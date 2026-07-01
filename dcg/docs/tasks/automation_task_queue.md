@@ -718,7 +718,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十六：完成三場 Raid Smoke Test
 
-狀態：未開始
+狀態：完成
 
 目標：確認早期核心循環可以連續遊玩。
 

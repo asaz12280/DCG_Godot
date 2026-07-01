@@ -1,4 +1,4 @@
-# Progress Log
+﻿# Progress Log
 
 ## 2026-07-01 Automation Baseline Task
 
@@ -1214,3 +1214,23 @@
 ### Next
 
 - Continue with 任務二十六：完成三場 Raid Smoke Test.
+
+## 2026-07-02 Three Raid Smoke Test Task
+
+### Completed
+
+- Added `tools/validate_three_raid_loop.gd` as a cross-system smoke test for three consecutive raid outcomes.
+- Raid 1 simulates extraction of wood and wire, confirms stash persistence, claims First Salvage, purchases Workbench Level 1, and verifies money/material/upgrades/quest state.
+- Raid 2 simulates player death with backpack loot, confirms lost items do not enter stash, and confirms money, base upgrades, and completed quests are preserved.
+- Raid 3 simulates killing a Scavenger, extracting a valuable item, claiming First Scavenger Hunt, and reloading the save slot to verify persistence.
+- The smoke test uses the existing SaveGameManager autoload, RaidResultApplier, BaseScreen, Scavenger scene, QuestState, and BaseProgression boundaries instead of adding a parallel test-only flow.
+
+### Verified
+
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Standard validation set passes: item catalog, UI foundation, inventory drag rules, gameplay architecture, combat domain, difficulty system, save slots, save slot panel, audio settings, pause menu, main project startup, and gameplay scene startup.
+- Additional loop-adjacent validations pass: quest flow, extraction flow, base progression, enemy AI, enemy loot drop, loot tables, and base screen.
+
+### Next
+
+- Continue with 任務二十七：UI polish/final layout quality pass.
