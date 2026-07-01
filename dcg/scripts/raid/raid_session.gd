@@ -1,14 +1,16 @@
 class_name RaidSession
 extends Node
 
+const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
+
 signal raid_started(state: Dictionary)
 signal raid_state_changed(state: Dictionary)
 signal raid_completed(result: Dictionary)
 
-const OUTCOME_IDLE := "idle"
-const OUTCOME_ACTIVE := "active"
-const OUTCOME_EXTRACTED := "extracted"
-const OUTCOME_DEAD := "dead"
+const OUTCOME_IDLE := RaidResultSchema.OUTCOME_IDLE
+const OUTCOME_ACTIVE := RaidResultSchema.OUTCOME_ACTIVE
+const OUTCOME_EXTRACTED := RaidResultSchema.OUTCOME_EXTRACTED
+const OUTCOME_DEAD := RaidResultSchema.OUTCOME_DEAD
 
 @export var auto_begin := true
 @export var map_id := "refuge_outskirts"
@@ -96,8 +98,8 @@ func get_state() -> Dictionary:
 
 
 func build_result() -> Dictionary:
-	var result := {
-		"outcome": _outcome,
+	var result := RaidResultSchema.create(_outcome, _result_context)
+	return RaidResultSchema.with_session_data(result, {
 		"active": active,
 		"extracted": extracted,
 		"dead": dead,
@@ -106,7 +108,4 @@ func build_result() -> Dictionary:
 		"map_id": map_id,
 		"started_at_unix": started_at_unix,
 		"completed_at_unix": completed_at_unix,
-	}
-	for key in _result_context.keys():
-		result[key] = _result_context[key]
-	return result
+	})

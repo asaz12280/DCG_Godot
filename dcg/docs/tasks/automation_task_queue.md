@@ -282,7 +282,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務八：建立 Raid Result Data
 
-狀態：未開始
+狀態：完成
 
 目標：定義 raid 結果資料，讓 UI 和 save 都使用同一份結果。
 

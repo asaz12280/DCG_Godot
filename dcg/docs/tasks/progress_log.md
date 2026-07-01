@@ -684,3 +684,23 @@
 ### Next
 
 - Continue with 任務八：建立 Raid Result Data.
+
+## 2026-07-02 Raid Result Data Task
+
+### Completed
+
+- Added `scripts/raid/raid_result.gd` as the shared raid result schema helper.
+- Defined required result fields: `outcome`, `extracted_items`, `lost_items`, `kept_safe_pocket_items`, `money_delta`, and `duration`.
+- Updated `RaidSession` to build extracted and death results through the shared schema.
+- Kept session metadata such as `map_id`, timestamps, and terminal flags as serializable result data.
+- Updated `tools/validate_raid_session.gd` to verify schema defaults, required keys, and Object/Node reference sanitization.
+
+### Verified
+
+- Raid session validation reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=schema_serializable scene=wired`.
+- Extraction flow validation still reports `[extraction_flow] OK countdown=works cancel=works session=notified scene=wired`.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務九：建立 Raid Result Panel.

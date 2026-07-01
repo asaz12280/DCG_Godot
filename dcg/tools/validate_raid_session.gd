@@ -1,6 +1,7 @@
 extends SceneTree
 
 const RaidSessionScript := preload("res://scripts/raid/raid_session.gd")
+const RaidResultScript := preload("res://scripts/raid/raid_result.gd")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 
 var _errors: Array[String] = []
@@ -10,9 +11,10 @@ func _initialize() -> void:
 	_validate_begin_and_extraction()
 	_validate_death_lockout()
 	_validate_restart_after_finish()
+	_validate_result_schema_defaults()
 	_validate_gameplay_scene_wiring()
 	if _errors.is_empty():
-		print("[raid_session] OK begin=active extraction=exclusive death=exclusive result=serializable scene=wired")
+		print("[raid_session] OK begin=active extraction=exclusive death=exclusive result=schema_serializable scene=wired")
 		quit(0)
 	else:
 		for error in _errors:
@@ -38,6 +40,7 @@ func _validate_begin_and_extraction() -> void:
 		_errors.append("Extraction result should use extracted outcome.")
 	if typeof(result.get("extracted_items", null)) != TYPE_ARRAY:
 		_errors.append("RaidSession should preserve serializable result context.")
+	_validate_required_result_keys(result, "extraction")
 	if session.register_player_death():
 		_errors.append("RaidSession should reject death after extraction.")
 	session.free()
@@ -56,6 +59,7 @@ func _validate_death_lockout() -> void:
 		_errors.append("Death result should use dead outcome.")
 	if typeof(result.get("lost_items", null)) != TYPE_ARRAY:
 		_errors.append("RaidSession should preserve serializable death context.")
+	_validate_required_result_keys(result, "death")
 	if session.register_extraction():
 		_errors.append("RaidSession should reject extraction after death.")
 	session.free()
@@ -74,6 +78,32 @@ func _validate_restart_after_finish() -> void:
 	if str(state.get("outcome", "")) != RaidSessionScript.OUTCOME_ACTIVE:
 		_errors.append("New raid should return to active outcome.")
 	session.free()
+
+
+func _validate_result_schema_defaults() -> void:
+	var debug_node := Node.new()
+	var result := RaidResultScript.create(RaidResultScript.OUTCOME_EXTRACTED, {"debug_node": debug_node})
+	debug_node.free()
+	_validate_required_result_keys(result, "schema")
+	if not RaidResultScript.is_serializable(result):
+		_errors.append("RaidResult should sanitize Object references into serializable values.")
+
+
+func _validate_required_result_keys(result: Dictionary, label: String) -> void:
+	var required_keys := [
+		"outcome",
+		"extracted_items",
+		"lost_items",
+		"kept_safe_pocket_items",
+		"money_delta",
+		"duration",
+	]
+	for key in required_keys:
+		if not result.has(key):
+			_errors.append("Raid result %s should include `%s`." % [label, key])
+	var errors := RaidResultScript.validate(result)
+	for error in errors:
+		_errors.append("Raid result %s invalid: %s" % [label, error])
 
 
 func _validate_gameplay_scene_wiring() -> void:
