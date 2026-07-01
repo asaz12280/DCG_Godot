@@ -662,3 +662,25 @@
 ### Next
 
 - Continue with 任務七：建立 Extraction Zone.
+
+## 2026-07-02 Extraction Zone Task
+
+### Completed
+
+- Added `scripts/raid/extraction_zone_3d.gd` as an independent Area3D-based extraction owner.
+- Added countdown, cancellation on exit, completion, progress state, and RaidSession notification.
+- Added a simple `ExtractionZone` node to `player_test_world_3d.tscn` with collision, visible marker, and Label3D prompt.
+- Kept extraction independent from inventory and backpack UI state.
+- Added `tools/validate_extraction_flow.gd` to guard countdown, cancellation, session notification, and gameplay scene wiring.
+
+### Verified
+
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works session=notified scene=wired`.
+- Raid session validation still reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=serializable scene=wired`.
+- Gameplay architecture validation still reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Combat domain validation still reports `[combat_domain] OK damageable=works weapon=applies_damage scene=has_target`.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務八：建立 Raid Result Data.

@@ -257,7 +257,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務七：建立 Extraction Zone
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家可以在地圖中完成撤離。
 
