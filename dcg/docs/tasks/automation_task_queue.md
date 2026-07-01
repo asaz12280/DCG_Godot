@@ -455,7 +455,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十五：補齊手槍基礎射擊規則
 
-狀態：未開始
+狀態：完成
 
 目標：讓戰鬥從單純造成傷害進化到可調整的武器行為。
 

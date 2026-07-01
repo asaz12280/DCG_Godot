@@ -877,3 +877,23 @@
 ### Next
 
 - Continue with 任務十五：補齊手槍基礎射擊規則.
+
+## 2026-07-02 Pistol Basic Firing Rules Task
+
+### Completed
+
+- Updated `WeaponController3D` with fire cooldown, magazine ammo, reserve ammo, reload-from-reserve, and block reasons.
+- Added `missed` and `fire_blocked` signals plus `last_fire_result` as early hit/miss/ammo feedback interfaces.
+- Kept damage application through the existing `DamageEvent` and `Damageable3D` domain path.
+- Updated `tools/validate_combat_domain.gd` to verify damage, ammo consumption, cooldown blocking, no-ammo blocking, reload behavior, and gameplay scene weapon wiring.
+
+### Verified
+
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Item catalog validation still passes.
+- Player scene and gameplay scene both pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務十六：建立玩家受傷與死亡事件.
