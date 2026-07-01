@@ -429,7 +429,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十四：把 Refuge Outskirts 測試場景改成第一張可玩 raid map
 
-狀態：未開始
+狀態：完成
 
 目標：把目前 test world 升級成可完成一次 raid 的小地圖。
 

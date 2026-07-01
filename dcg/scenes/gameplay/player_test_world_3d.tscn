@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene load_steps=22 format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/raid/extraction_zone_3d.gd" id="15_extraction_zone"]
 [ext_resource type="PackedScene" path="res://scenes/ui/raid_result_panel.tscn" id="16_raid_result_panel"]
 [ext_resource type="Script" path="res://scripts/raid/raid_result_applier.gd" id="17_raid_result_applier"]
+[ext_resource type="PackedScene" path="res://scenes/loot/loot_container_basic.tscn" id="18_loot_container"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -101,6 +102,9 @@ shape = SubResource("BoxShape3D_floor")
 
 [node name="SceneProps" type="Node3D" parent="." unique_id=2039664955]
 
+[node name="PlayerSpawnMarker" type="Node3D" parent="SceneProps" unique_id=1719324676 groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+
 [node name="TreeSmall" parent="SceneProps" unique_id=1264764924 instance=ExtResource("4_tree")]
 transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -6.8, 0, 3.8)
 
@@ -164,6 +168,15 @@ shape = SubResource("BoxShape3D_rope")
 
 [node name="LootPickupWood" parent="SceneProps" unique_id=167904670 instance=ExtResource("9_loot_pickup")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0, 0)
+
+[node name="LootContainerNorth" parent="SceneProps" unique_id=780359184 instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.95, 0, 0, 0, 0.95, 0, 0, 0, 0.95, -4.8, 0, -2.8)
+
+[node name="LootContainerEast" parent="SceneProps" unique_id=1888719321 instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.86, 0, 0.28, 0, 0.9, 0, -0.28, 0, 0.86, 5.2, 0, 1.9)
+
+[node name="LootContainerSouth" parent="SceneProps" unique_id=1499102481 instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.72, 0, -0.42, 0, 0.84, 0, 0.42, 0, 0.72, -1.8, 0, 5.2)
 
 [node name="ExtractionZone" type="Area3D" parent="SceneProps" unique_id=1094740989 groups=["extraction_zone"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0.9, -5.6)

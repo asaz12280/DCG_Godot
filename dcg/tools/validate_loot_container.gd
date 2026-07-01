@@ -4,6 +4,7 @@ const LootContainerScene := preload("res://scenes/loot/loot_container_basic.tscn
 const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 const InventoryModelScript := preload("res://scripts/inventory/inventory_model.gd")
 const CommonTable := preload("res://data/loot_tables/refuge_outskirts_common.tres")
+const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 
 var _errors: Array[String] = []
 var _opened_signal_count := 0
@@ -25,9 +26,10 @@ class FakePlayer:
 func _initialize() -> void:
 	_validate_container_grants_loot_once()
 	_validate_scene_wiring()
+	_validate_gameplay_map_wiring()
 	_validate_ui_independence()
 	if _errors.is_empty():
-		print("[loot_container] OK roll=grants_inventory one_shot=blocks_repeat ui_coupling=clean scene=wired")
+		print("[loot_container] OK roll=grants_inventory one_shot=blocks_repeat map=spawn_loot_extract ui_coupling=clean scene=wired")
 		quit(0)
 	else:
 		for error in _errors:
@@ -76,6 +78,26 @@ func _validate_scene_wiring() -> void:
 	if container.get("loot_table") == null:
 		_errors.append("Loot container scene should bind a LootTable resource.")
 	_free_node(container)
+
+
+func _validate_gameplay_map_wiring() -> void:
+	var scene := GameplayScene.instantiate()
+	root.add_child(scene)
+	var spawn_marker := scene.get_node_or_null("SceneProps/PlayerSpawnMarker")
+	if spawn_marker == null:
+		_errors.append("Gameplay map should include a clear PlayerSpawnMarker.")
+	var extraction_zone := scene.get_node_or_null("SceneProps/ExtractionZone")
+	if extraction_zone == null:
+		_errors.append("Gameplay map should include an ExtractionZone.")
+	var loot_container_count := 0
+	var scene_props := scene.get_node_or_null("SceneProps")
+	if scene_props != null:
+		for child in scene_props.get_children():
+			if child.get_script() == LootContainerScript:
+				loot_container_count += 1
+	if loot_container_count < 2:
+		_errors.append("Gameplay map should include at least two LootContainer3D instances.")
+	_free_node(scene)
 
 
 func _validate_ui_independence() -> void:

@@ -856,3 +856,24 @@
 ### Next
 
 - Continue with 任務十四：把 Refuge Outskirts 測試場景改成第一張可玩 raid map.
+
+## 2026-07-02 Refuge Outskirts Playable Map Task
+
+### Completed
+
+- Kept the existing gameplay test scene path so current Base and validation flows remain stable.
+- Added `SceneProps/PlayerSpawnMarker` as a clear player spawn marker.
+- Added three `LootContainer3D` instances to the map using the shared basic loot container scene and common Refuge Outskirts loot table.
+- Kept the existing `ExtractionZone`, player, HUD, TopMenu, Inventory, Codex, Pause, CombatTarget, RaidSession, RaidResultPanel, and RaidResultApplier wiring.
+- Updated `tools/validate_loot_container.gd` so gameplay map validation now checks for spawn, loot containers, and extraction.
+
+### Verified
+
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- Loot container validation reports `[loot_container] OK roll=grants_inventory one_shot=blocks_repeat map=spawn_loot_extract ui_coupling=clean scene=wired`.
+- Gameplay architecture, loot table, item catalog, and raid result panel validations still pass.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務十五：補齊手槍基礎射擊規則.
