@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"combat_knife"
+catalog_number = 6
+name_key = &"item.combat_knife.name"
+description_key = &"item.combat_knife.desc"
+item_type = "weapon"
+weight = 0.45
+value = 45
+max_stack = 1
+tags = Array[StringName]([&"melee"])

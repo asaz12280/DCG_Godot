@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"wood"
+catalog_number = 1
+display_name = ""
+name_key = &"item.wood.name"
+description_key = &"item.wood.desc"
+item_type = "crafting"
+weight = 0.6
+value = 6
+max_stack = 20

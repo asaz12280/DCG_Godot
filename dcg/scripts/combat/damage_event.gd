@@ -1,0 +1,15 @@
+class_name DamageEvent
+extends RefCounted
+
+var amount: float = 0.0
+var source: Node = null
+var item_def: ItemDef = null
+var tags: Array[StringName] = []
+
+
+func _init(damage_amount: float = 0.0, damage_source: Node = null, source_item: ItemDef = null, source_tags: Array[StringName] = []) -> void:
+	amount = maxf(damage_amount, 0.0)
+	source = damage_source
+	item_def = source_item
+	tags = source_tags.duplicate()
+

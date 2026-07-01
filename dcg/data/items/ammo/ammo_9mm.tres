@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"ammo_9mm"
+catalog_number = 7
+name_key = &"item.ammo_9mm.name"
+description_key = &"item.ammo_9mm.desc"
+item_type = "ammo"
+weight = 0.012
+value = 3
+max_stack = 60
+tags = Array[StringName]([&"9mm"])

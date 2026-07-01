@@ -1,0 +1,214 @@
+[gd_scene format=3 uid="uid://ddcgv3rfkvh5i"]
+
+[ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
+[ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
+[ext_resource type="Script" uid="uid://jf66geab6uv0" path="res://scripts/gameplay/top_down_camera_3d.gd" id="3_camera"]
+[ext_resource type="PackedScene" uid="uid://treeprop001" path="res://scenes/props/tree_prop.tscn" id="4_tree"]
+[ext_resource type="PackedScene" uid="uid://3y7c8ttuik7a" path="res://scenes/props/rock_cluster_prop.tscn" id="5_rock"]
+[ext_resource type="PackedScene" uid="uid://uu11pgwdptgi" path="res://scenes/props/fence_post_prop.tscn" id="6_post"]
+[ext_resource type="Script" uid="uid://o686vypu1rvs" path="res://scripts/ui/inventory_equipment_ui.gd" id="7_inventory_ui"]
+[ext_resource type="Script" uid="uid://buy17adl3daxv" path="res://scripts/gameplay/display_mode_3d.gd" id="8_display_mode"]
+[ext_resource type="PackedScene" uid="uid://dxu3jeh2qcaii" path="res://scenes/items/loot_pickup_wood.tscn" id="9_loot_pickup"]
+[ext_resource type="Script" uid="uid://bnmfsqa7lp6fl" path="res://scripts/ui/item_codex_ui.gd" id="10_item_codex_ui"]
+[ext_resource type="Script" uid="uid://c88trysktctm7" path="res://scripts/ui/top_menu_bar.gd" id="11_top_menu_bar"]
+[ext_resource type="Script" uid="uid://devi22diatgl3" path="res://scripts/combat/damageable_3d.gd" id="12_damageable"]
+[ext_resource type="Script" uid="uid://dtlj10iy2nmcq" path="res://scripts/ui/pause_menu.gd" id="13_pause_menu"]
+
+[sub_resource type="Environment" id="Environment_sunny"]
+background_mode = 1
+background_color = Color(0.78, 0.84, 0.92, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.84, 0.86, 0.78, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(32, 0.2, 32)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
+albedo_color = Color(0.72, 0.7, 0.61, 1)
+roughness = 0.92
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(32, 0.2, 32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rope"]
+size = Vector3(0.08, 0.08, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rope"]
+albedo_color = Color(0.58, 0.4, 0.24, 1)
+roughness = 0.9
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rope"]
+size = Vector3(0.08, 0.08, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_combat_target"]
+size = Vector3(0.9, 1.2, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_combat_target"]
+albedo_color = Color(0.72, 0.22, 0.18, 1)
+roughness = 0.82
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_combat_target"]
+size = Vector3(0.9, 1.2, 0.9)
+
+[node name="PlayerTestWorld3D" type="Node3D" unique_id=533737286]
+
+[node name="DisplayMode3D" type="Node" parent="." unique_id=686218874]
+script = ExtResource("8_display_mode")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1412131729]
+environment = SubResource("Environment_sunny")
+
+[node name="SunLight" type="DirectionalLight3D" parent="." unique_id=1112662776]
+transform = Transform3D(0.309058, -0.7285415, 0.61131865, -9.775169e-09, 0.6427874, 0.7660446, -0.95104325, -0.23675218, 0.19865859, 3.7094731, 2.7499256, 0)
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=189956493]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08094692, -0.09999905, -0.018536568)
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("StandardMaterial3D_floor")
+
+[node name="FloorCollision" type="StaticBody3D" parent="." unique_id=410497419]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FloorCollision" unique_id=368147268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape3D_floor")
+
+[node name="SceneProps" type="Node3D" parent="." unique_id=2039664955]
+
+[node name="TreeSmall" parent="SceneProps" unique_id=1264764924 instance=ExtResource("4_tree")]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -6.8, 0, 3.8)
+
+[node name="RockClusterSouth" parent="SceneProps" unique_id=1759814791 instance=ExtResource("5_rock")]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, -5.2871428, 0, 3.4)
+
+[node name="FencePostSouth01" parent="SceneProps" unique_id=1674919581 instance=ExtResource("6_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0, 4.3)
+
+[node name="FencePostSouth02" parent="SceneProps" unique_id=184139658 instance=ExtResource("6_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, 3.9)
+
+[node name="FencePostSouth03" parent="SceneProps" unique_id=159631615 instance=ExtResource("6_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, 4.2)
+
+[node name="FencePostSouth04" parent="SceneProps" unique_id=1968146223 instance=ExtResource("6_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 3.8)
+
+[node name="FencePostSouth05" parent="SceneProps" unique_id=1021701242 instance=ExtResource("6_post")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 4.3)
+
+[node name="RopeSouth01" type="StaticBody3D" parent="SceneProps" unique_id=1054148740]
+transform = Transform3D(-0.20065436, 0, 1.0707707, 0, 1, 0, -0.97966206, 0, -0.21931523, -3.35, 0.75, 4.1)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth01" unique_id=708237648]
+mesh = SubResource("BoxMesh_rope")
+surface_material_override/0 = SubResource("StandardMaterial3D_rope")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth01" unique_id=492128359]
+shape = SubResource("BoxShape3D_rope")
+
+[node name="RopeSouth02" type="StaticBody3D" parent="SceneProps" unique_id=1004280752]
+transform = Transform3D(0.14027438, 0, 1.1901156, 0, 1, 0, -0.99011266, 0, 0.16860978, -1.55, 0.75, 4.05)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth02" unique_id=1061197115]
+mesh = SubResource("BoxMesh_rope")
+surface_material_override/0 = SubResource("StandardMaterial3D_rope")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth02" unique_id=945337018]
+shape = SubResource("BoxShape3D_rope")
+
+[node name="RopeSouth03" type="StaticBody3D" parent="SceneProps" unique_id=1288219299]
+transform = Transform3D(-0.21339189, 0, 1.1264427, 0, 1, 0, -0.9769666, 0, -0.24604087, 0.3, 0.75, 4)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth03" unique_id=118895292]
+mesh = SubResource("BoxMesh_rope")
+surface_material_override/0 = SubResource("StandardMaterial3D_rope")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth03" unique_id=2079887272]
+shape = SubResource("BoxShape3D_rope")
+
+[node name="RopeSouth04" type="StaticBody3D" parent="SceneProps" unique_id=1562635261]
+transform = Transform3D(0.2830674, 0, 1.1307789, 0, 1, 0, -0.9591, 0, 0.3337365, 2.1, 0.75, 4.05)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth04" unique_id=85058424]
+mesh = SubResource("BoxMesh_rope")
+surface_material_override/0 = SubResource("StandardMaterial3D_rope")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth04" unique_id=1242632377]
+shape = SubResource("BoxShape3D_rope")
+
+[node name="LootPickupWood" parent="SceneProps" unique_id=167904670 instance=ExtResource("9_loot_pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0, 0)
+
+[node name="CombatTarget" type="StaticBody3D" parent="SceneProps" unique_id=1245573211 groups=["damageable"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.6, -2.4)
+script = ExtResource("12_damageable")
+max_health = 50.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/CombatTarget" unique_id=1197305119]
+mesh = SubResource("BoxMesh_combat_target")
+surface_material_override/0 = SubResource("StandardMaterial3D_combat_target")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/CombatTarget" unique_id=955603905]
+shape = SubResource("BoxShape3D_combat_target")
+
+[node name="Player3D" parent="." unique_id=1420536322 instance=ExtResource("1_player")]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=364342368]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, 6.8)
+current = true
+fov = 42.0
+script = ExtResource("3_camera")
+target_path = NodePath("../Player3D")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=317427250]
+
+[node name="TopMenuBar" type="Control" parent="HUD" unique_id=245550675]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -350.0
+offset_top = 20.0
+offset_right = 350.0
+offset_bottom = 104.0
+grow_horizontal = 2
+script = ExtResource("11_top_menu_bar")
+
+[node name="PlayerHud3D" type="Control" parent="HUD" unique_id=203906436]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_hud")
+
+[node name="InventoryEquipmentUI" type="Control" parent="HUD" unique_id=1088497690]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_inventory_ui")
+
+[node name="ItemCodexUI" type="Control" parent="HUD" unique_id=961553802]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10_item_codex_ui")
+
+[node name="PauseMenu" type="Control" parent="HUD" unique_id=1252808318]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("13_pause_menu")

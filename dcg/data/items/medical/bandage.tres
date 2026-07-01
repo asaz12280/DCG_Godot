@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"bandage"
+catalog_number = 4
+name_key = &"item.bandage.name"
+description_key = &"item.bandage.desc"
+item_type = "medical"
+weight = 0.12
+value = 12
+max_stack = 10

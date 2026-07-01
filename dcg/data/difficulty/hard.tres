@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DifficultyProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/difficulty/difficulty_profile.gd" id="1_difficulty_profile"]
+
+[resource]
+script = ExtResource("1_difficulty_profile")
+id = &"hard"
+name_key = &"ui.difficulty.hard"
+description_key = &"ui.difficulty.hard_desc"
+player_health_multiplier = 0.75
+

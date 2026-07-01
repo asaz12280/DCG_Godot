@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"cash"
+catalog_number = 20
+name_key = &"item.cash.name"
+description_key = &"item.cash.desc"
+item_type = "currency"
+weight = 0.0
+value = 1
+max_stack = 999

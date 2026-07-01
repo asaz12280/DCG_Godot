@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://dxu3jeh2qcaii"]
+
+[ext_resource type="Script" path="res://scripts/inventory/loot_pickup_3d.gd" id="1_pickup"]
+[ext_resource type="Resource" path="res://data/items/crafting/wood.tres" id="2_item"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pickup"]
+radius = 1.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_crate"]
+size = Vector3(0.62, 0.26, 0.46)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crate"]
+albedo_color = Color(0.52, 0.34, 0.18, 1)
+roughness = 0.88
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_prompt"]
+albedo_color = Color(1, 0.95, 0.55, 1)
+shading_mode = 0
+
+[node name="LootPickupWood" type="Area3D"]
+script = ExtResource("1_pickup")
+item_def = ExtResource("2_item")
+quantity = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.35, 0)
+shape = SubResource("SphereShape3D_pickup")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.16, 0)
+mesh = SubResource("BoxMesh_crate")
+surface_material_override/0 = SubResource("StandardMaterial3D_crate")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+visible = false
+position = Vector3(0, 1.05, 0)
+billboard = 1
+text = ""
+font_size = 36
+modulate = Color(1, 0.95, 0.55, 1)
+outline_size = 8
+outline_modulate = Color(0.05, 0.05, 0.04, 1)

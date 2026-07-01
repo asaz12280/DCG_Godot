@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"pistol_9mm"
+catalog_number = 5
+name_key = &"item.pistol_9mm.name"
+description_key = &"item.pistol_9mm.desc"
+item_type = "weapon"
+weight = 1.1
+value = 120
+max_stack = 1
+damage = 24
+tags = Array[StringName]([&"gun", &"pistol", &"9mm"])

@@ -1,0 +1,49 @@
+[gd_scene load_steps=7 format=3 uid="uid://rockclusterprop001"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rock"]
+albedo_color = Color(0.22, 0.33, 0.38, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_rock_large"]
+size = Vector3(0.95, 0.65, 0.78)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rock_mid"]
+size = Vector3(0.78, 0.52, 0.64)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rock_small"]
+size = Vector3(0.62, 0.42, 0.52)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cluster"]
+size = Vector3(1.9, 0.8, 1.45)
+
+[node name="RockClusterProp" type="Node3D"]
+
+[node name="RockLarge" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.325, 0)
+rotation = Vector3(0.05, 0.2, 0.08)
+mesh = SubResource("BoxMesh_rock_large")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock")
+
+[node name="RockMidA" type="MeshInstance3D" parent="."]
+position = Vector3(0.65, 0.26, 0.2)
+rotation = Vector3(0.1, 0.75, 0.08)
+mesh = SubResource("BoxMesh_rock_mid")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock")
+
+[node name="RockMidB" type="MeshInstance3D" parent="."]
+position = Vector3(-0.55, 0.26, 0.28)
+rotation = Vector3(0.2, 1.1, 0.16)
+mesh = SubResource("BoxMesh_rock_mid")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock")
+
+[node name="RockSmall" type="MeshInstance3D" parent="."]
+position = Vector3(0.25, 0.21, -0.55)
+rotation = Vector3(0.3, 1.65, 0.24)
+mesh = SubResource("BoxMesh_rock_small")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+position = Vector3(0.05, 0.4, 0)
+shape = SubResource("BoxShape3D_cluster")
