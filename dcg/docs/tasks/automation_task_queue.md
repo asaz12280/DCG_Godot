@@ -381,7 +381,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十二：建立 LootTable Resource
 
-狀態：未開始
+狀態：完成
 
 目標：讓 loot 來源資料化，避免每個場景手塞固定物品。
 

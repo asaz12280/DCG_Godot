@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="LootTable" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_wood"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/crafting/wood.tres"
+min_quantity = 1
+max_quantity = 4
+weight = 5.0
+tags = Array[StringName]([&"common", &"crafting"])
+
+[sub_resource type="Resource" id="LootTableEntry_cash"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/currency/cash.tres"
+min_quantity = 4
+max_quantity = 18
+weight = 4.0
+tags = Array[StringName]([&"common", &"currency"])
+
+[sub_resource type="Resource" id="LootTableEntry_water"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/food/bottled_water.tres"
+min_quantity = 1
+max_quantity = 2
+weight = 2.5
+tags = Array[StringName]([&"common", &"food"])
+
+[sub_resource type="Resource" id="LootTableEntry_bread"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/food/bread.tres"
+min_quantity = 1
+max_quantity = 2
+weight = 2.5
+tags = Array[StringName]([&"common", &"food"])
+
+[sub_resource type="Resource" id="LootTableEntry_wire"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/electronics/wire.tres"
+min_quantity = 1
+max_quantity = 3
+weight = 1.5
+tags = Array[StringName]([&"common", &"electronics"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"refuge_outskirts_common"
+entries = Array[Resource]([SubResource("LootTableEntry_wood"), SubResource("LootTableEntry_cash"), SubResource("LootTableEntry_water"), SubResource("LootTableEntry_bread"), SubResource("LootTableEntry_wire")])

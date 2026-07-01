@@ -791,3 +791,47 @@
 ### Next
 
 - Continue with 任務十二：建立 LootTable Resource.
+
+## 2026-07-02 LootTable Resource Task
+
+### Completed
+
+- Added `scripts/loot/loot_table_entry.gd` for item path, min/max quantity, weight, and optional tags.
+- Added `scripts/loot/loot_table.gd` for validation and weighted stack rolling.
+- Added `data/loot_tables/refuge_outskirts_common.tres` with early common loot entries.
+- Added `tools/validate_loot_tables.gd` to verify valid rolls, invalid item path detection, and empty table detection.
+
+### Verified
+
+- Loot table validation reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
+- Item catalog validation reports `[item_catalog] OK items=21 max_no=21`.
+- Gameplay architecture validation still reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### Next
+
+- Run Project Health Check after 任務十二, then continue with 任務十三：建立 LootContainer3D.
+
+## 2026-07-02 Project Health Check After Task Twelve
+
+### Health Check
+
+- Responsibility boundaries: Loot tables are Resource/data objects only; they do not reference UI, save managers, scene nodes, or raid flow.
+- UI ownership: no UI was changed in Task Twelve.
+- Godot node-first UI: unchanged; existing Result/Base UI validations still pass.
+- UI layout quality: unchanged UI remains covered by Base and Raid Result panel layout validations at `1280x720` and `1920x1080`.
+- Script size and focus: new loot scripts are small and focused; existing `inventory_equipment_ui.gd` and `item_codex_ui.gd` remain watch items.
+- Data-driven content: `refuge_outskirts_common.tres` now defines early loot via resource data instead of scene-hard-coded loot.
+- Save safety: no save schema changes were made in Task Twelve.
+- Localization: no new player-facing strings were added.
+- Scene health: main menu and gameplay scenes both load headless.
+- Validation health: loot table, item catalog, UI, inventory, save, gameplay, combat, raid, base, and audio validations pass.
+
+### Verified
+
+- `validate_loot_tables.gd`, `validate_item_catalog.gd`, `validate_ui_foundation.gd`, `validate_inventory_drag_rules.gd`, `validate_save_slots.gd`, `validate_gameplay_architecture.gd`, `validate_combat_domain.gd`, `validate_raid_session.gd`, `validate_extraction_flow.gd`, `validate_base_screen.gd`, `validate_base_flow.gd`, and `validate_audio_settings.gd` pass.
+- Main menu and gameplay scene startup pass Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 任務十三：建立 LootContainer3D.
