@@ -792,7 +792,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十九：建立內容擴充規格
 
-狀態：未開始
+狀態：完成
 
 目標：在開始堆內容前，定義新增內容的資料格式和流程。
 

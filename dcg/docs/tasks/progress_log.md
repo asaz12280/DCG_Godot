@@ -1301,3 +1301,29 @@
 ### Next
 
 - Continue with 任務二十九：內容製作指南與資料擴充流程.
+
+## 2026-07-02 Content Authoring Guide Task
+
+### Completed
+
+- Added `docs/design/content_authoring_guide.md` as the early content expansion rulebook before adding repeated item/enemy/quest/upgrades.
+- Documented folder ownership, content workflow, required fields, authoring rules, and validation commands for `ItemDef`, `LootTableEntry`, `EnemyDef`, `QuestDef`, and `UpgradeDef`.
+- Added localization requirements for item, UI, and enemy keys, including the rule that `UIText` fallback is only a safety net.
+- Added a validation matrix mapping each content type to the required `tools/validate_*.gd` scripts.
+- Added startup check guidance with the correct gameplay scene path: `res://scenes/gameplay/player_test_world_3d.tscn`.
+- Added `tools/validate_content_authoring_guide.gd` so automation can catch missing guide sections, missing resource type coverage, missing validation commands, and missing expected project paths.
+
+### Verified
+
+- Content authoring guide validation reports `[content_authoring_guide] OK sections=present resources=covered validation=listed`.
+- Required task validations pass: item catalog, loot tables, enemy def, and quest model.
+- Additional related validations pass: base progression, UI text quality, and three-raid loop.
+- Main project and gameplay scene startup checks pass.
+
+### Notes
+
+- This task intentionally adds no repeated content volume. It creates the rules for safe content expansion after Dev Slice 0.1 approval.
+
+### Next
+
+- Continue with 任務三十：Dev Slice 0.1 驗收與是否開始內容擴充判斷.
