@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene load_steps=23 format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/raid_result_panel.tscn" id="16_raid_result_panel"]
 [ext_resource type="Script" path="res://scripts/raid/raid_result_applier.gd" id="17_raid_result_applier"]
 [ext_resource type="PackedScene" path="res://scenes/loot/loot_container_basic.tscn" id="18_loot_container"]
+[ext_resource type="PackedScene" path="res://scenes/ui/raid_hud_panel.tscn" id="19_raid_hud_panel"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -241,6 +242,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_hud")
+
+[node name="RaidHudPanel" parent="HUD" instance=ExtResource("19_raid_hud_panel")]
 
 [node name="InventoryEquipmentUI" type="Control" parent="HUD" unique_id=1088497690]
 layout_mode = 3

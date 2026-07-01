@@ -574,7 +574,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十：加入 Raid HUD 目標資訊
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家知道目前 raid 要做什麼。
 

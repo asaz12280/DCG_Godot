@@ -991,6 +991,37 @@
 - Loot table validation reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
 - Enemy definition, combat domain, gameplay architecture, and Scavenger scene headless startup all pass.
 
+## 2026-07-02 Raid HUD Objective Task
+
+### Completed
+
+- Added `scripts/ui/raid_hud_panel.gd` and `scenes/ui/raid_hud_panel.tscn` as a node-first stable HUD panel.
+- Wired `RaidHudPanel` into `scenes/gameplay/player_test_world_3d.tscn`.
+- Raid HUD now shows the early objective, raid active status, extraction hint/countdown/progress, and current weapon ammo.
+- HUD uses Control nodes, PanelContainer, MarginContainer, VBoxContainer, Label, and ProgressBar; script only binds state and text.
+- HUD ignores mouse input and remains compatible with UIManager-managed backpack/codex/pause panels.
+- Added `tools/validate_raid_hud.gd` to cover HUD wiring, extraction state, ammo display, UIManager compatibility, node-first structure, UI independence, and 1280x720/1920x1080 layout fit.
+
+### Verified
+
+- Raid HUD validation reports `[raid_hud] OK objective=visible extraction=status ammo=visible ui_manager=compatible layout=fit`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Extraction flow and player damage validations still pass.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### UI Layout Quality Check
+
+- Panel base: compact top-left overlay with a styled PanelContainer backing.
+- Spacing and alignment: node-first margin and VBox spacing keep objective, status, extraction, progress, and ammo grouped clearly.
+- Readability: important labels use existing UIStyle font sizes and do not scale below readable sizes.
+- Fit: validation checks 1280x720 and 1920x1080 safe margins, viewport bounds, and gameplay-view coverage limits.
+- Interaction: mouse_filter is ignore, so the HUD does not block gameplay, backpack, codex, or pause UI.
+
+### Next
+
+- Continue with 任務二十一：建立簡單金錢與出售流程.
+
 ### Next
 
 - Continue with 任務二十：加入 Raid HUD 目標資訊.
