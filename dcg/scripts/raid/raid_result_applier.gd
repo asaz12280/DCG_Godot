@@ -3,6 +3,8 @@ extends Node
 
 const StashModelScript := preload("res://scripts/base/stash_model.gd")
 const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
+const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
+const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
 
 @export var raid_session_path: NodePath = NodePath("../RaidSession")
 @export var player_path: NodePath = NodePath("../Player3D")
@@ -64,6 +66,7 @@ func apply_raid_result(result: Dictionary) -> bool:
 
 	save_data["stash"] = stash.to_save_data()
 	save_data["money"] = maxi(int(save_data.get("money", 0)) + int(result.get("money_delta", 0)), 0)
+	_update_first_salvage_quest(save_data, extracted_items)
 	var saved := bool(save_manager.save_slot_data(slot_index, save_data))
 	if not saved:
 		last_apply_result["reason"] = "save_failed"
@@ -108,3 +111,19 @@ func _to_stash_stack(stack: Dictionary) -> Dictionary:
 	if not normalized.has("resource_path"):
 		normalized["resource_path"] = str(normalized.get("item_path", ""))
 	return normalized
+
+
+func _update_first_salvage_quest(save_data: Dictionary, extracted_items: Variant) -> void:
+	if typeof(extracted_items) != TYPE_ARRAY:
+		return
+	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
+	var quest_id := str(FirstSalvageQuest.get("id"))
+	var current_state: Dictionary = quests.get(quest_id, QuestStateScript.create(FirstSalvageQuest)) as Dictionary
+	quests[quest_id] = QuestStateScript.update_from_extracted_items(current_state, FirstSalvageQuest, extracted_items as Array)
+	save_data["quests"] = quests
+
+
+func _quests_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)

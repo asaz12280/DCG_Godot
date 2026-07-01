@@ -1114,6 +1114,37 @@
 - Base screen and item catalog validations pass.
 - Main project startup passes Godot 4.7 headless.
 
+## 2026-07-02 Quest Base Flow Task
+
+### Completed
+
+- Updated `RaidResultApplier` so extracted wood or wire updates First Salvage quest progress in the current save slot.
+- Added a node-first Quest section to `scenes/base/base_screen.tscn` with quest title, objective, progress, status, and Submit button.
+- Updated `BaseScreen` to display First Salvage as Active, Ready, or Completed.
+- BaseScreen can now submit a ready quest, grant reward money, mark it completed, and save the completed/claimed state.
+- Converted the Base middle content area into a ScrollContainer so Stash, Workbench, and Quest sections can grow without breaking 1280x720 layout.
+- Added `tools/validate_quest_flow.gd` to verify extraction progress, Base submit, reward persistence, completed state, and Quest UI layout.
+
+### Verified
+
+- Quest flow validation reports `[quest_flow] OK extraction=updates_base quest=claimable reward=saved layout=fits`.
+- Quest model validation reports `[quest_model] OK def=loads progress=extract_any reward=claim save=round_trip`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- Base progression, Base screen, UI foundation, and Base scene startup validations pass.
+
+### UI Layout Quality Check
+
+- Panel base: Quest UI extends the existing Base scene with Control/Container nodes, not script-built panels.
+- Visual hierarchy: Quest title, objective, progress, state, and submit action are separated and readable.
+- States: Active disables Submit, Ready enables Submit, Completed disables Submit and shows completed status.
+- Responsive fit: Base middle content now scrolls, keeping bottom status/actions stable and passing 1280x720/1920x1080 layout checks.
+- Future-proofing: Stash, Workbench, and Quest content can expand without overflowing the Base panel.
+
+### Next
+
+- Continue with 任務二十五：建立第一個擊殺任務.
+
 ### Next
 
 - Continue with 任務二十四：把第一個收集任務接到 Base.

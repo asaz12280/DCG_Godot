@@ -80,70 +80,130 @@ vertical_alignment = 1
 [node name="Separator" type="HSeparator" parent="MainPanel/PanelMargin/Content"]
 layout_mode = 2
 
-[node name="StashTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+[node name="SectionsScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content"]
+custom_minimum_size = Vector2(0, 338)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Sections" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="StashTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Stash"
 
-[node name="StashScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 92)
+[node name="StashScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="StashRows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/StashScroll"]
+[node name="StashRows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/StashScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="WorkbenchSeparator" type="HSeparator" parent="MainPanel/PanelMargin/Content"]
+[node name="WorkbenchSeparator" type="HSeparator" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 layout_mode = 2
 
-[node name="WorkbenchTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+[node name="WorkbenchTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Workbench"
 
-[node name="WorkbenchSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 92)
+[node name="WorkbenchSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
+custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
-[node name="WorkbenchNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
+[node name="WorkbenchNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Workbench Level 1"
 
-[node name="WorkbenchDescriptionLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
+[node name="WorkbenchDescriptionLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Prepare better starter ammunition for the next raid."
 autowrap_mode = 3
 
-[node name="WorkbenchInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
-custom_minimum_size = Vector2(0, 40)
+[node name="WorkbenchInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="WorkbenchCostLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+[node name="WorkbenchCostLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection/WorkbenchInfoRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Cost: $20, Wood x4, Wire x2"
 vertical_alignment = 1
 
-[node name="WorkbenchStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+[node name="WorkbenchStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection/WorkbenchInfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
 text = "Not upgraded"
 vertical_alignment = 1
 
-[node name="UpgradeWorkbenchButton" type="Button" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+[node name="UpgradeWorkbenchButton" type="Button" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection/WorkbenchInfoRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(190, 48)
+custom_minimum_size = Vector2(170, 44)
 layout_mode = 2
 text = "Upgrade"
+
+[node name="QuestSeparator" type="HSeparator" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
+layout_mode = 2
+
+[node name="QuestTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quest"
+
+[node name="QuestSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="QuestNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "First Salvage"
+
+[node name="QuestObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Extract wood x2 or wire x1."
+autowrap_mode = 3
+
+[node name="QuestInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="QuestProgressLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection/QuestInfoRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Progress: 0 / 1 route proven"
+vertical_alignment = 1
+
+[node name="QuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection/QuestInfoRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "Active"
+vertical_alignment = 1
+
+[node name="SubmitQuestButton" type="Button" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection/QuestInfoRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 44)
+layout_mode = 2
+text = "Submit"
 
 [node name="StatusLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
@@ -153,19 +213,19 @@ text = "Ready for the next run."
 autowrap_mode = 3
 
 [node name="ActionRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 2
 
 [node name="SellAllJunkButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(190, 48)
+custom_minimum_size = Vector2(190, 44)
 layout_mode = 2
 text = "Sell All Junk"
 
 [node name="StartRaidButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 48)
+custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "Start Raid"

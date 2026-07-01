@@ -4,7 +4,9 @@ class_name BaseScreen
 const BaseUIStyle := preload("res://scripts/ui/ui_style.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
+const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const WORKBENCH_LEVEL_1 := preload("res://data/base_upgrades/workbench_level_1.tres")
+const FIRST_SALVAGE_QUEST := preload("res://data/quests/first_salvage.tres")
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 
 @export var current_slot_index: int = 1
@@ -23,6 +25,12 @@ const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 @onready var workbench_cost_label: Label = %WorkbenchCostLabel
 @onready var workbench_status_label: Label = %WorkbenchStatusLabel
 @onready var upgrade_workbench_button: Button = %UpgradeWorkbenchButton
+@onready var quest_title_label: Label = %QuestTitleLabel
+@onready var quest_name_label: Label = %QuestNameLabel
+@onready var quest_objective_label: Label = %QuestObjectiveLabel
+@onready var quest_progress_label: Label = %QuestProgressLabel
+@onready var quest_status_label: Label = %QuestStatusLabel
+@onready var submit_quest_button: Button = %SubmitQuestButton
 @onready var status_label: Label = %StatusLabel
 @onready var sell_all_junk_button: Button = %SellAllJunkButton
 @onready var start_raid_button: Button = %StartRaidButton
@@ -34,6 +42,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_apply_styles()
 	upgrade_workbench_button.pressed.connect(_on_upgrade_workbench_pressed)
+	submit_quest_button.pressed.connect(_on_submit_quest_pressed)
 	sell_all_junk_button.pressed.connect(_on_sell_all_junk_pressed)
 	start_raid_button.pressed.connect(_on_start_raid_pressed)
 	resized.connect(_layout_panel)
@@ -59,6 +68,9 @@ func refresh() -> void:
 	workbench_name_label.text = WORKBENCH_LEVEL_1.display_name
 	workbench_description_label.text = WORKBENCH_LEVEL_1.description
 	workbench_cost_label.text = "%s: %s" % [_text(&"ui.base.upgrade_cost", "Cost"), BaseProgressionScript.describe_cost(WORKBENCH_LEVEL_1)]
+	quest_title_label.text = _text(&"ui.base.quest", "Quest")
+	quest_name_label.text = str(FIRST_SALVAGE_QUEST.get("display_name"))
+	quest_objective_label.text = _quest_objective_text(FIRST_SALVAGE_QUEST)
 	sell_all_junk_button.text = _text(&"ui.base.sell_all_junk", "Sell All Junk")
 	upgrade_workbench_button.text = _text(&"ui.base.upgrade", "Upgrade")
 	start_raid_button.text = _text(&"ui.base.start_raid", "Start Raid")
@@ -66,6 +78,7 @@ func refresh() -> void:
 	_rebuild_stash_rows(save_data.get("stash", []))
 	_update_sell_button(save_data.get("stash", []), has_save)
 	_update_workbench_state(save_data, has_save)
+	_update_quest_state(save_data, has_save)
 	_layout_panel.call_deferred()
 
 
@@ -87,8 +100,15 @@ func get_display_state() -> Dictionary:
 		"workbench_status": workbench_status_label.text,
 		"upgrade_workbench_disabled": upgrade_workbench_button.disabled,
 		"upgrade_workbench_text": upgrade_workbench_button.text,
+		"quest_name": quest_name_label.text,
+		"quest_objective": quest_objective_label.text,
+		"quest_progress": quest_progress_label.text,
+		"quest_status": quest_status_label.text,
+		"submit_quest_disabled": submit_quest_button.disabled,
+		"submit_quest_text": submit_quest_button.text,
 		"panel_rect": Rect2(main_panel.position, main_panel.size),
 		"upgrade_button_rect": Rect2(upgrade_workbench_button.global_position, upgrade_workbench_button.size),
+		"submit_quest_button_rect": Rect2(submit_quest_button.global_position, submit_quest_button.size),
 		"sell_button_rect": Rect2(sell_all_junk_button.global_position, sell_all_junk_button.size),
 		"start_button_rect": Rect2(start_raid_button.global_position, start_raid_button.size),
 	}
@@ -115,6 +135,16 @@ func _apply_styles() -> void:
 	BaseUIStyle.apply_font_size(workbench_status_label, BaseUIStyle.FONT_PLACEHOLDER)
 	BaseUIStyle.apply_font_color(workbench_status_label, BaseUIStyle.COLOR_TEXT_STATUS)
 	BaseUIStyle.apply_font_size(upgrade_workbench_button, BaseUIStyle.FONT_BODY)
+	BaseUIStyle.apply_font_size(quest_title_label, BaseUIStyle.FONT_BODY)
+	BaseUIStyle.apply_font_color(quest_title_label, BaseUIStyle.COLOR_TEXT_SUBTITLE)
+	BaseUIStyle.apply_font_size(quest_name_label, BaseUIStyle.FONT_BODY)
+	BaseUIStyle.apply_font_color(quest_name_label, BaseUIStyle.COLOR_TEXT_PRIMARY)
+	BaseUIStyle.apply_font_size(quest_objective_label, BaseUIStyle.FONT_PLACEHOLDER)
+	BaseUIStyle.apply_font_color(quest_objective_label, BaseUIStyle.COLOR_TEXT_HELP)
+	BaseUIStyle.apply_font_size(quest_progress_label, BaseUIStyle.FONT_PLACEHOLDER)
+	BaseUIStyle.apply_font_size(quest_status_label, BaseUIStyle.FONT_PLACEHOLDER)
+	BaseUIStyle.apply_font_color(quest_status_label, BaseUIStyle.COLOR_TEXT_STATUS)
+	BaseUIStyle.apply_font_size(submit_quest_button, BaseUIStyle.FONT_BODY)
 	BaseUIStyle.apply_font_size(status_label, BaseUIStyle.FONT_PLACEHOLDER)
 	BaseUIStyle.apply_font_color(status_label, BaseUIStyle.COLOR_TEXT_MUTED)
 	BaseUIStyle.apply_font_size(sell_all_junk_button, BaseUIStyle.FONT_BODY)
@@ -204,6 +234,7 @@ func sell_all_junk() -> Dictionary:
 	_rebuild_stash_rows(save_data.get("stash", []))
 	_update_sell_button(save_data.get("stash", []), true)
 	_update_workbench_state(save_data, true)
+	_update_quest_state(save_data, true)
 	status_label.text = "%s +$%d" % [_text(&"ui.base.sell_success", "Sold junk"), int(result.get("money_delta", 0))]
 	return result
 
@@ -231,7 +262,40 @@ func upgrade_workbench() -> Dictionary:
 	_rebuild_stash_rows(updated.get("stash", []))
 	_update_sell_button(updated.get("stash", []), true)
 	_update_workbench_state(updated, true)
+	_update_quest_state(updated, true)
 	status_label.text = _text(&"ui.base.upgrade_success", "Workbench upgraded. Next raid starts with +1 reserve ammo.")
+	return result
+
+
+func submit_first_salvage_quest() -> Dictionary:
+	var save_manager := _get_save_manager()
+	if save_manager == null or not save_manager.has_method("save_slot_data"):
+		return {}
+	var save_data := _get_current_save_data()
+	if save_data.is_empty():
+		return {}
+	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
+	var quest_id := str(FIRST_SALVAGE_QUEST.get("id"))
+	var quest_state: Dictionary = quests.get(quest_id, QuestStateScript.create(FIRST_SALVAGE_QUEST)) as Dictionary
+	var result: Dictionary = QuestStateScript.claim_reward(save_data, quest_state, FIRST_SALVAGE_QUEST)
+	if not bool(result.get("success", false)):
+		status_label.text = _text(&"ui.base.quest_not_ready", "Quest is not ready to submit.")
+		_update_quest_state(save_data, true)
+		return result
+
+	var updated: Dictionary = result.get("save_data", {}) as Dictionary
+	var updated_state: Dictionary = result.get("quest_state", {}) as Dictionary
+	var updated_quests: Dictionary = _quests_dict(updated.get("quests", {}))
+	updated_quests[quest_id] = updated_state
+	updated["quests"] = updated_quests
+	if not save_manager.save_slot_data(current_slot_index, updated):
+		status_label.text = _text(&"ui.base.quest_save_failed", "Could not save quest reward.")
+		return {}
+
+	_current_save_data = updated.duplicate(true)
+	money_label.text = "%s: $%d" % [_text(&"ui.base.money", "Money"), int(updated.get("money", 0))]
+	_update_quest_state(updated, true)
+	status_label.text = "%s +$%d" % [_text(&"ui.base.quest_claimed", "Quest completed"), int(FIRST_SALVAGE_QUEST.get("reward_money"))]
 	return result
 
 
@@ -278,10 +342,62 @@ func _update_workbench_state(save_data: Dictionary, has_save: bool) -> void:
 		upgrade_workbench_button.disabled = not bool(check.get("can_purchase", false))
 
 
+func _update_quest_state(save_data: Dictionary, has_save: bool) -> void:
+	var quest_state := _first_salvage_state(save_data)
+	quest_progress_label.text = _quest_progress_text(quest_state)
+	var state := str(quest_state.get("state", QuestStateScript.STATE_ACTIVE))
+	submit_quest_button.text = _text(&"ui.base.submit_quest", "Submit")
+	if not has_save:
+		quest_status_label.text = _text(&"ui.base.quest_no_save", "Create a save first")
+		submit_quest_button.disabled = true
+	elif state == QuestStateScript.STATE_COMPLETED:
+		quest_status_label.text = _text(&"ui.base.quest_completed", "Completed")
+		submit_quest_button.text = _text(&"ui.base.completed", "Completed")
+		submit_quest_button.disabled = true
+	elif state == QuestStateScript.STATE_READY:
+		quest_status_label.text = _text(&"ui.base.quest_ready", "Ready")
+		submit_quest_button.disabled = false
+	else:
+		quest_status_label.text = _text(&"ui.base.quest_active", "Active")
+		submit_quest_button.disabled = true
+
+
 func _stash_array_from_variant(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _first_salvage_state(save_data: Dictionary) -> Dictionary:
+	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
+	var quest_id := str(FIRST_SALVAGE_QUEST.get("id"))
+	return QuestStateScript.normalize(quests.get(quest_id, QuestStateScript.create(FIRST_SALVAGE_QUEST)) as Dictionary, FIRST_SALVAGE_QUEST)
+
+
+func _quests_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+func _quest_objective_text(quest_def: Resource) -> String:
+	var parts: Array[String] = []
+	var objectives: Array = quest_def.get("objectives") as Array
+	for objective in objectives:
+		parts.append("%s x%d" % [_item_name_from_path(str(objective.get("item_path", ""))), int(objective.get("quantity", 0))])
+	return "%s: %s" % [_text(&"ui.base.quest_objective", "Extract"), " or ".join(parts)]
+
+
+func _quest_progress_text(quest_state: Dictionary) -> String:
+	var progress: Dictionary = quest_state.get("progress", {}) as Dictionary
+	var parts: Array[String] = []
+	var objectives: Array = FIRST_SALVAGE_QUEST.get("objectives") as Array
+	for objective in objectives:
+		var item_path := str(objective.get("item_path", ""))
+		var current := int(progress.get(item_path, 0))
+		var required := int(objective.get("quantity", 0))
+		parts.append("%s %d/%d" % [_item_name_from_path(item_path), mini(current, required), required])
+	return "%s: %s" % [_text(&"ui.base.quest_progress", "Progress"), " or ".join(parts)]
 
 
 func _upgrade_ready_text(reason: String) -> String:
@@ -371,3 +487,7 @@ func _on_sell_all_junk_pressed() -> void:
 
 func _on_upgrade_workbench_pressed() -> void:
 	upgrade_workbench()
+
+
+func _on_submit_quest_pressed() -> void:
+	submit_first_salvage_quest()

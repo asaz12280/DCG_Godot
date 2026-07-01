@@ -670,7 +670,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十四：把第一個收集任務接到 Base
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家在基地看到並完成第一個任務。
 
