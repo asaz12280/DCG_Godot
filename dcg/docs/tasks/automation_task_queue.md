@@ -767,7 +767,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十八：早期平衡調整
 
-狀態：未開始
+狀態：完成
 
 目標：讓三場 raid 的節奏合理，先追求可玩而不是準確數值。
 

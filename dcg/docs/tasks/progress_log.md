@@ -1275,3 +1275,29 @@
 ### Next
 
 - Continue with 任務二十八：早期數值調整.
+
+## 2026-07-02 Early Balance Tuning Task
+
+### Completed
+
+- Tuned the early player baseline toward a more forgiving first loop: max health 110, max stamina 110, sprint stamina cost 22, and stamina recovery 24.
+- Tuned Scavenger combat pressure: max health 40 so the pistol kills in two clean hits, damage 10 so the enemy threatens over repeated mistakes, detect radius 9, and move speed 3.0.
+- Tuned `refuge_outskirts_common` loot pacing: wood now rolls 2-4, cash rolls 8-22, wire has higher weight, and common junk was added as vendor-trash economy filler.
+- Tuned Workbench Level 1 to cost $15, 3 wood, and 2 wire so the first successful salvage route can reasonably reach the first upgrade without perfect loot.
+- Tuned the gameplay extraction zone to 4.5 seconds, adding a small stay-in-zone pressure window while keeping the first map readable.
+- Added `tools/validate_early_balance.gd` as the early balance guardrail for player stats, enemy pressure, loot pacing, extraction timer, and upgrade cost.
+- Updated `validate_base_progression.gd` and `validate_three_raid_loop.gd` for the tuned Workbench cost and resulting money/material totals.
+
+### Verified
+
+- Early balance validation reports `[early_balance] OK player=forgiving enemy=readable loot=progression extraction=pressure upgrade=reachable`.
+- Related validations pass: loot tables, enemy def, enemy AI, base progression, extraction flow, raid HUD, three-raid loop, combat domain, and player damage.
+- Raid HUD validation still passes after the longer extraction timer.
+
+### Notes
+
+- This is an early automated balance pass, not final tuning. The goal is to keep a fresh three-raid loop reachable and readable before adding repeated content volume.
+
+### Next
+
+- Continue with 任務二十九：內容製作指南與資料擴充流程.

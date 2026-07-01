@@ -1,7 +1,7 @@
 class_name PlayerStatsProfile
 extends Resource
 
-@export var base_max_health: float = 100.0
+@export var base_max_health: float = 110.0
 @export var skill_max_health_bonus: float = 0.0
 @export var equipment_max_health_bonus: float = 0.0
 @export var other_max_health_bonus: float = 0.0
@@ -16,7 +16,7 @@ extends Resource
 @export var equipment_sprint_speed_bonus: float = 0.0
 @export var other_sprint_speed_bonus: float = 0.0
 
-@export var base_max_stamina: float = 100.0
+@export var base_max_stamina: float = 110.0
 @export var skill_max_stamina_bonus: float = 0.0
 @export var equipment_max_stamina_bonus: float = 0.0
 @export var other_max_stamina_bonus: float = 0.0
@@ -49,8 +49,7 @@ extends Resource
 @export var immobilized_weight_ratio: float = 1.35
 @export var roll_duration: float = 0.18
 @export var exhausted_speed: float = 3.0
-@export var sprint_stamina_cost: float = 26.0
+@export var sprint_stamina_cost: float = 22.0
 @export var roll_stamina_cost: float = 30.0
-@export var stamina_recovery_rate: float = 20.0
+@export var stamina_recovery_rate: float = 24.0
 @export var exhausted_recovery_threshold: float = 40.0
-

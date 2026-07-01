@@ -81,10 +81,10 @@ func _validate_raid_one_extract_and_base_progress() -> void:
 	_free_node(base_screen)
 
 	var after_base: Dictionary = _save_manager.get_slot_data(1)
-	if int(after_base.get("money", 0)) != 15:
-		_errors.append("Raid one base phase should leave money at 15 after quest reward and upgrade cost.")
-	if _stash_quantity(after_base, WOOD_PATH) != 0 or _stash_quantity(after_base, WIRE_PATH) != 0:
-		_errors.append("Workbench purchase should consume the raid one material stash.")
+	if int(after_base.get("money", 0)) != 20:
+		_errors.append("Raid one base phase should leave money at 20 after quest reward and tuned upgrade cost.")
+	if _stash_quantity(after_base, WOOD_PATH) != 1 or _stash_quantity(after_base, WIRE_PATH) != 0:
+		_errors.append("Workbench purchase should consume tuned material costs and keep excess wood.")
 	if not BaseProgressionScript.is_upgrade_purchased(after_base, WorkbenchUpgrade.id):
 		_errors.append("Workbench Level 1 should persist after raid one.")
 	var completed_salvage := _quest_state(after_base, "first_salvage")
@@ -155,8 +155,8 @@ func _validate_raid_three_kill_extract_and_save_reload() -> void:
 	var reloaded: Dictionary = _reload_slot_data()
 	if _stash_quantity(reloaded, WATCH_PATH) != 1:
 		_errors.append("Save reload should preserve raid three extracted stash.")
-	if int(reloaded.get("money", 0)) != 63:
-		_errors.append("Save reload should preserve money after three raids, expected 63.")
+	if int(reloaded.get("money", 0)) != 68:
+		_errors.append("Save reload should preserve money after three raids, expected 68.")
 	if not BaseProgressionScript.is_upgrade_purchased(reloaded, WorkbenchUpgrade.id):
 		_errors.append("Save reload should preserve Workbench Level 1.")
 	if str(_quest_state(reloaded, "first_salvage").get("state", "")) != QuestStateScript.STATE_COMPLETED:

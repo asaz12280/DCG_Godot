@@ -84,10 +84,10 @@ func _validate_purchase_upgrade_and_save() -> void:
 	if not bool(result.get("success", false)):
 		_errors.append("BaseScreen should purchase Workbench Level 1 when costs are available.")
 	var loaded: Dictionary = save_manager.get_slot_data(1)
-	if int(loaded.get("money", 0)) != 5:
+	if int(loaded.get("money", 0)) != 10:
 		_errors.append("Workbench upgrade should deduct money cost from save data.")
-	if (loaded.get("stash", []) as Array).size() != 0:
-		_errors.append("Workbench upgrade should consume required material stacks.")
+	if _stash_quantity(loaded, WOOD_PATH) != 1 or _stash_quantity(loaded, WIRE_PATH) != 0:
+		_errors.append("Workbench upgrade should consume required material stacks and leave only excess materials.")
 	if not BaseProgressionScript.is_upgrade_purchased(loaded, WorkbenchUpgrade.id):
 		_errors.append("Workbench upgrade purchase should persist in base_upgrades.")
 	if BaseProgressionScript.get_starter_ammo_bonus(loaded) != 1:
@@ -144,6 +144,17 @@ func _cleanup_validation_root(root_path: String) -> void:
 		DirAccess.remove_absolute("%s/slot_2.json" % absolute)
 		DirAccess.remove_absolute("%s/slot_3.json" % absolute)
 		DirAccess.remove_absolute(absolute)
+
+
+func _stash_quantity(save_data: Dictionary, item_path: String) -> int:
+	var total := 0
+	var stash: Array = save_data.get("stash", []) as Array
+	for entry in stash:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		if str((entry as Dictionary).get("item_path", "")) == item_path:
+			total += int((entry as Dictionary).get("quantity", 0))
+	return total
 
 
 func _free_created_save_manager() -> void:

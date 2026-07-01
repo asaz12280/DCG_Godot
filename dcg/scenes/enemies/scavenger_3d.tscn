@@ -29,7 +29,7 @@ roughness = 0.86
 [node name="Scavenger3D" type="CharacterBody3D" groups=["enemy", "damageable"]]
 metadata/enemy_def = ExtResource("1_enemy_def")
 script = ExtResource("2_damageable")
-max_health = 45.0
+max_health = 40.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.62, 0)
@@ -46,7 +46,7 @@ mesh = SubResource("SphereMesh_head")
 surface_material_override/0 = SubResource("StandardMaterial3D_head")
 
 [node name="DetectRadiusMarker" type="Node3D" parent="."]
-metadata/detect_radius = 8.5
+metadata/detect_radius = 9.0
 
 [node name="EnemyController3D" type="Node" parent="."]
 script = ExtResource("3_enemy_controller")
