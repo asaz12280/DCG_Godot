@@ -747,3 +747,26 @@
 ### Next
 
 - Continue with 任務十：完成撤離成功物資轉移.
+
+## 2026-07-02 Extraction Success Transfer Task
+
+### Completed
+
+- Added `scripts/raid/raid_result_applier.gd` as the non-UI owner of applying completed raid results to persistent save data.
+- Updated `ExtractionZone3D` to snapshot the player's backpack stacks into `extracted_items` before completing extraction.
+- Updated the gameplay scene with a `RaidResultApplier` node wired to `RaidSession.raid_completed`.
+- Added `InventoryModel.clear()` so raid inventory can be cleared after a successful transfer.
+- Updated `tools/validate_extraction_flow.gd` to verify backpack pickup data becomes raid result data, then persistent stash save data, and the raid inventory is cleared.
+
+### Verified
+
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved inventory=cleared scene=wired`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Raid session validation reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=schema_serializable scene=wired`.
+- Raid result panel validation still reports `[raid_result_panel] OK node_first=true fake_data=shown continue=base layout=fits`.
+- Gameplay architecture validation still reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Stash model, Base screen, Base flow, and gameplay scene headless startup all pass.
+
+### Next
+
+- Continue with 任務十一：完成死亡與遺失規則.

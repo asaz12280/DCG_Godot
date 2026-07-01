@@ -84,6 +84,7 @@ func _complete_extraction() -> void:
 	var context := {
 		"source": "extraction_zone",
 		"zone_path": str(get_path()) if is_inside_tree() else name,
+		"extracted_items": _collect_player_inventory(_tracked_player),
 	}
 	if not bool(session.call("register_extraction", context)):
 		return
@@ -106,6 +107,27 @@ func _find_raid_session() -> Node:
 
 func _is_player_body(body: Node3D) -> bool:
 	return body.name == "Player3D" or body.is_in_group(player_group) or body.has_method("get_inventory_model")
+
+
+func _collect_player_inventory(player: Node) -> Array[Dictionary]:
+	if player == null or not player.has_method("get_inventory_model"):
+		return []
+	var inventory: Variant = player.get_inventory_model()
+	if inventory == null or not inventory.has_method("get_display_items"):
+		return []
+	var items: Array[Dictionary] = []
+	for stack in inventory.get_display_items():
+		if typeof(stack) != TYPE_DICTIONARY:
+			continue
+		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+		var quantity := int(stack.get("quantity", 1))
+		if item_path == "" or quantity <= 0:
+			continue
+		items.append({
+			"item_path": item_path,
+			"quantity": quantity,
+		})
+	return items
 
 
 func _update_prompt() -> void:

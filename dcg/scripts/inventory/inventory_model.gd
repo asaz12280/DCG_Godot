@@ -7,6 +7,13 @@ var slot_limit: int = 50
 var stacks: Array[Dictionary] = []
 
 
+func clear() -> void:
+	if stacks.is_empty():
+		return
+	stacks.clear()
+	changed.emit()
+
+
 func setup(max_slots: int) -> void:
 	slot_limit = maxi(max_slots, 0)
 	if stacks.size() > slot_limit:

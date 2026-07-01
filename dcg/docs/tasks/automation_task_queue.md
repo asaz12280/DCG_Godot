@@ -332,7 +332,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十：完成撤離成功物資轉移
 
-狀態：未開始
+狀態：完成
 
 目標：撤離成功後把玩家 raid 物品存入永久 stash。
 
