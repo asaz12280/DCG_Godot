@@ -4,6 +4,7 @@ extends Control
 signal continue_to_base_requested(result: Dictionary)
 
 const ResultUIStyle := preload("res://scripts/ui/ui_style.gd")
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
 const BASE_SCENE := "res://scenes/base/base_screen.tscn"
 
@@ -16,6 +17,9 @@ const BASE_SCENE := "res://scenes/base/base_screen.tscn"
 @onready var outcome_label: Label = %OutcomeLabel
 @onready var duration_label: Label = %DurationLabel
 @onready var money_label: Label = %MoneyLabel
+@onready var extracted_title_label: Label = %ExtractedTitleLabel
+@onready var lost_title_label: Label = %LostTitleLabel
+@onready var safe_pocket_title_label: Label = %SafePocketTitleLabel
 @onready var extracted_rows: VBoxContainer = %ExtractedRows
 @onready var lost_rows: VBoxContainer = %LostRows
 @onready var safe_pocket_rows: VBoxContainer = %SafePocketRows
@@ -107,6 +111,9 @@ func _bind_result() -> void:
 	outcome_label.text = "%s: %s" % [_text(&"ui.raid_result.outcome", "Outcome"), _outcome_text(str(current_result.get("outcome", "")))]
 	duration_label.text = "%s: %.1fs" % [_text(&"ui.raid_result.duration", "Duration"), float(current_result.get("duration", 0.0))]
 	money_label.text = "%s: %+d" % [_text(&"ui.raid_result.money_delta", "Money"), int(current_result.get("money_delta", 0))]
+	extracted_title_label.text = _text(&"ui.raid_result.extracted_items", "Extracted")
+	lost_title_label.text = _text(&"ui.raid_result.lost_items", "Lost")
+	safe_pocket_title_label.text = _text(&"ui.raid_result.safe_pocket_items", "Safe Pocket")
 	continue_button.text = _text(&"ui.raid_result.continue_to_base", "Continue to Base")
 	status_label.text = _text(&"ui.raid_result.status", "Inventory transfer is handled by the raid result flow.")
 	_rebuild_rows(extracted_rows, current_result.get("extracted_items", []), _text(&"ui.raid_result.empty_extracted", "No extracted items."))
@@ -153,17 +160,7 @@ func _make_item_row(item_name: String, quantity_text: String) -> HBoxContainer:
 
 
 func _item_name_from_path(item_path: String) -> String:
-	if item_path == "" or not ResourceLoader.exists(item_path):
-		return _text(&"item.unknown.name", "Unknown item")
-	var item_def := load(item_path) as ItemDef
-	if item_def == null:
-		return _text(&"item.unknown.name", "Unknown item")
-	var name_key := str(item_def.name_key)
-	if name_key != "":
-		var translated := tr(name_key)
-		if translated != name_key:
-			return translated
-	return item_def.display_name if item_def.display_name != "" else str(item_def.id)
+	return UITextScript.item_name(self, item_path, "Unknown item")
 
 
 func _outcome_text(outcome: String) -> String:
@@ -177,9 +174,7 @@ func _outcome_text(outcome: String) -> String:
 
 
 func _text(key: StringName, fallback: String) -> String:
-	var key_text := str(key)
-	var translated := tr(key_text)
-	return fallback if translated == key_text else translated
+	return UITextScript.text(self, key, fallback)
 
 
 func _on_continue_pressed() -> void:

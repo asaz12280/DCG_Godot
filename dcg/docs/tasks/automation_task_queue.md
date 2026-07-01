@@ -742,7 +742,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十七：早期 UI 與文字整理
 
-狀態：未開始
+狀態：完成
 
 目標：讓 Dev Slice 0.1 的資訊足夠清楚，不要求最終美術。
 

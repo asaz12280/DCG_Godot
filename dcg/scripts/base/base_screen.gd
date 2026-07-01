@@ -2,6 +2,7 @@ extends Control
 class_name BaseScreen
 
 const BaseUIStyle := preload("res://scripts/ui/ui_style.gd")
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
@@ -486,17 +487,7 @@ func _empty_save_data() -> Dictionary:
 
 
 func _item_name_from_path(item_path: String) -> String:
-	if item_path == "" or not ResourceLoader.exists(item_path):
-		return _text(&"item.unknown.name", "Unknown item")
-	var item_def := load(item_path) as ItemDef
-	if item_def == null:
-		return _text(&"item.unknown.name", "Unknown item")
-	var name_key := str(item_def.name_key)
-	if name_key != "":
-		var translated := tr(name_key)
-		if translated != name_key:
-			return translated
-	return item_def.display_name if item_def.display_name != "" else str(item_def.id)
+	return UITextScript.item_name(self, item_path, "Unknown item")
 
 
 func _enemy_name(enemy_id: String) -> String:
@@ -518,9 +509,7 @@ func _difficulty_name(difficulty_id: String) -> String:
 
 
 func _text(key: StringName, fallback: String) -> String:
-	var key_text := str(key)
-	var translated := tr(key_text)
-	return fallback if translated == key_text else translated
+	return UITextScript.text(self, key, fallback)
 
 
 func _on_start_raid_pressed() -> void:

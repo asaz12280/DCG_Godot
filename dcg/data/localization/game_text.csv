@@ -121,3 +121,75 @@ ui.difficulty.normal,普通,Normal,普通,普通
 ui.difficulty.normal_desc,標準生命值。,Standard health value.,標準の体力値です。,标准生命值。
 ui.difficulty.hard,困難,Hard,難しい,困难
 ui.difficulty.hard_desc,玩家生命值降低。,Player health is reduced.,プレイヤーの体力が低下します。,玩家生命值降低。
+ui.base.title,Base,Base,Base,Base
+ui.base.subtitle,Stash, prepare, and start the next raid.,Stash, prepare, and start the next raid.,Stash, prepare, and start the next raid.,Stash, prepare, and start the next raid.
+ui.base.slot_format,Slot %d,Slot %d,Slot %d,Slot %d
+ui.base.difficulty,Difficulty,Difficulty,Difficulty,Difficulty
+ui.base.money,Money,Money,Money,Money
+ui.base.stash,Stash,Stash,Stash,Stash
+ui.base.stash_empty,Stash is empty.,Stash is empty.,Stash is empty.,Stash is empty.
+ui.base.workbench,Workbench,Workbench,Workbench,Workbench
+ui.base.upgrade_cost,Cost,Cost,Cost,Cost
+ui.base.quest,Quest,Quest,Quest,Quest
+ui.base.sell_all_junk,Sell All Junk,Sell All Junk,Sell All Junk,Sell All Junk
+ui.base.upgrade,Upgrade,Upgrade,Upgrade,Upgrade
+ui.base.upgraded,Upgraded,Upgraded,Upgraded,Upgraded
+ui.base.start_raid,Start Raid,Start Raid,Start Raid,Start Raid
+ui.base.ready,Ready for the next run.,Ready for the next run.,Ready for the next run.,Ready for the next run.
+ui.base.no_save,No save data yet. Start a raid to create progress.,No save data yet. Start a raid to create progress.,No save data yet. Start a raid to create progress.,No save data yet. Start a raid to create progress.
+ui.base.sell_none,No junk to sell.,No junk to sell.,No junk to sell.,No junk to sell.
+ui.base.sell_failed,Could not save sale result.,Could not save sale result.,Could not save sale result.,Could not save sale result.
+ui.base.sell_success,Sold junk,Sold junk,Sold junk,Sold junk
+ui.base.upgrade_save_failed,Could not save upgrade result.,Could not save upgrade result.,Could not save upgrade result.,Could not save upgrade result.
+ui.base.upgrade_success,Workbench upgraded. Next raid starts with +1 reserve ammo.,Workbench upgraded. Next raid starts with +1 reserve ammo.,Workbench upgraded. Next raid starts with +1 reserve ammo.,Workbench upgraded. Next raid starts with +1 reserve ammo.
+ui.base.quest_not_ready,Quest is not ready to submit.,Quest is not ready to submit.,Quest is not ready to submit.,Quest is not ready to submit.
+ui.base.quest_save_failed,Could not save quest reward.,Could not save quest reward.,Could not save quest reward.,Could not save quest reward.
+ui.base.quest_claimed,Quest completed,Quest completed,Quest completed,Quest completed
+ui.base.workbench_upgraded,Upgraded: starter ammo +1,Upgraded: starter ammo +1,Upgraded: starter ammo +1,Upgraded: starter ammo +1
+ui.base.workbench_no_save,Create a save to upgrade.,Create a save to upgrade.,Create a save to upgrade.,Create a save to upgrade.
+ui.base.workbench_ready,Ready to upgrade,Ready to upgrade,Ready to upgrade,Ready to upgrade
+ui.base.workbench_need_money,Need more money,Need more money,Need more money,Need more money
+ui.base.workbench_need_items,Need more materials,Need more materials,Need more materials,Need more materials
+ui.base.workbench_unavailable,Upgrade unavailable,Upgrade unavailable,Upgrade unavailable,Upgrade unavailable
+ui.base.upgrade_missing_money,Not enough money for upgrade.,Not enough money for upgrade.,Not enough money for upgrade.,Not enough money for upgrade.
+ui.base.upgrade_missing_items,Not enough materials for upgrade.,Not enough materials for upgrade.,Not enough materials for upgrade.,Not enough materials for upgrade.
+ui.base.upgrade_already_owned,Workbench is already upgraded.,Workbench is already upgraded.,Workbench is already upgraded.,Workbench is already upgraded.
+ui.base.upgrade_failed,Cannot upgrade workbench.,Cannot upgrade workbench.,Cannot upgrade workbench.,Cannot upgrade workbench.
+ui.base.quest_no_save,Create a save first,Create a save first,Create a save first,Create a save first
+ui.base.quest_completed,Completed,Completed,Completed,Completed
+ui.base.completed,Completed,Completed,Completed,Completed
+ui.base.quest_ready,Ready,Ready,Ready,Ready
+ui.base.quest_active,Active,Active,Active,Active
+ui.base.submit_quest,Submit,Submit,Submit,Submit
+ui.base.quest_objective,Extract,Extract,Extract,Extract
+ui.base.quest_kill_objective,Eliminate,Eliminate,Eliminate,Eliminate
+ui.base.quest_progress,Progress,Progress,Progress,Progress
+ui.raid_hud.objective,Find supplies and extract,Find supplies and extract,Find supplies and extract,Find supplies and extract
+ui.raid_hud.status_dead,Raid failed,Raid failed,Raid failed,Raid failed
+ui.raid_hud.status_extracted,Extracted,Extracted,Extracted,Extracted
+ui.raid_hud.status_active,Raid active,Raid active,Raid active,Raid active
+ui.raid_hud.status_ready,Ready,Ready,Ready,Ready
+ui.raid_hud.extraction_hint,Reach extraction zone to leave,Reach extraction zone to leave,Reach extraction zone to leave,Reach extraction zone to leave
+ui.raid_hud.ammo_missing,Ammo: -- / --,Ammo: -- / --,Ammo: -- / --,Ammo: -- / --
+ui.raid_hud.ammo,Ammo,Ammo,Ammo,Ammo
+ui.raid_hud.extracting,Extracting...,Extracting...,Extracting...,Extracting...
+ui.raid_hud.extraction_remaining,Extraction,Extraction,Extraction,Extraction
+ui.raid_hud.extracted,Extracted,Extracted,Extracted,Extracted
+ui.raid_result.title,Raid Result,Raid Result,Raid Result,Raid Result
+ui.raid_result.subtitle,Review what happened before returning to base.,Review what happened before returning to base.,Review what happened before returning to base.,Review what happened before returning to base.
+ui.raid_result.outcome,Outcome,Outcome,Outcome,Outcome
+ui.raid_result.duration,Duration,Duration,Duration,Duration
+ui.raid_result.money_delta,Money,Money,Money,Money
+ui.raid_result.continue_to_base,Continue to Base,Continue to Base,Continue to Base,Continue to Base
+ui.raid_result.status,Inventory transfer is handled by the raid result flow.,Inventory transfer is handled by the raid result flow.,Inventory transfer is handled by the raid result flow.,Inventory transfer is handled by the raid result flow.
+ui.raid_result.empty_extracted,No extracted items.,No extracted items.,No extracted items.,No extracted items.
+ui.raid_result.empty_lost,No lost items.,No lost items.,No lost items.,No lost items.
+ui.raid_result.empty_safe_pocket,No safe pocket items.,No safe pocket items.,No safe pocket items.,No safe pocket items.
+ui.raid_result.extracted,Extracted,Extracted,Extracted,Extracted
+ui.raid_result.dead,Dead,Dead,Dead,Dead
+ui.raid_result.unknown,Unknown,Unknown,Unknown,Unknown
+ui.raid_result.extracted_items,Extracted,Extracted,Extracted,Extracted
+ui.raid_result.lost_items,Lost,Lost,Lost,Lost
+ui.raid_result.safe_pocket_items,Safe Pocket,Safe Pocket,Safe Pocket,Safe Pocket
+enemy.scavenger.name,Scavenger,Scavenger,Scavenger,Scavenger
+enemy.unknown.name,Unknown enemy,Unknown enemy,Unknown enemy,Unknown enemy

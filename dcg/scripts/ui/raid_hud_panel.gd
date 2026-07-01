@@ -2,6 +2,7 @@ class_name RaidHudPanel
 extends Control
 
 const RaidHUDStyle := preload("res://scripts/ui/ui_style.gd")
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
 
 @export var raid_session_path: NodePath = NodePath("../../RaidSession")
 @export var extraction_zone_path: NodePath = NodePath("../../SceneProps/ExtractionZone")
@@ -194,6 +195,4 @@ func _on_extraction_completed(_body: Node3D) -> void:
 
 
 func _text(key: StringName, fallback: String) -> String:
-	var key_text := str(key)
-	var translated := tr(key_text)
-	return fallback if translated == key_text else translated
+	return UITextScript.text(self, key, fallback)

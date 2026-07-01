@@ -1234,3 +1234,44 @@
 ### Next
 
 - Continue with 任務二十七：UI polish/final layout quality pass.
+## 2026-07-02 UI Text Quality Task
+
+### Completed
+
+- Added `scripts/ui/ui_text.gd` as the shared safe text helper for player-facing UI fallback text.
+- Updated BaseScreen, RaidHudPanel, and RaidResultPanel to use `UIText.text()` so missing or corrupt localization entries fall back to clean readable text.
+- Updated BaseScreen and RaidResultPanel item-name display to use `UIText.item_name()`, protecting stash/result rows from corrupt item localization text.
+- Added clean ASCII fallback localization rows for Base, Raid HUD, Raid Result, and Scavenger/unknown enemy UI keys.
+- Bound Raid Result list section titles through localization keys instead of leaving them as static scene text.
+- Added `tools/validate_ui_text_quality.gd` to verify required keys, mojibake-free rendered UI text, and 1280x720/1920x1080 fit for Base, Raid HUD, and Raid Result.
+
+### Verified
+
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Base screen, Raid HUD, Raid Result Panel, Quest flow, and UI foundation validations pass.
+- Standard validation set passes: item catalog, inventory drag rules, gameplay architecture, combat domain, difficulty system, save slots, save slot panel, audio settings, pause menu, main project startup, and gameplay scene startup.
+
+## 2026-07-02 Project Health Check After Task Twenty-Seven
+
+### Health Check
+
+- Responsibility boundaries: UI text fallback is centralized in `UIText`; Base/HUD/Result scripts consume the helper and do not own localization parsing.
+- UI ownership: Base, Raid HUD, Result, and Quest UI still display model/service state and emit user intent; persistent state remains in SaveGameManager and domain helpers.
+- Godot node-first UI: Base, Raid HUD, and Raid Result remain `.tscn` Control/container based; this task did not move stable panels into script-created UI.
+- UI layout quality: Base, Raid HUD, Raid Result, and Quest layout checks pass at 1280x720 and 1920x1080 with action buttons inside their panels.
+- Data-driven content: items, quests, enemies, upgrades, and loot tables remain resource/data driven.
+- Save safety: save slots, quest flow, extraction flow, base progression, and three-raid persistence validations pass.
+- Scene loadability: main project and gameplay scene pass Godot 4.7 headless startup.
+- Validation health: added `validate_ui_text_quality.gd`; existing standard, quest, extraction, enemy, loot, base, and three-raid validations pass.
+
+### Technical Debt
+
+- `scripts/base/base_screen.gd` is now about 529 lines and should be split in a future maintenance slice into focused helpers for quest display, workbench display, stash rows, and Base actions. This was not split inside the UI text task to avoid a broad refactor while all current validations pass.
+
+### Verified
+
+- `validate_ui_text_quality.gd`, `validate_base_screen.gd`, `validate_raid_hud.gd`, `validate_raid_result_panel.gd`, `validate_quest_flow.gd`, `validate_ui_foundation.gd`, `validate_three_raid_loop.gd`, `validate_extraction_flow.gd`, `validate_base_progression.gd`, `validate_enemy_ai.gd`, `validate_enemy_loot_drop.gd`, `validate_loot_tables.gd`, `validate_quest_model.gd`, and the Standard Validation Set pass.
+
+### Next
+
+- Continue with 任務二十八：早期數值調整.
