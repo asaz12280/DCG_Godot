@@ -304,7 +304,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務九：建立 Raid Result Panel
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家在撤離或死亡後看到明確結算。
 

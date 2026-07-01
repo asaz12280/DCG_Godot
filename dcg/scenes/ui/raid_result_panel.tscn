@@ -1,0 +1,170 @@
+[gd_scene load_steps=2 format=3 uid="uid://raid_result_panel_001"]
+
+[ext_resource type="Script" path="res://scripts/ui/raid_result_panel.gd" id="1_raid_result_panel"]
+
+[node name="RaidResultPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_raid_result_panel")
+
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.04, 0.72)
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 440.0
+offset_top = 220.0
+offset_right = 1480.0
+offset_bottom = 860.0
+
+[node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 28
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Raid Result"
+
+[node name="SubtitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "Review what happened before returning to base."
+autowrap_mode = 3
+
+[node name="SummaryRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="OutcomeLabel" type="Label" parent="MainPanel/PanelMargin/Content/SummaryRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 0)
+layout_mode = 2
+text = "Outcome: Extracted"
+vertical_alignment = 1
+
+[node name="DurationLabel" type="Label" parent="MainPanel/PanelMargin/Content/SummaryRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 0)
+layout_mode = 2
+text = "Duration: 0.0s"
+vertical_alignment = 1
+
+[node name="MoneyLabel" type="Label" parent="MainPanel/PanelMargin/Content/SummaryRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Money: +0"
+vertical_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+
+[node name="ListsRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="ExtractedSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="ExtractedTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/ListsRow/ExtractedSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Extracted"
+
+[node name="ExtractedScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content/ListsRow/ExtractedSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ExtractedRows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow/ExtractedSection/ExtractedScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LostSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="LostTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/ListsRow/LostSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Lost"
+
+[node name="LostScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content/ListsRow/LostSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="LostRows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow/LostSection/LostScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="SafePocketSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SafePocketTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/ListsRow/SafePocketSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Safe Pocket"
+
+[node name="SafePocketScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content/ListsRow/SafePocketSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="SafePocketRows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/ListsRow/SafePocketSection/SafePocketScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="StatusLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "Inventory transfer is handled by the raid result flow."
+autowrap_mode = 3
+
+[node name="ActionRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+alignment = 2
+
+[node name="ContinueButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "Continue to Base"

@@ -33,7 +33,7 @@ func _ready() -> void:
 	_apply_responsive_layout()
 	if not get_viewport().size_changed.is_connected(_apply_responsive_layout):
 		get_viewport().size_changed.connect(_apply_responsive_layout)
-	_move_to_front_deferred.call_deferred()
+	_move_to_front.call_deferred()
 	queue_redraw()
 
 
@@ -77,11 +77,6 @@ func select_item(id: StringName) -> void:
 
 func get_selected_item_id() -> StringName:
 	return StringName(MENU_ITEMS[selected_index].get("id", &""))
-
-
-func _move_to_front_deferred() -> void:
-	await get_tree().process_frame
-	_move_to_front()
 
 
 func _move_to_front() -> void:
