@@ -3,6 +3,7 @@ extends SceneTree
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
+const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
 const WIRE_PATH := "res://data/items/electronics/wire.tres"
@@ -13,10 +14,11 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	_validate_quest_def_loads()
 	_validate_extract_any_progress()
+	_validate_kill_progress()
 	_validate_claim_reward()
 	_validate_save_round_trip()
 	if _errors.is_empty():
-		print("[quest_model] OK def=loads progress=extract_any reward=claim save=round_trip")
+		print("[quest_model] OK def=loads progress=extract_any kill=ready reward=claim save=round_trip")
 		quit(0)
 	else:
 		for error in _errors:
@@ -34,6 +36,13 @@ func _validate_quest_def_loads() -> void:
 		_errors.append("First Salvage should require two wood for the wood objective.")
 	if int(FirstSalvageQuest.call("get_required_quantity", WIRE_PATH)) != 1:
 		_errors.append("First Salvage should require one wire for the wire objective.")
+	if FirstScavengerHuntQuest == null or not FirstScavengerHuntQuest.has_method("is_valid") or not FirstScavengerHuntQuest.is_valid():
+		_errors.append("First Scavenger Hunt QuestDef should load and validate.")
+		return
+	if str(FirstScavengerHuntQuest.get("objective_type")) != "kill":
+		_errors.append("First Scavenger Hunt should use kill objective.")
+	if int(FirstScavengerHuntQuest.call("get_required_kill_quantity", "scavenger")) != 1:
+		_errors.append("First Scavenger Hunt should require one scavenger kill.")
 
 
 func _validate_extract_any_progress() -> void:
@@ -53,6 +62,16 @@ func _validate_extract_any_progress() -> void:
 	])
 	if str(partial_state.get("state", "")) == QuestStateScript.STATE_READY:
 		_errors.append("Extracting only one wood should not ready a two wood objective.")
+
+
+func _validate_kill_progress() -> void:
+	var state: Dictionary = QuestStateScript.create(FirstScavengerHuntQuest)
+	state = QuestStateScript.update_from_enemy_killed(state, FirstScavengerHuntQuest, "scavenger", 1)
+	if str(state.get("state", "")) != QuestStateScript.STATE_READY:
+		_errors.append("Killing one scavenger should ready First Scavenger Hunt.")
+	var progress: Dictionary = state.get("progress", {}) as Dictionary
+	if int(progress.get(QuestStateScript.kill_progress_key("scavenger"), 0)) != 1:
+		_errors.append("Kill quest progress should use a stable kill:scavenger save key.")
 
 
 func _validate_claim_reward() -> void:

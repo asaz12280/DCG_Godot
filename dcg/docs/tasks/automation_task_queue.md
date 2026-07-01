@@ -695,7 +695,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十五：建立第一個擊殺任務
 
-狀態：未開始
+狀態：完成
 
 目標：讓戰鬥也能推動任務進度。
 

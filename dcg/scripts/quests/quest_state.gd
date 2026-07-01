@@ -54,6 +54,38 @@ static func update_from_extracted_items(raw_state: Dictionary, quest_def: Resour
 	return state
 
 
+static func update_from_enemy_killed(raw_state: Dictionary, quest_def: Resource, enemy_id: String, count: int = 1) -> Dictionary:
+	var state := normalize(raw_state, quest_def)
+	if quest_def == null or not bool(quest_def.call("is_valid")):
+		return state
+	if str(quest_def.get("objective_type")) != "kill":
+		return state
+	if str(state.get("state", "")) == STATE_COMPLETED:
+		return state
+	if enemy_id == "" or count <= 0:
+		return state
+
+	var progress: Dictionary = state.get("progress", {}) as Dictionary
+	for objective in _objectives(quest_def):
+		if str(objective.get("enemy_id", "")) != enemy_id:
+			continue
+		var required := int(objective.get("quantity", 0))
+		var progress_key := kill_progress_key(enemy_id)
+		var current := int(progress.get(progress_key, 0)) + count
+		progress[progress_key] = mini(current, required)
+
+	state["progress"] = progress
+	if _is_ready(progress, quest_def):
+		state["state"] = STATE_READY
+	else:
+		state["state"] = STATE_ACTIVE
+	return state
+
+
+static func kill_progress_key(enemy_id: String) -> String:
+	return "kill:%s" % enemy_id
+
+
 static func can_claim(raw_state: Dictionary, quest_def: Resource) -> bool:
 	var state := normalize(raw_state, quest_def)
 	return str(state.get("state", "")) == STATE_READY and not bool(state.get("claimed", false))
@@ -101,8 +133,9 @@ static func _is_ready(progress: Dictionary, quest_def: Resource) -> bool:
 		return false
 	for objective in objectives:
 		var item_path := str(objective.get("item_path", ""))
+		var progress_key := kill_progress_key(str(objective.get("enemy_id", ""))) if objective_type == "kill" else item_path
 		var required := int(objective.get("quantity", 0))
-		if int(progress.get(item_path, 0)) < required:
+		if int(progress.get(progress_key, 0)) < required:
 			return false
 	return true
 

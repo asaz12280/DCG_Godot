@@ -1,11 +1,14 @@
 extends SceneTree
 
 const BaseScreenScene := preload("res://scenes/base/base_screen.tscn")
+const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
+const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
 const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
+const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
 const WIRE_PATH := "res://data/items/electronics/wire.tres"
@@ -16,9 +19,10 @@ var _created_save_manager: Node = null
 
 func _initialize() -> void:
 	await _validate_extraction_updates_quest_and_base_submit()
+	await _validate_scavenger_kill_updates_quest_and_base_submit()
 	await _validate_quest_ui_layout()
 	if _errors.is_empty():
-		print("[quest_flow] OK extraction=updates_base quest=claimable reward=saved layout=fits")
+		print("[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits")
 		quit(0)
 	else:
 		for error in _errors:
@@ -80,13 +84,83 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 	if not bool(claimed_state.get("claimed", false)):
 		_errors.append("Submitting First Salvage should save claimed=true.")
 	var completed_state: Dictionary = base_screen.get_display_state()
+	if not str(completed_state.get("quest_name", "")).contains("Scavenger"):
+		_errors.append("Base should advance to the next active quest after First Salvage is completed.")
 	if not bool(completed_state.get("submit_quest_disabled", false)):
-		_errors.append("Base quest submit button should disable after completion.")
-	if not str(completed_state.get("quest_status", "")).contains("Completed"):
-		_errors.append("Base quest status should show Completed after claim.")
+		_errors.append("Base quest submit button should disable for the next active quest.")
 
 	_free_node(base_screen)
 	_free_node(test_root)
+	_cleanup_validation_root(save_manager.save_root_path)
+	_free_created_save_manager()
+
+
+func _validate_scavenger_kill_updates_quest_and_base_submit() -> void:
+	var save_manager := _make_save_manager()
+	_cleanup_validation_root(save_manager.save_root_path)
+	save_manager.set_current_slot_index(1)
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 0,
+		"stash": [],
+		"base_upgrades": {},
+		"quests": {},
+	})
+
+	var enemy := ScavengerScene.instantiate()
+	root.add_child(enemy)
+	await process_frame
+	var tracker := enemy.get_node_or_null("QuestKillTracker3D")
+	if tracker == null:
+		_errors.append("Scavenger should include QuestKillTracker3D.")
+	else:
+		enemy.apply_damage(DamageEventScript.new(999.0, null, null, [&"validation"]))
+
+	var after_kill: Dictionary = save_manager.get_slot_data(1)
+	var quests: Dictionary = after_kill.get("quests", {}) as Dictionary
+	if not quests.has("first_scavenger_hunt"):
+		_errors.append("Killing a Scavenger should create first_scavenger_hunt quest state in save data.")
+	else:
+		var quest_state: Dictionary = quests.get("first_scavenger_hunt", {}) as Dictionary
+		var progress: Dictionary = quest_state.get("progress", {}) as Dictionary
+		var progress_key := QuestStateScript.kill_progress_key("scavenger")
+		if int(progress.get(progress_key, 0)) != 1:
+			_errors.append("Scavenger kill should save kill:scavenger progress immediately.")
+		if str(quest_state.get("state", "")) != QuestStateScript.STATE_READY:
+			_errors.append("Killing one Scavenger should ready First Scavenger Hunt.")
+
+	if tracker != null and tracker.has_method("record_kill"):
+		tracker.record_kill("scavenger")
+	var after_repeat: Dictionary = save_manager.get_slot_data(1)
+	var repeat_quests: Dictionary = after_repeat.get("quests", {}) as Dictionary
+	var repeat_state: Dictionary = repeat_quests.get("first_scavenger_hunt", {}) as Dictionary
+	var repeat_progress: Dictionary = repeat_state.get("progress", {}) as Dictionary
+	if int(repeat_progress.get(QuestStateScript.kill_progress_key("scavenger"), 0)) > 1:
+		_errors.append("QuestKillTracker3D should not double count the same enemy death.")
+
+	var base_screen: BaseScreen = BaseScreenScene.instantiate()
+	root.add_child(base_screen)
+	await process_frame
+	base_screen.refresh()
+	var ready_state: Dictionary = base_screen.get_display_state()
+	if not str(ready_state.get("quest_name", "")).contains("Scavenger"):
+		_errors.append("Base should show the ready Scavenger kill quest.")
+	if bool(ready_state.get("submit_quest_disabled", true)):
+		_errors.append("Base submit button should enable for ready Scavenger kill quest.")
+
+	var claim_result: Dictionary = base_screen.submit_first_scavenger_hunt_quest()
+	if not bool(claim_result.get("success", false)):
+		_errors.append("BaseScreen should submit First Scavenger Hunt when ready.")
+	var after_claim: Dictionary = save_manager.get_slot_data(1)
+	if int(after_claim.get("money", 0)) != int(FirstScavengerHuntQuest.get("reward_money")):
+		_errors.append("Submitting First Scavenger Hunt should save reward money.")
+	var claimed_quests: Dictionary = after_claim.get("quests", {}) as Dictionary
+	var claimed_state: Dictionary = claimed_quests.get("first_scavenger_hunt", {}) as Dictionary
+	if str(claimed_state.get("state", "")) != QuestStateScript.STATE_COMPLETED:
+		_errors.append("Submitting First Scavenger Hunt should save completed quest state.")
+
+	_free_node(base_screen)
+	_free_node(enemy)
 	_cleanup_validation_root(save_manager.save_root_path)
 	_free_created_save_manager()
 

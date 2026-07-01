@@ -1168,3 +1168,49 @@
 ### Next
 
 - Continue with 任務十九：加入敵人掉落.
+
+## 2026-07-02 Project Health Check After Task Twenty-Four
+
+### Health Check
+
+- Responsibility boundaries: quest data/state, Base UI display, save application, enemy AI, and enemy drop logic remain split across focused scripts.
+- Script boundaries: QuestState, BaseScreen, enemy AI, and enemy loot drop remain focused enough to continue.
+- UI ownership: Base Quest UI remains node-first and only displays save-backed quest state.
+- Godot node-first UI: Base screen uses `.tscn` Control nodes, containers, labels, buttons, and a ScrollContainer for expanding middle content.
+- UI layout quality: Base Quest, Workbench, stash, and action areas pass 1280x720/1920x1080 fit checks with readable buttons and stable spacing.
+- Data-driven content: quests, upgrades, enemies, items, and loot tables remain resource-driven.
+- Save safety: quest state dictionaries round-trip through SaveGameManager and missing quest data still normalizes to active defaults.
+- Scene loadability: main project, Base scene, gameplay scene, and Scavenger scene dependencies load in Godot 4.7 headless.
+- Validation health: quest, Base, save, enemy, extraction, UI, combat, and gameplay architecture validations pass.
+
+### Verified
+
+- `validate_quest_flow.gd`, `validate_quest_model.gd`, `validate_base_progression.gd`, `validate_base_screen.gd`, `validate_ui_foundation.gd`, `validate_save_slots.gd`, `validate_enemy_ai.gd`, `validate_enemy_loot_drop.gd`, `validate_extraction_flow.gd`, `validate_gameplay_architecture.gd`, and `validate_combat_domain.gd` pass.
+- Base scene and gameplay scene startup pass Godot 4.7 headless checks.
+
+## 2026-07-02 First Kill Quest Task
+
+### Completed
+
+- Extended `QuestDef` with `kill` objectives using `enemy_id` and positive quantity validation.
+- Extended `QuestState` with `update_from_enemy_killed()` and stable `kill:<enemy_id>` progress keys.
+- Added `data/quests/first_scavenger_hunt.tres` as the first kill quest: eliminate one Scavenger for money.
+- Added `QuestKillTracker3D` as a focused enemy death listener that updates quest save progress through SaveGameManager.
+- Wired `QuestKillTracker3D` into `scenes/enemies/scavenger_3d.tscn`.
+- Updated BaseScreen quest display and submission to handle multiple early quest definitions, prioritizing ready quests before active quests.
+- Updated `validate_quest_model.gd`, `validate_quest_flow.gd`, and `validate_enemy_ai.gd` to cover kill quest data, Scavenger scene wiring, Base submission, and duplicate kill protection.
+
+### Rule
+
+- Kill quest progress is saved immediately when the enemy death signal is recorded. Death or extraction after that point does not roll back kill progress.
+
+### Verified
+
+- Quest model validation reports `[quest_model] OK def=loads progress=extract_any kill=ready reward=claim save=round_trip`.
+- Quest flow validation reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Base screen, save slots, enemy loot drop, extraction flow, UI foundation, gameplay architecture, combat domain, base progression, Base scene startup, gameplay scene startup, and main project startup validations pass.
+
+### Next
+
+- Continue with 任務二十六：完成三場 Raid Smoke Test.

@@ -2,6 +2,7 @@ extends SceneTree
 
 const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
 const EnemyControllerScript := preload("res://scripts/ai/enemy_controller_3d.gd")
+const QuestKillTrackerScript := preload("res://scripts/quests/quest_kill_tracker_3d.gd")
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 
 var _errors: Array[String] = []
@@ -87,6 +88,9 @@ func _validate_scene_wiring() -> void:
 	var controller := enemy.get_node_or_null("EnemyController3D")
 	if controller == null or controller.get_script() != EnemyControllerScript:
 		_errors.append("Scavenger scene should wire EnemyController3D script.")
+	var kill_tracker := enemy.get_node_or_null("QuestKillTracker3D")
+	if kill_tracker == null or kill_tracker.get_script() != QuestKillTrackerScript:
+		_errors.append("Scavenger scene should wire QuestKillTracker3D script.")
 	if not enemy.has_signal("died"):
 		_errors.append("Scavenger root should expose died signal for AI stop behavior.")
 	_free_node(enemy)

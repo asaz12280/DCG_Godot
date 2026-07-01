@@ -7,6 +7,7 @@ const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const WORKBENCH_LEVEL_1 := preload("res://data/base_upgrades/workbench_level_1.tres")
 const FIRST_SALVAGE_QUEST := preload("res://data/quests/first_salvage.tres")
+const FIRST_SCAVENGER_HUNT_QUEST := preload("res://data/quests/first_scavenger_hunt.tres")
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 
 @export var current_slot_index: int = 1
@@ -69,8 +70,6 @@ func refresh() -> void:
 	workbench_description_label.text = WORKBENCH_LEVEL_1.description
 	workbench_cost_label.text = "%s: %s" % [_text(&"ui.base.upgrade_cost", "Cost"), BaseProgressionScript.describe_cost(WORKBENCH_LEVEL_1)]
 	quest_title_label.text = _text(&"ui.base.quest", "Quest")
-	quest_name_label.text = str(FIRST_SALVAGE_QUEST.get("display_name"))
-	quest_objective_label.text = _quest_objective_text(FIRST_SALVAGE_QUEST)
 	sell_all_junk_button.text = _text(&"ui.base.sell_all_junk", "Sell All Junk")
 	upgrade_workbench_button.text = _text(&"ui.base.upgrade", "Upgrade")
 	start_raid_button.text = _text(&"ui.base.start_raid", "Start Raid")
@@ -268,16 +267,28 @@ func upgrade_workbench() -> Dictionary:
 
 
 func submit_first_salvage_quest() -> Dictionary:
+	return _submit_quest(FIRST_SALVAGE_QUEST)
+
+
+func submit_first_scavenger_hunt_quest() -> Dictionary:
+	return _submit_quest(FIRST_SCAVENGER_HUNT_QUEST)
+
+
+func submit_current_quest() -> Dictionary:
+	return _submit_quest(_selected_quest_def(_get_current_save_data()))
+
+
+func _submit_quest(quest_def: Resource) -> Dictionary:
 	var save_manager := _get_save_manager()
-	if save_manager == null or not save_manager.has_method("save_slot_data"):
+	if quest_def == null or save_manager == null or not save_manager.has_method("save_slot_data"):
 		return {}
 	var save_data := _get_current_save_data()
 	if save_data.is_empty():
 		return {}
 	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
-	var quest_id := str(FIRST_SALVAGE_QUEST.get("id"))
-	var quest_state: Dictionary = quests.get(quest_id, QuestStateScript.create(FIRST_SALVAGE_QUEST)) as Dictionary
-	var result: Dictionary = QuestStateScript.claim_reward(save_data, quest_state, FIRST_SALVAGE_QUEST)
+	var quest_id := str(quest_def.get("id"))
+	var quest_state: Dictionary = quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary
+	var result: Dictionary = QuestStateScript.claim_reward(save_data, quest_state, quest_def)
 	if not bool(result.get("success", false)):
 		status_label.text = _text(&"ui.base.quest_not_ready", "Quest is not ready to submit.")
 		_update_quest_state(save_data, true)
@@ -295,7 +306,7 @@ func submit_first_salvage_quest() -> Dictionary:
 	_current_save_data = updated.duplicate(true)
 	money_label.text = "%s: $%d" % [_text(&"ui.base.money", "Money"), int(updated.get("money", 0))]
 	_update_quest_state(updated, true)
-	status_label.text = "%s +$%d" % [_text(&"ui.base.quest_claimed", "Quest completed"), int(FIRST_SALVAGE_QUEST.get("reward_money"))]
+	status_label.text = "%s +$%d" % [_text(&"ui.base.quest_claimed", "Quest completed"), int(quest_def.get("reward_money"))]
 	return result
 
 
@@ -343,8 +354,11 @@ func _update_workbench_state(save_data: Dictionary, has_save: bool) -> void:
 
 
 func _update_quest_state(save_data: Dictionary, has_save: bool) -> void:
-	var quest_state := _first_salvage_state(save_data)
-	quest_progress_label.text = _quest_progress_text(quest_state)
+	var quest_def := _selected_quest_def(save_data)
+	var quest_state := _quest_state(save_data, quest_def)
+	quest_name_label.text = str(quest_def.get("display_name"))
+	quest_objective_label.text = _quest_objective_text(quest_def)
+	quest_progress_label.text = _quest_progress_text(quest_state, quest_def)
 	var state := str(quest_state.get("state", QuestStateScript.STATE_ACTIVE))
 	submit_quest_button.text = _text(&"ui.base.submit_quest", "Submit")
 	if not has_save:
@@ -368,10 +382,27 @@ func _stash_array_from_variant(value: Variant) -> Array:
 	return (value as Array).duplicate(true)
 
 
-func _first_salvage_state(save_data: Dictionary) -> Dictionary:
+func _quest_state(save_data: Dictionary, quest_def: Resource) -> Dictionary:
 	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
-	var quest_id := str(FIRST_SALVAGE_QUEST.get("id"))
-	return QuestStateScript.normalize(quests.get(quest_id, QuestStateScript.create(FIRST_SALVAGE_QUEST)) as Dictionary, FIRST_SALVAGE_QUEST)
+	var quest_id := str(quest_def.get("id"))
+	return QuestStateScript.normalize(quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary, quest_def)
+
+
+func _selected_quest_def(save_data: Dictionary) -> Resource:
+	for quest_def in _quest_defs():
+		if str(_quest_state(save_data, quest_def).get("state", "")) == QuestStateScript.STATE_READY:
+			return quest_def
+	for quest_def in _quest_defs():
+		if str(_quest_state(save_data, quest_def).get("state", "")) == QuestStateScript.STATE_ACTIVE:
+			return quest_def
+	for quest_def in _quest_defs():
+		if str(_quest_state(save_data, quest_def).get("state", "")) != QuestStateScript.STATE_COMPLETED:
+			return quest_def
+	return _quest_defs().back()
+
+
+func _quest_defs() -> Array[Resource]:
+	return [FIRST_SALVAGE_QUEST, FIRST_SCAVENGER_HUNT_QUEST]
 
 
 func _quests_dict(value: Variant) -> Dictionary:
@@ -384,19 +415,27 @@ func _quest_objective_text(quest_def: Resource) -> String:
 	var parts: Array[String] = []
 	var objectives: Array = quest_def.get("objectives") as Array
 	for objective in objectives:
-		parts.append("%s x%d" % [_item_name_from_path(str(objective.get("item_path", ""))), int(objective.get("quantity", 0))])
-	return "%s: %s" % [_text(&"ui.base.quest_objective", "Extract"), " or ".join(parts)]
+		if str(quest_def.get("objective_type")) == "kill":
+			parts.append("%s x%d" % [_enemy_name(str(objective.get("enemy_id", ""))), int(objective.get("quantity", 0))])
+		else:
+			parts.append("%s x%d" % [_item_name_from_path(str(objective.get("item_path", ""))), int(objective.get("quantity", 0))])
+	var verb := _text(&"ui.base.quest_kill_objective", "Eliminate") if str(quest_def.get("objective_type")) == "kill" else _text(&"ui.base.quest_objective", "Extract")
+	return "%s: %s" % [verb, " or ".join(parts)]
 
 
-func _quest_progress_text(quest_state: Dictionary) -> String:
+func _quest_progress_text(quest_state: Dictionary, quest_def: Resource) -> String:
 	var progress: Dictionary = quest_state.get("progress", {}) as Dictionary
 	var parts: Array[String] = []
-	var objectives: Array = FIRST_SALVAGE_QUEST.get("objectives") as Array
+	var objectives: Array = quest_def.get("objectives") as Array
 	for objective in objectives:
+		var is_kill := str(quest_def.get("objective_type")) == "kill"
 		var item_path := str(objective.get("item_path", ""))
-		var current := int(progress.get(item_path, 0))
+		var enemy_id := str(objective.get("enemy_id", ""))
+		var progress_key := QuestStateScript.kill_progress_key(enemy_id) if is_kill else item_path
+		var current := int(progress.get(progress_key, 0))
 		var required := int(objective.get("quantity", 0))
-		parts.append("%s %d/%d" % [_item_name_from_path(item_path), mini(current, required), required])
+		var label := _enemy_name(enemy_id) if is_kill else _item_name_from_path(item_path)
+		parts.append("%s %d/%d" % [label, mini(current, required), required])
 	return "%s: %s" % [_text(&"ui.base.quest_progress", "Progress"), " or ".join(parts)]
 
 
@@ -460,6 +499,14 @@ func _item_name_from_path(item_path: String) -> String:
 	return item_def.display_name if item_def.display_name != "" else str(item_def.id)
 
 
+func _enemy_name(enemy_id: String) -> String:
+	match enemy_id:
+		"scavenger":
+			return _text(&"enemy.scavenger.name", "Scavenger")
+		_:
+			return enemy_id.capitalize() if enemy_id != "" else _text(&"enemy.unknown.name", "Unknown enemy")
+
+
 func _difficulty_name(difficulty_id: String) -> String:
 	match difficulty_id:
 		"easy":
@@ -490,4 +537,4 @@ func _on_upgrade_workbench_pressed() -> void:
 
 
 func _on_submit_quest_pressed() -> void:
-	submit_first_salvage_quest()
+	submit_current_quest()
