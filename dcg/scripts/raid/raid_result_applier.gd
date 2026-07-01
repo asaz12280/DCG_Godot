@@ -22,6 +22,15 @@ func apply_raid_result(result: Dictionary) -> bool:
 		"applied": false,
 		"reason": "",
 	}
+	if str(result.get("outcome", "")) == RaidResultSchema.OUTCOME_DEAD:
+		_clear_player_inventory()
+		last_apply_result = {
+			"attempted": true,
+			"applied": true,
+			"death_loss": true,
+			"reason": "dead_inventory_cleared",
+		}
+		return true
 	if str(result.get("outcome", "")) != RaidResultSchema.OUTCOME_EXTRACTED:
 		last_apply_result["reason"] = "not_extracted"
 		return false

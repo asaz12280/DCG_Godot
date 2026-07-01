@@ -357,7 +357,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十一：完成死亡與遺失規則
 
-狀態：未開始
+狀態：完成
 
 目標：讓 raid 有失敗成本，建立撤離類遊戲的核心張力。
 

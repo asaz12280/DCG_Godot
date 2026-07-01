@@ -3,6 +3,7 @@ extends SceneTree
 const ExtractionZoneScript := preload("res://scripts/raid/extraction_zone_3d.gd")
 const RaidSessionScript := preload("res://scripts/raid/raid_session.gd")
 const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier.gd")
+const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const InventoryModelScript := preload("res://scripts/inventory/inventory_model.gd")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
@@ -23,9 +24,10 @@ class FakePlayer:
 
 func _initialize() -> void:
 	_validate_zone_countdown_and_transfer()
+	_validate_death_loss_rules()
 	_validate_gameplay_scene_wiring()
 	if _errors.is_empty():
-		print("[extraction_flow] OK countdown=works cancel=works transfer=stash_saved inventory=cleared scene=wired")
+		print("[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired")
 		quit(0)
 	else:
 		for error in _errors:
@@ -108,6 +110,63 @@ func _validate_zone_countdown_and_transfer() -> void:
 		_errors.append("Extracted items should be saved into persistent stash.")
 	if player.inventory_model.get_used_slots() != 0:
 		_errors.append("Raid inventory should be cleared after successful transfer.")
+
+	test_root.free()
+	_cleanup_validation_root(save_manager.save_root_path)
+	_free_node(save_manager)
+
+
+func _validate_death_loss_rules() -> void:
+	var test_root := Node3D.new()
+	root.add_child(test_root)
+	var save_manager := _make_save_manager()
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 0,
+		"stash": [],
+		"base_upgrades": {},
+		"quests": {},
+	})
+	save_manager.set_current_slot_index(1)
+
+	var session := RaidSessionScript.new()
+	session.name = "RaidSession"
+	session.auto_begin = false
+	test_root.add_child(session)
+	session.begin_raid("death_validation_map")
+
+	var applier := RaidResultApplierScript.new()
+	applier.name = "RaidResultApplier"
+	applier.raid_session_path = NodePath("../RaidSession")
+	applier.player_path = NodePath("../Player3D")
+	test_root.add_child(applier)
+	applier._ready()
+
+	var player := FakePlayer.new()
+	player.name = "Player3D"
+	player.inventory_model.setup(12)
+	player.inventory_model.add_item(WoodItem, 2)
+	test_root.add_child(player)
+
+	var death_context := RaidLossRulesScript.build_death_context_from_player(player)
+	if not session.register_player_death(death_context):
+		_errors.append("RaidSession should accept death context built from RaidLossRules.")
+	var result := session.build_result()
+	if str(result.get("outcome", "")) != "dead":
+		_errors.append("Death result should use dead outcome.")
+	var lost_items := result.get("lost_items", []) as Array
+	if lost_items.is_empty() or int(lost_items[0].get("quantity", 0)) != 2:
+		_errors.append("Death result should list backpack items as lost_items.")
+	if typeof(result.get("kept_safe_pocket_items", null)) != TYPE_ARRAY:
+		_errors.append("Death result should include safe pocket retention array.")
+	if not bool(applier.last_apply_result.get("death_loss", false)):
+		_errors.append("RaidResultApplier should handle death loss without saving backpack to stash.")
+	var saved_after: Dictionary = save_manager.get_slot_data(1)
+	var saved_stash := saved_after.get("stash", []) as Array
+	if not saved_stash.is_empty():
+		_errors.append("Death should not add backpack items to persistent stash.")
+	if player.inventory_model.get_used_slots() != 0:
+		_errors.append("Raid inventory should be cleared after death result is applied.")
 
 	test_root.free()
 	_cleanup_validation_root(save_manager.save_root_path)

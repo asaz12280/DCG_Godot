@@ -770,3 +770,24 @@
 ### Next
 
 - Continue with 任務十一：完成死亡與遺失規則.
+
+## 2026-07-02 Death Loss Rules Task
+
+### Completed
+
+- Added `scripts/raid/raid_loss_rules.gd` to define the early death loss interface.
+- Death context now lists backpack stacks as `lost_items` and keeps a `kept_safe_pocket_items` array for the future safe pocket system.
+- Updated `RaidResultApplier` so death results clear raid inventory without adding backpack items to persistent stash.
+- Updated `tools/validate_extraction_flow.gd` to cover both successful extraction transfer and death loss behavior.
+- Confirmed death still travels through the existing `RaidSession.raid_completed` result flow, so `RaidResultPanel` can show lost items from the result data.
+
+### Verified
+
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Raid session validation reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=schema_serializable scene=wired`.
+- Raid result panel, save slots, stash model, and gameplay scene headless startup all pass.
+
+### Next
+
+- Continue with 任務十二：建立 LootTable Resource.
