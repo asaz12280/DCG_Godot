@@ -599,7 +599,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十一：建立簡單金錢與出售流程
 
-狀態：未開始
+狀態：完成
 
 目標：讓 loot 有第一層經濟用途。
 

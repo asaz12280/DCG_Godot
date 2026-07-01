@@ -1018,6 +1018,57 @@
 - Fit: validation checks 1280x720 and 1920x1080 safe margins, viewport bounds, and gameplay-view coverage limits.
 - Interaction: mouse_filter is ignore, so the HUD does not block gameplay, backpack, codex, or pause UI.
 
+## 2026-07-02 Vendor Sell Task
+
+### Completed
+
+- Added `scripts/base/stash_vendor.gd` as the focused sell-rule helper for stash items.
+- Added `Sell All Junk` to `scenes/base/base_screen.tscn` using an existing Button node inside the Base action row.
+- Updated `BaseScreen` to show sell value, sell stash junk, update money, rebuild stash rows, and save the current slot.
+- Sell rules use `ItemDef.value * quantity`, sell `loot`, `valuable`, `currency`, and `intel`, and keep crafting/electronics materials for early upgrades.
+- Added `tools/validate_vendor_sell.gd` to verify sale value, stash removal, money persistence, and material retention.
+
+### Verified
+
+- Vendor sell validation reports `[vendor_sell] OK value=item_def stash=removes_sold money=saved materials=kept`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Base screen validation reports `[base_screen] OK node_first=true empty=shown stash=shown layout=fits`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Base scene passes Godot 4.7 headless startup.
+
+### UI Layout Quality Check
+
+- Panel base: unchanged Base panel backing and margins remain node-first.
+- Buttons: `Sell All Junk` uses a real Button node with the same 48px height as `Start Raid`.
+- Spacing and alignment: ActionRow now has consistent 12px separation and right alignment.
+- Readability: sell button displays the sale value when available and disables when no sellable stash exists.
+- Fit: existing Base screen validation still reports layout fit after adding the second action button.
+
+## 2026-07-02 Project Health Check After Task Twenty-One
+
+### Health Check
+
+- Responsibility boundaries: enemy drops, Raid HUD, and vendor sell rules are split across focused components instead of being mixed into AI, gameplay, or monolithic UI scripts.
+- Script boundaries: `EnemyLootDrop3D`, `RaidHudPanel`, and `StashVendor` remain focused; BaseScreen only coordinates UI, save, and refresh behavior.
+- UI ownership: Raid HUD does not depend on inventory/codex panels, and Base sell UI uses scene nodes plus small state-binding code.
+- Godot node-first UI: Raid HUD and Base sell button are implemented with `.tscn` Control nodes, containers, labels, progress bar, and buttons.
+- UI layout quality: Raid HUD and Base screen validations cover fit, safe margins, visible hierarchy, button size, and non-blocking HUD input.
+- Data-driven content: enemy drops read EnemyDef LootTable paths; vendor sell value reads `ItemDef.value`.
+- Save safety: vendor sell updates current slot data through SaveGameManager and save slot validation still passes.
+- Localization: new player-facing strings use `_text()` fallback keys and do not introduce hardcoded-only flow blockers.
+- Scene loadability: main project, gameplay scene, and Base scene all load in Godot 4.7 headless.
+- Validation health: vendor, save, base, UI, Raid HUD, enemy drop, extraction, gameplay architecture, combat, item catalog, and loot table validations pass.
+
+### Verified
+
+- `validate_vendor_sell.gd`, `validate_save_slots.gd`, `validate_base_screen.gd`, `validate_base_flow.gd`, `validate_ui_foundation.gd`, `validate_raid_hud.gd`, `validate_enemy_loot_drop.gd`, `validate_extraction_flow.gd`, `validate_gameplay_architecture.gd`, `validate_combat_domain.gd`, `validate_item_catalog.gd`, and `validate_loot_tables.gd` pass.
+- Main project, gameplay scene, and Base scene startup pass Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 任務二十二：建立第一個 Workbench Upgrade.
+
 ### Next
 
 - Continue with 任務二十一：建立簡單金錢與出售流程.

@@ -2,6 +2,7 @@ extends Control
 class_name BaseScreen
 
 const BaseUIStyle := preload("res://scripts/ui/ui_style.gd")
+const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 
 @export var current_slot_index: int = 1
@@ -15,12 +16,16 @@ const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 @onready var stash_title_label: Label = %StashTitleLabel
 @onready var stash_rows: VBoxContainer = %StashRows
 @onready var status_label: Label = %StatusLabel
+@onready var sell_all_junk_button: Button = %SellAllJunkButton
 @onready var start_raid_button: Button = %StartRaidButton
+
+var _current_save_data: Dictionary = {}
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_apply_styles()
+	sell_all_junk_button.pressed.connect(_on_sell_all_junk_pressed)
 	start_raid_button.pressed.connect(_on_start_raid_pressed)
 	resized.connect(_layout_panel)
 	_layout_panel()
@@ -33,6 +38,7 @@ func refresh() -> void:
 	var has_save := not save_data.is_empty()
 	if not has_save:
 		save_data = _empty_save_data()
+	_current_save_data = save_data.duplicate(true)
 
 	title_label.text = _text(&"ui.base.title", "Base")
 	subtitle_label.text = _text(&"ui.base.subtitle", "Stash, prepare, and start the next raid.")
@@ -40,9 +46,11 @@ func refresh() -> void:
 	difficulty_label.text = "%s: %s" % [_text(&"ui.base.difficulty", "Difficulty"), _difficulty_name(str(save_data.get("difficulty_id", "normal")))]
 	money_label.text = "%s: $%d" % [_text(&"ui.base.money", "Money"), int(save_data.get("money", 0))]
 	stash_title_label.text = _text(&"ui.base.stash", "Stash")
+	sell_all_junk_button.text = _text(&"ui.base.sell_all_junk", "Sell All Junk")
 	start_raid_button.text = _text(&"ui.base.start_raid", "Start Raid")
 	status_label.text = _text(&"ui.base.ready", "Ready for the next run.") if has_save else _text(&"ui.base.no_save", "No save data yet. Start a raid to create progress.")
 	_rebuild_stash_rows(save_data.get("stash", []))
+	_update_sell_button(save_data.get("stash", []), has_save)
 	_layout_panel.call_deferred()
 
 
@@ -57,7 +65,10 @@ func get_display_state() -> Dictionary:
 		"money": money_label.text,
 		"stash_rows": get_stash_row_count(),
 		"status": status_label.text,
+		"sell_all_junk_disabled": sell_all_junk_button.disabled,
+		"sell_all_junk_text": sell_all_junk_button.text,
 		"panel_rect": Rect2(main_panel.position, main_panel.size),
+		"sell_button_rect": Rect2(sell_all_junk_button.global_position, sell_all_junk_button.size),
 		"start_button_rect": Rect2(start_raid_button.global_position, start_raid_button.size),
 	}
 
@@ -75,6 +86,7 @@ func _apply_styles() -> void:
 	BaseUIStyle.apply_font_color(stash_title_label, BaseUIStyle.COLOR_TEXT_SUBTITLE)
 	BaseUIStyle.apply_font_size(status_label, BaseUIStyle.FONT_PLACEHOLDER)
 	BaseUIStyle.apply_font_color(status_label, BaseUIStyle.COLOR_TEXT_MUTED)
+	BaseUIStyle.apply_font_size(sell_all_junk_button, BaseUIStyle.FONT_BODY)
 	BaseUIStyle.apply_font_size(start_raid_button, BaseUIStyle.FONT_BODY)
 
 
@@ -136,6 +148,34 @@ func _make_stash_row(item_name: String, quantity_text: String) -> HBoxContainer:
 	return row
 
 
+func sell_all_junk() -> Dictionary:
+	var save_manager := _get_save_manager()
+	if save_manager == null or not save_manager.has_method("save_slot_data"):
+		return {}
+	var save_data := _get_current_save_data()
+	if save_data.is_empty():
+		return {}
+	var stash_data: Array = _stash_array_from_variant(save_data.get("stash", []))
+	var result: Dictionary = StashVendorScript.sell_all_junk(stash_data, int(save_data.get("money", 0)))
+	if int(result.get("money_delta", 0)) <= 0:
+		status_label.text = _text(&"ui.base.sell_none", "No junk to sell.")
+		_update_sell_button(stash_data, true)
+		return result
+
+	save_data["money"] = int(result.get("money", 0))
+	save_data["stash"] = (result.get("remaining_stash", []) as Array).duplicate(true)
+	if not save_manager.save_slot_data(current_slot_index, save_data):
+		status_label.text = _text(&"ui.base.sell_failed", "Could not save sale result.")
+		return {}
+
+	_current_save_data = save_data.duplicate(true)
+	money_label.text = "%s: $%d" % [_text(&"ui.base.money", "Money"), int(save_data.get("money", 0))]
+	_rebuild_stash_rows(save_data.get("stash", []))
+	_update_sell_button(save_data.get("stash", []), true)
+	status_label.text = "%s +$%d" % [_text(&"ui.base.sell_success", "Sold junk"), int(result.get("money_delta", 0))]
+	return result
+
+
 func _get_current_save_data() -> Dictionary:
 	var save_manager := _get_save_manager()
 	if save_manager == null or not save_manager.has_method("get_slot_data"):
@@ -153,6 +193,20 @@ func _get_current_save_data() -> Dictionary:
 					save_manager.set_current_slot_index(current_slot_index)
 				return save_manager.get_slot_data(current_slot_index)
 	return {}
+
+
+func _update_sell_button(stash_data: Variant, has_save: bool) -> void:
+	var stash_array: Array = _stash_array_from_variant(stash_data)
+	var sell_value := StashVendorScript.get_sellable_value(stash_array)
+	sell_all_junk_button.disabled = not has_save or sell_value <= 0
+	if sell_value > 0:
+		sell_all_junk_button.text = "%s ($%d)" % [_text(&"ui.base.sell_all_junk", "Sell All Junk"), sell_value]
+
+
+func _stash_array_from_variant(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
 
 
 func _get_save_manager() -> Node:
@@ -208,3 +262,7 @@ func _text(key: StringName, fallback: String) -> String:
 func _on_start_raid_pressed() -> void:
 	if is_inside_tree():
 		get_tree().change_scene_to_file(GAMEPLAY_SCENE)
+
+
+func _on_sell_all_junk_pressed() -> void:
+	sell_all_junk()

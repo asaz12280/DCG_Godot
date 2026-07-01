@@ -106,7 +106,14 @@ autowrap_mode = 3
 [node name="ActionRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
+theme_override_constants/separation = 12
 alignment = 2
+
+[node name="SellAllJunkButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 48)
+layout_mode = 2
+text = "Sell All Junk"
 
 [node name="StartRaidButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
 unique_name_in_owner = true
