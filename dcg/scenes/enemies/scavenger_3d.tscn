@@ -1,0 +1,46 @@
+[gd_scene load_steps=8 format=3 uid="uid://scavenger_3d_001"]
+
+[ext_resource type="Resource" path="res://data/enemies/scavenger.tres" id="1_enemy_def"]
+[ext_resource type="Script" path="res://scripts/ai/enemy_damageable_3d.gd" id="2_damageable"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_scavenger"]
+radius = 0.32
+height = 1.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_scavenger"]
+radius = 0.34
+height = 1.18
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.24
+height = 0.48
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.42, 0.48, 0.38, 1)
+roughness = 0.82
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.64, 0.58, 0.45, 1)
+roughness = 0.86
+
+[node name="Scavenger3D" type="CharacterBody3D" groups=["enemy", "damageable"]]
+metadata/enemy_def = ExtResource("1_enemy_def")
+script = ExtResource("2_damageable")
+max_health = 45.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.62, 0)
+shape = SubResource("CapsuleShape3D_scavenger")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("CapsuleMesh_scavenger")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.28, 0)
+mesh = SubResource("SphereMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_head")
+
+[node name="DetectRadiusMarker" type="Node3D" parent="."]
+metadata/detect_radius = 8.5

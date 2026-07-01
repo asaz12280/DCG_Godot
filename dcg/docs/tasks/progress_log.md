@@ -917,3 +917,24 @@
 ### Next
 
 - Continue with 任務十七：建立 EnemyDef 與 Scavenger 場景.
+
+## 2026-07-02 EnemyDef And Scavenger Scene Task
+
+### Completed
+
+- Added `scripts/ai/enemy_def.gd` as the first data-driven enemy definition resource.
+- Added `data/enemies/scavenger.tres` with health, move speed, damage, detect radius, and loot table path.
+- Added `scripts/ai/enemy_damageable_3d.gd` so enemy roots can be CharacterBody3D and still receive DamageEvent.
+- Added `scenes/enemies/scavenger_3d.tscn` with placeholder body/head meshes, collision, EnemyDef metadata, and damageable behavior.
+- Added `tools/validate_enemy_def.gd` to verify enemy data, invalid data detection, scene loadability, and damageable presence.
+
+### Verified
+
+- Enemy definition validation reports `[enemy_def] OK scavenger=data_valid scene=loadable damageable=present`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Loot table and gameplay architecture validations still pass.
+- Scavenger scene and gameplay scene both pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務十八：建立 Scavenger AI v1.

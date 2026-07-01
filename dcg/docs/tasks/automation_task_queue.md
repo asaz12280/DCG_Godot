@@ -502,7 +502,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十七：建立 EnemyDef 與 Scavenger 場景
 
-狀態：未開始
+狀態：完成
 
 目標：建立第一個資料化敵人。
 

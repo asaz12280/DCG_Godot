@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/enemy_def.gd" id="1_enemy_def"]
+
+[resource]
+script = ExtResource("1_enemy_def")
+id = &"scavenger"
+display_name = "Scavenger"
+max_health = 45.0
+move_speed = 3.1
+damage = 8.0
+detect_radius = 8.5
+loot_table_path = "res://data/loot_tables/refuge_outskirts_common.tres"
