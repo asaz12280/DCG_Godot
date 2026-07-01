@@ -974,6 +974,27 @@
 - `validate_player_damage.gd`, `validate_combat_domain.gd`, `validate_enemy_def.gd`, `validate_enemy_ai.gd`, `validate_gameplay_architecture.gd`, `validate_extraction_flow.gd`, `validate_loot_container.gd`, `validate_ui_foundation.gd`, `validate_save_slots.gd`, `validate_raid_session.gd`, `validate_base_flow.gd`, `validate_audio_settings.gd`, and `validate_loot_tables.gd` pass.
 - Main menu, gameplay scene, and scavenger scene startup pass Godot 4.7 headless checks.
 
+## 2026-07-02 Enemy Loot Drop Task
+
+### Completed
+
+- Added `scripts/ai/enemy_loot_drop_3d.gd` as a focused enemy death loot component.
+- Wired `EnemyLootDrop3D` into `scenes/enemies/scavenger_3d.tscn`.
+- Scavenger now reads its `EnemyDef.loot_table_path`, rolls the linked LootTable on death, and spawns existing LootPickup3D pickups near the death position.
+- Enemy drops are one-shot per enemy instance through `has_dropped`, preventing repeated loot from the same Scavenger.
+- Added `tools/validate_enemy_loot_drop.gd` to verify death drop spawn, pickup inventory transfer, repeat-drop blocking, and UI independence.
+
+### Verified
+
+- Enemy loot drop validation reports `[enemy_loot_drop] OK death=spawns_pickup pickup=adds_inventory repeat=blocked ui_coupling=clean`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Loot table validation reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
+- Enemy definition, combat domain, gameplay architecture, and Scavenger scene headless startup all pass.
+
+### Next
+
+- Continue with 任務二十：加入 Raid HUD 目標資訊.
+
 ### Next
 
 - Continue with 任務十九：加入敵人掉落.
