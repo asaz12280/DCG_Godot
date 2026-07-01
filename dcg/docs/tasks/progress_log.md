@@ -1,5 +1,87 @@
 # Progress Log
 
+## 2026-07-01 Automation Baseline Task
+
+### Completed
+
+- Read the automation documents: `docs/design/early_development_plan.md`, `docs/tasks/automation_task_queue.md`, and `docs/design/ui_layout_quality_guide.md`.
+- Confirmed the automation queue, project health check rules, and UI layout quality rules are present.
+- Completed `任務一：建立自動化基準線` in `docs/tasks/automation_task_queue.md`.
+- Cleaned a non-blocking baseline validation issue by guarding `/root` autoload lookups in `difficulty_manager.gd` and `difficulty_select_panel.gd` when nodes are initialized outside the active scene tree during headless validation.
+
+### Verified
+
+- Standard validation set reports `ALL_STANDARD_VALIDATIONS_PASSED`.
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=21 max_no=21`.
+- `validate_ui_foundation.gd` reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- `validate_inventory_drag_rules.gd` reports `[inventory_drag_rules] OK`.
+- `validate_gameplay_architecture.gd` reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- `validate_combat_domain.gd` reports `[combat_domain] OK damageable=works weapon=applies_damage scene=has_target`.
+- `validate_difficulty_system.gd` reports `[difficulty_system] OK profiles=3 health=scaled menu=available` without the previous absolute-path errors.
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue`.
+- `validate_save_slot_panel.gd` reports `[save_slot_panel] OK rows=3 refresh=ready`.
+- `validate_audio_settings.gd` reports `[audio_settings] OK buses=Master/BGM/SFX`.
+- `validate_pause_menu.gd` reports `[pause_menu] OK open_close=true`.
+- Main scene and `res://scenes/gameplay/player_test_world_3d.tscn` both load in Godot 4.7 headless mode.
+
+### Next
+
+1. Start `任務二：建立 StashModel`.
+
+## 2026-07-01 Stash Model Task
+
+### Completed
+
+- Completed `任務二：建立 StashModel` in `docs/tasks/automation_task_queue.md`.
+- Added `scripts/base/stash_model.gd` as a UI-independent permanent stash model.
+- Added support for adding valid `ItemDef` resources, merging stackable items, splitting overflow into multiple stacks, tracking total quantity, removing partial quantities, removing stacks, serializing to save-friendly dictionaries, and loading from save data.
+- Added resource existence checks before loading save entries so invalid saved item paths are handled without noisy Godot resource load errors.
+- Added `tools/validate_stash_model.gd` for focused stash model validation.
+
+### Verified
+
+- `validate_stash_model.gd` reports `[stash_model] OK add=merge remove=works save=round_trip`.
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=21 max_no=21`.
+- Main scene loads in Godot 4.7 headless mode after the stash model addition.
+
+### Next
+
+1. Start `任務三：擴充存檔格式為 Save Schema v1`.
+
+## 2026-07-01 Save Schema v1 Task
+
+### Completed
+
+- Completed `任務三：擴充存檔格式為 Save Schema v1` in `docs/tasks/automation_task_queue.md`.
+- Expanded `SaveGameManager` slot data to schema version 1.
+- Added `version`, `money`, `stash`, `base_upgrades`, and `quests` fields to new save files.
+- Added `get_slot_data()` and `save_slot_data()` so future systems can round-trip persistent state without reaching into private file helpers.
+- Preserved legacy slot compatibility by normalizing old scene/difficulty/time-only save data to schema v1 defaults.
+- Updated `tools/validate_save_slots.gd` to validate schema defaults, money/stash/base-upgrade/quest round-trip, and legacy-slot normalization.
+
+### Verified
+
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- `validate_stash_model.gd` reports `[stash_model] OK add=merge remove=works save=round_trip`.
+- `validate_save_slot_panel.gd` reports `[save_slot_panel] OK rows=3 refresh=ready`.
+- Standard validation set reports `ALL_STANDARD_VALIDATIONS_PASSED`, including item catalog, UI foundation, inventory drag rules, gameplay architecture, combat, difficulty, save slots, save slot panel, stash model, audio settings, pause menu, main scene startup, and gameplay scene startup.
+
+### Project Health Check
+
+- Trigger: completed 任務三, before 任務四.
+- Responsibility boundaries: new stash and save logic stay in `scripts/base` and `scripts/save`; no UI node owns persistent gameplay state.
+- UI node-first/layout quality: no new player-facing UI was introduced in tasks one through three, so there is no new layout surface to review yet.
+- Script size/focus: scan found no scripts over 300 lines in `scripts`; new `stash_model.gd` and expanded `save_game_manager.gd` remain focused.
+- Data-driven content: stash serialization uses item resource paths and does not hard-code item behavior into UI.
+- Coupling scan: no new dependency from gameplay/domain scripts to `InventoryEquipmentUI`; `UIManager` remains the expected owner of active gameplay UI binding.
+- Save safety: schema v1 defaults and legacy normalization are covered by validation.
+- Scene health: main scene and gameplay scene both load headless.
+- Validation health: new `validate_stash_model.gd` exists, and updated `validate_save_slots.gd` covers schema v1.
+
+### Next
+
+1. Start `任務四：建立最小 Base Screen`.
+
 ## 2026-06-30
 
 ### Completed
@@ -399,6 +481,22 @@
 - Item catalog validation still reports `[item_catalog] OK items=21 max_no=21`.
 - Inventory drag rule validation reports `[inventory_drag_rules] OK`.
 
+## 2026-07-01 Save Slot Panel Pass
+
+### Completed
+
+- Added reusable `SaveSlotPanel` so the main menu no longer builds load-slot rows inline.
+- Connected the load panel to `SaveGameManager` slot summaries and continue flow.
+- Added fallback UI copy for empty-slot, loading, and save-manager-missing states without depending on the messy localization CSV.
+- Simplified `main_menu.gd` so it only opens and refreshes the reusable save-slot panel.
+- Added `tools/validate_save_slot_panel.gd` for focused headless validation.
+
+### Verified
+
+- Save slot validation still reports `[save_slots] OK slots=3 save=start load=continue`.
+- Save slot panel validation reports `[save_slot_panel] OK rows=3 refresh=ready`.
+- Godot 4.7 headless startup succeeds after the main-menu load panel refactor.
+
 ## 2026-07-01 Gameplay Architecture Pass
 
 ### Completed
@@ -457,3 +555,110 @@
 - Godot MCP launched the main menu and reported the game helper live.
 - Runtime eval confirms pressing Start opens the difficulty panel with exactly three difficulty buttons.
 - Runtime eval confirms choosing hard sets `DifficultyManager.selected_difficulty_id` to `hard`, changes to gameplay, and initializes the player at 75 max health.
+
+## 2026-07-01 Base Screen Task
+
+### Completed
+
+- Added node-first `scenes/base/base_screen.tscn` with a stable Control/container layout for the early base screen.
+- Added `BaseScreen` binding logic for current slot, difficulty, money, stash rows, empty-stash state, and Start Raid.
+- Added `tools/validate_base_screen.gd` to verify empty stash, filled stash, localized difficulty text, button sizing, and 1280x720/1920x1080 fit.
+- Adjusted the base stash scroll region so the panel fits cleanly at 720p while staying ready for future art pass replacements.
+
+### Verified
+
+- Base screen validation reports `[base_screen] OK node_first=true empty=shown stash=shown layout=fits`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Stash model validation reports `[stash_model] OK add=merge remove=works save=round_trip`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Base screen and main scene both pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務五：調整新遊戲與讀取流程進入 Base.
+
+## 2026-07-01 Base Entry Flow Task
+
+### Completed
+
+- Updated `SaveGameManager` so new saves default to `base_screen.tscn` and the manager tracks the current save slot.
+- Changed difficulty confirmation so a new game creates/overwrites the preferred save slot, then enters Base instead of going straight to gameplay.
+- Changed continue flow so loading an existing slot enters Base and preserves the selected current slot.
+- Updated `BaseScreen` to read the current slot from `SaveGameManager`, while still falling back to the first existing slot if needed.
+- Added `tools/validate_base_flow.gd` to guard the main menu start flow, continue flow, Base destination, and current-slot tracking.
+
+### Verified
+
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base screen validation reports `[base_screen] OK node_first=true empty=shown stash=shown layout=fits`.
+- Difficulty validation reports `[difficulty_system] OK profiles=3 health=scaled menu=available`.
+- UI foundation and StashModel validations still pass.
+- Base screen and main scene both pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務六：建立 `RaidSession`.
+
+## 2026-07-02 Base Start Button Layout Repair
+
+### Completed
+
+- Fixed the Base screen layout issue where the stash scroll area expanded vertically and pushed the Start Raid button below the visible 1920x1080 game window.
+- Reduced the Base stash scroll minimum height and removed its vertical expand flag so status text and the primary action stay visible.
+- Added a deferred Base screen layout pass after data binding, preventing Godot container layout from stretching the main panel after `_ready()`.
+- Strengthened `tools/validate_base_screen.gd` so it fails if the Start Raid button leaves the viewport or main panel.
+
+### Verified
+
+- Base screen validation reports `[base_screen] OK node_first=true empty=shown stash=shown layout=fits`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Godot AI runtime inspection confirms `MainPanel` is `980x620` at 1920x1080 and `StartRaidButton` is visible at `y=733`.
+- Runtime mouse click on Start Raid successfully changes from Base to `PlayerTestWorld3D`.
+
+## 2026-07-02 RaidSession Task
+
+### Completed
+
+- Added `scripts/raid/raid_session.gd` as the authoritative single-raid state owner.
+- Added begin, extraction, death, state snapshot, and result dictionary APIs.
+- Enforced terminal-state exclusivity so one raid cannot be both extracted and dead.
+- Added a `RaidSession` node to `player_test_world_3d.tscn` at the scene root, separate from UI and player ownership.
+- Added `tools/validate_raid_session.gd` to cover active state, extraction result, death result, restart behavior, and gameplay scene wiring.
+
+### Verified
+
+- Raid session validation reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=serializable scene=wired`.
+- Gameplay architecture validation still reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Combat domain validation still reports `[combat_domain] OK damageable=works weapon=applies_damage scene=has_target`.
+- Base flow and save slot validations still pass.
+- Gameplay scene passes Godot 4.7 headless startup.
+
+### Next
+
+- Run the required Project Health Check after 任務六, then continue with 任務七：建立 Extraction Zone.
+
+## 2026-07-02 Project Health Check After Task Six
+
+### Health Check
+
+- Responsibility boundaries: `RaidSession` owns only raid lifecycle state/result data and does not reference UI, save files, inventory UI, or scene-flow panels.
+- UI ownership: Base, save slot, and difficulty UI still read service/model state and emit user intent; persistent save data remains in `SaveGameManager`.
+- Godot node-first UI: Base screen remains `.tscn`/Control/container based, with script limited to data binding, layout correction, and button behavior.
+- UI layout quality: Base panel now keeps `StartRaidButton` visible in runtime and validation checks the button stays inside both panel and viewport.
+- Script size and focus: largest scripts remain below the 300-350 line review threshold; `inventory_equipment_ui.gd` and `item_codex_ui.gd` are watch items but not blockers.
+- Data-driven content: item catalog remains resource-driven; no new hard-coded content volume was added in Task Six.
+- Save safety: Save Schema v1 validation still passes after Base and RaidSession changes.
+- Localization: no new player-facing strings were added by RaidSession; existing Base validation accepts localized difficulty text.
+- Scene health: main scene and gameplay scene both load headless.
+- Validation health: Standard validation set plus `validate_stash_model.gd`, `validate_base_screen.gd`, `validate_base_flow.gd`, and `validate_raid_session.gd` pass.
+
+### Verified
+
+- Full health validation run reports `PROJECT_HEALTH_VALIDATION_PASSED`.
+- `validate_raid_session.gd` reports `[raid_session] OK begin=active extraction=exclusive death=exclusive result=serializable scene=wired`.
+- Main scene and gameplay scene pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務七：建立 Extraction Zone.

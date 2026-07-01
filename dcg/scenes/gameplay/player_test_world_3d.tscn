@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene load_steps=15 format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://c88trysktctm7" path="res://scripts/ui/top_menu_bar.gd" id="11_top_menu_bar"]
 [ext_resource type="Script" uid="uid://devi22diatgl3" path="res://scripts/combat/damageable_3d.gd" id="12_damageable"]
 [ext_resource type="Script" uid="uid://dtlj10iy2nmcq" path="res://scripts/ui/pause_menu.gd" id="13_pause_menu"]
+[ext_resource type="Script" path="res://scripts/raid/raid_session.gd" id="14_raid_session"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -57,6 +58,9 @@ size = Vector3(0.9, 1.2, 0.9)
 
 [node name="DisplayMode3D" type="Node" parent="." unique_id=686218874]
 script = ExtResource("8_display_mode")
+
+[node name="RaidSession" type="Node" parent="." unique_id=1943850037]
+script = ExtResource("14_raid_session")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1412131729]
 environment = SubResource("Environment_sunny")

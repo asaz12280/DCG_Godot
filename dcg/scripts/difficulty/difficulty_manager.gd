@@ -16,9 +16,10 @@ func _ready() -> void:
 	_register_profile(EASY_PROFILE)
 	_register_profile(NORMAL_PROFILE)
 	_register_profile(HARD_PROFILE)
-	var settings := get_node_or_null("/root/GameSettings")
-	if settings != null and settings.has_method("get_difficulty_id"):
-		selected_difficulty_id = StringName(settings.get_difficulty_id())
+	if is_inside_tree():
+		var settings := get_node_or_null("/root/GameSettings")
+		if settings != null and settings.has_method("get_difficulty_id"):
+			selected_difficulty_id = StringName(settings.get_difficulty_id())
 	if not _profiles.has(selected_difficulty_id):
 		selected_difficulty_id = DEFAULT_DIFFICULTY_ID
 
@@ -29,9 +30,10 @@ func set_difficulty(id: StringName) -> void:
 	if selected_difficulty_id == id:
 		return
 	selected_difficulty_id = id
-	var settings := get_node_or_null("/root/GameSettings")
-	if settings != null and settings.has_method("set_difficulty_id"):
-		settings.set_difficulty_id(str(selected_difficulty_id))
+	if is_inside_tree():
+		var settings := get_node_or_null("/root/GameSettings")
+		if settings != null and settings.has_method("set_difficulty_id"):
+			settings.set_difficulty_id(str(selected_difficulty_id))
 	difficulty_changed.emit(selected_difficulty_id)
 
 
@@ -57,4 +59,3 @@ func _register_profile(profile: DifficultyProfile) -> void:
 	if profile == null or profile.id == &"":
 		return
 	_profiles[profile.id] = profile
-

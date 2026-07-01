@@ -21,6 +21,7 @@ LocalizationBootstrap="*res://scripts/localization/localization_bootstrap.gd"
 GameSettings="*res://scripts/settings/game_settings.gd"
 DifficultyManager="*res://scripts/difficulty/difficulty_manager.gd"
 UIManager="*res://scripts/ui/ui_manager.gd"
+SaveGameManager="*res://scripts/save/save_game_manager.gd"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]

@@ -1,14 +1,9 @@
 ﻿extends BaseMenuScreen
 
-const MenuUIStyle := preload("res://scripts/ui/ui_style.gd")
 const DifficultySelectPanelScript := preload("res://scripts/ui/difficulty_select_panel.gd")
-
-const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
+const SaveSlotPanelScript := preload("res://scripts/ui/save_slot_panel.gd")
 
 var load_panel: PanelContainer
-var load_title_label: Label
-var load_message_label: Label
-var load_back_button: Button
 var settings_panel: SettingsPanel
 var difficulty_panel: Control
 
@@ -20,9 +15,8 @@ func _ready() -> void:
 	add_menu_button(&"ui.main.settings", _on_settings_pressed)
 	add_menu_button(&"ui.main.quit", _on_quit_pressed)
 
-	load_panel = make_overlay_panel()
+	load_panel = SaveSlotPanelScript.new()
 	add_child(load_panel)
-	_build_load_panel()
 
 	settings_panel = SettingsPanel.new()
 	add_child(settings_panel)
@@ -92,36 +86,12 @@ func _get_overlay_position(viewport_size: Vector2, panel_size: Vector2, preferre
 
 func update_texts() -> void:
 	update_base_texts()
-	if load_title_label != null:
-		load_title_label.text = tr("ui.main.load")
-	if load_message_label != null:
-		load_message_label.text = tr("ui.main.load_empty")
-	if load_back_button != null:
-		load_back_button.text = tr("ui.main.back")
+	if load_panel != null:
+		load_panel.refresh_texts()
 	if settings_panel != null:
 		settings_panel.refresh_texts()
 	if difficulty_panel != null and difficulty_panel.has_method("refresh_texts"):
 		difficulty_panel.call("refresh_texts")
-
-
-func _build_load_panel() -> void:
-	var box := VBoxContainer.new()
-	MenuUIStyle.apply_panel_margins(box, MenuUIStyle.SPACING_LOAD_PANEL_CONTENT)
-	load_panel.add_child(box)
-
-	load_title_label = Label.new()
-	MenuUIStyle.apply_font_size(load_title_label, MenuUIStyle.FONT_PANEL_TITLE)
-	box.add_child(load_title_label)
-
-	load_message_label = Label.new()
-	load_message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	MenuUIStyle.apply_font_size(load_message_label, MenuUIStyle.FONT_BODY)
-	box.add_child(load_message_label)
-
-	load_back_button = Button.new()
-	load_back_button.custom_minimum_size = MenuUIStyle.SIZE_PANEL_BACK_BUTTON
-	load_back_button.pressed.connect(func() -> void: load_panel.visible = false)
-	box.add_child(load_back_button)
 
 
 func _on_start_pressed() -> void:
@@ -136,7 +106,7 @@ func _on_load_pressed() -> void:
 	update_texts()
 	settings_panel.visible = false
 	difficulty_panel.visible = false
-	load_panel.visible = true
+	load_panel.open()
 
 
 func _on_settings_pressed() -> void:

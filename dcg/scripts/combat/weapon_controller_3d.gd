@@ -8,7 +8,7 @@ signal hit(target: Node, event: DamageEvent)
 
 @export var weapon_def: ItemDef
 @export var fallback_damage: float = 10.0
-@export var range: float = 28.0
+@export var weapon_range: float = 28.0
 
 
 func fire_at(target: Node) -> bool:
@@ -28,7 +28,7 @@ func fire_forward(origin: Vector3, direction: Vector3, space_state: PhysicsDirec
 	if space_state == null or direction == Vector3.ZERO:
 		fired.emit(weapon_def)
 		return false
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * range)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * weapon_range)
 	query.exclude = [get_parent()]
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
@@ -58,4 +58,3 @@ func _resolve_damage_target(target: Node) -> Node:
 	if parent != null and parent.has_method("apply_damage"):
 		return parent
 	return null
-

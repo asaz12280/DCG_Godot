@@ -2,7 +2,7 @@ class_name DifficultySelectPanel
 extends PanelContainer
 
 const PanelUIStyle := preload("res://scripts/ui/ui_style.gd")
-const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
+const BASE_SCENE := "res://scenes/base/base_screen.tscn"
 
 var title_label: Label
 var description_label: Label
@@ -89,10 +89,12 @@ func _rebuild_difficulty_rows() -> void:
 		return
 	for child in rows_box.get_children():
 		rows_box.remove_child(child)
-		child.free()
+		child.queue_free()
 	difficulty_buttons.clear()
 
-	var manager := get_node_or_null("/root/DifficultyManager")
+	var manager: Node = null
+	if is_inside_tree():
+		manager = get_node_or_null("/root/DifficultyManager")
 	if manager == null or not manager.has_method("get_profiles"):
 		return
 
@@ -180,10 +182,15 @@ func _on_difficulty_button_input(event: InputEvent, id: StringName) -> void:
 
 
 func _confirm_difficulty() -> void:
+	var save_manager := get_node_or_null("/root/SaveGameManager")
+	if save_manager != null and save_manager.has_method("start_new_game") and save_manager.has_method("get_preferred_new_game_slot"):
+		var slot_index := int(save_manager.get_preferred_new_game_slot())
+		if save_manager.start_new_game(slot_index, str(pending_difficulty_id), BASE_SCENE):
+			return
 	var manager := get_node_or_null("/root/DifficultyManager")
 	if manager != null and manager.has_method("set_difficulty"):
 		manager.set_difficulty(pending_difficulty_id)
-	get_tree().change_scene_to_file(GAMEPLAY_SCENE)
+	get_tree().change_scene_to_file(BASE_SCENE)
 
 
 func _localized_text(key: StringName) -> String:
