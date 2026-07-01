@@ -527,7 +527,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十八：建立 Scavenger AI v1
 
-狀態：未開始
+狀態：完成
 
 目標：讓第一個敵人具備最小可玩行為。
 

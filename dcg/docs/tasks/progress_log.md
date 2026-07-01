@@ -938,3 +938,42 @@
 ### Next
 
 - Continue with 任務十八：建立 Scavenger AI v1.
+
+## 2026-07-02 Scavenger AI v1 Task
+
+### Completed
+
+- Added `scripts/ai/enemy_controller_3d.gd` with Idle, Chase, Attack, and Dead behavior.
+- Wired `EnemyController3D` into `scavenger_3d.tscn`.
+- Scavenger now detects live players in range, chases when outside attack range, attacks when close, and stops after enemy death.
+- Added `tools/validate_enemy_ai.gd` to cover detect/chase, attack damage, death stop behavior, and scene wiring.
+
+### Verified
+
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Player damage validation reports `[player_damage] OK health=decreases death=once raid_result=dead hud_signal=emits`.
+- Enemy definition, combat domain, and gameplay scene startup validations pass.
+
+## 2026-07-02 Project Health Check After Task Eighteen
+
+### Health Check
+
+- Responsibility boundaries: enemy data, damageable health, and AI behavior remain split across EnemyDef, EnemyDamageable3D, and EnemyController3D.
+- UI ownership: no UI state is changed by enemy AI; player HUD remains signal/read based.
+- Godot node-first UI: unchanged UI validations still pass.
+- UI layout quality: no UI layout changes were made in Tasks Sixteen to Eighteen.
+- Script size and focus: new AI scripts are focused and under review thresholds; existing large UI scripts remain watch items.
+- Data-driven content: Scavenger reads EnemyDef metadata and loot table path rather than hard-coding enemy stats into AI logic.
+- Save safety: no save schema changes were made.
+- Localization: no new player-facing UI text was added.
+- Scene health: main menu, gameplay scene, and scavenger scene all load headless.
+- Validation health: player damage, combat, enemy data, enemy AI, gameplay architecture, extraction, loot, UI, save, raid, base, and audio validations pass.
+
+### Verified
+
+- `validate_player_damage.gd`, `validate_combat_domain.gd`, `validate_enemy_def.gd`, `validate_enemy_ai.gd`, `validate_gameplay_architecture.gd`, `validate_extraction_flow.gd`, `validate_loot_container.gd`, `validate_ui_foundation.gd`, `validate_save_slots.gd`, `validate_raid_session.gd`, `validate_base_flow.gd`, `validate_audio_settings.gd`, and `validate_loot_tables.gd` pass.
+- Main menu, gameplay scene, and scavenger scene startup pass Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 任務十九：加入敵人掉落.

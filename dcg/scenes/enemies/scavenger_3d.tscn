@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://scavenger_3d_001"]
+[gd_scene load_steps=9 format=3 uid="uid://scavenger_3d_001"]
 
 [ext_resource type="Resource" path="res://data/enemies/scavenger.tres" id="1_enemy_def"]
 [ext_resource type="Script" path="res://scripts/ai/enemy_damageable_3d.gd" id="2_damageable"]
+[ext_resource type="Script" path="res://scripts/ai/enemy_controller_3d.gd" id="3_enemy_controller"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_scavenger"]
 radius = 0.32
@@ -44,3 +45,6 @@ surface_material_override/0 = SubResource("StandardMaterial3D_head")
 
 [node name="DetectRadiusMarker" type="Node3D" parent="."]
 metadata/detect_radius = 8.5
+
+[node name="EnemyController3D" type="Node" parent="."]
+script = ExtResource("3_enemy_controller")
