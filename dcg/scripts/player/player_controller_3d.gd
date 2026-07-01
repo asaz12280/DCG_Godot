@@ -5,7 +5,10 @@ const PlayerStatsProfileScript := preload("res://scripts/player/player_stats_pro
 const PlayerStatsScript := preload("res://scripts/player/player_stats_3d.gd")
 const PlayerInputReaderScript := preload("res://scripts/player/player_input_reader_3d.gd")
 const PlayerLocomotionScript := preload("res://scripts/player/player_locomotion_3d.gd")
+const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
 
+signal health_changed(current: float, maximum: float)
+signal died(event: DamageEvent)
 signal stamina_changed(current: float, maximum: float)
 signal inventory_changed
 
@@ -53,6 +56,7 @@ var health: float = 0.0
 var stamina: float = 0.0
 var current_carry_weight: float = 0.0
 var is_exhausted: bool = false
+var is_dead := false
 
 @export var stats_profile: PlayerStatsProfile = PlayerStatsProfileScript.new()
 @export var starter_loadout: Resource = DEFAULT_STARTER_LOADOUT
@@ -79,6 +83,7 @@ func _ready() -> void:
 	health = get_total_max_health()
 	stamina = max_stamina
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	health_changed.emit(health, get_total_max_health())
 	stamina_changed.emit(stamina, max_stamina)
 
 
@@ -123,6 +128,21 @@ func get_inventory_model() -> InventoryModel:
 
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
+
+
+func apply_damage(event: DamageEvent) -> bool:
+	if event == null or event.amount <= 0.0 or is_dead:
+		return false
+	var mitigated_amount := maxf(event.amount - defense, 1.0)
+	health = maxf(health - mitigated_amount, 0.0)
+	health_changed.emit(health, get_total_max_health())
+	if health <= 0.0:
+		_die(event)
+	return true
+
+
+func is_alive() -> bool:
+	return not is_dead and health > 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -177,3 +197,26 @@ func _load_starter_inventory() -> void:
 func _on_inventory_changed() -> void:
 	current_carry_weight = inventory_model.get_total_weight()
 	inventory_changed.emit()
+
+
+func _die(event: DamageEvent) -> void:
+	if is_dead:
+		return
+	is_dead = true
+	died.emit(event)
+	var raid_session := _find_raid_session()
+	if raid_session != null and raid_session.has_method("register_player_death"):
+		var context := RaidLossRulesScript.build_death_context_from_player(self)
+		context["source"] = "player_death"
+		raid_session.call("register_player_death", context)
+
+
+func _find_raid_session() -> Node:
+	var current_scene := get_tree().current_scene if is_inside_tree() else null
+	if current_scene != null:
+		var session := current_scene.get_node_or_null("RaidSession")
+		if session != null:
+			return session
+	if get_parent() != null:
+		return get_parent().get_node_or_null("RaidSession")
+	return null

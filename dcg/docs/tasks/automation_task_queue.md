@@ -478,7 +478,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十六：建立玩家受傷與死亡事件
 
-狀態：未開始
+狀態：完成
 
 目標：讓敵人可以真正威脅玩家，並讓死亡接上 raid result。
 

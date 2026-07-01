@@ -26,6 +26,8 @@ func _ready() -> void:
 	player = get_tree().get_first_node_in_group("player")
 	if player != null and player.has_signal("stamina_changed"):
 		player.stamina_changed.connect(_on_stamina_changed)
+	if player != null and player.has_signal("health_changed"):
+		player.health_changed.connect(_on_health_changed)
 	_setup_health_styles()
 
 
@@ -39,6 +41,10 @@ func _on_stamina_changed(current: float, maximum: float) -> void:
 		stamina_visible_time = 1.2
 	stamina = current
 	max_stamina = maximum
+
+
+func _on_health_changed(_current: float, _maximum: float) -> void:
+	queue_redraw()
 
 
 func _draw() -> void:

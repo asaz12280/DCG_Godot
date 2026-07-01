@@ -897,3 +897,23 @@
 ### Next
 
 - Continue with 任務十六：建立玩家受傷與死亡事件.
+
+## 2026-07-02 Player Damage And Death Task
+
+### Completed
+
+- Added `health_changed` and `died` signals to `Player3D`.
+- Added `Player3D.apply_damage()` so DamageEvent can reduce player health and trigger death once.
+- Player death now builds death loss context through `RaidLossRules` and notifies `RaidSession.register_player_death()`.
+- Updated `PlayerHud3D` to listen for player health changes and redraw immediately.
+- Added `tools/validate_player_damage.gd` to verify damage, single death emission, RaidSession death result, lost items, and HUD health signal.
+
+### Verified
+
+- Player damage validation reports `[player_damage] OK health=decreases death=once raid_result=dead hud_signal=emits`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Extraction flow, raid result panel, gameplay architecture, and gameplay scene headless startup all pass.
+
+### Next
+
+- Continue with 任務十七：建立 EnemyDef 與 Scavenger 場景.
