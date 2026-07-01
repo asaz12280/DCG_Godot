@@ -1,0 +1,60 @@
+name: Godot Smoke Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.7"
+  GODOT_STATUS: stable
+  PROJECT_PATH: dcg
+
+jobs:
+  smoke:
+    name: Headless Project Load
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check project files
+        run: |
+          test -f "$PROJECT_PATH/project.godot"
+          test -f "$PROJECT_PATH/scenes/ui/main_menu.tscn"
+
+      - name: Install Godot
+        run: |
+          set -euo pipefail
+
+          archive="godot-${GODOT_VERSION}-${GODOT_STATUS}.tar.xz"
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/${archive}"
+
+          curl --fail --location --output "$archive" "$url"
+          tar -xf "$archive"
+
+          godot_bin="$(find "$PWD" -maxdepth 2 -type f \( -name 'Godot_*linux*x86_64*' -o -name 'godot*' \) ! -name '*.sha256' | head -n 1)"
+          if [ -z "$godot_bin" ]; then
+            echo "Could not find Godot binary after extracting $archive"
+            exit 1
+          fi
+
+          chmod +x "$godot_bin"
+          echo "GODOT_BIN=$godot_bin" >> "$GITHUB_ENV"
+
+      - name: Print Godot version
+        run: "$GODOT_BIN" --version
+
+      - name: Import project
+        run: "$GODOT_BIN" --headless --path "$PROJECT_PATH" --import --quit
+
+      - name: Load main scene
+        run: "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 1
