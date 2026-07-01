@@ -6,6 +6,7 @@ const PlayerStatsScript := preload("res://scripts/player/player_stats_3d.gd")
 const PlayerInputReaderScript := preload("res://scripts/player/player_input_reader_3d.gd")
 const PlayerLocomotionScript := preload("res://scripts/player/player_locomotion_3d.gd")
 const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
+const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 
 signal health_changed(current: float, maximum: float)
 signal died(event: DamageEvent)
@@ -77,6 +78,7 @@ func _ready() -> void:
 	_stats = PlayerStatsScript.new(runtime_stats_profile)
 	_locomotion = PlayerLocomotionScript.new(self, _stats)
 	_weapon_controller = get_node_or_null("WeaponController3D")
+	_apply_base_upgrade_effects()
 	inventory_model.setup(backpack_slots)
 	inventory_model.changed.connect(_on_inventory_changed)
 	_load_starter_inventory()
@@ -192,6 +194,22 @@ func _load_starter_inventory() -> void:
 		return
 	if starter_loadout != null and starter_loadout.has_method("add_to_inventory"):
 		starter_loadout.add_to_inventory(inventory_model)
+
+
+func _apply_base_upgrade_effects() -> void:
+	if _weapon_controller == null:
+		return
+	var save_manager := get_node_or_null("/root/SaveGameManager")
+	if save_manager == null or not save_manager.has_method("get_current_slot_index") or not save_manager.has_method("get_slot_data"):
+		return
+	var slot_index := int(save_manager.get_current_slot_index())
+	var save_data: Dictionary = save_manager.get_slot_data(slot_index)
+	var starter_ammo_bonus := BaseProgressionScript.get_starter_ammo_bonus(save_data)
+	if starter_ammo_bonus <= 0:
+		return
+	_weapon_controller.set("reserve_ammo", int(_weapon_controller.get("reserve_ammo")) + starter_ammo_bonus)
+	if _weapon_controller.has_method("_sync_ammo_result"):
+		_weapon_controller.call("_sync_ammo_result")
 
 
 func _on_inventory_changed() -> void:

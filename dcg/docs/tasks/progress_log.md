@@ -1065,6 +1065,39 @@
 - `validate_vendor_sell.gd`, `validate_save_slots.gd`, `validate_base_screen.gd`, `validate_base_flow.gd`, `validate_ui_foundation.gd`, `validate_raid_hud.gd`, `validate_enemy_loot_drop.gd`, `validate_extraction_flow.gd`, `validate_gameplay_architecture.gd`, `validate_combat_domain.gd`, `validate_item_catalog.gd`, and `validate_loot_tables.gd` pass.
 - Main project, gameplay scene, and Base scene startup pass Godot 4.7 headless checks.
 
+## 2026-07-02 Workbench Upgrade Task
+
+### Completed
+
+- Added `scripts/base/upgrade_def.gd` as the data format for base upgrades.
+- Added `data/base_upgrades/workbench_level_1.tres` with wood, wire, and money costs.
+- Added `scripts/base/base_progression.gd` as the focused helper for upgrade affordability, cost deduction, purchased state, and starter ammo bonus lookup.
+- Updated `BaseScreen` with a node-first Workbench section showing upgrade name, description, cost, status, and an Upgrade button.
+- Workbench Level 1 now deducts required stash materials and money, persists in `base_upgrades`, and disables the button after purchase.
+- Player startup now reads the current save slot upgrade state and applies the Workbench starter reserve ammo +1 effect for the next raid.
+- Added `tools/validate_base_progression.gd` to verify upgrade data, insufficient-cost UI state, successful purchase, save persistence, and starter ammo effect.
+
+### Verified
+
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+- Vendor sell validation reports `[vendor_sell] OK value=item_def stash=removes_sold money=saved materials=kept`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Gameplay architecture, combat domain, player damage, UI foundation, and item catalog validations pass.
+- Base scene and gameplay scene pass Godot 4.7 headless startup.
+
+### UI Layout Quality Check
+
+- Panel base: Workbench was added inside the existing Base panel using scene nodes and containers, not script-built UI.
+- Spacing and grouping: Workbench has its own title, description, cost/status row, and Upgrade button, separated from stash and global actions.
+- Buttons: Upgrade, Sell All Junk, and Start Raid keep readable 48px button heights and consistent grouping.
+- 1280x720 fit: Base vertical spacing and stash height were tightened after validation caught overflow at 720p.
+- Visual hierarchy: upgrade status and cost are visible before the action button, and purchased/blocked states are clearly disabled.
+
+### Next
+
+- Continue with 任務二十三：建立 Quest 資料模型.
+
 ### Next
 
 - Continue with 任務二十二：建立第一個 Workbench Upgrade.

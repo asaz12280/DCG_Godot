@@ -1,0 +1,160 @@
+extends SceneTree
+
+const BaseScreenScene := preload("res://scenes/base/base_screen.tscn")
+const PlayerScene := preload("res://scenes/player/player_3d.tscn")
+const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
+const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
+const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
+
+const WOOD_PATH := "res://data/items/crafting/wood.tres"
+const WIRE_PATH := "res://data/items/electronics/wire.tres"
+
+var _errors: Array[String] = []
+var _created_save_manager: Node = null
+
+
+func _initialize() -> void:
+	_validate_upgrade_def()
+	await _validate_insufficient_upgrade_state()
+	await _validate_purchase_upgrade_and_save()
+	await _validate_starter_ammo_bonus()
+	if _errors.is_empty():
+		print("[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo")
+		quit(0)
+	else:
+		for error in _errors:
+			push_error(error)
+		quit(1)
+
+
+func _validate_upgrade_def() -> void:
+	if WorkbenchUpgrade == null or not WorkbenchUpgrade.has_method("is_valid") or not WorkbenchUpgrade.is_valid():
+		_errors.append("Workbench Level 1 UpgradeDef should load and validate.")
+	if WorkbenchUpgrade.starter_ammo_bonus != 1:
+		_errors.append("Workbench Level 1 should grant starter ammo +1.")
+	if BaseProgressionScript.describe_cost(WorkbenchUpgrade) == "":
+		_errors.append("Workbench Level 1 should expose readable cost text.")
+
+
+func _validate_insufficient_upgrade_state() -> void:
+	var save_manager := _make_save_manager()
+	_cleanup_validation_root(save_manager.save_root_path)
+	save_manager.set_current_slot_index(1)
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 0,
+		"stash": [{"item_path": WOOD_PATH, "quantity": 1}],
+		"base_upgrades": {},
+		"quests": {},
+	})
+	var screen: BaseScreen = _make_screen()
+	await process_frame
+	screen.refresh()
+	var state: Dictionary = screen.get_display_state()
+	if not bool(state.get("upgrade_workbench_disabled", false)):
+		_errors.append("Workbench upgrade button should be disabled when costs are missing.")
+	if str(state.get("workbench_status", "")) == "":
+		_errors.append("Workbench upgrade should show a clear blocked status.")
+	_free_node(screen)
+	_cleanup_validation_root(save_manager.save_root_path)
+
+
+func _validate_purchase_upgrade_and_save() -> void:
+	var save_manager := _make_save_manager()
+	_cleanup_validation_root(save_manager.save_root_path)
+	save_manager.set_current_slot_index(1)
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 25,
+		"stash": [
+			{"item_path": WOOD_PATH, "quantity": 4},
+			{"item_path": WIRE_PATH, "quantity": 2},
+		],
+		"base_upgrades": {},
+		"quests": {},
+	})
+	var screen: BaseScreen = _make_screen()
+	await process_frame
+	screen.refresh()
+	var before_state: Dictionary = screen.get_display_state()
+	if bool(before_state.get("upgrade_workbench_disabled", true)):
+		_errors.append("Workbench upgrade button should be enabled when costs are available.")
+
+	var result: Dictionary = screen.upgrade_workbench()
+	if not bool(result.get("success", false)):
+		_errors.append("BaseScreen should purchase Workbench Level 1 when costs are available.")
+	var loaded: Dictionary = save_manager.get_slot_data(1)
+	if int(loaded.get("money", 0)) != 5:
+		_errors.append("Workbench upgrade should deduct money cost from save data.")
+	if (loaded.get("stash", []) as Array).size() != 0:
+		_errors.append("Workbench upgrade should consume required material stacks.")
+	if not BaseProgressionScript.is_upgrade_purchased(loaded, WorkbenchUpgrade.id):
+		_errors.append("Workbench upgrade purchase should persist in base_upgrades.")
+	if BaseProgressionScript.get_starter_ammo_bonus(loaded) != 1:
+		_errors.append("Workbench upgrade should persist starter ammo bonus.")
+
+	var after_state: Dictionary = screen.get_display_state()
+	if not bool(after_state.get("upgrade_workbench_disabled", false)):
+		_errors.append("Workbench upgrade button should disable after purchase.")
+	if not str(after_state.get("workbench_status", "")).contains("starter ammo"):
+		_errors.append("Workbench status should explain the starter ammo effect after purchase.")
+	_free_node(screen)
+
+
+func _validate_starter_ammo_bonus() -> void:
+	var save_manager := _make_save_manager()
+	save_manager.set_current_slot_index(1)
+	var player := PlayerScene.instantiate()
+	root.add_child(player)
+	await process_frame
+	var weapon := player.get_node_or_null("WeaponController3D")
+	if weapon == null:
+		_errors.append("Player scene should include WeaponController3D for upgrade effect validation.")
+	else:
+		if int(weapon.get("reserve_ammo")) != 25:
+			_errors.append("Purchased Workbench Level 1 should add +1 reserve ammo to the next raid.")
+	_free_node(player)
+	_cleanup_validation_root(save_manager.save_root_path)
+	_free_created_save_manager()
+
+
+func _make_save_manager() -> Node:
+	var existing := root.get_node_or_null("SaveGameManager")
+	if existing != null:
+		existing.save_root_path = "user://validation_base_progression"
+		return existing
+	var save_manager := SaveGameManagerScript.new()
+	save_manager.name = "SaveGameManager"
+	save_manager.save_root_path = "user://validation_base_progression"
+	root.add_child(save_manager)
+	_created_save_manager = save_manager
+	return save_manager
+
+
+func _make_screen() -> BaseScreen:
+	var screen := BaseScreenScene.instantiate()
+	root.add_child(screen)
+	return screen
+
+
+func _cleanup_validation_root(root_path: String) -> void:
+	var absolute := ProjectSettings.globalize_path(root_path)
+	if DirAccess.dir_exists_absolute(absolute):
+		DirAccess.remove_absolute("%s/slot_1.json" % absolute)
+		DirAccess.remove_absolute("%s/slot_2.json" % absolute)
+		DirAccess.remove_absolute("%s/slot_3.json" % absolute)
+		DirAccess.remove_absolute(absolute)
+
+
+func _free_created_save_manager() -> void:
+	if _created_save_manager != null:
+		_free_node(_created_save_manager)
+		_created_save_manager = null
+
+
+func _free_node(node: Node) -> void:
+	if node == null:
+		return
+	if node.get_parent() != null:
+		node.get_parent().remove_child(node)
+	node.free()

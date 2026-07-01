@@ -623,7 +623,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十二：建立第一個 Workbench Upgrade
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家有第一個使用撤離物資的長期目標。
 

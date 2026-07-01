@@ -31,13 +31,13 @@ offset_bottom = 850.0
 [node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 36
-theme_override_constants/margin_top = 30
+theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 36
-theme_override_constants/margin_bottom = 28
+theme_override_constants/margin_bottom = 22
 
 [node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
@@ -46,13 +46,13 @@ text = "Base"
 
 [node name="SubtitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 text = "Stash, prepare, and start the next raid."
 autowrap_mode = 3
 
 [node name="InfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 theme_override_constants/separation = 22
 
@@ -86,7 +86,7 @@ layout_mode = 2
 text = "Stash"
 
 [node name="StashScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 180)
+custom_minimum_size = Vector2(0, 92)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
@@ -96,15 +96,64 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
+[node name="WorkbenchSeparator" type="HSeparator" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+
+[node name="WorkbenchTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Workbench"
+
+[node name="WorkbenchSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content"]
+custom_minimum_size = Vector2(0, 92)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WorkbenchNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Workbench Level 1"
+
+[node name="WorkbenchDescriptionLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Prepare better starter ammunition for the next raid."
+autowrap_mode = 3
+
+[node name="WorkbenchInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/WorkbenchSection"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="WorkbenchCostLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cost: $20, Wood x4, Wire x2"
+vertical_alignment = 1
+
+[node name="WorkbenchStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+text = "Not upgraded"
+vertical_alignment = 1
+
+[node name="UpgradeWorkbenchButton" type="Button" parent="MainPanel/PanelMargin/Content/WorkbenchSection/WorkbenchInfoRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 48)
+layout_mode = 2
+text = "Upgrade"
+
 [node name="StatusLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Ready for the next run."
 autowrap_mode = 3
 
 [node name="ActionRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 2
