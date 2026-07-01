@@ -51,10 +51,13 @@ jobs:
           echo "GODOT_BIN=$godot_bin" >> "$GITHUB_ENV"
 
       - name: Print Godot version
-        run: "$GODOT_BIN" --version
+        run: |
+          "$GODOT_BIN" --version
 
       - name: Import project
-        run: "$GODOT_BIN" --headless --path "$PROJECT_PATH" --import --quit
+        run: |
+          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --import --quit
 
       - name: Load main scene
-        run: "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 1
+        run: |
+          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 1
