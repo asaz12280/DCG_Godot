@@ -405,7 +405,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務十三：建立 LootContainer3D
 
-狀態：未開始
+狀態：完成
 
 目標：讓地圖上的箱子/容器可以提供隨機 loot。
 

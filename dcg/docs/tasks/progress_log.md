@@ -835,3 +835,24 @@
 ### Next
 
 - Continue with 任務十三：建立 LootContainer3D.
+
+## 2026-07-02 LootContainer3D Task
+
+### Completed
+
+- Added `scripts/loot/loot_container_3d.gd` as an Area3D interaction owner for loot containers.
+- Added `scenes/loot/loot_container_basic.tscn` with collision, placeholder crate mesh, prompt label, and a bound LootTable.
+- Added one-shot open behavior so an opened container cannot grant repeat loot.
+- Container rolls from LootTable and directly calls the player's inventory API, without depending on `InventoryEquipmentUI`.
+- Added `tools/validate_loot_container.gd` to verify roll-to-inventory behavior, repeat-open blocking, scene wiring, and UI independence.
+
+### Verified
+
+- Loot container validation reports `[loot_container] OK roll=grants_inventory one_shot=blocks_repeat ui_coupling=clean scene=wired`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Loot table, inventory loadout, and item catalog validations still pass.
+- Loot container scene and gameplay scene both pass Godot 4.7 headless startup.
+
+### Next
+
+- Continue with 任務十四：把 Refuge Outskirts 測試場景改成第一張可玩 raid map.

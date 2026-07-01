@@ -1,0 +1,48 @@
+[gd_scene load_steps=7 format=3 uid="uid://loot_container_basic_001"]
+
+[ext_resource type="Script" path="res://scripts/loot/loot_container_3d.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/refuge_outskirts_common.tres" id="2_loot_table"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_container"]
+radius = 1.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_container"]
+size = Vector3(1.15, 0.62, 0.82)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_container"]
+albedo_color = Color(0.38, 0.31, 0.22, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lid"]
+albedo_color = Color(0.24, 0.34, 0.31, 1)
+roughness = 0.85
+
+[node name="LootContainerBasic" type="Area3D" groups=["loot_container"]]
+script = ExtResource("1_container")
+loot_table = ExtResource("2_loot_table")
+roll_count = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.45, 0)
+shape = SubResource("SphereShape3D_container")
+
+[node name="CrateBody" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.28, 0)
+mesh = SubResource("BoxMesh_container")
+surface_material_override/0 = SubResource("StandardMaterial3D_container")
+
+[node name="CrateLid" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.64, 0)
+scale = Vector3(1.08, 0.16, 0.92)
+mesh = SubResource("BoxMesh_container")
+surface_material_override/0 = SubResource("StandardMaterial3D_lid")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+visible = false
+position = Vector3(0, 1.35, 0)
+billboard = 1
+text = ""
+font_size = 36
+modulate = Color(1, 0.95, 0.55, 1)
+outline_size = 8
+outline_modulate = Color(0.05, 0.05, 0.04, 1)
