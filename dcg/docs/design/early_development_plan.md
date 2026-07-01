@@ -833,6 +833,8 @@ Mitigation:
 
 Do not expand content volume until this checklist is true:
 
+Dev Slice 0.1 automated acceptance passed on 2026-07-02. Repeated content expansion remains locked until user approval.
+
 - Main menu starts a new save.
 - Base screen displays persistent stash.
 - Raid map starts from base.

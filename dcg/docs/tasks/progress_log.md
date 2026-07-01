@@ -1327,3 +1327,43 @@
 ### Next
 
 - Continue with 任務三十：Dev Slice 0.1 驗收與是否開始內容擴充判斷.
+
+## 2026-07-02 Dev Slice 0.1 Acceptance Task
+
+### Completed
+
+- Added `docs/tasks/dev_slice_0_1_acceptance.md` as the final Dev Slice 0.1 acceptance report.
+- Recorded the Dev Slice 0.1 approval checklist evidence for main menu, base, raid start, loot, combat, extraction, death loss, stash, money, save/load, upgrade, quest, validation, and three-raid repeatability.
+- Added `tools/validate_dev_slice_acceptance.gd` so automation can verify the acceptance report, task queue state, approval gate, listed validation scripts, content authoring guide, and gameplay scene path.
+- Updated `early_development_plan.md` to record that automated Dev Slice 0.1 acceptance passed while repeated content expansion remains locked until user approval.
+- Marked 任務三十 complete in `automation_task_queue.md`.
+
+### Project Health Check After Task Thirty
+
+- Responsibility boundaries: raid result application, save persistence, quests, base progression, enemy behavior, loot tables, and UI display remain split across focused scripts/resources.
+- UI ownership: Base, Raid HUD, Raid Result, save slot, settings, and pause screens read model/service state and emit user intent instead of owning persistent gameplay truth.
+- Godot node-first UI: stable UI surfaces remain `.tscn` Control scenes using Godot nodes, containers, and theme/style helpers.
+- UI layout quality: Base, Raid HUD, Raid Result, quest/base UI, save slot panel, pause menu, and settings validations cover readable spacing, button fit, hierarchy, and 1280x720/1920x1080 fit.
+- Data-driven content: items, loot tables, enemies, quests, upgrades, localization, and authoring rules are resource or data driven.
+- Save safety: extraction, death, stash, money, quest, upgrade, and reload behavior are covered by save and three-raid validations.
+- Localization: UI text quality validation checks required keys and clean fallback behavior.
+- Scene loadability: main project and gameplay scene load in Godot headless checks.
+- Validation health: Dev Slice 0.1 now has `validate_dev_slice_acceptance.gd` as the final guardrail.
+
+### Verified
+
+- Dev Slice 0.1 acceptance validation reports `[dev_slice_acceptance] OK checklist=documented gate=locked validations=listed`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Standard Validation Set passes: item catalog, UI foundation, inventory drag rules, gameplay architecture, combat domain, difficulty system, save slots, save slot panel, audio settings, and pause menu.
+- Dev Slice 0.1 validation set passes: stash model, base screen, base flow, raid session, extraction flow, raid result panel, loot tables, loot container, enemy def, enemy AI, enemy loot drop, player damage, vendor sell, base progression, quest model, quest flow, raid HUD, UI text quality, early balance, content authoring guide, and three-raid loop.
+- Main project and gameplay scene startup checks pass in Godot 4.7 headless mode.
+
+### Gate
+
+- Automated Dev Slice 0.1 acceptance passed.
+- Repeated content expansion is locked until the user explicitly approves that this early version matches the desired direction.
+
+### Next
+
+- Pause numbered automation tasks after Dev Slice 0.1 completion.
+- Wait for user hands-on approval before adding repeated content volume.

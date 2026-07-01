@@ -817,7 +817,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務三十：Dev Slice 0.1 驗收與鎖定擴充門檻
 
-狀態：未開始
+狀態：完成
 
 目標：確認早期版本是不是符合想要的方向，再決定是否開始加重複內容。
 
