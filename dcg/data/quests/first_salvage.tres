@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="QuestDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_def.gd" id="1_quest_def"]
+
+[resource]
+script = ExtResource("1_quest_def")
+id = &"first_salvage"
+display_name = "First Salvage"
+description = "Extract wood or wire to prove the route is worth running."
+objective_type = "extract_any"
+objectives = Array[Dictionary]([{
+"item_path": "res://data/items/crafting/wood.tres",
+"quantity": 2
+}, {
+"item_path": "res://data/items/electronics/wire.tres",
+"quantity": 1
+}])
+reward_money = 35

@@ -1094,6 +1094,30 @@
 - 1280x720 fit: Base vertical spacing and stash height were tightened after validation caught overflow at 720p.
 - Visual hierarchy: upgrade status and cost are visible before the action button, and purchased/blocked states are clearly disabled.
 
+## 2026-07-02 Quest Data Model Task
+
+### Completed
+
+- Added `scripts/quests/quest_def.gd` as the data-driven quest definition resource.
+- Added `scripts/quests/quest_state.gd` as a save-friendly quest state helper.
+- Added `data/quests/first_salvage.tres` as the first collection/extraction quest: extract wood or wire.
+- Quest objectives now support `collect`, `extract`, and `extract_any` data modes.
+- Quest state can update from extracted item stacks, become ready, claim rewards, and serialize back to save data.
+- SaveGameManager now normalizes quest state dictionaries when loading slots.
+- Added `tools/validate_quest_model.gd` to verify QuestDef loading, extract_any progress, reward claiming, and save round trip.
+
+### Verified
+
+- Quest model validation reports `[quest_model] OK def=loads progress=extract_any reward=claim save=round_trip`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+- Base screen and item catalog validations pass.
+- Main project startup passes Godot 4.7 headless.
+
+### Next
+
+- Continue with 任務二十四：把第一個收集任務接到 Base.
+
 ### Next
 
 - Continue with 任務二十三：建立 Quest 資料模型.

@@ -647,7 +647,7 @@ Run these after tasks that touch shared gameplay, UI, save, items, or scene wiri
 
 ## 任務二十三：建立 Quest 資料模型
 
-狀態：未開始
+狀態：完成
 
 目標：讓任務系統能以資料驅動方式擴充。
 

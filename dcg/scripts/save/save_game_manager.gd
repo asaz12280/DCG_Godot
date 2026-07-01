@@ -6,6 +6,7 @@ const SAVE_SCHEMA_VERSION := 1
 const DEFAULT_BASE_SCENE := "res://scenes/base/base_screen.tscn"
 const DEFAULT_GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const DEFAULT_MONEY := 0
+const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
 var save_root_path := DEFAULT_SAVE_ROOT
 var current_slot_index := 1
@@ -199,6 +200,18 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 
 	var quests_value: Variant = raw_data.get("quests", {})
 	if typeof(quests_value) == TYPE_DICTIONARY:
-		normalized["quests"] = (quests_value as Dictionary).duplicate(true)
+		normalized["quests"] = _normalize_quest_states(quests_value as Dictionary)
 
 	return normalized
+
+
+func _normalize_quest_states(raw_quests: Dictionary) -> Dictionary:
+	var quests: Dictionary = {}
+	for quest_id in raw_quests.keys():
+		var value: Variant = raw_quests.get(quest_id, {})
+		if typeof(value) == TYPE_DICTIONARY:
+			var normalized: Dictionary = QuestStateScript.normalize(value as Dictionary)
+			if str(normalized.get("id", "")) == "":
+				normalized["id"] = str(quest_id)
+			quests[str(quest_id)] = normalized
+	return quests
