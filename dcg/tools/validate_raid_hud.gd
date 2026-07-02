@@ -43,7 +43,9 @@ func _validate_gameplay_hud_wiring() -> void:
 	_require_terms(state, "status", ["行動中"], "Raid HUD should show active raid status in Traditional Chinese.")
 	_require_terms(state, "vitals", ["生命", "體力"], "Raid HUD should show player health and stamina.")
 	_require_terms(state, "ammo", ["武器", "手槍-S", "彈藥"], "Raid HUD should show current weapon and ammo.")
-	_reject_english_fallbacks(state, ["objective", "route_hint", "status", "vitals", "extraction", "ammo"])
+	_require_terms(state, "weapon_status", ["戰鬥狀態"], "Raid HUD should show readable weapon combat status.")
+	_require_any_term(state, "weapon_status", ["未裝備", "空彈", "裝填中", "可射擊", "射擊間隔"], "Raid HUD weapon status should show a player-readable state.")
+	_reject_english_fallbacks(state, ["objective", "route_hint", "status", "vitals", "extraction", "ammo", "weapon_status"])
 
 	if int(state.get("mouse_filter", -1)) != Control.MOUSE_FILTER_IGNORE:
 		_errors.append("Raid HUD should ignore mouse input so it does not block gameplay or panels.")
@@ -104,6 +106,7 @@ func _validate_node_first_structure() -> void:
 		"MainPanel/PanelMargin/Content/ExtractionLabel",
 		"MainPanel/PanelMargin/Content/ExtractionProgress",
 		"MainPanel/PanelMargin/Content/AmmoLabel",
+		"MainPanel/PanelMargin/Content/WeaponStatusLabel",
 		"MainPanel/PanelMargin/Content/ReloadLabel",
 		"MainPanel/PanelMargin/Content/ReloadProgress",
 	]:
@@ -120,6 +123,9 @@ func _validate_node_first_structure() -> void:
 	var ammo := hud.get_node_or_null("MainPanel/PanelMargin/Content/AmmoLabel") as Label
 	if ammo != null:
 		_require_text_terms(ammo.text, ["武器", "手槍-S", "彈藥"], "Raid HUD scene default ammo text should be Traditional Chinese.")
+	var weapon_status := hud.get_node_or_null("MainPanel/PanelMargin/Content/WeaponStatusLabel") as Label
+	if weapon_status != null:
+		_require_text_terms(weapon_status.text, ["戰鬥狀態", "未裝備"], "Raid HUD scene default weapon status should be Traditional Chinese.")
 	_free_node(hud)
 
 
@@ -129,6 +135,9 @@ func _validate_ui_independence() -> void:
 		_errors.append("RaidHudPanel should not directly depend on inventory or codex panel scripts.")
 	if source.contains("\"Find supplies") or source.contains("\"Raid active") or source.contains("\"Ammo"):
 		_errors.append("RaidHudPanel fallbacks should be Traditional Chinese, not English.")
+	for required in ["WeaponStatusLabel", "_update_weapon_status", "_weapon_status_text", "get_reload_state"]:
+		if not source.contains(required):
+			_errors.append("RaidHudPanel should expose weapon status HUD term: %s." % required)
 
 
 func _require_exact(state: Dictionary, key: String, expected: String, message: String) -> void:
@@ -139,6 +148,14 @@ func _require_exact(state: Dictionary, key: String, expected: String, message: S
 
 func _require_terms(state: Dictionary, key: String, terms: Array[String], message: String) -> void:
 	_require_text_terms(str(state.get(key, "")), terms, message)
+
+
+func _require_any_term(state: Dictionary, key: String, terms: Array[String], message: String) -> void:
+	var actual := str(state.get(key, ""))
+	for term in terms:
+		if actual.contains(term):
+			return
+	_errors.append("%s Missing one of `%s` in `%s`." % [message, terms, actual])
 
 
 func _require_text_terms(text: String, terms: Array[String], message: String) -> void:
@@ -158,7 +175,7 @@ func _allows_unarmed_ammo_state(text: String, term: String, message: String) -> 
 func _reject_english_fallbacks(state: Dictionary, keys: Array[String]) -> void:
 	for key in keys:
 		var value := str(state.get(key, ""))
-		for token in ["Find supplies", "Reach extraction", "Raid active", "Ready", "Health", "Stamina", "Weapon", "Ammo"]:
+		for token in ["Find supplies", "Reach extraction", "Raid active", "Ready", "Health", "Stamina", "Weapon", "Ammo", "No weapon", "Ready to fire", "Reloading", "Empty", "Combat status"]:
 			if value.contains(token):
 				_errors.append("Raid HUD %s should not show English fallback text: %s" % [key, value])
 

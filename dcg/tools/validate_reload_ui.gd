@@ -27,6 +27,7 @@ func _validate_node_first_structure() -> void:
 	var hud := RaidHudScene.instantiate()
 	root.add_child(hud)
 	for path in [
+		"MainPanel/PanelMargin/Content/WeaponStatusLabel",
 		"MainPanel/PanelMargin/Content/ReloadLabel",
 		"MainPanel/PanelMargin/Content/ReloadProgress",
 	]:
@@ -89,6 +90,8 @@ func _validate_reload_progress_is_player_visible() -> void:
 		_errors.append("Reload progress bar should become visible after pressing R.")
 	if not str(state.get("reload", "")).contains("裝填"):
 		_errors.append("Reload label should show Traditional Chinese reload text while active.")
+	if not str(state.get("weapon_status", "")).contains("裝填中"):
+		_errors.append("Weapon status HUD should show `裝填中` while reload is active.")
 	var first_progress := float(state.get("reload_progress", 0.0))
 	if first_progress < 0.0 or first_progress >= 100.0:
 		_errors.append("Reload progress should start between 0 and 100 while reloading.")
@@ -117,6 +120,9 @@ func _validate_source_boundaries() -> void:
 	for required in ["ReloadLabel", "ReloadProgress", "reload_progress_changed", "_on_reload_progress_changed"]:
 		if not hud_source.contains(required):
 			_errors.append("RaidHudPanel should expose reload UI term: %s." % required)
+	for required in ["WeaponStatusLabel", "_update_weapon_status", "get_reload_state"]:
+		if not hud_source.contains(required):
+			_errors.append("RaidHudPanel should expose weapon status reload term: %s." % required)
 	for forbidden in ["consume_stack_quantity", "reload_from_item", "InventoryModel"]:
 		if hud_source.contains(forbidden):
 			_errors.append("RaidHudPanel should not own reload data mutation: %s." % forbidden)

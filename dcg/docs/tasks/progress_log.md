@@ -2081,3 +2081,41 @@
 ### Next
 
 - Continue with V2 任務二十一：射擊回饋 HUD.
+
+## 2026-07-03 Player Visibility V2 Shooting Feedback HUD
+
+### Completed
+
+- Added a node-first `WeaponStatusLabel` to the Raid HUD so weapon state is visible beside ammo and reload feedback.
+- Updated `RaidHudPanel` to show `戰鬥狀態` from existing player reload and weapon controller state without mutating inventory, equipment, or ammo data.
+- Added Traditional Chinese localization for `未裝備`, `空彈`, `裝填中`, `可射擊`, and `射擊間隔`.
+- Added `tools/validate_shooting_feedback_hud.gd` to verify the four player-readable shooting states in the real gameplay scene.
+- Expanded Raid HUD, reload UI, and V2 health validators to include the new shooting feedback HUD path.
+- Marked V2 任務二十一 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Shooting feedback HUD validation reports `[shooting_feedback_hud] OK status=unarmed_empty_ready_reloading node_first=true zh_tw=true boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Reload UI validation reports `[reload_ui] OK node_first=progress_bar visible=reload_progress completion=clears layout=fit boundaries=clean`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Reload flow validation reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages miss=cleans_up hitscan=removed boundaries=clean`.
+- Projectile hit validation reports `[projectile_hit] OK damage=applied projectile=removed feedback=visible boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Project Health Check After V2 Task Twenty One
+
+- Base boundary: unchanged in this slice; Base 3D and Base flow code were not touched.
+- Inventory and equipment boundaries: unchanged; HUD does not consume backpack stacks, equip items, or read container models.
+- Weapon boundary: `WeaponController3D` remains the source of weapon presence, ammo counts, fire block reason, reload data, and projectile firing.
+- Player boundary: `PlayerController3D` remains the source of timed reload state exposed through `get_reload_state()` and `reload_progress_changed`.
+- UI boundary: `RaidHudPanel` only reads state and formats Traditional Chinese player feedback through node-first Control children.
+- UI layout: Raid HUD still passes 1280x720 and 1920x1080 fit checks with the added status row.
+- Validation health: shooting HUD, raid HUD, reload UI, combat, projectile, architecture, V2 health, UI text, and scene launch checks pass.
+
+### Next
+
+- Continue with V2 任務二十二：修正 Raid HUD 大面板問題.

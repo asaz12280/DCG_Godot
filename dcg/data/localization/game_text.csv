@@ -198,6 +198,12 @@ ui.raid_hud.weapon,武器,Weapon,Weapon,武器
 ui.raid_hud.weapon_missing,未裝備,No weapon,No weapon,未装备
 ui.raid_hud.ammo_missing,彈藥：-- / --,Ammo: -- / --,Ammo: -- / --,弹药：-- / --
 ui.raid_hud.ammo,彈藥,Ammo,Ammo,弹药
+ui.raid_hud.weapon_status,戰鬥狀態,Combat status,Combat status,战斗状态
+ui.raid_hud.weapon_status_unarmed,未裝備,No weapon,No weapon,未装备
+ui.raid_hud.weapon_status_empty,空彈,Empty,Empty,空弹
+ui.raid_hud.weapon_status_reloading,裝填中,Reloading,Reloading,装填中
+ui.raid_hud.weapon_status_ready,可射擊,Ready to fire,Ready to fire,可射击
+ui.raid_hud.weapon_status_cooldown,射擊間隔,Cooldown,Cooldown,射击间隔
 ui.raid_hud.extracting,撤離中...,Extracting...,Extracting...,撤离中...
 ui.raid_hud.extraction_remaining,撤離,Extraction,Extraction,撤离
 ui.raid_hud.extracted,已撤離,Extracted,Extracted,已撤离

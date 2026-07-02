@@ -326,7 +326,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十一：射擊回饋 HUD
 
-狀態：未開始
+狀態：完成
 
 目標：HUD 顯示目前武器、彈匣、備用彈藥、裝填中狀態。
 

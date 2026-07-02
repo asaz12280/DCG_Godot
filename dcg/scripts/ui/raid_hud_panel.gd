@@ -19,6 +19,7 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 @onready var extraction_label: Label = %ExtractionLabel
 @onready var extraction_progress: ProgressBar = %ExtractionProgress
 @onready var ammo_label: Label = %AmmoLabel
+@onready var weapon_status_label: Label = %WeaponStatusLabel
 @onready var reload_label: Label = %ReloadLabel
 @onready var reload_progress: ProgressBar = %ReloadProgress
 
@@ -45,6 +46,7 @@ func _process(_delta: float) -> void:
 	_update_raid_status()
 	_update_vitals()
 	_update_ammo()
+	_update_weapon_status()
 	_update_reload_hold(_delta)
 
 
@@ -58,6 +60,7 @@ func get_display_state() -> Dictionary:
 		"extraction": extraction_label.text,
 		"extraction_progress": extraction_progress.value,
 		"ammo": ammo_label.text,
+		"weapon_status": weapon_status_label.text,
 		"reload": reload_label.text,
 		"reload_progress": reload_progress.value,
 		"reload_visible": reload_progress.visible,
@@ -84,6 +87,7 @@ func _bind_world_nodes() -> void:
 	_update_vitals()
 	_update_extraction_idle()
 	_update_ammo()
+	_update_weapon_status()
 	_update_reload_idle()
 
 
@@ -134,6 +138,8 @@ func _apply_styles() -> void:
 	RaidHUDStyle.apply_font_color(extraction_label, RaidHUDStyle.COLOR_TEXT_HELP)
 	RaidHUDStyle.apply_font_size(ammo_label, RaidHUDStyle.FONT_PLACEHOLDER)
 	RaidHUDStyle.apply_font_color(ammo_label, RaidHUDStyle.COLOR_TEXT_STATUS)
+	RaidHUDStyle.apply_font_size(weapon_status_label, RaidHUDStyle.FONT_PLACEHOLDER)
+	RaidHUDStyle.apply_font_color(weapon_status_label, RaidHUDStyle.COLOR_TEXT_STATUS)
 	RaidHUDStyle.apply_font_size(reload_label, RaidHUDStyle.FONT_HELP)
 	RaidHUDStyle.apply_font_color(reload_label, RaidHUDStyle.COLOR_TEXT_SUBTITLE)
 
@@ -223,6 +229,43 @@ func _update_ammo() -> void:
 	]
 
 
+func _update_weapon_status() -> void:
+	weapon_status_label.text = "%s：%s" % [
+		_text(&"ui.raid_hud.weapon_status", "戰鬥狀態"),
+		_weapon_status_text(),
+	]
+
+
+func _weapon_status_text() -> String:
+	if _is_player_reloading():
+		return _text(&"ui.raid_hud.weapon_status_reloading", "裝填中")
+	if _weapon_controller == null:
+		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	if _weapon_controller.has_method("has_weapon") and not bool(_weapon_controller.call("has_weapon")):
+		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	if _weapon_controller.get("weapon_def") == null:
+		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	var current := int(_weapon_controller.get("current_ammo"))
+	if current <= 0:
+		return _text(&"ui.raid_hud.weapon_status_empty", "空彈")
+	if _weapon_controller.has_method("get_fire_block_reason"):
+		var reason := StringName(_weapon_controller.call("get_fire_block_reason"))
+		if reason == &"cooldown":
+			return _text(&"ui.raid_hud.weapon_status_cooldown", "射擊間隔")
+		if reason == &"no_ammo":
+			return _text(&"ui.raid_hud.weapon_status_empty", "空彈")
+		if reason == &"no_weapon":
+			return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	return _text(&"ui.raid_hud.weapon_status_ready", "可射擊")
+
+
+func _is_player_reloading() -> bool:
+	if _player == null or not _player.has_method("get_reload_state"):
+		return false
+	var state: Dictionary = _player.call("get_reload_state")
+	return bool(state.get("active", false))
+
+
 func _update_reload_idle() -> void:
 	reload_label.visible = false
 	reload_progress.visible = false
@@ -279,6 +322,7 @@ func _on_reload_progress_changed(state: Dictionary) -> void:
 		reload_label.visible = true
 		reload_progress.visible = true
 		reload_label.text = "%s %.0f%%" % [_text(&"ui.raid_hud.reloading", "裝填中"), progress * 100.0]
+		_update_weapon_status()
 		return
 	if status == "complete":
 		reload_label.visible = true
@@ -286,14 +330,17 @@ func _on_reload_progress_changed(state: Dictionary) -> void:
 		reload_progress.value = 100.0
 		reload_label.text = _text(&"ui.raid_hud.reload_complete", "裝填完成")
 		_reload_status_hold = 0.55
+		_update_weapon_status()
 		return
 	if status != "idle":
 		reload_label.visible = true
 		reload_progress.visible = false
 		reload_label.text = _text(&"ui.raid_hud.reload_cancelled", "裝填取消")
 		_reload_status_hold = 0.55
+		_update_weapon_status()
 		return
 	_update_reload_idle()
+	_update_weapon_status()
 
 
 func _text(key: StringName, fallback: String) -> String:
