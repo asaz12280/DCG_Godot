@@ -4,13 +4,40 @@ Date: 2026-07-02
 
 ## Status
 
-Automated acceptance: PASSED.
+System validation: PASSED.
 
-Development gate: content expansion remains locked until the user approves that Dev Slice 0.1 feels like the desired direction.
+Player-visible acceptance: PENDING.
 
-This report closes the early framework slice. It does not approve repeated content volume by itself.
+The automated systems, data paths, and validation scripts have passed. The player-facing version is not approved yet because the user's hands-on review only clearly confirmed a small part of the loop.
+
+Development gate: content expansion remains locked until the user approves Dev Slice 0.1 after hands-on player-visible review.
+
+This report no longer closes the early framework slice for content expansion. It records that system validation passed, but player-visible acceptance is still pending.
+
+## Player Hands-On Review
+
+Confirmed player-visible:
+
+- Difficulty selection / new game entry.
+- Extraction zone countdown and result transition.
+- Loot containers can produce items.
+
+Not clearly player-visible yet:
+
+- Base phase as a recognizable base screen.
+- Traditional Chinese UI text across Base, Raid HUD, and Raid Result.
+- Pistol ownership, weapon state, and shooting feedback.
+- Scavenger enemy in the normal raid route.
+- Player damage, death, and death-loss flow.
+- Enemy death and dropped loot.
+- Quest progress and claim flow.
+- Workbench upgrade requirements and result.
+- Vendor/junk selling and money change.
+- Save/load state changes visible through normal play.
 
 ## Acceptance Checklist
+
+System validation checklist:
 
 - Main menu starts a new save: verified by `validate_base_flow.gd`, `validate_save_slots.gd`, and main project startup.
 - Base screen displays persistent stash: verified by `validate_base_screen.gd`, `validate_stash_model.gd`, and `validate_three_raid_loop.gd`.
@@ -23,6 +50,24 @@ This report closes the early framework slice. It does not approve repeated conte
 - At least one quest gives direction: verified by `validate_quest_model.gd`, `validate_quest_flow.gd`, and `validate_three_raid_loop.gd`.
 - Existing validation suite passes: verified by the Standard Validation Set and the slice-specific validations listed below.
 - The loop is repeatable for at least three raids: verified by `validate_three_raid_loop.gd`; final feel approval still requires the user to play and approve the direction.
+
+## Player-Visible Acceptance Checklist
+
+- [ ] Difficulty selection leads to a clearly recognizable Base phase.
+- [ ] Base UI is readable in Traditional Chinese.
+- [ ] Base clearly shows stash, money, quest, workbench, selling, and start raid.
+- [ ] Raid HUD tells the player what to do in Traditional Chinese.
+- [ ] Pistol, ammo, and shooting feedback are visible during normal play.
+- [ ] Scavenger is visible on the normal raid route.
+- [ ] Enemy attack, player damage, and player death are visible.
+- [ ] Enemy death and dropped loot are visible and collectible.
+- [ ] Extraction result clearly shows brought-back and lost items.
+- [ ] Returning to Base clearly shows stash, money, quest, and upgrade changes.
+- [ ] At least one collection quest and one kill quest can be understood and completed by normal play.
+- [ ] Workbench upgrade requirements and success result are visible.
+- [ ] Selling junk and money change are visible.
+- [ ] A new `validate_player_visible_slice.gd` or equivalent runtime check catches missing player-visible wiring.
+- [ ] The user approves that Dev Slice 0.1 now matches the intended early direction.
 
 ## Required Validation Set
 
@@ -89,7 +134,7 @@ Startup checks:
 
 ## Decision Gate
 
-Do not start repeated content expansion until the user explicitly approves Dev Slice 0.1.
+Do not start repeated content expansion until the user explicitly approves Dev Slice 0.1 after hands-on player-visible review.
 
 Allowed next work before approval:
 

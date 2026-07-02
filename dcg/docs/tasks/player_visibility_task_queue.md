@@ -94,7 +94,7 @@ Run these after tasks touching shared UI, scene flow, save, combat, or raid stat
 
 ## 可視化任務一：重新標記 Dev Slice 狀態
 
-狀態：未開始
+狀態：完成
 
 目標：把目前狀態從「自動驗收通過」改成「系統驗證通過，但玩家可見驗收未通過」。
 

@@ -2,6 +2,7 @@ extends SceneTree
 
 const ACCEPTANCE_PATH := "res://docs/tasks/dev_slice_0_1_acceptance.md"
 const TASK_QUEUE_PATH := "res://docs/tasks/automation_task_queue.md"
+const PLAYER_VISIBILITY_QUEUE_PATH := "res://docs/tasks/player_visibility_task_queue.md"
 const PLAN_PATH := "res://docs/design/early_development_plan.md"
 const CONTENT_GUIDE_PATH := "res://docs/design/content_authoring_guide.md"
 const GAMEPLAY_SCENE_PATH := "res://scenes/gameplay/player_test_world_3d.tscn"
@@ -13,11 +14,11 @@ func _initialize() -> void:
 	_validate_required_files()
 	if _errors.is_empty():
 		_validate_acceptance_report()
-		_validate_task_queue()
+		_validate_task_queues()
 		_validate_plan_gate()
 		_validate_project_paths()
 	if _errors.is_empty():
-		print("[dev_slice_acceptance] OK checklist=documented gate=locked validations=listed")
+		print("[dev_slice_acceptance] OK system=passed player_visible=pending gate=locked")
 		quit(0)
 	else:
 		for error in _errors:
@@ -29,6 +30,7 @@ func _validate_required_files() -> void:
 	for path in [
 		ACCEPTANCE_PATH,
 		TASK_QUEUE_PATH,
+		PLAYER_VISIBILITY_QUEUE_PATH,
 		PLAN_PATH,
 		CONTENT_GUIDE_PATH,
 	]:
@@ -41,7 +43,9 @@ func _validate_acceptance_report() -> void:
 	for heading in [
 		"# Project DCG Dev Slice 0.1 Acceptance",
 		"## Status",
+		"## Player Hands-On Review",
 		"## Acceptance Checklist",
+		"## Player-Visible Acceptance Checklist",
 		"## Required Validation Set",
 		"## Project Health Check",
 		"## Technical Debt",
@@ -51,9 +55,13 @@ func _validate_acceptance_report() -> void:
 			_errors.append("Acceptance report is missing heading: %s" % heading)
 
 	for phrase in [
-		"Automated acceptance: PASSED.",
-		"content expansion remains locked until the user approves",
-		"Do not start repeated content expansion until the user explicitly approves Dev Slice 0.1.",
+		"System validation: PASSED.",
+		"Player-visible acceptance: PENDING.",
+		"Difficulty selection / new game entry.",
+		"Extraction zone countdown and result transition.",
+		"Loot containers can produce items.",
+		"player-visible acceptance is still pending",
+		"Do not start repeated content expansion until the user explicitly approves Dev Slice 0.1 after hands-on player-visible review.",
 		"validate_three_raid_loop.gd",
 		"validate_dev_slice_acceptance.gd",
 		"res://scenes/gameplay/player_test_world_3d.tscn",
@@ -75,22 +83,42 @@ func _validate_acceptance_report() -> void:
 		"The loop is repeatable for at least three raids",
 	]:
 		if not text.contains(checklist_item):
-			_errors.append("Acceptance report is missing checklist item: %s" % checklist_item)
+			_errors.append("Acceptance report is missing system checklist item: %s" % checklist_item)
+
+	for player_visible_item in [
+		"Difficulty selection leads to a clearly recognizable Base phase.",
+		"Base UI is readable in Traditional Chinese.",
+		"Pistol, ammo, and shooting feedback are visible during normal play.",
+		"Scavenger is visible on the normal raid route.",
+		"Enemy attack, player damage, and player death are visible.",
+		"A new `validate_player_visible_slice.gd` or equivalent runtime check catches missing player-visible wiring.",
+		"The user approves that Dev Slice 0.1 now matches the intended early direction.",
+	]:
+		if not text.contains(player_visible_item):
+			_errors.append("Acceptance report is missing player-visible checklist item: %s" % player_visible_item)
 
 	for validation_script in _required_validation_scripts():
 		if not text.contains(validation_script):
 			_errors.append("Acceptance report should list validation script: %s" % validation_script)
 
 
-func _validate_task_queue() -> void:
-	var text := FileAccess.get_file_as_string(TASK_QUEUE_PATH)
-	var task_index := text.find("## 任務三十：Dev Slice 0.1 驗收與鎖定擴充門檻")
+func _validate_task_queues() -> void:
+	var original_queue_text := FileAccess.get_file_as_string(TASK_QUEUE_PATH)
+	if not original_queue_text.contains("player_visibility_task_queue.md"):
+		_errors.append("Automation task queue should point future automation to the player visibility queue.")
+	if not original_queue_text.contains("system-level complete"):
+		_errors.append("Automation task queue should record that the first 30 tasks are system-level complete.")
+
+	var visibility_text := FileAccess.get_file_as_string(PLAYER_VISIBILITY_QUEUE_PATH)
+	var task_index := visibility_text.find("## 可視化任務一")
 	if task_index < 0:
-		_errors.append("Task queue is missing task thirty.")
+		_errors.append("Player visibility queue is missing task one.")
 		return
-	var task_text := text.substr(task_index, 220)
-	if not task_text.contains("狀態：完成"):
-		_errors.append("Task thirty should be marked complete after Dev Slice 0.1 acceptance.")
+	var first_task_text := visibility_text.substr(task_index, 360)
+	if not first_task_text.contains("狀態：完成"):
+		_errors.append("Player visibility task one should be marked complete after the pending gate is documented.")
+	if not visibility_text.contains("player-visible acceptance"):
+		_errors.append("Player visibility queue should mention player-visible acceptance.")
 
 
 func _validate_plan_gate() -> void:
@@ -98,8 +126,9 @@ func _validate_plan_gate() -> void:
 	for phrase in [
 		"Approval Target For Dev Slice 0.1",
 		"Do not expand content volume until this checklist is true",
-		"Dev Slice 0.1 automated acceptance passed on 2026-07-02",
-		"Repeated content expansion remains locked until user approval",
+		"Dev Slice 0.1 system validation passed on 2026-07-02",
+		"Player-visible acceptance is pending after hands-on review",
+		"repeated content expansion remains locked until user approval",
 	]:
 		if not text.contains(phrase):
 			_errors.append("Early development plan is missing approval gate phrase: %s" % phrase)

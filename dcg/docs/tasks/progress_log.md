@@ -1367,3 +1367,24 @@
 
 - Pause numbered automation tasks after Dev Slice 0.1 completion.
 - Wait for user hands-on approval before adding repeated content volume.
+
+## 2026-07-02 Player Visibility Gate Task
+
+### Completed
+
+- Updated `docs/tasks/dev_slice_0_1_acceptance.md` to distinguish system validation from player-visible acceptance.
+- Recorded the user's hands-on finding that only difficulty selection, extraction countdown/result transition, and loot containers are clearly visible so far.
+- Added a player-visible acceptance checklist for Base, Traditional Chinese UI, Raid HUD, pistol feedback, Scavenger, damage/death, enemy drops, quests, workbench, selling, stash/money changes, and future visible-slice validation.
+- Updated `early_development_plan.md` so content expansion remains locked because player-visible acceptance is still pending.
+- Marked 可視化任務一 complete in `player_visibility_task_queue.md`.
+
+### Verified
+
+- Dev Slice acceptance validation reports `[dev_slice_acceptance] OK system=passed player_visible=pending gate=locked`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Main project and gameplay scene startup checks pass in Godot 4.7 headless mode.
+
+### Next
+
+- Continue with 可視化任務二：修復繁中 UI 文字基礎.
