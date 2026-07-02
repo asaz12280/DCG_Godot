@@ -188,7 +188,7 @@ Run these after tasks touching shared UI, scene flow, save, combat, or raid stat
 
 ## 可視化任務五：Raid HUD 顯示玩家當下目標
 
-狀態：未開始
+狀態：完成
 
 目標：進入 Raid 後，玩家知道現在要做什麼。
 

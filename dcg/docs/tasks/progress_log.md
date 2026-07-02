@@ -1492,3 +1492,26 @@
 ### Next
 
 - Continue with 可視化任務五：Raid HUD 顯示玩家當下目標.
+
+## 2026-07-02 Raid HUD Player Objective Visibility Task
+
+### Completed
+
+- Marked 可視化任務五 complete in `docs/tasks/player_visibility_task_queue.md`.
+- Updated `scenes/ui/raid_hud_panel.tscn` so the stable HUD panel defaults to readable Traditional Chinese instead of English placeholders.
+- Added node-first HUD rows for `目前目標`, route guidance, health/stamina, extraction status, and weapon/ammo.
+- Updated `scripts/ui/raid_hud_panel.gd` to bind the HUD to the existing RaidSession, player vitals, WeaponController3D, and extraction zone without adding new map/content.
+- Added Raid HUD localization keys for goal title, route hint, health, stamina, weapon, and missing weapon/vitals states.
+- Strengthened `tools/validate_raid_hud.gd` so the task fails if the HUD only exists technically but does not show the visible player objective in Traditional Chinese.
+- Expanded `tools/validate_ui_text_quality.gd` to verify the new HUD keys and visible HUD text at 1280x720 and 1920x1080.
+
+### Verified
+
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Related validations pass: extraction flow, three-raid loop, UI foundation, gameplay architecture, Base screen, and Raid result panel.
+- Localization key check reports no duplicate non-empty keys in `game_text.csv`.
+
+### Next
+
+- Continue with 可視化任務六：讓手槍與射擊回饋可見.

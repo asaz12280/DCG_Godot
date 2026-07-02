@@ -7,8 +7,8 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 36.0
 offset_top = 36.0
-offset_right = 426.0
-offset_bottom = 202.0
+offset_right = 466.0
+offset_bottom = 232.0
 mouse_filter = 2
 script = ExtResource("1_raid_hud_panel")
 
@@ -24,29 +24,45 @@ grow_vertical = 2
 [node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_bottom = 14
 
 [node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
+
+[node name="GoalTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "目前目標"
 
 [node name="ObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Find supplies and extract"
+text = "搜索物資 / 小心敵人 / 前往撤離點"
+autowrap_mode = 3
+
+[node name="RouteHintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "搜完箱子後，確認血量與彈藥，再站進撤離區倒數。"
 autowrap_mode = 3
 
 [node name="StatusLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Raid active 0s"
+text = "行動中 0 秒"
+
+[node name="VitalsLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "生命：100 / 100　體力：100 / 100"
 
 [node name="ExtractionLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Reach extraction zone to leave"
+text = "前往撤離區即可離開"
 autowrap_mode = 3
 
 [node name="ExtractionProgress" type="ProgressBar" parent="MainPanel/PanelMargin/Content"]
@@ -58,4 +74,4 @@ show_percentage = false
 [node name="AmmoLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Ammo: 8 / 24"
+text = "武器：手槍-S　彈藥：8 / 24"

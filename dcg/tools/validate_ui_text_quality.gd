@@ -18,7 +18,14 @@ const REQUIRED_KEYS: Array[String] = [
 	"ui.base.sell_all_junk",
 	"ui.base.start_raid",
 	"ui.base.quest_progress",
+	"ui.raid_hud.goal_title",
 	"ui.raid_hud.objective",
+	"ui.raid_hud.route_hint",
+	"ui.raid_hud.health",
+	"ui.raid_hud.stamina",
+	"ui.raid_hud.vitals_missing",
+	"ui.raid_hud.weapon",
+	"ui.raid_hud.weapon_missing",
 	"ui.raid_hud.ammo",
 	"ui.raid_hud.extraction_hint",
 	"ui.raid_result.title",
@@ -41,7 +48,14 @@ const REQUIRED_ZH_TW_TEXT := {
 	"ui.base.sell_all_junk": "出售雜物",
 	"ui.base.workbench": "工作台",
 	"ui.base.quest": "任務",
-	"ui.raid_hud.objective": "搜索物資並前往撤離點",
+	"ui.raid_hud.goal_title": "目前目標",
+	"ui.raid_hud.objective": "搜索物資 / 小心敵人 / 前往撤離點",
+	"ui.raid_hud.route_hint": "搜完箱子後，確認血量與彈藥，再站進撤離區倒數。",
+	"ui.raid_hud.health": "生命",
+	"ui.raid_hud.stamina": "體力",
+	"ui.raid_hud.vitals_missing": "生命：-- / --　體力：-- / --",
+	"ui.raid_hud.weapon": "武器",
+	"ui.raid_hud.weapon_missing": "未裝備",
 	"ui.raid_hud.ammo": "彈藥",
 	"ui.raid_result.title": "行動結算",
 	"ui.raid_result.transfer_title": "物資轉移",
@@ -212,9 +226,21 @@ func _validate_raid_hud_text_and_layout() -> void:
 		var rect: Rect2 = hud.call("preview_layout", viewport_size)
 		hud.call("_update_objective")
 		hud.call("_update_raid_status")
+		hud.call("_update_vitals")
 		hud.call("_update_extraction_idle")
 		hud.call("_update_ammo")
 		_assert_clean_tree_text(hud, "RaidHudPanel")
+		var state: Dictionary = hud.call("get_display_state")
+		if str(state.get("goal_title", "")) != "目前目標":
+			_errors.append("Raid HUD should expose a readable Traditional Chinese goal title.")
+		if not str(state.get("objective", "")).contains("搜索物資") or not str(state.get("objective", "")).contains("小心敵人") or not str(state.get("objective", "")).contains("前往撤離點"):
+			_errors.append("Raid HUD objective should tell the player to search, watch enemies, and extract.")
+		if not str(state.get("route_hint", "")).contains("箱子") or not str(state.get("route_hint", "")).contains("撤離區"):
+			_errors.append("Raid HUD route hint should explain the visible raid path.")
+		if not str(state.get("vitals", "")).contains("生命") or not str(state.get("vitals", "")).contains("體力"):
+			_errors.append("Raid HUD should show health and stamina text.")
+		if not str(state.get("ammo", "")).contains("武器") or not str(state.get("ammo", "")).contains("彈藥"):
+			_errors.append("Raid HUD should show weapon and ammo text.")
 		if rect.position.x < 24.0 or rect.position.y < 24.0:
 			_errors.append("Raid HUD should keep safe margins at %s." % viewport_size)
 		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
@@ -283,7 +309,7 @@ func _looks_like_english_fallback(text: String) -> bool:
 			break
 	if has_cjk:
 		return false
-	for token in ["Base", "Raid", "Stash", "Quest", "Workbench", "Start", "Extracted", "Lost", "Scavenger", "Ammo"]:
+	for token in ["Base", "Raid", "Stash", "Quest", "Workbench", "Start", "Extracted", "Lost", "Scavenger", "Ammo", "Weapon", "Health", "Stamina", "Find supplies", "Reach extraction"]:
 		if text.contains(token):
 			return true
 	return false

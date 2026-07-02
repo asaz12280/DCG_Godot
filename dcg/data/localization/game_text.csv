@@ -182,12 +182,19 @@ ui.base.submit_quest,回報任務,Submit,Submit,回报任务
 ui.base.quest_objective,帶回,Extract,Extract,带回
 ui.base.quest_kill_objective,擊倒,Eliminate,Eliminate,击倒
 ui.base.quest_progress,進度,Progress,Progress,进度
-ui.raid_hud.objective,搜索物資並前往撤離點,Find supplies and extract,Find supplies and extract,搜索物资并前往撤离点
+ui.raid_hud.goal_title,目前目標,Current objective,Current objective,当前目标
+ui.raid_hud.objective,搜索物資 / 小心敵人 / 前往撤離點,Search supplies / Watch enemies / Reach extraction,Search supplies / Watch enemies / Reach extraction,搜索物资 / 小心敌人 / 前往撤离点
+ui.raid_hud.route_hint,搜完箱子後，確認血量與彈藥，再站進撤離區倒數。,Search containers then check health and ammo before extraction,Search containers then check health and ammo before extraction,搜完箱子后，确认血量与弹药，再站进撤离区倒数。
 ui.raid_hud.status_dead,行動失敗,Raid failed,Raid failed,行动失败
 ui.raid_hud.status_extracted,已撤離,Extracted,Extracted,已撤离
 ui.raid_hud.status_active,行動中,Raid active,Raid active,行动中
 ui.raid_hud.status_ready,準備中,Ready,Ready,准备中
 ui.raid_hud.extraction_hint,前往撤離區即可離開,Reach extraction zone to leave,Reach extraction zone to leave,前往撤离区即可离开
+ui.raid_hud.health,生命,Health,Health,生命
+ui.raid_hud.stamina,體力,Stamina,Stamina,体力
+ui.raid_hud.vitals_missing,生命：-- / --　體力：-- / --,Health: -- / --  Stamina: -- / --,Health: -- / --  Stamina: -- / --,生命：-- / --　体力：-- / --
+ui.raid_hud.weapon,武器,Weapon,Weapon,武器
+ui.raid_hud.weapon_missing,未裝備,No weapon,No weapon,未装备
 ui.raid_hud.ammo_missing,彈藥：-- / --,Ammo: -- / --,Ammo: -- / --,弹药：-- / --
 ui.raid_hud.ammo,彈藥,Ammo,Ammo,弹药
 ui.raid_hud.extracting,撤離中...,Extracting...,Extracting...,撤离中...
