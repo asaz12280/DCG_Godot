@@ -12,6 +12,8 @@ const COLOR_TEXT_HELP := Color(0.80, 0.92, 0.92, 0.72)
 
 const COLOR_OVERLAY_PANEL := Color(0.12, 0.16, 0.16, 0.92)
 const COLOR_OVERLAY_BORDER := Color(0.70, 0.88, 0.88, 0.20)
+const COLOR_BASE_PHASE_PANEL := Color(0.16, 0.20, 0.18, 0.95)
+const COLOR_BASE_PHASE_BORDER := Color(0.86, 0.78, 0.48, 0.34)
 
 const COLOR_MENU_BACKGROUND := Color(0.08, 0.10, 0.10, 1.0)
 const COLOR_MENU_ATMOSPHERE := Color(0.50, 0.55, 0.47, 0.32)
@@ -73,6 +75,13 @@ static func make_overlay_panel_style() -> StyleBoxFlat:
 	style.border_color = COLOR_OVERLAY_BORDER
 	style.set_border_width_all(OVERLAY_BORDER_WIDTH)
 	style.set_corner_radius_all(OVERLAY_CORNER_RADIUS)
+	return style
+
+
+static func make_base_phase_panel_style() -> StyleBoxFlat:
+	var style := make_overlay_panel_style()
+	style.bg_color = COLOR_BASE_PHASE_PANEL
+	style.border_color = COLOR_BASE_PHASE_BORDER
 	return style
 
 

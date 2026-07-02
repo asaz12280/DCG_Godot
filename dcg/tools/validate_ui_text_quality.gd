@@ -9,6 +9,8 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const REQUIRED_KEYS: Array[String] = [
 	"ui.base.title",
 	"ui.base.subtitle",
+	"ui.base.phase",
+	"ui.base.phase_hint",
 	"ui.base.difficulty",
 	"ui.base.stash",
 	"ui.base.workbench",
@@ -28,6 +30,8 @@ const REQUIRED_KEYS: Array[String] = [
 
 const REQUIRED_ZH_TW_TEXT := {
 	"ui.base.title": "基地",
+	"ui.base.phase": "安全區 / 基地階段",
+	"ui.base.phase_hint": "這裡不會戰鬥。確認倉庫、任務與工作台後再開始出擊。",
 	"ui.base.start_raid": "開始出擊",
 	"ui.base.sell_all_junk": "出售雜物",
 	"ui.base.workbench": "工作台",
@@ -176,12 +180,16 @@ func _validate_base_text_and_layout() -> void:
 		_assert_clean_tree_text(screen, "BaseScreen")
 		var state: Dictionary = screen.get_display_state()
 		var panel_rect := state.get("panel_rect") as Rect2
+		var phase_rect := state.get("phase_banner_rect") as Rect2
 		var start_rect := state.get("start_button_rect") as Rect2
-		var submit_rect := state.get("submit_quest_button_rect") as Rect2
+		if str(state.get("phase", "")) != "安全區 / 基地階段":
+			_errors.append("Base UI should expose a readable Traditional Chinese base phase banner.")
+		if not str(state.get("phase_hint", "")).contains("開始出擊"):
+			_errors.append("Base UI phase hint should explain the next player action.")
 		if panel_rect.end.x > viewport_size.x or panel_rect.end.y > viewport_size.y:
 			_errors.append("Base UI text quality check should fit panel inside %s." % viewport_size)
-		if not panel_rect.encloses(start_rect) or not panel_rect.encloses(submit_rect):
-			_errors.append("Base UI actions should stay inside panel at %s." % viewport_size)
+		if not panel_rect.encloses(start_rect) or not panel_rect.encloses(phase_rect):
+			_errors.append("Base UI primary action and base phase banner should stay inside panel at %s." % viewport_size)
 		_free_node(screen)
 	_free_node(save_manager)
 

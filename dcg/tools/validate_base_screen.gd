@@ -7,12 +7,13 @@ var _errors: Array[String] = []
 
 
 func _initialize() -> void:
+	TranslationServer.set_locale("zh_TW")
 	await _validate_empty_stash()
 	await _validate_filled_stash()
 	await _validate_layout_fit()
 	await _validate_start_raid_button()
 	if _errors.is_empty():
-		print("[base_screen] OK node_first=true empty=shown stash=shown layout=fits")
+		print("[base_screen] OK node_first=true base=recognizable empty=shown stash=shown layout=fits")
 		quit(0)
 	else:
 		for error in _errors:
@@ -26,12 +27,10 @@ func _validate_empty_stash() -> void:
 	await process_frame
 	screen.refresh()
 	var state: Dictionary = screen.get_display_state()
+	_validate_base_identity(state)
 	if int(state.get("stash_rows", 0)) != 1:
 		_errors.append("BaseScreen should show one empty-state stash row when there is no save data.")
-	if not (
-		str(state.get("status", "")).contains("尚無存檔")
-		or str(state.get("status", "")).contains("No save data")
-	):
+	if not str(state.get("status", "")).contains("尚無存檔"):
 		_errors.append("BaseScreen should show a clear no-save status message.")
 	_free_node(screen)
 	_free_node(save_manager)
@@ -57,19 +56,17 @@ func _validate_filled_stash() -> void:
 	await process_frame
 	screen.refresh()
 	var state: Dictionary = screen.get_display_state()
+	_validate_base_identity(state)
 	if not str(state.get("slot", "")).contains("2"):
 		_errors.append("BaseScreen should show the SaveGameManager current slot.")
 	if int(state.get("stash_rows", 0)) != 2:
 		_errors.append("BaseScreen should show one row per stash entry.")
-	var difficulty_text := str(state.get("difficulty", ""))
-	if not (
-		difficulty_text.contains("Hard")
-		or difficulty_text.contains("困難")
-		or difficulty_text.contains("困难")
-	):
-		_errors.append("BaseScreen should show the saved difficulty.")
+	if not str(state.get("difficulty", "")).contains("困難"):
+		_errors.append("BaseScreen should show the saved difficulty in Traditional Chinese.")
 	if not str(state.get("money", "")).contains("42"):
 		_errors.append("BaseScreen should show saved money.")
+	if not str(state.get("status", "")).contains("開始出擊"):
+		_errors.append("BaseScreen ready status should tell the player how to continue to raid.")
 	_free_node(screen)
 	_cleanup_validation_root(save_manager.save_root_path)
 	_free_node(save_manager)
@@ -88,6 +85,7 @@ func _validate_layout_fit() -> void:
 		await process_frame
 		var state: Dictionary = screen.get_display_state()
 		var panel_rect := state.get("panel_rect") as Rect2
+		var phase_rect := state.get("phase_banner_rect") as Rect2
 		var button_rect := state.get("start_button_rect") as Rect2
 		if panel_rect.position.x < 48.0 and viewport_size.x >= 1280.0:
 			_errors.append("BaseScreen panel should keep a large-screen safe margin.")
@@ -99,6 +97,10 @@ func _validate_layout_fit() -> void:
 			_errors.append("BaseScreen start button should stay inside the viewport at %s." % viewport_size)
 		if not panel_rect.encloses(button_rect):
 			_errors.append("BaseScreen start button should stay inside the main panel at %s." % viewport_size)
+		if not panel_rect.encloses(phase_rect):
+			_errors.append("BaseScreen base phase banner should stay inside the main panel at %s." % viewport_size)
+		if phase_rect.size.y < 56.0:
+			_errors.append("BaseScreen base phase banner should be large enough to read at %s." % viewport_size)
 		_free_node(screen)
 	_free_node(save_manager)
 
@@ -109,10 +111,27 @@ func _validate_start_raid_button() -> void:
 	await process_frame
 	if screen.start_raid_button == null:
 		_errors.append("BaseScreen should expose a Start Raid button from the scene tree.")
-	elif screen.start_raid_button.text == "":
-		_errors.append("BaseScreen Start Raid button should have readable text.")
+	elif screen.start_raid_button.text != "開始出擊":
+		_errors.append("BaseScreen Start Raid button should use readable Traditional Chinese text.")
 	_free_node(screen)
 	_free_node(save_manager)
+
+
+func _validate_base_identity(state: Dictionary) -> void:
+	if not str(state.get("title", "")).contains("基地"):
+		_errors.append("BaseScreen title should identify the screen as the base.")
+	if not str(state.get("phase", "")).contains("基地階段"):
+		_errors.append("BaseScreen should show a visible base phase banner.")
+	var phase_hint := str(state.get("phase_hint", ""))
+	for expected in ["不會戰鬥", "倉庫", "任務", "工作台", "開始出擊"]:
+		if not phase_hint.contains(expected):
+			_errors.append("BaseScreen phase hint should mention `%s`." % expected)
+	if str(state.get("stash_title", "")) != "倉庫":
+		_errors.append("BaseScreen should label the stash section in Traditional Chinese.")
+	if str(state.get("workbench_title", "")) != "工作台":
+		_errors.append("BaseScreen should label the workbench section in Traditional Chinese.")
+	if str(state.get("quest_title", "")) != "任務":
+		_errors.append("BaseScreen should label the quest section in Traditional Chinese.")
 
 
 func _make_save_manager() -> Node:

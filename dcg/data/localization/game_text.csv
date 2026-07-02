@@ -139,6 +139,8 @@ ui.pause.main_menu,回到主選單,Main Menu,Main Menu,回到主菜单
 ui.pause.quit,退出遊戲,Quit Game,Quit Game,退出游戏
 ui.base.title,基地,Base,Base,基地
 ui.base.subtitle,整理倉庫、準備裝備，開始下一場行動。,Stash prepare and start the next raid,Stash prepare and start the next raid,整理仓库、准备装备，开始下一场行动。
+ui.base.phase,安全區 / 基地階段,Safe zone / Base phase,Safe zone / Base phase,安全区 / 基地阶段
+ui.base.phase_hint,這裡不會戰鬥。確認倉庫、任務與工作台後再開始出擊。,No combat here. Check stash quests and workbench before raiding,No combat here. Check stash quests and workbench before raiding,这里不会战斗。确认仓库、任务与工作台后再开始出击。
 ui.base.slot_format,存檔 %d,Slot %d,Slot %d,存档 %d
 ui.base.difficulty,難度,Difficulty,Difficulty,难度
 ui.base.money,金錢,Money,Money,金钱
@@ -151,7 +153,7 @@ ui.base.sell_all_junk,出售雜物,Sell All Junk,Sell All Junk,出售杂物
 ui.base.upgrade,升級,Upgrade,Upgrade,升级
 ui.base.upgraded,已升級,Upgraded,Upgraded,已升级
 ui.base.start_raid,開始出擊,Start Raid,Start Raid,开始出击
-ui.base.ready,已準備好進行下一次行動。,Ready for the next run,Ready for the next run,已准备好进行下一次行动。
+ui.base.ready,基地待命：整理物資後按「開始出擊」。,Base ready. Prepare supplies then start the raid,Base ready. Prepare supplies then start the raid,基地待命：整理物资后按「开始出击」。
 ui.base.no_save,尚無存檔資料。先開始一場行動來建立進度。,No save data yet. Start a raid to create progress,No save data yet. Start a raid to create progress,尚无存档资料。先开始一场行动来建立进度。
 ui.base.sell_none,沒有可出售的雜物。,No junk to sell,No junk to sell,没有可出售的杂物。
 ui.base.sell_failed,無法保存出售結果。,Could not save sale result,Could not save sale result,无法保存出售结果。

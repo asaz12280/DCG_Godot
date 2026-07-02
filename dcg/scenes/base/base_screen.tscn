@@ -42,13 +42,41 @@ theme_override_constants/separation = 10
 [node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Base"
+text = "基地"
 
 [node name="SubtitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-text = "Stash, prepare, and start the next raid."
+text = "整理倉庫、準備裝備，開始下一場行動。"
+autowrap_mode = 3
+
+[node name="PhaseBanner" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+
+[node name="PhaseMargin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/PhaseBanner"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
+
+[node name="PhaseContent" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/PhaseBanner/PhaseMargin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="PhaseLabel" type="Label" parent="MainPanel/PanelMargin/Content/PhaseBanner/PhaseMargin/PhaseContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "安全區 / 基地階段"
+
+[node name="PhaseHintLabel" type="Label" parent="MainPanel/PanelMargin/Content/PhaseBanner/PhaseMargin/PhaseContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+text = "這裡不會戰鬥。確認倉庫、任務與工作台後再開始出擊。"
 autowrap_mode = 3
 
 [node name="InfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
@@ -60,28 +88,28 @@ theme_override_constants/separation = 22
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "Slot 1"
+text = "存檔 1"
 vertical_alignment = 1
 
 [node name="DifficultyLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
-text = "Difficulty: Normal"
+text = "難度: 普通"
 vertical_alignment = 1
 
 [node name="MoneyLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Money: $0"
+text = "金錢: $0"
 vertical_alignment = 1
 
 [node name="Separator" type="HSeparator" parent="MainPanel/PanelMargin/Content"]
 layout_mode = 2
 
 [node name="SectionsScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content"]
-custom_minimum_size = Vector2(0, 338)
+custom_minimum_size = Vector2(0, 270)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
@@ -94,7 +122,7 @@ theme_override_constants/separation = 10
 [node name="StashTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Stash"
+text = "倉庫"
 
 [node name="StashScroll" type="ScrollContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 custom_minimum_size = Vector2(0, 76)
@@ -113,7 +141,7 @@ layout_mode = 2
 [node name="WorkbenchTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Workbench"
+text = "工作台"
 
 [node name="WorkbenchSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 custom_minimum_size = Vector2(0, 78)
@@ -123,12 +151,12 @@ theme_override_constants/separation = 6
 [node name="WorkbenchNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Workbench Level 1"
+text = "工作台 Lv.1"
 
 [node name="WorkbenchDescriptionLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Prepare better starter ammunition for the next raid."
+text = "為下一場行動準備更多初始備用彈藥。"
 autowrap_mode = 3
 
 [node name="WorkbenchInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection"]
@@ -140,21 +168,21 @@ theme_override_constants/separation = 16
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Cost: $20, Wood x4, Wire x2"
+text = "需求: $20、木頭 x4、電線 x2"
 vertical_alignment = 1
 
 [node name="WorkbenchStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection/WorkbenchInfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
-text = "Not upgraded"
+text = "尚未升級"
 vertical_alignment = 1
 
 [node name="UpgradeWorkbenchButton" type="Button" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/WorkbenchSection/WorkbenchInfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 44)
 layout_mode = 2
-text = "Upgrade"
+text = "升級"
 
 [node name="QuestSeparator" type="HSeparator" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 layout_mode = 2
@@ -162,7 +190,7 @@ layout_mode = 2
 [node name="QuestTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Quest"
+text = "任務"
 
 [node name="QuestSection" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections"]
 custom_minimum_size = Vector2(0, 88)
@@ -172,12 +200,12 @@ theme_override_constants/separation = 6
 [node name="QuestNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "First Salvage"
+text = "首次回收"
 
 [node name="QuestObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Extract wood x2 or wire x1."
+text = "帶回木頭 x2 或電線 x1。"
 autowrap_mode = 3
 
 [node name="QuestInfoRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection"]
@@ -189,27 +217,27 @@ theme_override_constants/separation = 16
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Progress: 0 / 1 route proven"
+text = "進度: 0 / 1"
 vertical_alignment = 1
 
 [node name="QuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection/QuestInfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-text = "Active"
+text = "進行中"
 vertical_alignment = 1
 
 [node name="SubmitQuestButton" type="Button" parent="MainPanel/PanelMargin/Content/SectionsScroll/Sections/QuestSection/QuestInfoRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 44)
 layout_mode = 2
-text = "Submit"
+text = "回報任務"
 
 [node name="StatusLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
-text = "Ready for the next run."
+text = "基地待命：整理物資後按「開始出擊」。"
 autowrap_mode = 3
 
 [node name="ActionRow" type="HBoxContainer" parent="MainPanel/PanelMargin/Content"]
@@ -222,10 +250,10 @@ alignment = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(190, 44)
 layout_mode = 2
-text = "Sell All Junk"
+text = "出售雜物"
 
 [node name="StartRaidButton" type="Button" parent="MainPanel/PanelMargin/Content/ActionRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
-text = "Start Raid"
+text = "開始出擊"
