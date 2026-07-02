@@ -1574,3 +1574,40 @@
 ### Next
 
 - Continue with V2 任務四：建立 Base 互動點.
+
+## 2026-07-02 Project Health Check After V2 Task Three
+
+### Health Check
+
+- Player flow reachability: V2 flow enters `res://scenes/base/base_3d.tscn` through new game and continue validation.
+- 3D Base vs 2D panel responsibility: 3D Base owns the world shell and station placement; old `BaseScreen` remains available for later panel reuse and is not embedded as the whole Base scene.
+- Inventory/equipment/weapon boundaries: no inventory, equipment, ammo, or weapon ownership changed in V2 task three.
+- Container inventory boundary: unchanged; direct container-to-backpack grant remains documented as V2 debt.
+- UIManager and UI ownership: unchanged; top menu panel debt remains documented until the relevant V2 tasks.
+- Traditional Chinese text quality: Base station labels are Traditional Chinese and validated in `validate_base_3d_scene.gd`.
+- Scene loadability and validation health: Base 3D, base flow, save slots, V2 health, gameplay architecture, UI foundation, and main startup validations pass.
+
+## 2026-07-02 Player Visibility V2 Base Interaction Points
+
+### Completed
+
+- Added `scripts/base/base_interaction_controller_3d.gd` so 3D Base proximity prompts and E-key interaction are owned by a Base controller instead of PlayerController3D.
+- Added node-first `scenes/base/base_interaction_panel.tscn` with `scripts/base/base_interaction_panel.gd` for visible Traditional Chinese station panels.
+- Wired `base_3d.tscn` so `倉庫`, `任務板`, `工作台`, and `出擊門` show a nearby prompt; station panels open for the first three and the raid gate starts the existing raid scene.
+- Added `tools/validate_base_interactions.gd` to verify prompts, panel visibility, Traditional Chinese station text, and raid start target.
+- Marked V2 任務四 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Base interaction validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Base 3D scene validation reports `[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=4`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Save slots validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- New `res://scenes/base/base_3d.tscn` loads in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務五：拆分舊 BaseScreen 職責.

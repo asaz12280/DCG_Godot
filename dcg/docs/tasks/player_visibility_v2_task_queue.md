@@ -88,7 +88,7 @@ Each Project Health Check must inspect:
 
 ## 任務四：建立 Base 互動點
 
-狀態：未開始
+狀態：完成
 
 目標：在 3D Base 中放置倉庫、任務板、工作台、出擊門。
 
@@ -97,7 +97,7 @@ Each Project Health Check must inspect:
 - 按互動鍵能開啟對應面板或開始出擊。
 
 驗證：
-- Base interaction validation。
+- `validate_base_interactions.gd`
 
 ## 任務五：拆分舊 BaseScreen 職責
 

@@ -1,7 +1,9 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/gameplay/top_down_camera_3d.gd" id="2_camera"]
+[ext_resource type="Script" path="res://scripts/base/base_interaction_controller_3d.gd" id="3_interaction_controller"]
+[ext_resource type="PackedScene" path="res://scenes/base/base_interaction_panel.tscn" id="4_interaction_panel"]
 
 [sub_resource type="Environment" id="Environment_base"]
 background_mode = 1
@@ -243,3 +245,21 @@ current = true
 fov = 42.0
 script = ExtResource("2_camera")
 target_path = NodePath("../Player3D")
+
+[node name="BaseInteractionController3D" type="Node" parent="."]
+script = ExtResource("3_interaction_controller")
+player_path = NodePath("../Player3D")
+prompt_label_path = NodePath("../PromptLabel")
+panel_path = NodePath("../HUD/BaseInteractionPanel")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+visible = false
+billboard = 1
+text = ""
+font_size = 42
+outline_size = 8
+modulate = Color(0.92, 1, 0.92, 1)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="BaseInteractionPanel" parent="HUD" instance=ExtResource("4_interaction_panel")]
