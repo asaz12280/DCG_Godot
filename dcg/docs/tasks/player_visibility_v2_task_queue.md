@@ -174,7 +174,7 @@ Each Project Health Check must inspect:
 
 ## 任務十：把 No.5 手槍與 No.7 子彈放入早期箱子
 
-狀態：未開始
+狀態：完成
 
 目標：使用現有 No.5 手槍與 No.7 子彈驗證流程，不新增大量物品。
 

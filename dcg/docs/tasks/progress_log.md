@@ -1749,3 +1749,30 @@
 ### Next
 
 - Continue with V2 任務十：把 No.5 手槍與 No.7 子彈放入早期箱子.
+
+## 2026-07-02 Player Visibility V2 Early Pistol And Ammo Container
+
+### Completed
+
+- Added `guaranteed_entries` support to `LootTable` so early proof items can be data-authored without hard-coding them into player, UI, or container scripts.
+- Updated `data/loot_tables/refuge_outskirts_common.tres` so early loot containers always include No.5 `手槍-S` and No.7 `彈藥-S`, then roll the existing small common loot set.
+- Kept the scope narrow: no new weapon list, no new map, no new enemy, and no final art.
+- Strengthened `tools/validate_loot_tables.gd` to require the guaranteed No.5 pistol and No.7 ammo entries and prove rolled loot contains both.
+- Strengthened `tools/validate_container_transfer.gd` to open the gameplay container UI and verify the visible slot text matches the item catalog names for No.5 and No.7.
+- Strengthened `tools/validate_item_catalog.gd` to guard No.5 as `pistol_9mm` / `手槍-S` and No.7 as `ammo_9mm` / `彈藥-S`.
+- Marked V2 任務十 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Loot table validation reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
+- Container transfer validation reports `[container_transfer] OK click=moves_to_backpack full=feedback boundaries=clean`.
+- Item catalog validation reports `[item_catalog] OK items=21 max_no=21`.
+- Loot container validation reports `[loot_container] OK roll=container_inventory one_shot=no_reroll map=spawn_loot_extract ui_coupling=clean scene=wired`.
+- Container open flow validation reports `[container_open_flow] OK interaction=opens_ui contents=container_owned ui_manager=owner`.
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- Early balance validation reports `[early_balance] OK player=forgiving enemy=readable loot=progression extraction=pressure upgrade=reachable`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+
+### Next
+
+- Continue with V2 任務十一：建立 EquipmentModel.

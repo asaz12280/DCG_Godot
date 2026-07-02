@@ -11,6 +11,7 @@ func _initialize() -> void:
 	_collect_items(ITEM_ROOT_PATH)
 	_validate_numbers()
 	_validate_item_fields()
+	_validate_v2_proof_items()
 	if _errors.is_empty():
 		print("[item_catalog] OK items=%d max_no=%d" % [_items_by_number.size(), _highest_number()])
 		quit(0)
@@ -75,6 +76,23 @@ func _validate_item_fields() -> void:
 			_errors.append("Invalid max_stack at %s" % path)
 		if item.tags.has(&"gun") and item.damage <= 0:
 			_errors.append("Gun item is missing damage at %s" % path)
+
+
+func _validate_v2_proof_items() -> void:
+	_validate_catalog_item(5, &"pistol_9mm", "手槍-S")
+	_validate_catalog_item(7, &"ammo_9mm", "彈藥-S")
+
+
+func _validate_catalog_item(number: int, expected_id: StringName, expected_display_name: String) -> void:
+	if not _items_by_number.has(number):
+		return
+	var entry := _items_by_number[number] as Dictionary
+	var item := entry.get("item") as ItemDef
+	var path := str(entry.get("path", ""))
+	if item.id != expected_id:
+		_errors.append("Catalog No.%d should be %s, got %s at %s." % [number, expected_id, item.id, path])
+	if item.display_name != expected_display_name:
+		_errors.append("Catalog No.%d display name should stay %s, got %s at %s." % [number, expected_display_name, item.display_name, path])
 
 
 func _highest_number() -> int:

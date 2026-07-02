@@ -3,12 +3,16 @@ extends SceneTree
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
 
 var _errors: Array[String] = []
 
 
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
+	await _validate_early_container_visible_pistol_and_ammo()
 	await _validate_click_transfer_to_backpack()
 	await _validate_full_backpack_feedback()
 	_validate_responsibility_boundary()
@@ -19,6 +23,28 @@ func _initialize() -> void:
 		for error in _errors:
 			push_error(error)
 		quit(1)
+
+
+func _validate_early_container_visible_pistol_and_ammo() -> void:
+	var context := await _open_first_container()
+	if context.is_empty():
+		return
+
+	var container: Node = context["container"]
+	var container_ui: Control = context["container_ui"]
+	var container_model: RefCounted = container.call("get_container_inventory_model")
+	var slots: Array = container_model.call("get_slots")
+	if not _slots_contain_path(slots, PISTOL_PATH):
+		_errors.append("Early container should visibly include No.5 pistol.")
+	if not _slots_contain_path(slots, AMMO_PATH):
+		_errors.append("Early container should visibly include No.7 ammo.")
+
+	var visible_text := _container_slot_text(container_ui)
+	if not visible_text.contains(Pistol.display_name):
+		_errors.append("Container UI should show No.5 pistol name matching item catalog: %s" % Pistol.display_name)
+	if not visible_text.contains(Ammo.display_name):
+		_errors.append("Container UI should show No.7 ammo name matching item catalog: %s" % Ammo.display_name)
+	_free_node(context["scene"])
 
 
 func _validate_click_transfer_to_backpack() -> void:
@@ -189,6 +215,20 @@ func _first_occupied_slot(container_model: RefCounted) -> int:
 		if typeof(stack) == TYPE_DICTIONARY and not (stack as Dictionary).is_empty():
 			return index
 	return -1
+
+
+func _slots_contain_path(slots: Array, item_path: String) -> bool:
+	for stack in slots:
+		if typeof(stack) == TYPE_DICTIONARY and str((stack as Dictionary).get("resource_path", "")) == item_path:
+			return true
+	return false
+
+
+func _container_slot_text(container_ui: Control) -> String:
+	var parts: PackedStringArray = []
+	for child in container_ui.find_children("ContainerSlot*", "Button", true, false):
+		parts.append((child as Button).text)
+	return "\n".join(parts)
 
 
 func _free_node(node: Node) -> void:
