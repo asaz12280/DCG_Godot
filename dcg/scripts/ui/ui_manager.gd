@@ -8,6 +8,7 @@ const UI_QUESTS := &"quests"
 const UI_STATUS := &"status"
 const UI_MAP := &"map"
 const UI_CODEX := &"codex"
+const UI_CONTAINER := &"container"
 const UI_PAUSE := &"pause"
 const TOP_MENU_IDS: Array[StringName] = [
 	UI_BACKPACK,
@@ -22,8 +23,10 @@ var active_ui: StringName = UI_NONE
 var _top_menu_bar: Control = null
 var _inventory_ui: Control = null
 var _codex_ui: Control = null
+var _container_inventory_ui: Control = null
 var _pause_menu: Control = null
 var _last_scene: Node = null
+var _active_container: Node = null
 
 
 func _ready() -> void:
@@ -83,6 +86,16 @@ func close_all() -> void:
 	close_active_ui()
 
 
+func open_container_inventory(container: Node) -> void:
+	_bind_ui_nodes()
+	if container == null or _container_inventory_ui == null:
+		return
+	if not container.has_method("get_container_inventory_model"):
+		return
+	_active_container = container
+	_set_active_ui(UI_CONTAINER)
+
+
 func get_active_ui() -> StringName:
 	return active_ui
 
@@ -110,6 +123,7 @@ func _set_active_ui(id: StringName) -> void:
 	active_ui = id
 	_set_inventory_open(active_ui == UI_BACKPACK)
 	_set_codex_open(active_ui == UI_CODEX)
+	_set_container_inventory_open(active_ui == UI_CONTAINER)
 	_set_pause_open(active_ui == UI_PAUSE)
 	_update_top_menu_state()
 	_update_focus_and_mouse()
@@ -130,6 +144,13 @@ func _bind_ui_nodes() -> void:
 
 	if _codex_ui == null or not is_instance_valid(_codex_ui):
 		_codex_ui = _find_control("ItemCodexUI")
+
+	if _container_inventory_ui == null or not is_instance_valid(_container_inventory_ui):
+		_container_inventory_ui = _find_control("ContainerInventoryUI")
+		if _container_inventory_ui != null and _container_inventory_ui.has_signal("close_requested"):
+			var close_callback := Callable(self, "_on_container_inventory_close_requested")
+			if not _container_inventory_ui.is_connected("close_requested", close_callback):
+				_container_inventory_ui.connect("close_requested", close_callback)
 
 	if _pause_menu == null or not is_instance_valid(_pause_menu):
 		_pause_menu = _find_control("PauseMenu")
@@ -158,6 +179,23 @@ func _set_codex_open(should_open: bool) -> void:
 		_codex_ui.open_codex()
 	elif not should_open and _codex_ui.has_method("close_codex"):
 		_codex_ui.close_codex()
+
+
+func _set_container_inventory_open(should_open: bool) -> void:
+	if _container_inventory_ui == null:
+		return
+	if should_open:
+		if _active_container == null or not is_instance_valid(_active_container):
+			return
+		var model: RefCounted = _active_container.call("get_container_inventory_model")
+		var display_name := "物資箱"
+		if _active_container.has_method("get_container_display_name"):
+			display_name = str(_active_container.call("get_container_display_name"))
+		if _container_inventory_ui.has_method("open_container"):
+			_container_inventory_ui.call("open_container", model, display_name)
+	elif _container_inventory_ui.has_method("close_panel"):
+		_container_inventory_ui.call("close_panel")
+		_active_container = null
 
 
 func _set_pause_open(should_open: bool) -> void:
@@ -201,6 +239,8 @@ func _get_active_focus_target() -> Control:
 			return _inventory_ui
 		UI_CODEX:
 			return _codex_ui
+		UI_CONTAINER:
+			return _container_inventory_ui
 		UI_PAUSE:
 			return _pause_menu
 		_:
@@ -223,11 +263,13 @@ func _can_open_ui(id: StringName) -> bool:
 		return _codex_ui != null
 	if id == UI_PAUSE:
 		return _pause_menu != null
+	if id == UI_CONTAINER:
+		return _container_inventory_ui != null
 	return TOP_MENU_IDS.has(id)
 
 
 func _has_panel_for_ui(id: StringName) -> bool:
-	return id == UI_BACKPACK or id == UI_CODEX or id == UI_PAUSE
+	return id == UI_BACKPACK or id == UI_CODEX or id == UI_CONTAINER or id == UI_PAUSE
 
 
 func _refresh_scene_cache() -> void:
@@ -240,6 +282,7 @@ func _refresh_scene_cache() -> void:
 	_top_menu_bar = null
 	_inventory_ui = null
 	_codex_ui = null
+	_container_inventory_ui = null
 	_pause_menu = null
 
 
@@ -251,6 +294,11 @@ func _handle_input_as_handled() -> void:
 
 func _on_tree_changed() -> void:
 	_bind_ui_nodes.call_deferred()
+
+
+func _on_container_inventory_close_requested() -> void:
+	if active_ui == UI_CONTAINER:
+		close_active_ui()
 
 
 func _find_control(node_name: String) -> Control:

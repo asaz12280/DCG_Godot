@@ -26,13 +26,13 @@ The health check does not mean these debts are acceptable forever. It means the 
    - `PlayerController3D` still loads starter inventory and applies Base starter ammo bonus directly.
    - Target: player movement/input should not decide starting weapons, ammo, or Base progression effects.
 
-5. direct container-to-backpack grant
-   - `LootContainer3D.try_open()` rolls loot and calls the player `add_item_resource` API directly.
-   - Target: containers hold their own inventory grid; the player moves items from container slots into backpack slots.
+5. direct container-to-backpack grant resolved in V2 task eight
+   - `LootContainer3D.try_open()` now prepares a container-owned inventory and asks `UIManager` to open `ContainerInventoryUI`.
+   - Guardrail: this direct container-to-backpack grant must not return; container transfer belongs to the later transfer task.
 
-6. missing container capacity UI
-   - Current container interaction does not show box name, `2/4` capacity, or visible item slots.
-   - Target: a stable `.tscn`/Control panel displays container contents and capacity.
+6. missing container capacity UI resolved in V2 task seven
+   - `ContainerInventoryUI` is a stable `.tscn`/Control panel that shows box name, `2/4` capacity text, and visible item slots.
+   - Target: later tasks connect item transfer actions without moving layout ownership out of the UI panel.
 
 7. fake ammo counters
    - `WeaponController3D` owns `current_ammo` and `reserve_ammo` as local counters.

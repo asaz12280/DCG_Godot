@@ -1690,3 +1690,29 @@
 ### Next
 
 - Continue with V2 任務八：改造箱子開啟流程.
+
+## 2026-07-02 Player Visibility V2 Container Open Flow
+
+### Completed
+
+- Updated `LootContainer3D` so opening a container now generates and holds a `ContainerInventoryModel` instead of directly granting all rolled loot to the player backpack.
+- Added `UIManager.open_container_inventory()` and `UI_CONTAINER` state so active container UI, mouse focus, and action blocking are owned by UIManager.
+- Wired `ContainerInventoryUI` into the gameplay HUD so normal raid play can open the visible container panel.
+- Updated `validate_loot_container.gd` from the old direct-grant expectation to the new container-owned inventory expectation.
+- Added `tools/validate_container_open_flow.gd` to verify a gameplay scene container opens the visible UI through UIManager.
+- Updated V2 health audit and validation so the direct container-to-backpack grant is now treated as removed debt.
+- Marked V2 任務八 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Container open flow validation reports `[container_open_flow] OK interaction=opens_ui contents=container_owned ui_manager=owner`.
+- Loot container validation reports `[loot_container] OK roll=container_inventory one_shot=no_reroll map=spawn_loot_extract ui_coupling=clean scene=wired`.
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Main project loads in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務九：箱子物品轉移到背包.

@@ -8,6 +8,7 @@ const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn"
 
 var _errors: Array[String] = []
 var _opened_signal_count := 0
+var _open_requested_signal_count := 0
 
 
 class FakePlayer:
@@ -24,12 +25,12 @@ class FakePlayer:
 
 
 func _initialize() -> void:
-	_validate_container_grants_loot_once()
+	_validate_container_opens_inventory_once()
 	_validate_scene_wiring()
 	_validate_gameplay_map_wiring()
 	_validate_ui_independence()
 	if _errors.is_empty():
-		print("[loot_container] OK roll=grants_inventory one_shot=blocks_repeat map=spawn_loot_extract ui_coupling=clean scene=wired")
+		print("[loot_container] OK roll=container_inventory one_shot=no_reroll map=spawn_loot_extract ui_coupling=clean scene=wired")
 		quit(0)
 	else:
 		for error in _errors:
@@ -37,29 +38,39 @@ func _initialize() -> void:
 		quit(1)
 
 
-func _validate_container_grants_loot_once() -> void:
+func _validate_container_opens_inventory_once() -> void:
 	var container := LootContainerScript.new()
 	container.loot_table = CommonTable
 	container.roll_count = 2
+	container.container_capacity = 4
 	container.opened.connect(_on_container_opened)
+	container.open_requested.connect(_on_container_open_requested)
 	root.add_child(container)
 	var player := FakePlayer.new()
 	root.add_child(player)
 
 	_opened_signal_count = 0
+	_open_requested_signal_count = 0
 	if not container.try_open(player):
-		_errors.append("LootContainer3D should open and grant loot to a valid player.")
-	if player.inventory_model.get_used_slots() <= 0:
-		_errors.append("LootContainer3D should add rolled loot to player inventory.")
+		_errors.append("LootContainer3D should open for a valid player.")
+	if player.inventory_model.get_used_slots() != 0:
+		_errors.append("LootContainer3D should not directly add rolled loot to player inventory.")
+	var container_model: RefCounted = container.get_container_inventory_model()
+	if int(container_model.call("get_used_slots")) <= 0:
+		_errors.append("LootContainer3D should add rolled loot to its own container inventory.")
 	if not bool(container.get_state().get("has_opened", false)):
-		_errors.append("LootContainer3D should mark itself opened after granting loot.")
+		_errors.append("LootContainer3D should mark itself opened after generating container contents.")
 	if _opened_signal_count != 1:
-		_errors.append("LootContainer3D should emit opened exactly once on first open.")
-	var slots_after_first_open := player.inventory_model.get_used_slots()
-	if container.try_open(player):
-		_errors.append("LootContainer3D one-shot containers should reject repeat opening.")
-	if player.inventory_model.get_used_slots() != slots_after_first_open:
-		_errors.append("LootContainer3D should not grant repeat loot after opened.")
+		_errors.append("LootContainer3D should emit opened exactly once when contents are generated.")
+	if _open_requested_signal_count != 1:
+		_errors.append("LootContainer3D should request UI open on player interaction.")
+	var slots_after_first_open := int(container_model.call("get_used_slots"))
+	if not container.try_open(player):
+		_errors.append("LootContainer3D should allow reopening already-generated container UI.")
+	if int(container_model.call("get_used_slots")) != slots_after_first_open:
+		_errors.append("LootContainer3D should not roll repeat loot after opened.")
+	if _opened_signal_count != 1:
+		_errors.append("LootContainer3D should not emit opened again on repeat UI open.")
 
 	_free_node(container)
 	_free_node(player)
@@ -108,6 +119,10 @@ func _validate_ui_independence() -> void:
 
 func _on_container_opened(_rolled_stacks: Array[Dictionary]) -> void:
 	_opened_signal_count += 1
+
+
+func _on_container_open_requested(_container: LootContainer3D) -> void:
+	_open_requested_signal_count += 1
 
 
 func _free_node(node: Node) -> void:

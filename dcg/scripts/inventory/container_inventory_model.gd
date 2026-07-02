@@ -209,7 +209,7 @@ func _can_merge_item(stack: Dictionary, item_def: ItemDef) -> bool:
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:
-	var item_path := str(stack.get("resource_path", ""))
+	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
 	if item_path == "" or not ResourceLoader.exists(item_path):
 		return null
 	return load(item_path) as ItemDef

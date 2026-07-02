@@ -9,6 +9,9 @@ var _required_files := PackedStringArray([
 	"res://scripts/inventory/inventory_model.gd",
 	"res://scripts/combat/weapon_controller_3d.gd",
 	"res://scripts/loot/loot_container_3d.gd",
+	"res://scripts/inventory/container_inventory_model.gd",
+	"res://scenes/ui/container_inventory_ui.tscn",
+	"res://tools/validate_container_open_flow.gd",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
@@ -21,8 +24,8 @@ var _audit_required_terms := PackedStringArray([
 	"2D Base screen",
 	"hardwired starter pistol",
 	"starter loadout coupling",
-	"direct container-to-backpack grant",
-	"missing container capacity UI",
+	"direct container-to-backpack grant resolved",
+	"missing container capacity UI resolved",
 	"fake ammo counters",
 	"hitscan firing",
 	"missing EquipmentModel",
@@ -46,6 +49,8 @@ var _ui_surface_terms := PackedStringArray([
 	"UI_STATUS",
 	"UI_MAP",
 	"UI_CODEX",
+	"UI_CONTAINER",
+	"open_container_inventory",
 ])
 
 var _inventory_forbidden_terms := PackedStringArray([
@@ -132,7 +137,10 @@ func _validate_known_current_risks_are_visible() -> void:
 	_expect_contains(weapon_text, "intersect_ray", "Current hitscan firing risk should remain visible until projectile tasks remove it.")
 
 	var container_text := _read_text("res://scripts/loot/loot_container_3d.gd")
-	_expect_contains(container_text, "add_item_resource", "Current direct container-to-backpack grant should remain visible until container flow tasks remove it.")
+	if container_text.contains("add_item_resource"):
+		_errors.append("Direct container-to-backpack grant should stay removed after V2 task eight.")
+	_expect_contains(container_text, "ContainerInventoryModelScript", "LootContainer3D should prepare container-owned inventory after V2 task eight.")
+	_expect_contains(container_text, "open_container_inventory", "LootContainer3D should request UIManager container UI after V2 task eight.")
 
 
 func _validate_queue_mentions_health_check() -> void:

@@ -145,7 +145,7 @@ Each Project Health Check must inspect:
 
 ## 任務八：改造箱子開啟流程
 
-狀態：未開始
+狀態：完成
 
 目標：靠近箱子按鍵開啟內容 UI，不直接拾取全部物品。
 
