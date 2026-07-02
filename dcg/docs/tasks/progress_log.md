@@ -2143,3 +2143,29 @@
 ### Next
 
 - Continue with V2 任務二十三：任務清單移入 Top Menu 第二頁籤.
+
+## 2026-07-03 Player Visibility V2 Quest Top Menu Tab
+
+### Completed
+
+- Added node-first `scenes/ui/quest_top_menu_panel.tscn` for the Top Menu quest tab.
+- Added `scripts/ui/quest_top_menu_panel.gd` to display existing quest definitions and save-backed quest state without mutating quest progress or rewards.
+- Wired `UIManager` so `UI_QUESTS` opens/closes the quest panel and keeps Top Menu selection/focus ownership centralized.
+- Instanced `QuestTopMenuPanel` under the gameplay HUD so the second Top Menu icon opens a visible quest list.
+- Added Traditional Chinese localization keys for the quest panel title, hint, empty state, and inactive status.
+- Added `tools/validate_top_menu_panels.gd` to verify second-tab reachability, collect/kill quest visibility, layout fit, and display-only boundaries.
+- Added the Top Menu panels validator to V2 health required paths.
+- Marked V2 任務二十三 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Top Menu panels validation reports `[top_menu_panels] OK quests_tab=opens list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- Quest flow validation reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務二十四：角色狀態頁籤.

@@ -1,0 +1,123 @@
+[gd_scene load_steps=2 format=3 uid="uid://quest_top_menu_panel_001"]
+
+[ext_resource type="Script" path="res://scripts/ui/quest_top_menu_panel.gd" id="1_quest_top_menu_panel"]
+
+[node name="QuestTopMenuPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 580.0
+offset_top = 126.0
+offset_right = 1340.0
+offset_bottom = 546.0
+mouse_filter = 2
+script = ExtResource("1_quest_top_menu_panel")
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 22
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "任務清單"
+
+[node name="HintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "追蹤目前可完成的回收與擊殺目標。"
+autowrap_mode = 3
+
+[node name="QuestCards" type="VBoxContainer" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="FirstQuestCard" type="PanelContainer" parent="MainPanel/PanelMargin/Content/QuestCards"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FirstQuestNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "首次回收"
+
+[node name="FirstQuestObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "帶回: 木頭 x2 或 電線 x1"
+autowrap_mode = 3
+
+[node name="FirstQuestProgressLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進度: 木頭 0/2 或 電線 0/1"
+autowrap_mode = 3
+
+[node name="FirstQuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/FirstQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進行中"
+
+[node name="SecondQuestCard" type="PanelContainer" parent="MainPanel/PanelMargin/Content/QuestCards"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SecondQuestNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "首次獵捕拾荒者"
+
+[node name="SecondQuestObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "擊倒: 拾荒者 x1"
+autowrap_mode = 3
+
+[node name="SecondQuestProgressLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進度: 拾荒者 0/1"
+autowrap_mode = 3
+
+[node name="SecondQuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進行中"

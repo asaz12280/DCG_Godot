@@ -354,7 +354,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十三：任務清單移入 Top Menu 第二頁籤
 
-狀態：未開始
+狀態：完成
 
 目標：任務列表收納在 Top Menu 的任務頁籤，不散落在錯誤位置。
 

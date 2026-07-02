@@ -4,6 +4,10 @@ ui.top.quests,任務,Quests,Quests,任务
 ui.top.status,狀態,Status,Status,状态
 ui.top.map,地圖,Map,Map,地图
 ui.top.codex,圖鑑,Codex,Codex,图鉴
+ui.top.quest_panel_title,任務清單,Quest List,Quest List,任务清单
+ui.top.quest_panel_hint,追蹤目前可完成的回收與擊殺目標。,Track current salvage and hunt objectives,Track current salvage and hunt objectives,追踪目前可完成的回收与击杀目标。
+ui.top.quest_empty,沒有任務,No quests,No quests,没有任务
+ui.top.quest_inactive,未啟用,Inactive,Inactive,未启用
 ui.inventory.equipment,裝備,Equipment,Equipment,装备
 ui.inventory.safe_pocket,保險格,Safe Pocket,Safe Pocket,保险格
 ui.inventory.backpack_format,背包 (%d/%d),Backpack (%d/%d),Backpack (%d/%d),背包 (%d/%d)
