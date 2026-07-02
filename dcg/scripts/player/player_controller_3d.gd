@@ -86,6 +86,7 @@ func _ready() -> void:
 	inventory_model.changed.connect(_on_inventory_changed)
 	equipment_model.changed.connect(_on_equipment_changed)
 	_load_starter_inventory()
+	_sync_weapon_from_equipment()
 	health = get_total_max_health()
 	stamina = max_stamina
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -252,6 +253,7 @@ func _face_mouse_on_ground() -> void:
 func _fire_equipped_weapon() -> void:
 	if _weapon_controller == null or not _weapon_controller.has_method("fire_forward"):
 		return
+	_sync_weapon_from_equipment()
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
@@ -290,7 +292,32 @@ func _on_inventory_changed() -> void:
 
 
 func _on_equipment_changed() -> void:
+	_sync_weapon_from_equipment()
 	equipment_changed.emit()
+
+
+func _sync_weapon_from_equipment() -> void:
+	if _weapon_controller == null:
+		return
+	var weapon_item := _get_equipped_weapon_item()
+	if weapon_item == null:
+		if _weapon_controller.has_method("clear_weapon"):
+			_weapon_controller.call("clear_weapon")
+		else:
+			_weapon_controller.set("weapon_def", null)
+		return
+	if _weapon_controller.has_method("equip_weapon"):
+		_weapon_controller.call("equip_weapon", weapon_item)
+	else:
+		_weapon_controller.set("weapon_def", weapon_item)
+
+
+func _get_equipped_weapon_item() -> ItemDef:
+	for slot_id in [&"primary_weapon", &"sidearm"]:
+		var item: Variant = equipment_model.call("get_equipped_item", slot_id)
+		if item is ItemDef:
+			return item
+	return null
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:

@@ -216,7 +216,7 @@ Each Project Health Check must inspect:
 
 ## 任務十三：解除玩家預設手槍耦合
 
-狀態：未開始
+狀態：完成
 
 目標：Player 不再出生就固定有可射擊手槍；WeaponController 改讀 EquipmentModel。
 

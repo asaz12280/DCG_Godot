@@ -71,11 +71,29 @@ func can_fire() -> bool:
 
 
 func get_fire_block_reason() -> StringName:
+	if weapon_def == null:
+		return &"no_weapon"
 	if current_ammo <= 0:
 		return &"no_ammo"
 	if _cooldown_remaining() > 0.0:
 		return &"cooldown"
 	return &""
+
+
+func equip_weapon(item_def: ItemDef) -> bool:
+	if item_def == null or item_def.item_type != "weapon":
+		clear_weapon()
+		return false
+	weapon_def = item_def
+	return true
+
+
+func clear_weapon() -> void:
+	weapon_def = null
+
+
+func has_weapon() -> bool:
+	return weapon_def != null
 
 
 func reload_from_reserve() -> bool:

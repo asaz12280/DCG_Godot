@@ -18,9 +18,9 @@ The health check does not mean these debts are acceptable forever. It means the 
    - `BaseScreen` currently carries too much of the Base experience.
    - Target: keep it as reusable stash/workbench/summary UI opened from 3D Base interactions.
 
-3. hardwired starter pistol
-   - `scenes/player/player_3d.tscn` assigns `pistol_9mm.tres` directly to `WeaponController3D`.
-   - Target: the pistol must come from loot, appear in backpack, then be equipped through `EquipmentModel`.
+3. hardwired starter pistol resolved in V2 task thirteen
+   - `scenes/player/player_3d.tscn` no longer assigns `pistol_9mm.tres` directly to `WeaponController3D`.
+   - Guardrail: the pistol must come from loot, appear in backpack, then be equipped through `EquipmentModel` before `WeaponController3D` receives it.
 
 4. starter loadout coupling
    - `PlayerController3D` still loads starter inventory and applies Base starter ammo bonus directly.

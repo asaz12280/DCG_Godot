@@ -1,8 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://bxq7u5q3qmt3e"]
+[gd_scene load_steps=12 format=3 uid="uid://bxq7u5q3qmt3e"]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller_3d.gd" id="1_controller"]
 [ext_resource type="Script" path="res://scripts/combat/weapon_controller_3d.gd" id="2_weapon_controller"]
-[ext_resource type="Resource" path="res://data/items/weapons/pistol_9mm.tres" id="3_pistol"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.28
@@ -100,4 +99,3 @@ surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")
 
 [node name="WeaponController3D" type="Node3D" parent="."]
 script = ExtResource("2_weapon_controller")
-weapon_def = ExtResource("3_pistol")

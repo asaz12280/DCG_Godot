@@ -24,7 +24,7 @@ var _required_files := PackedStringArray([
 var _audit_required_terms := PackedStringArray([
 	"3D Base interaction wiring pending",
 	"2D Base screen",
-	"hardwired starter pistol",
+	"hardwired starter pistol resolved",
 	"starter loadout coupling",
 	"direct container-to-backpack grant resolved",
 	"missing container capacity UI resolved",
@@ -141,9 +141,16 @@ func _validate_equipment_independence() -> void:
 
 func _validate_known_current_risks_are_visible() -> void:
 	var player_scene_text := _read_text("res://scenes/player/player_3d.tscn")
-	_expect_contains(player_scene_text, "weapon_def = ExtResource(\"3_pistol\")", "Current hardwired starter pistol risk should remain visible until task thirteen removes it.")
+	if player_scene_text.contains("weapon_def = ExtResource(\"3_pistol\")") or player_scene_text.contains("data/items/weapons/pistol_9mm.tres"):
+		_errors.append("Player scene should not hardwire No.5 pistol after V2 task thirteen.")
+
+	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
+	for required in PackedStringArray(["_sync_weapon_from_equipment", "get_equipped_item", "equip_weapon", "clear_weapon"]):
+		_expect_contains(player_text, required, "PlayerController3D should sync EquipmentModel weapons through %s." % required)
 
 	var weapon_text := _read_text("res://scripts/combat/weapon_controller_3d.gd")
+	for required in PackedStringArray(["no_weapon", "equip_weapon", "clear_weapon", "has_weapon"]):
+		_expect_contains(weapon_text, required, "WeaponController3D should expose equipment-bound weapon API %s." % required)
 	_expect_contains(weapon_text, "current_ammo", "Current fake ammo counter risk should remain visible until ammo model tasks remove it.")
 	_expect_contains(weapon_text, "reserve_ammo", "Current reserve ammo counter risk should remain visible until ammo model tasks remove it.")
 	_expect_contains(weapon_text, "intersect_ray", "Current hitscan firing risk should remain visible until projectile tasks remove it.")

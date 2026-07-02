@@ -1833,3 +1833,29 @@
 ### Next
 
 - Continue with V2 任務十三：解除玩家預設手槍耦合.
+
+## 2026-07-03 Player Visibility V2 Weapon Equipment Binding
+
+### Completed
+
+- Removed the hardwired No.5 pistol reference from `scenes/player/player_3d.tscn`, so the player no longer starts with an always-ready weapon.
+- Added an explicit unarmed state to `WeaponController3D`; firing is blocked with `no_weapon` when no weapon is equipped.
+- Added small weapon binding APIs on `WeaponController3D`: `equip_weapon`, `clear_weapon`, and `has_weapon`.
+- Updated `PlayerController3D` to sync the current primary/sidearm item from `EquipmentModel` into `WeaponController3D` whenever equipment changes.
+- Preserved responsibility boundaries: `WeaponController3D` does not read backpack UI or `InventoryModel`; `PlayerController3D` bridges player-owned equipment to the combat controller.
+- Updated the V2 health audit and health validator so the removed hardwired pistol cannot return silently.
+- Added `tools/validate_weapon_equipment_binding.gd`.
+- Marked V2 任務十三 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+
+### Next
+
+- Continue with V2 任務十四：建立 Ammo/Magazine 裝彈資料.
