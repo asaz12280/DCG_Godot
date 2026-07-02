@@ -8,6 +8,7 @@ const PlayerLocomotionScript := preload("res://scripts/player/player_locomotion_
 const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
+const RaidLoadoutTransferScript := preload("res://scripts/raid/raid_loadout_transfer.gd")
 
 signal health_changed(current: float, maximum: float)
 signal died(event: DamageEvent)
@@ -107,7 +108,8 @@ func _ready() -> void:
 	inventory_model.setup(backpack_slots)
 	inventory_model.changed.connect(_on_inventory_changed)
 	equipment_model.changed.connect(_on_equipment_changed)
-	_load_starter_inventory()
+	if not _load_pending_raid_loadout():
+		_load_starter_inventory()
 	_sync_weapon_from_equipment()
 	health = get_total_max_health()
 	stamina = max_stamina
@@ -484,6 +486,16 @@ func _load_starter_inventory() -> void:
 		return
 	if starter_loadout != null and starter_loadout.has_method("add_to_inventory"):
 		starter_loadout.add_to_inventory(inventory_model)
+
+
+func _load_pending_raid_loadout() -> bool:
+	var save_manager := get_node_or_null("/root/SaveGameManager")
+	if save_manager == null or not save_manager.has_method("consume_pending_raid_loadout"):
+		return false
+	var loadout: Dictionary = save_manager.call("consume_pending_raid_loadout")
+	if loadout.is_empty():
+		return false
+	return RaidLoadoutTransferScript.apply_to_player(self, loadout)
 
 
 func _apply_base_upgrade_effects() -> void:

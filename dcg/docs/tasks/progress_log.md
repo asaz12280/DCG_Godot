@@ -2263,3 +2263,43 @@
 ### Next
 
 - Continue with V2 任務二十七：3D Base 到 Raid 裝備帶入.
+
+## 2026-07-03 Player Visibility V2 Base To Raid Loadout
+
+### Completed
+
+- Added `scripts/raid/raid_loadout_transfer.gd` as a data-only bridge for backpack and equipment loadout transfer.
+- Added one-shot pending raid loadout methods to `SaveGameManager` so 3D Base can hand off the current player loadout across a scene change without persisting it as stash or UI state.
+- Updated `BaseInteractionController3D` so the raid gate prepares the current 3D Base player backpack/equipment before changing to the Raid scene.
+- Updated `PlayerController3D` so a Raid player consumes pending loadout before falling back to starter inventory.
+- Added `tools/validate_base_to_raid_loadout.gd` to prove No.5 equipped pistol and No.7 backpack ammo transfer from 3D Base into Raid and sync to `WeaponController3D`.
+- Added the loadout transfer script and validator to V2 health validation.
+- Marked V2 任務二十七 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Base to Raid loadout validation reports `[base_to_raid_loadout] OK base=prepares_pending raid=consumes backpack=ammo equipment=pistol weapon=synced`.
+- Base interactions validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Weapon equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Shooting feedback HUD validation reports `[shooting_feedback_hud] OK status=unarmed_empty_ready_reloading node_first=true zh_tw=true boundaries=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Base 3D and gameplay scene launch checks completed with Godot headless `--quit-after 1`.
+
+### Project Health Check After V2 Task Twenty Seven
+
+- Trigger: completed V2 tasks twenty five, twenty six, and twenty seven after the previous health check.
+- Player flow reachability: 3D Base raid gate now prepares current player loadout before entering Raid; Raid player consumes that pending loadout on spawn.
+- Base boundary: `BaseInteractionController3D` only captures and stores a loadout through `RaidLoadoutTransfer`; it does not directly add items, equip gear, reload, or manipulate combat.
+- Inventory/equipment/weapon boundaries: backpack stacks and equipment slots are converted by a data-only transfer helper; `PlayerController3D` applies the pending loadout and then syncs equipment to `WeaponController3D`.
+- Container boundary: container ownership and transfer flow were not changed, and `validate_container_transfer.gd` still passes.
+- UIManager boundary: no UI state ownership changed; Top Menu and UI panels still pass reachability and ownership checks.
+- Quest boundary: quest extraction and kill progression still pass after the loadout handoff change.
+- Traditional Chinese text quality and UI layout: no new player-facing UI was added; existing UI text/layout validations still pass at required resolutions.
+- Save/load safety: pending raid loadout is temporary one-shot state on `SaveGameManager`, not persistent stash/save schema data; save slot validation still passes.
+- Scene loadability: both 3D Base and gameplay scenes load headless after the loadout transfer changes.
+- Validation health: new `validate_base_to_raid_loadout.gd` guards the exact player-visible handoff that was previously invisible/broken.
+
+### Next
+
+- Continue with V2 任務二十八：Raid 結算回 3D Base.

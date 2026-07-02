@@ -10,6 +10,7 @@ const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
 var save_root_path := DEFAULT_SAVE_ROOT
 var current_slot_index := 1
+var _pending_raid_loadout: Dictionary = {}
 
 
 func list_slots() -> Array[Dictionary]:
@@ -118,6 +119,27 @@ func set_current_slot_index(slot_index: int) -> bool:
 		return false
 	current_slot_index = slot_index
 	return true
+
+
+func set_pending_raid_loadout(loadout: Dictionary) -> bool:
+	if loadout.is_empty():
+		return false
+	_pending_raid_loadout = loadout.duplicate(true)
+	return true
+
+
+func has_pending_raid_loadout() -> bool:
+	return not _pending_raid_loadout.is_empty()
+
+
+func peek_pending_raid_loadout() -> Dictionary:
+	return _pending_raid_loadout.duplicate(true)
+
+
+func consume_pending_raid_loadout() -> Dictionary:
+	var loadout := _pending_raid_loadout.duplicate(true)
+	_pending_raid_loadout.clear()
+	return loadout
 
 
 func _apply_difficulty(difficulty_id: String) -> void:

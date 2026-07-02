@@ -2,6 +2,7 @@ class_name BaseInteractionController3D
 extends Node
 
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
+const RaidLoadoutTransferScript := preload("res://scripts/raid/raid_loadout_transfer.gd")
 
 @export_node_path("Node3D") var player_path: NodePath
 @export_node_path("Label3D") var prompt_label_path: NodePath
@@ -13,6 +14,7 @@ var _prompt_label: Label3D
 var _panel: Control
 var _points: Array[Node3D] = []
 var _nearest_point: Node3D
+var _last_prepared_raid_loadout: Dictionary = {}
 
 
 func _ready() -> void:
@@ -51,6 +53,7 @@ func open_interaction_by_id(interaction_id: String) -> bool:
 		return false
 	var display_name := _display_name(point)
 	if interaction_id == "raid_gate":
+		prepare_raid_loadout()
 		get_tree().change_scene_to_file(GAMEPLAY_SCENE)
 		return true
 	if _panel == null or not _panel.has_method("open_interaction"):
@@ -74,6 +77,24 @@ func get_current_prompt_text() -> String:
 
 func get_panel_state() -> Dictionary:
 	return _panel.call("get_display_state") if _panel != null and _panel.has_method("get_display_state") else {}
+
+
+func prepare_raid_loadout() -> bool:
+	_last_prepared_raid_loadout.clear()
+	if _player == null:
+		return false
+	var save_manager := _get_save_manager()
+	if save_manager == null or not save_manager.has_method("set_pending_raid_loadout"):
+		return false
+	var loadout: Dictionary = RaidLoadoutTransferScript.build_from_player(_player)
+	if not bool(save_manager.call("set_pending_raid_loadout", loadout)):
+		return false
+	_last_prepared_raid_loadout = loadout.duplicate(true)
+	return true
+
+
+func get_last_prepared_raid_loadout() -> Dictionary:
+	return _last_prepared_raid_loadout.duplicate(true)
 
 
 func _refresh_points() -> void:
@@ -129,3 +150,14 @@ func _is_panel_open() -> bool:
 	if _panel == null or not _panel.has_method("is_open"):
 		return false
 	return bool(_panel.call("is_open"))
+
+
+func _get_save_manager() -> Node:
+	if is_inside_tree():
+		var manager := get_node_or_null("/root/SaveGameManager")
+		if manager != null:
+			return manager
+	var tree := get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("SaveGameManager")

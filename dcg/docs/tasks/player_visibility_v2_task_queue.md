@@ -409,7 +409,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十七：3D Base 到 Raid 裝備帶入
 
-狀態：未開始
+狀態：完成
 
 目標：從 3D Base 出擊時，玩家帶著目前背包與裝備進入 Raid。
 
