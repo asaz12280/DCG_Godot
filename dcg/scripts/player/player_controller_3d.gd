@@ -79,6 +79,7 @@ var _last_reload_result := {
 	"current_ammo": 0,
 	"reserve_ammo": 0,
 	"backpack_ammo_remaining": 0,
+	"source": "",
 }
 
 
@@ -188,25 +189,25 @@ func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
 	return true
 
 
-func reload_equipped_weapon() -> bool:
+func reload_equipped_weapon(reload_source: StringName = &"manual") -> bool:
 	if _weapon_controller == null or not _weapon_controller.has_method("reload_from_item"):
-		_record_reload_feedback(false, &"no_weapon", 0)
+		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
 		return false
 	_sync_weapon_from_equipment()
 	if not _weapon_controller.has_method("has_weapon") or not bool(_weapon_controller.call("has_weapon")):
-		_record_reload_feedback(false, &"no_weapon", 0)
+		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
 		return false
 
 	var current_rounds := int(_weapon_controller.get("current_ammo"))
 	var magazine_capacity := int(_weapon_controller.get("magazine_size"))
 	var needed_rounds := magazine_capacity - current_rounds
 	if needed_rounds <= 0:
-		_record_reload_feedback(false, &"magazine_full", 0)
+		_record_reload_feedback(false, &"magazine_full", 0, reload_source)
 		return false
 
 	var ammo_stack := _find_compatible_ammo_stack()
 	if ammo_stack.is_empty():
-		_record_reload_feedback(false, &"no_compatible_ammo", 0)
+		_record_reload_feedback(false, &"no_compatible_ammo", 0, reload_source)
 		return false
 
 	var ammo_index := int(ammo_stack.get("index", -1))
@@ -216,11 +217,11 @@ func reload_equipped_weapon() -> bool:
 	var loaded_rounds := int(_weapon_controller.call("reload_from_item", ammo_def, quantity_to_load))
 	if loaded_rounds <= 0:
 		var weapon_result: Dictionary = _weapon_controller.get("last_reload_result")
-		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0)
+		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0, reload_source)
 		return false
 
 	inventory_model.consume_stack_quantity(ammo_index, loaded_rounds)
-	_record_reload_feedback(true, &"", loaded_rounds)
+	_record_reload_feedback(true, &"", loaded_rounds, reload_source)
 	return true
 
 
@@ -307,6 +308,8 @@ func _fire_equipped_weapon() -> void:
 	if _weapon_controller == null or not _weapon_controller.has_method("fire_forward"):
 		return
 	_sync_weapon_from_equipment()
+	if _should_auto_reload_before_fire():
+		return
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
@@ -314,6 +317,16 @@ func _fire_equipped_weapon() -> void:
 	var ray_origin := camera.project_ray_origin(mouse_position)
 	var ray_direction := camera.project_ray_normal(mouse_position)
 	_weapon_controller.fire_forward(ray_origin, ray_direction, get_world_3d().direct_space_state)
+
+
+func _should_auto_reload_before_fire() -> bool:
+	if _weapon_controller == null or not _weapon_controller.has_method("get_fire_block_reason"):
+		return false
+	if StringName(str(_weapon_controller.call("get_fire_block_reason"))) != &"no_ammo":
+		return false
+	if _find_compatible_ammo_stack().is_empty():
+		return false
+	return reload_equipped_weapon(&"empty_fire")
 
 
 func _is_reload_event(event: InputEvent) -> bool:
@@ -347,7 +360,7 @@ func _find_compatible_ammo_stack() -> Dictionary:
 	return {}
 
 
-func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, rounds_loaded: int) -> void:
+func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, rounds_loaded: int, reload_source: StringName = &"manual") -> void:
 	_last_reload_result = {
 		"reloaded": did_reload,
 		"blocked_reason": str(blocked_reason),
@@ -355,6 +368,7 @@ func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, round
 		"current_ammo": int(_weapon_controller.get("current_ammo")) if _weapon_controller != null else 0,
 		"reserve_ammo": int(_weapon_controller.get("reserve_ammo")) if _weapon_controller != null else 0,
 		"backpack_ammo_remaining": _count_compatible_backpack_ammo(),
+		"source": str(reload_source),
 	}
 	reload_feedback_changed.emit(_last_reload_result.duplicate(true))
 

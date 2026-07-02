@@ -12,9 +12,10 @@ func _initialize() -> void:
 	await _validate_r_key_blocks_without_weapon()
 	await _validate_r_key_blocks_without_ammo()
 	await _validate_r_key_loads_equipped_pistol_from_backpack()
+	await _validate_empty_left_click_auto_reloads_without_firing()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[reload_flow] OK r_key=bound backpack_ammo=consumed magazine=updated boundaries=clean")
+		print("[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -112,9 +113,51 @@ func _validate_r_key_loads_equipped_pistol_from_backpack() -> void:
 	_free_node(context["scene"])
 
 
+func _validate_empty_left_click_auto_reloads_without_firing() -> void:
+	var context := await _spawn_context()
+	if context.is_empty():
+		return
+	var player: Node = context["player"]
+	var weapon: Node = context["weapon"]
+	var hud: Control = context["hud"]
+	var backpack_model: InventoryModel = player.call("get_inventory_model")
+	backpack_model.clear()
+	backpack_model.setup(50)
+	backpack_model.add_item(Pistol, 1)
+	backpack_model.add_item(Ammo, 24)
+	if not bool(player.call("equip_inventory_stack", 0)):
+		_errors.append("Auto reload validation should equip No.5 pistol from backpack.")
+	await process_frame
+	weapon.set("current_ammo", 0)
+	weapon.set("reserve_ammo", 0)
+	if weapon.has_method("_sync_ammo_result"):
+		weapon.call("_sync_ammo_result")
+	if weapon.has_method("force_cooldown_ready"):
+		weapon.call("force_cooldown_ready")
+
+	_press_primary_fire(player)
+	await process_frame
+	var result: Dictionary = player.call("get_last_reload_result")
+	if not bool(result.get("reloaded", false)):
+		_errors.append("Left-clicking with an empty magazine and compatible backpack ammo should auto-reload.")
+	if str(result.get("source", "")) != "empty_fire":
+		_errors.append("Auto reload should record empty_fire as the reload source.")
+	if int(weapon.get("current_ammo")) != 8:
+		_errors.append("Empty-fire auto reload should fill the pistol to 8 rounds.")
+	if bool(weapon.get("last_fire_result").get("fired", false)):
+		_errors.append("The empty left click that triggers reload should not also fire a shot.")
+	if int(_first_stack_quantity(backpack_model, Ammo)) != 16:
+		_errors.append("Empty-fire auto reload should consume 8 rounds from backpack No.7 ammo.")
+	var hud_state: Dictionary = hud.call("get_display_state")
+	if not str(hud_state.get("ammo", "")).contains("8 / 0"):
+		_errors.append("Raid HUD should visibly show auto-reloaded 8 / 0 ammo state.")
+
+	_free_node(context["scene"])
+
+
 func _validate_source_boundaries() -> void:
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")
-	for required in ["KEY_R", "reload_equipped_weapon", "_find_compatible_ammo_stack", "consume_stack_quantity"]:
+	for required in ["KEY_R", "reload_equipped_weapon", "_should_auto_reload_before_fire", "_find_compatible_ammo_stack", "consume_stack_quantity", "empty_fire"]:
 		if not player_source.contains(required):
 			_errors.append("PlayerController3D should expose R reload flow term: %s." % required)
 
@@ -136,6 +179,13 @@ func _press_reload(player: Node) -> void:
 	event.pressed = true
 	event.keycode = KEY_R
 	event.physical_keycode = KEY_R
+	player.call("_unhandled_input", event)
+
+
+func _press_primary_fire(player: Node) -> void:
+	var event := InputEventMouseButton.new()
+	event.pressed = true
+	event.button_index = MOUSE_BUTTON_LEFT
 	player.call("_unhandled_input", event)
 
 

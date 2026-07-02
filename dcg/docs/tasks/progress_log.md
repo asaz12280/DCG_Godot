@@ -1926,3 +1926,30 @@
 ### Next
 
 - Continue with V2 任務十六：空彈左鍵自動裝填.
+
+## 2026-07-03 Player Visibility V2 Empty Fire Auto Reload
+
+### Completed
+
+- Updated `PlayerController3D` so a left-click fire request checks for an empty equipped weapon before firing.
+- When the equipped weapon is empty and the backpack has compatible No.7 ammo, the left click now triggers `reload_equipped_weapon(&"empty_fire")`.
+- The empty left click returns after reload, so that same click does not also fire a shot or consume one of the newly loaded rounds.
+- Added a reload feedback `source` field so validators and later UI can distinguish manual `R` reload from empty-fire auto reload.
+- Expanded `tools/validate_reload_flow.gd` to verify empty-left-click auto reload, no same-click shot, backpack ammo consumption, HUD ammo update, and ownership boundaries.
+- Marked V2 任務十六 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Reload flow validation reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務十七：建立裝填時間條 UI.
