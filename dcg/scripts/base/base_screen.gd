@@ -2,10 +2,10 @@ extends Control
 class_name BaseScreen
 
 const BaseUIStyle := preload("res://scripts/ui/ui_style.gd")
+const BaseScreenActionsScript := preload("res://scripts/base/base_screen_actions.gd")
 const BaseScreenViewModelScript := preload("res://scripts/base/base_screen_view_model.gd")
 const BaseScreenStashRowsScript := preload("res://scripts/base/base_screen_stash_rows.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
-const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const WORKBENCH_LEVEL_1 := preload("res://data/base_upgrades/workbench_level_1.tres")
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
@@ -104,6 +104,7 @@ func get_display_state() -> Dictionary:
 		"workbench_title": workbench_title_label.text,
 		"status": status_label.text,
 		"quest_title": quest_title_label.text,
+		"quest_id": _current_quest_id(),
 		"sell_all_junk_disabled": sell_all_junk_button.disabled,
 		"sell_all_junk_text": sell_all_junk_button.text,
 		"workbench_name": workbench_name_label.text,
@@ -118,6 +119,7 @@ func get_display_state() -> Dictionary:
 		"submit_quest_disabled": submit_quest_button.disabled,
 		"submit_quest_text": submit_quest_button.text,
 		"panel_rect": Rect2(main_panel.position, main_panel.size),
+		"panel_global_rect": Rect2(main_panel.global_position, main_panel.size),
 		"phase_banner_rect": Rect2(phase_banner.global_position, phase_banner.size),
 		"upgrade_button_rect": Rect2(upgrade_workbench_button.global_position, upgrade_workbench_button.size),
 		"submit_quest_button_rect": Rect2(submit_quest_button.global_position, submit_quest_button.size),
@@ -198,7 +200,7 @@ func sell_all_junk() -> Dictionary:
 	if save_data.is_empty():
 		return {}
 	var stash_data: Array = _stash_array_from_variant(save_data.get("stash", []))
-	var result: Dictionary = StashVendorScript.sell_all_junk(stash_data, int(save_data.get("money", 0)))
+	var result: Dictionary = BaseScreenActionsScript.sell_all_junk(stash_data, int(save_data.get("money", 0)))
 	if int(result.get("money_delta", 0)) <= 0:
 		status_label.text = _text(&"ui.base.sell_none", "沒有可出售的雜物。")
 		_update_sell_button(stash_data, true)
@@ -313,7 +315,7 @@ func _get_current_save_data() -> Dictionary:
 
 func _update_sell_button(stash_data: Variant, has_save: bool) -> void:
 	var stash_array: Array = _stash_array_from_variant(stash_data)
-	var sell_value := StashVendorScript.get_sellable_value(stash_array)
+	var sell_value := BaseScreenActionsScript.get_sellable_value(stash_array)
 	sell_all_junk_button.disabled = not has_save or sell_value <= 0
 	if sell_value > 0:
 		sell_all_junk_button.text = "%s ($%d)" % [_text(&"ui.base.sell_all_junk", "出售雜物"), sell_value]
@@ -386,6 +388,16 @@ func _empty_save_data() -> Dictionary:
 
 func _text(key: StringName, fallback: String) -> String:
 	return BaseScreenViewModelScript.text(self, key, fallback)
+
+
+func _current_quest_id() -> String:
+	var save_data := _current_save_data
+	if save_data.is_empty():
+		save_data = _get_current_save_data()
+	var quest_def := BaseScreenViewModelScript.selected_quest_def(save_data)
+	if quest_def == null:
+		return ""
+	return str(quest_def.get("id"))
 
 
 func _on_start_raid_pressed() -> void:

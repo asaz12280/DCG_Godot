@@ -1611,3 +1611,28 @@
 ### Next
 
 - Continue with V2 任務五：拆分舊 BaseScreen 職責.
+
+## 2026-07-02 Player Visibility V2 BaseScreen Responsibility Split
+
+### Completed
+
+- Added `scripts/base/base_screen_actions.gd` as the BaseScreen action boundary for vendor/sell action rules.
+- Updated `scripts/base/base_screen.gd` so it no longer directly preloads `StashVendor`; BaseScreen now delegates display text, stash row construction, and sell action rules to focused helpers.
+- Added `tools/validate_base_screen_responsibilities.gd` to guard BaseScreen boundaries, confirm Base3D does not embed the old full BaseScreen, and confirm base flow validation targets the 3D Base scene.
+- Marked V2 任務五 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- BaseScreen responsibility validation reports `[base_screen_responsibilities] OK display=view_model stash=helper actions=helper base3d=separate`.
+- Base screen validation reports `[base_screen] OK node_first=true base=recognizable empty=shown stash=shown layout=fits`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Vendor sell validation reports `[vendor_sell] OK value=item_def stash=removes_sold money=saved materials=kept`.
+- Quest flow validation reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Main project loads in Godot 4.7 headless checks.
+- Main project and `res://scenes/base/base_3d.tscn` load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務六：建立 ContainerInventoryModel.

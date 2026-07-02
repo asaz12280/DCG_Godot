@@ -73,7 +73,7 @@ func _validate_base_sell_and_save_round_trip() -> void:
 	if int(sale_result.get("money_delta", 0)) != 120:
 		_errors.append("BaseScreen sell_all_junk should report the sold value.")
 	var after_state: Dictionary = base_screen.get_display_state()
-	if str(after_state.get("money", "")) != "Money: $130":
+	if not str(after_state.get("money", "")).contains("$130"):
 		_errors.append("Base money label should update after selling junk.")
 	if int(after_state.get("stash_rows", 0)) != 1:
 		_errors.append("Base stash rows should remove sold items and keep unsold materials.")

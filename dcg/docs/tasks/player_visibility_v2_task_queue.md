@@ -101,7 +101,7 @@ Each Project Health Check must inspect:
 
 ## 任務五：拆分舊 BaseScreen 職責
 
-狀態：未開始
+狀態：完成
 
 目標：舊 BaseScreen 改為可被 3D Base 呼叫的功能面板，不再承擔整個基地場景。
 
@@ -112,6 +112,7 @@ Each Project Health Check must inspect:
 驗證：
 - `validate_base_screen.gd`
 - `validate_base_flow.gd`
+- `validate_base_screen_responsibilities.gd`
 - V2 health check。
 
 ## 任務六：建立 ContainerInventoryModel
