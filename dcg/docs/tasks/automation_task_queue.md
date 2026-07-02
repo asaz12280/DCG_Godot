@@ -4,6 +4,8 @@ Last updated: 2026-07-01
 
 This file is the sequential task queue for Codex-driven development. Earlier tasks have higher priority. The automation rule is simple: start from the first task that is not marked complete, finish its acceptance criteria, run its validation, then move to the next task.
 
+2026-07-02 player hands-on review update: the first 30 tasks are system-level complete, but Dev Slice 0.1 is not player-visible approved. Future automation should now use `docs/tasks/player_visibility_task_queue.md` before adding any repeated content volume.
+
 ## Automation Rules
 
 1. Do not skip ahead unless every earlier task is already complete or its acceptance criteria are already satisfied by the current codebase.
