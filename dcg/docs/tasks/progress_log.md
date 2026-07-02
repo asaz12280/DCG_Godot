@@ -2303,3 +2303,26 @@
 ### Next
 
 - Continue with V2 任務二十八：Raid 結算回 3D Base.
+
+## 2026-07-03 Player Visibility V2 Raid Return To 3D Base
+
+### Completed
+
+- Updated `RaidResultPanel` so the player-facing `回到基地` action returns to `res://scenes/base/base_3d.tscn` instead of the old 2D BaseScreen scene.
+- Added `tools/validate_raid_return_to_base_3d.gd` to run an extraction result, verify extracted items and money are saved, press the result continue button, and confirm the loaded current scene is `Base3D`.
+- Strengthened `tools/validate_raid_result_panel.gd` so future changes fail if normal result flow points back to `base_screen.tscn`.
+- Added the new return-flow validator to the V2 health baseline.
+- Marked V2 任務二十八 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Raid return to 3D Base validation reports `[raid_return_to_base_3d] OK result=applied destination=base_3d stash=visible`.
+- Raid result panel validation reports `[raid_result_panel] OK node_first=true transfer=visible loot=shown continue=base layout=fits`.
+- Three Raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Base 3D and gameplay scene launch checks completed with Godot headless `--quit-after 1`.
+
+### Next
+
+- Continue with V2 任務二十九：刪除錯誤捷徑.

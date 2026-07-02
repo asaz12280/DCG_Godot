@@ -6,7 +6,7 @@ signal continue_to_base_requested(result: Dictionary)
 const ResultUIStyle := preload("res://scripts/ui/ui_style.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
-const BASE_SCENE := "res://scenes/base/base_screen.tscn"
+const BASE_SCENE := "res://scenes/base/base_3d.tscn"
 
 @export var raid_session_path: NodePath = NodePath("../../RaidSession")
 

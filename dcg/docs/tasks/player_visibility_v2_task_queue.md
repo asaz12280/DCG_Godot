@@ -422,7 +422,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十八：Raid 結算回 3D Base
 
-狀態：未開始
+狀態：完成
 
 目標：撤離或死亡後結算，再回到 3D Base 查看物品、任務、金錢、裝備狀態。
 

@@ -47,6 +47,8 @@ func _validate_extracted_result_display() -> void:
 	panel.continue_button.pressed.emit()
 	if not _continue_signal_seen:
 		_errors.append("RaidResultPanel should emit user intent before returning to Base.")
+	if str(panel.BASE_SCENE) != "res://scenes/base/base_3d.tscn":
+		_errors.append("RaidResultPanel should continue to the 3D Base scene.")
 	if not ResourceLoader.exists(panel.BASE_SCENE):
 		_errors.append("RaidResultPanel Base destination scene should exist.")
 	await process_frame
@@ -152,6 +154,8 @@ func _validate_script_boundaries() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/raid_result_panel.gd")
 	if source.contains("SaveGameManager") or source.contains("StashModel"):
 		_errors.append("RaidResultPanel should not directly mutate save or stash state.")
+	if source.contains("base_screen.tscn"):
+		_errors.append("RaidResultPanel should not route normal player flow back to the old 2D BaseScreen.")
 	if not source.contains("change_scene_to_file(BASE_SCENE)"):
 		_errors.append("RaidResultPanel should route Continue to Base through the configured scene path.")
 
