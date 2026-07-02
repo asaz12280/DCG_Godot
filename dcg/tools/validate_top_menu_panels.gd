@@ -5,6 +5,8 @@ const QuestTopMenuScene := preload("res://scenes/ui/quest_top_menu_panel.tscn")
 const QuestTopMenuScript := preload("res://scripts/ui/quest_top_menu_panel.gd")
 const StatusTopMenuScene := preload("res://scenes/ui/status_top_menu_panel.tscn")
 const StatusTopMenuScript := preload("res://scripts/ui/status_top_menu_panel.gd")
+const MapTopMenuScene := preload("res://scenes/ui/map_top_menu_panel.tscn")
+const MapTopMenuScript := preload("res://scripts/ui/map_top_menu_panel.gd")
 const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
 const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
 
@@ -15,12 +17,14 @@ func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
 	await _validate_quest_tab_opens_panel()
 	await _validate_status_tab_opens_panel()
+	await _validate_map_tab_opens_panel()
 	await _validate_quest_panel_layout()
 	await _validate_status_panel_layout()
+	await _validate_map_panel_layout()
 	_validate_node_first_structure()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[top_menu_panels] OK quests_tab=opens status_tab=player_model list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean")
+		print("[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -110,6 +114,47 @@ func _validate_status_tab_opens_panel() -> void:
 	_free_node(scene)
 
 
+func _validate_map_tab_opens_panel() -> void:
+	var scene := GameplayScene.instantiate()
+	root.add_child(scene)
+	await process_frame
+	await process_frame
+
+	var ui_manager := root.get_node_or_null("UIManager")
+	var top_menu := scene.get_node_or_null("HUD/TopMenuBar")
+	var map_panel := scene.get_node_or_null("HUD/MapTopMenuPanel")
+	var status_panel := scene.get_node_or_null("HUD/StatusTopMenuPanel")
+	if ui_manager == null or top_menu == null or map_panel == null:
+		_errors.append("Gameplay scene should include UIManager, TopMenuBar, and MapTopMenuPanel.")
+		_free_node(scene)
+		return
+	if map_panel.get_script() != MapTopMenuScript:
+		_errors.append("MapTopMenuPanel should use MapTopMenuPanel script.")
+
+	ui_manager.call("open_ui", &"map")
+	await process_frame
+	var state: Dictionary = map_panel.call("get_display_state")
+	if not bool(state.get("visible", false)):
+		_errors.append("Opening top-menu map tab should show MapTopMenuPanel.")
+	if str(ui_manager.call("get_active_ui")) != "map":
+		_errors.append("UIManager active UI should be `map` after opening the map tab.")
+	if not bool(top_menu.get("visible")):
+		_errors.append("TopMenuBar should remain visible while the map panel is open.")
+	if str(top_menu.call("get_selected_item_id")) != "map":
+		_errors.append("TopMenuBar should select the map icon when the map panel is open.")
+	_validate_map_summary(state)
+
+	ui_manager.call("open_ui", &"status")
+	await process_frame
+	state = map_panel.call("get_display_state")
+	if bool(state.get("visible", true)):
+		_errors.append("Opening status tab should close the map panel.")
+	if status_panel != null and not bool(status_panel.call("get_display_state").get("visible", false)):
+		_errors.append("Switching from map to status should still open the status panel.")
+
+	_free_node(scene)
+
+
 func _validate_quest_panel_layout() -> void:
 	var panel := QuestTopMenuScene.instantiate()
 	root.add_child(panel)
@@ -152,6 +197,27 @@ func _validate_status_panel_layout() -> void:
 	_free_node(panel)
 
 
+func _validate_map_panel_layout() -> void:
+	var panel := MapTopMenuScene.instantiate()
+	root.add_child(panel)
+	await process_frame
+	panel.call("open_map")
+	await process_frame
+	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
+		var rect: Rect2 = panel.call("preview_layout", viewport_size)
+		if rect.position.y < 70.0:
+			_errors.append("Map top-menu panel should sit below the icon bar at %s." % viewport_size)
+		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
+			_errors.append("Map top-menu panel should fit inside viewport at %s." % viewport_size)
+		if rect.size.x > viewport_size.x * 0.55:
+			_errors.append("Map top-menu panel should not cover too much horizontal gameplay view at %s." % viewport_size)
+		if rect.size.y > viewport_size.y * 0.50:
+			_errors.append("Map top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
+		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
+		_require_terms(str(state.get("title", "")), ["區域", "地圖"], "Map panel title should be Traditional Chinese.")
+	_free_node(panel)
+
+
 func _validate_node_first_structure() -> void:
 	var panel := QuestTopMenuScene.instantiate()
 	root.add_child(panel)
@@ -189,6 +255,21 @@ func _validate_node_first_structure() -> void:
 			_errors.append("Status panel scene should provide node-first UI path: %s" % path)
 	_free_node(panel)
 
+	panel = MapTopMenuScene.instantiate()
+	root.add_child(panel)
+	await process_frame
+	for path in [
+		"MainPanel/PanelMargin/Content/TitleLabel",
+		"MainPanel/PanelMargin/Content/HintLabel",
+		"MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows/AreaLabel",
+		"MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows/ExtractionLabel",
+		"MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows/FlowStateLabel",
+		"MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows/NoteLabel",
+	]:
+		if panel.get_node_or_null(path) == null:
+			_errors.append("Map panel scene should provide node-first UI path: %s" % path)
+	_free_node(panel)
+
 
 func _validate_source_boundaries() -> void:
 	var ui_manager_source := FileAccess.get_file_as_string("res://scripts/ui/ui_manager.gd")
@@ -198,6 +279,9 @@ func _validate_source_boundaries() -> void:
 	for required in ["StatusTopMenuPanel", "open_status", "close_status", "UI_STATUS"]:
 		if not ui_manager_source.contains(required):
 			_errors.append("UIManager should own status panel state through %s." % required)
+	for required in ["MapTopMenuPanel", "open_map", "close_map", "UI_MAP"]:
+		if not ui_manager_source.contains(required):
+			_errors.append("UIManager should own map panel state through %s." % required)
 
 	var panel_source := FileAccess.get_file_as_string("res://scripts/ui/quest_top_menu_panel.gd")
 	for required in ["BaseScreenViewModelScript.quest_defs", "QuestStateScript", "get_slot_data"]:
@@ -212,6 +296,8 @@ func _validate_source_boundaries() -> void:
 		_errors.append("Gameplay HUD should instance QuestTopMenuPanel.")
 	if not scene_text.contains("StatusTopMenuPanel"):
 		_errors.append("Gameplay HUD should instance StatusTopMenuPanel.")
+	if not scene_text.contains("MapTopMenuPanel"):
+		_errors.append("Gameplay HUD should instance MapTopMenuPanel.")
 
 	panel_source = FileAccess.get_file_as_string("res://scripts/ui/status_top_menu_panel.gd")
 	for required in ["get_total_max_health", "get_total_carry_weight_limit", "get_inventory_model", "get_equipment_model", "WeaponController3D"]:
@@ -220,6 +306,14 @@ func _validate_source_boundaries() -> void:
 	for forbidden in ["save_slot_data", "claim_reward", "ContainerInventoryModel", "LootContainer3D", "equip_inventory_stack", "reload_equipped_weapon", "add_item_resource"]:
 		if panel_source.contains(forbidden):
 			_errors.append("StatusTopMenuPanel should stay display-only and not mutate gameplay state: %s." % forbidden)
+
+	panel_source = FileAccess.get_file_as_string("res://scripts/ui/map_top_menu_panel.gd")
+	for required in ["RaidSession", "ExtractionZone", "Player3D", "get_state"]:
+		if not panel_source.contains(required):
+			_errors.append("MapTopMenuPanel should read map/raid state through %s." % required)
+	for forbidden in ["register_extraction", "register_player_death", "change_scene", "save_slot_data", "equip_inventory_stack", "reload_equipped_weapon"]:
+		if panel_source.contains(forbidden):
+			_errors.append("MapTopMenuPanel should be display-only and not mutate flow/gameplay state: %s." % forbidden)
 
 
 func _validate_quest_summaries(state: Dictionary) -> void:
@@ -262,6 +356,23 @@ func _validate_status_summary(state: Dictionary) -> void:
 	for token in ["Character Status", "Health", "Stamina", "Equipment", "Weapon ammo"]:
 		if text.contains(token) or str(state.get("weapon_ammo", "")).contains(token):
 			_errors.append("Status top-menu panel should not show English fallback text.")
+
+
+func _validate_map_summary(state: Dictionary) -> void:
+	_require_terms(str(state.get("title", "")), ["區域", "地圖"], "Map panel title should be Traditional Chinese.")
+	_require_terms(str(state.get("area", "")), ["目前區域", "避難郊區"], "Map panel should show current area.")
+	_require_terms(str(state.get("extraction", "")), ["撤離方向", "撤離點"], "Map panel should show extraction direction.")
+	_require_terms(str(state.get("flow_state", "")), ["基地", "出擊", "出擊中"], "Map panel should show base/raid state.")
+	var text := "%s\n%s\n%s\n%s\n%s" % [
+		state.get("title", ""),
+		state.get("hint", ""),
+		state.get("area", ""),
+		state.get("extraction", ""),
+		state.get("flow_state", ""),
+	]
+	for token in ["Area Map", "Current area", "Extraction direction", "In raid", "Base / raid state"]:
+		if text.contains(token) or str(state.get("note", "")).contains(token):
+			_errors.append("Map top-menu panel should not show English fallback text.")
 
 
 func _prepare_player_status_sample(player: Node) -> void:

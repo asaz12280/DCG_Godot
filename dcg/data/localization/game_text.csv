@@ -26,6 +26,32 @@ ui.top.status_slot_headset,耳機,Headset,Headset,耳机
 ui.top.status_slot_backpack,背包,Backpack,Backpack,背包
 ui.top.status_slot_charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
 ui.top.status_slot_charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
+ui.top.map_panel_title,區域地圖,Area Map,Area Map,区域地图
+ui.top.map_panel_hint,早期導覽：確認目前位置、撤離方向與行動狀態。,Early guide for area extraction and raid state,Early guide for area extraction and raid state,早期导览：确认目前位置、撤离方向与行动状态。
+ui.top.map_area,目前區域,Current area,Current area,目前区域
+ui.top.map_extraction,撤離方向,Extraction direction,Extraction direction,撤离方向
+ui.top.map_flow_state,基地 / 出擊狀態,Base / raid state,Base / raid state,基地 / 出击状态
+ui.top.map_note,這是早期文字地圖，完整大地圖會在核心流程穩定後再製作。,This is an early text map; the full map comes after the core loop is stable,This is an early text map; the full map comes after the core loop is stable,这是早期文字地图，完整大地图会在核心流程稳定后再制作。
+ui.top.map_area_base,基地安全區,Base safe area,Base safe area,基地安全区
+ui.top.map_area_refuge_outskirts,避難郊區,Refuge Outskirts,Refuge Outskirts,避难郊区
+ui.top.map_extraction_base,基地內無撤離壓力,No extraction pressure in base,No extraction pressure in base,基地内无撤离压力
+ui.top.map_extraction_unknown,尋找撤離點標記,Find extraction marker,Find extraction marker,寻找撤离点标记
+ui.top.map_extraction_toward,往 %s 的撤離點前進,Head %s to extraction,Head %s to extraction,往 %s 的撤离点前进
+ui.top.map_flow_base,基地整備中,Preparing in base,Preparing in base,基地整备中
+ui.top.map_flow_raid,出擊中,In raid,In raid,出击中
+ui.top.map_flow_extracted,已撤離,Extracted,Extracted,已撤离
+ui.top.map_flow_failed,行動失敗,Raid failed,Raid failed,行动失败
+ui.top.map_flow_ready,準備中,Ready,Ready,准备中
+ui.top.map_unknown,未知,Unknown,Unknown,未知
+ui.top.map_dir_here,目前位置,Here,Here,目前位置
+ui.top.map_dir_n,北,North,North,北
+ui.top.map_dir_ne,東北,Northeast,Northeast,东北
+ui.top.map_dir_e,東,East,East,东
+ui.top.map_dir_se,東南,Southeast,Southeast,东南
+ui.top.map_dir_s,南,South,South,南
+ui.top.map_dir_sw,西南,Southwest,Southwest,西南
+ui.top.map_dir_w,西,West,West,西
+ui.top.map_dir_nw,西北,Northwest,Northwest,西北
 ui.inventory.equipment,裝備,Equipment,Equipment,装备
 ui.inventory.safe_pocket,保險格,Safe Pocket,Safe Pocket,保险格
 ui.inventory.backpack_format,背包 (%d/%d),Backpack (%d/%d),Backpack (%d/%d),背包 (%d/%d)

@@ -381,7 +381,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十五：地圖頁籤早期版
 
-狀態：未開始
+狀態：完成
 
 目標：Top Menu 第四頁籤顯示目前區域、撤離方向、基地/出擊狀態。
 

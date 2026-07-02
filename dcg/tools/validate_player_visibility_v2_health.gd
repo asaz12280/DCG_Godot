@@ -28,6 +28,8 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_top_menu_panels.gd",
 	"res://scripts/ui/status_top_menu_panel.gd",
 	"res://scenes/ui/status_top_menu_panel.tscn",
+	"res://scripts/ui/map_top_menu_panel.gd",
+	"res://scenes/ui/map_top_menu_panel.tscn",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",

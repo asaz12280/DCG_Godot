@@ -1,0 +1,83 @@
+[gd_scene load_steps=2 format=3 uid="uid://map_top_menu_panel_001"]
+
+[ext_resource type="Script" path="res://scripts/ui/map_top_menu_panel.gd" id="1_map_top_menu_panel"]
+
+[node name="MapTopMenuPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 580.0
+offset_top = 126.0
+offset_right = 1340.0
+offset_bottom = 546.0
+mouse_filter = 2
+script = ExtResource("1_map_top_menu_panel")
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 22
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "區域地圖"
+
+[node name="HintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "早期導覽：確認目前位置、撤離方向與行動狀態。"
+autowrap_mode = 3
+
+[node name="InfoPanel" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/InfoPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="AreaLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "目前區域：避難郊區"
+autowrap_mode = 3
+
+[node name="ExtractionLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "撤離方向：往 西北 的撤離點前進"
+autowrap_mode = 3
+
+[node name="FlowStateLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "基地 / 出擊狀態：出擊中"
+autowrap_mode = 3
+
+[node name="NoteLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "這是早期文字地圖，完整大地圖會在核心流程穩定後再製作。"
+autowrap_mode = 3

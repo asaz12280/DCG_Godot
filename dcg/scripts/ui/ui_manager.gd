@@ -24,6 +24,7 @@ var _top_menu_bar: Control = null
 var _inventory_ui: Control = null
 var _quest_ui: Control = null
 var _status_ui: Control = null
+var _map_ui: Control = null
 var _codex_ui: Control = null
 var _container_inventory_ui: Control = null
 var _pause_menu: Control = null
@@ -126,6 +127,7 @@ func _set_active_ui(id: StringName) -> void:
 	_set_inventory_open(active_ui == UI_BACKPACK)
 	_set_quest_open(active_ui == UI_QUESTS)
 	_set_status_open(active_ui == UI_STATUS)
+	_set_map_open(active_ui == UI_MAP)
 	_set_codex_open(active_ui == UI_CODEX)
 	_set_container_inventory_open(active_ui == UI_CONTAINER)
 	_set_pause_open(active_ui == UI_PAUSE)
@@ -151,6 +153,9 @@ func _bind_ui_nodes() -> void:
 
 	if _status_ui == null or not is_instance_valid(_status_ui):
 		_status_ui = _find_control("StatusTopMenuPanel")
+
+	if _map_ui == null or not is_instance_valid(_map_ui):
+		_map_ui = _find_control("MapTopMenuPanel")
 
 	if _codex_ui == null or not is_instance_valid(_codex_ui):
 		_codex_ui = _find_control("ItemCodexUI")
@@ -202,6 +207,15 @@ func _set_status_open(should_open: bool) -> void:
 		_status_ui.call("open_status")
 	elif not should_open and _status_ui.has_method("close_status"):
 		_status_ui.call("close_status")
+
+
+func _set_map_open(should_open: bool) -> void:
+	if _map_ui == null:
+		return
+	if should_open and _map_ui.has_method("open_map"):
+		_map_ui.call("open_map")
+	elif not should_open and _map_ui.has_method("close_map"):
+		_map_ui.call("close_map")
 
 
 func _set_codex_open(should_open: bool) -> void:
@@ -273,6 +287,8 @@ func _get_active_focus_target() -> Control:
 			return _quest_ui
 		UI_STATUS:
 			return _status_ui
+		UI_MAP:
+			return _map_ui
 		UI_CODEX:
 			return _codex_ui
 		UI_CONTAINER:
@@ -299,6 +315,8 @@ func _can_open_ui(id: StringName) -> bool:
 		return _quest_ui != null
 	if id == UI_STATUS:
 		return _status_ui != null
+	if id == UI_MAP:
+		return _map_ui != null
 	if id == UI_CODEX:
 		return _codex_ui != null
 	if id == UI_PAUSE:
@@ -309,7 +327,7 @@ func _can_open_ui(id: StringName) -> bool:
 
 
 func _has_panel_for_ui(id: StringName) -> bool:
-	return id == UI_BACKPACK or id == UI_QUESTS or id == UI_STATUS or id == UI_CODEX or id == UI_CONTAINER or id == UI_PAUSE
+	return id == UI_BACKPACK or id == UI_QUESTS or id == UI_STATUS or id == UI_MAP or id == UI_CODEX or id == UI_CONTAINER or id == UI_PAUSE
 
 
 func _refresh_scene_cache() -> void:
@@ -323,6 +341,7 @@ func _refresh_scene_cache() -> void:
 	_inventory_ui = null
 	_quest_ui = null
 	_status_ui = null
+	_map_ui = null
 	_codex_ui = null
 	_container_inventory_ui = null
 	_pause_menu = null

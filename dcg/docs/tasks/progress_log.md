@@ -2211,3 +2211,31 @@
 ### Next
 
 - Continue with V2 任務二十五：地圖頁籤早期版.
+
+## 2026-07-03 Player Visibility V2 Early Map Top Menu Tab
+
+### Completed
+
+- Added node-first `scenes/ui/map_top_menu_panel.tscn` for the Top Menu map tab.
+- Added `scripts/ui/map_top_menu_panel.gd` to display a compact early map guide: current area, extraction direction, base/raid state, and a note that this is not yet the full map.
+- Wired `UIManager` so `UI_MAP` opens/closes the map panel and keeps Top Menu selection/focus ownership centralized.
+- Instanced `MapTopMenuPanel` under the gameplay HUD so the fourth Top Menu icon opens a visible early map page.
+- Added Traditional Chinese localization keys for the map panel title, hint, current area, extraction direction, base/raid state, map note, known area names, flow states, and direction names.
+- Expanded `tools/validate_top_menu_panels.gd` to verify quest, status, and map tab reachability, map player-visible text, layout fit, node-first structure, and display-only boundaries.
+- Added map panel scene/script paths to V2 health validation.
+- Marked V2 任務二十五 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Top Menu panels validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Quest flow validation reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務二十六：圖鑑一致性檢查.
