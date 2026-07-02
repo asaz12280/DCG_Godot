@@ -6,7 +6,7 @@
 script = ExtResource("1_item_def")
 id = &"wood"
 catalog_number = 1
-display_name = ""
+display_name = "木頭"
 name_key = &"item.wood.name"
 description_key = &"item.wood.desc"
 item_type = "crafting"

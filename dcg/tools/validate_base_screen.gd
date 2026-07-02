@@ -28,7 +28,10 @@ func _validate_empty_stash() -> void:
 	var state: Dictionary = screen.get_display_state()
 	if int(state.get("stash_rows", 0)) != 1:
 		_errors.append("BaseScreen should show one empty-state stash row when there is no save data.")
-	if not str(state.get("status", "")).contains("No save data"):
+	if not (
+		str(state.get("status", "")).contains("尚無存檔")
+		or str(state.get("status", "")).contains("No save data")
+	):
 		_errors.append("BaseScreen should show a clear no-save status message.")
 	_free_node(screen)
 	_free_node(save_manager)

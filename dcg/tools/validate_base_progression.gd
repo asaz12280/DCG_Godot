@@ -96,7 +96,10 @@ func _validate_purchase_upgrade_and_save() -> void:
 	var after_state: Dictionary = screen.get_display_state()
 	if not bool(after_state.get("upgrade_workbench_disabled", false)):
 		_errors.append("Workbench upgrade button should disable after purchase.")
-	if not str(after_state.get("workbench_status", "")).contains("starter ammo"):
+	if not (
+		str(after_state.get("workbench_status", "")).contains("備用彈藥")
+		or str(after_state.get("workbench_status", "")).contains("starter ammo")
+	):
 		_errors.append("Workbench status should explain the starter ammo effect after purchase.")
 	_free_node(screen)
 

@@ -6,6 +6,7 @@
 script = ExtResource("1_item_def")
 id = &"pistol_9mm"
 catalog_number = 5
+display_name = "手槍-S"
 name_key = &"item.pistol_9mm.name"
 description_key = &"item.pistol_9mm.desc"
 item_type = "weapon"

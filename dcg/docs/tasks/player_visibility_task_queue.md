@@ -116,7 +116,7 @@ Run these after tasks touching shared UI, scene flow, save, combat, or raid stat
 
 ## 可視化任務二：修復繁中 UI 文字基礎
 
-狀態：未開始
+狀態：完成
 
 目標：讓玩家看得懂目前所有早期流程。
 

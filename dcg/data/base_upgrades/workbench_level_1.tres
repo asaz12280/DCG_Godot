@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_upgrade_def")
 id = &"workbench_level_1"
-display_name = "Workbench Level 1"
-description = "Prepare better starter ammunition for the next raid."
+display_name = "工作台 Lv.1"
+description = "讓下一場行動有更多備用彈藥。"
 money_cost = 15
 item_costs = Array[Dictionary]([{
 "item_path": "res://data/items/crafting/wood.tres",

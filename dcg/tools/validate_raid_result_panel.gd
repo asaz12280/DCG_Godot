@@ -30,7 +30,10 @@ func _validate_fake_result_display() -> void:
 	var state: Dictionary = panel.get_display_state()
 	if not bool(state.get("visible", false)):
 		_errors.append("RaidResultPanel should become visible after show_result().")
-	if not str(state.get("outcome", "")).contains("Extracted"):
+	if not (
+		str(state.get("outcome", "")).contains("撤離成功")
+		or str(state.get("outcome", "")).contains("Extracted")
+	):
 		_errors.append("RaidResultPanel should show extracted outcome from fake data.")
 	if int(state.get("extracted_rows", 0)) < 1:
 		_errors.append("RaidResultPanel should show extracted item rows.")

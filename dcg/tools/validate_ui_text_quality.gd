@@ -8,14 +8,71 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 
 const REQUIRED_KEYS: Array[String] = [
 	"ui.base.title",
+	"ui.base.subtitle",
+	"ui.base.difficulty",
+	"ui.base.stash",
+	"ui.base.workbench",
+	"ui.base.quest",
+	"ui.base.sell_all_junk",
 	"ui.base.start_raid",
 	"ui.base.quest_progress",
 	"ui.raid_hud.objective",
 	"ui.raid_hud.ammo",
+	"ui.raid_hud.extraction_hint",
 	"ui.raid_result.title",
 	"ui.raid_result.continue_to_base",
 	"ui.raid_result.extracted_items",
+	"ui.raid_result.lost_items",
 	"enemy.scavenger.name",
+]
+
+const REQUIRED_ZH_TW_TEXT := {
+	"ui.base.title": "基地",
+	"ui.base.start_raid": "開始出擊",
+	"ui.base.sell_all_junk": "出售雜物",
+	"ui.base.workbench": "工作台",
+	"ui.base.quest": "任務",
+	"ui.raid_hud.objective": "搜索物資並前往撤離點",
+	"ui.raid_hud.ammo": "彈藥",
+	"ui.raid_result.title": "行動結算",
+	"ui.raid_result.continue_to_base": "回到基地",
+	"ui.raid_result.extracted_items": "帶回物品",
+	"ui.raid_result.lost_items": "遺失物品",
+	"enemy.scavenger.name": "拾荒者",
+}
+
+const VISIBLE_RESOURCE_TEXT := [
+	{
+		"path": "res://data/base_upgrades/workbench_level_1.tres",
+		"display_name": "工作台 Lv.1",
+		"description": "讓下一場行動有更多備用彈藥。",
+	},
+	{
+		"path": "res://data/quests/first_salvage.tres",
+		"display_name": "首次回收",
+		"description": "帶回木頭或電線，確認這條路線值得重複探索。",
+	},
+	{
+		"path": "res://data/quests/first_scavenger_hunt.tres",
+		"display_name": "首次獵捕拾荒者",
+		"description": "擊倒一名拾荒者後回基地回報。",
+	},
+	{
+		"path": "res://data/enemies/scavenger.tres",
+		"display_name": "拾荒者",
+	},
+	{
+		"path": "res://data/items/crafting/wood.tres",
+		"display_name": "木頭",
+	},
+	{
+		"path": "res://data/items/electronics/wire.tres",
+		"display_name": "電線",
+	},
+	{
+		"path": "res://data/items/loot/junk.tres",
+		"display_name": "垃圾",
+	},
 ]
 
 var _errors: Array[String] = []
@@ -24,6 +81,8 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
 	_validate_required_keys()
+	_validate_required_zh_tw_text()
+	_validate_visible_resource_text()
 	await _validate_base_text_and_layout()
 	await _validate_raid_hud_text_and_layout()
 	await _validate_result_text_and_layout()
@@ -49,6 +108,50 @@ func _validate_required_keys() -> void:
 				_errors.append("Localization key %s should not have empty locale text." % key)
 			elif UITextScript.looks_corrupt(text):
 				_errors.append("Localization key %s contains mojibake text: %s" % [key, text])
+
+
+func _validate_required_zh_tw_text() -> void:
+	var rows := _csv_rows()
+	for key in REQUIRED_ZH_TW_TEXT.keys():
+		if not rows.has(key):
+			_errors.append("Localization CSV should include zh_TW key: %s" % key)
+			continue
+		var row: Array = rows[key]
+		if row.size() < 2:
+			_errors.append("Localization key %s should include zh_TW text." % key)
+			continue
+		var actual := str(row[1])
+		var expected := str(REQUIRED_ZH_TW_TEXT[key])
+		if actual != expected:
+			_errors.append("Localization key %s zh_TW should be `%s`, got `%s`." % [key, expected, actual])
+		if _looks_like_english_fallback(actual):
+			_errors.append("Localization key %s zh_TW should not be an English fallback: %s" % [key, actual])
+
+
+func _validate_visible_resource_text() -> void:
+	for expectation in VISIBLE_RESOURCE_TEXT:
+		var path := str(expectation.get("path", ""))
+		if path == "" or not ResourceLoader.exists(path):
+			_errors.append("Visible resource text path is missing: %s" % path)
+			continue
+		var resource := load(path)
+		if resource == null:
+			_errors.append("Visible resource text path cannot load: %s" % path)
+			continue
+		if expectation.has("display_name"):
+			var expected_name := str(expectation.get("display_name", ""))
+			var actual_name := str(resource.get("display_name"))
+			if actual_name != expected_name:
+				_errors.append("Visible resource %s display_name should be `%s`, got `%s`." % [path, expected_name, actual_name])
+			if _looks_like_english_fallback(actual_name):
+				_errors.append("Visible resource %s display_name should not be English fallback: %s" % [path, actual_name])
+		if expectation.has("description"):
+			var expected_description := str(expectation.get("description", ""))
+			var actual_description := str(resource.get("description"))
+			if actual_description != expected_description:
+				_errors.append("Visible resource %s description should be `%s`, got `%s`." % [path, expected_description, actual_description])
+			if _looks_like_english_fallback(actual_description):
+				_errors.append("Visible resource %s description should not be English fallback: %s" % [path, actual_description])
 
 
 func _validate_base_text_and_layout() -> void:
@@ -143,6 +246,22 @@ func _assert_clean_text(text: String, label: String) -> void:
 		return
 	if UITextScript.looks_corrupt(text):
 		_errors.append("%s should not display mojibake: %s" % [label, text])
+
+
+func _looks_like_english_fallback(text: String) -> bool:
+	if text == "":
+		return false
+	var has_cjk := false
+	for codepoint in text.to_utf32_buffer():
+		if (codepoint >= 0x3400 and codepoint <= 0x9FFF) or (codepoint >= 0xF900 and codepoint <= 0xFAFF):
+			has_cjk = true
+			break
+	if has_cjk:
+		return false
+	for token in ["Base", "Raid", "Stash", "Quest", "Workbench", "Start", "Extracted", "Lost", "Scavenger", "Ammo"]:
+		if text.contains(token):
+			return true
+	return false
 
 
 func _csv_rows() -> Dictionary:

@@ -42,9 +42,11 @@ func _validate_manager() -> void:
 		_errors.append("DifficultyManager should expose three profiles.")
 	manager.set_difficulty(&"hard")
 	var profile := PlayerStatsProfileScript.new()
+	var base_health := profile.base_max_health
 	manager.apply_to_player_stats(profile)
-	if not is_equal_approx(profile.base_max_health, 75.0):
-		_errors.append("Hard difficulty should scale default player health to 75.")
+	var expected_hard_health := base_health * 0.75
+	if not is_equal_approx(profile.base_max_health, expected_hard_health):
+		_errors.append("Hard difficulty should scale default player health by the hard multiplier.")
 	manager.queue_free()
 
 
@@ -57,4 +59,3 @@ func _validate_menu_panel() -> void:
 	if not panel.has_method("refresh_texts"):
 		_errors.append("DifficultySelectPanel should refresh localized text.")
 	panel.queue_free()
-

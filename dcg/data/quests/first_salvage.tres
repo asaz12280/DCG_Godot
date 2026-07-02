@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_quest_def")
 id = &"first_salvage"
-display_name = "First Salvage"
-description = "Extract wood or wire to prove the route is worth running."
+display_name = "首次回收"
+description = "帶回木頭或電線，確認這條路線值得重複探索。"
 objective_type = "extract_any"
 objectives = Array[Dictionary]([{
 "item_path": "res://data/items/crafting/wood.tres",

@@ -6,6 +6,7 @@
 script = ExtResource("1_item_def")
 id = &"old_watch"
 catalog_number = 13
+display_name = "舊懷錶"
 name_key = &"item.old_watch.name"
 description_key = &"item.old_watch.desc"
 item_type = "valuable"

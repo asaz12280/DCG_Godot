@@ -6,6 +6,7 @@
 script = ExtResource("1_item_def")
 id = &"junk"
 catalog_number = 21
+display_name = "垃圾"
 name_key = &"item.junk.name"
 description_key = &"item.junk.desc"
 item_type = "loot"

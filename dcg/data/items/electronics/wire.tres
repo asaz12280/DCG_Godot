@@ -6,6 +6,7 @@
 script = ExtResource("1_item_def")
 id = &"wire"
 catalog_number = 16
+display_name = "電線"
 name_key = &"item.wire.name"
 description_key = &"item.wire.desc"
 item_type = "electronics"

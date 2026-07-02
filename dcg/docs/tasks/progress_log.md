@@ -1388,3 +1388,33 @@
 ### Next
 
 - Continue with 可視化任務二：修復繁中 UI 文字基礎.
+
+## 2026-07-02 Traditional Chinese UI Text Visibility Task
+
+### Completed
+
+- Rebuilt `data/localization/game_text.csv` into a clean one-key-per-line CSV so `LocalizationBootstrap` can reliably load player-facing text.
+- Replaced English `zh_TW` text for Base, Raid HUD, Raid Result, difficulty, save slots, pause, codex, inventory labels, item types, visible items, and enemy names.
+- Added Traditional Chinese fallback display names/descriptions to the currently visible workbench upgrade, two starter quests, Scavenger enemy, and key visible item resources.
+- Expanded `tools/validate_ui_text_quality.gd` so it now checks exact zh_TW strings for key Base/Raid/Result UI labels and catches English fallback text.
+- Marked 可視化任務二 complete in `player_visibility_task_queue.md`.
+
+### Verified
+
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- CSV key uniqueness check reports `CSV keys unique: 210 rows`.
+- Difficulty validation reports `[difficulty_system] OK profiles=3 health=scaled menu=available`.
+- Base screen validation reports `[base_screen] OK node_first=true empty=shown stash=shown layout=fits`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible extraction=status ammo=visible ui_manager=compatible layout=fit`.
+- Raid result panel validation reports `[raid_result_panel] OK node_first=true fake_data=shown continue=base layout=fits`.
+- Save slot panel validation reports `[save_slot_panel] OK rows=3 refresh=ready`.
+- Item catalog validation reports `[item_catalog] OK items=21 max_no=21`.
+- Quest model validation reports `[quest_model] OK def=loads progress=extract_any kill=ready reward=claim save=round_trip`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Main project, Base scene, and current Raid gameplay scene load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 可視化任務三：讓 Base 成為明確可辨識的基地畫面.

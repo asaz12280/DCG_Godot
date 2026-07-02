@@ -36,11 +36,20 @@ func _validate_gameplay_hud_wiring() -> void:
 		_errors.append("RaidHudPanel should use RaidHudPanel script.")
 
 	var state: Dictionary = hud.call("get_display_state")
-	if not str(state.get("objective", "")).contains("Find supplies"):
+	if not (
+		str(state.get("objective", "")).contains("搜索物資")
+		or str(state.get("objective", "")).contains("Find supplies")
+	):
 		_errors.append("Raid HUD should show the early raid objective.")
-	if not str(state.get("status", "")).contains("Raid active"):
+	if not (
+		str(state.get("status", "")).contains("行動中")
+		or str(state.get("status", "")).contains("Raid active")
+	):
 		_errors.append("Raid HUD should show active raid status.")
-	if not str(state.get("ammo", "")).contains("Ammo"):
+	if not (
+		str(state.get("ammo", "")).contains("彈藥")
+		or str(state.get("ammo", "")).contains("Ammo")
+	):
 		_errors.append("Raid HUD should show current weapon ammo.")
 	if int(state.get("mouse_filter", -1)) != Control.MOUSE_FILTER_IGNORE:
 		_errors.append("Raid HUD should ignore mouse input so it does not block gameplay or panels.")
@@ -55,7 +64,10 @@ func _validate_gameplay_hud_wiring() -> void:
 	extraction_zone.call("_process", 1.0)
 	await process_frame
 	state = hud.call("get_display_state")
-	if not str(state.get("extraction", "")).contains("Extraction"):
+	if not (
+		str(state.get("extraction", "")).contains("撤離")
+		or str(state.get("extraction", "")).contains("Extraction")
+	):
 		_errors.append("Raid HUD should show extraction countdown/status while player is in the zone.")
 	if float(state.get("extraction_progress", 0.0)) <= 0.0:
 		_errors.append("Raid HUD extraction progress should increase while extracting.")

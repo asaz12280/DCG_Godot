@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_quest_def")
 id = &"first_scavenger_hunt"
-display_name = "First Scavenger Hunt"
-description = "Eliminate one Scavenger and report back to base."
+display_name = "首次獵捕拾荒者"
+description = "擊倒一名拾荒者後回基地回報。"
 objective_type = "kill"
 objectives = Array[Dictionary]([{
 "enemy_id": "scavenger",
