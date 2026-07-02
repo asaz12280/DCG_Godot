@@ -138,7 +138,7 @@ Run these after tasks touching shared UI, scene flow, save, combat, or raid stat
 
 ## 可視化任務三：讓 Base 成為明確可辨識的基地畫面
 
-狀態：未開始
+狀態：完成
 
 目標：玩家選完難度後，能明確知道自己來到基地，而不是誤以為卡在結算或普通 UI。
 

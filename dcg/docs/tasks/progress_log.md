@@ -1418,3 +1418,47 @@
 ### Next
 
 - Continue with 可視化任務三：讓 Base 成為明確可辨識的基地畫面.
+
+## 2026-07-02 Base Visibility Task
+
+### Completed
+
+- Updated `scenes/base/base_screen.tscn` with a node-first Base phase banner that identifies the screen as `安全區 / 基地階段`.
+- Added a clear player-facing hint: `這裡不會戰鬥。確認倉庫、任務與工作台後再開始出擊。`
+- Changed Base scene default text to readable Traditional Chinese so editor preview and pre-refresh text do not show English placeholders.
+- Added `ui.base.phase` and `ui.base.phase_hint` localization keys and strengthened `ui.base.ready` as a next-step status.
+- Updated `scripts/base/base_screen.gd` so Base fallbacks are Traditional Chinese instead of English.
+- Added `scripts/base/base_screen_view_model.gd` for Base display text, quest selection, quest progress formatting, upgrade status text, enemy names, item names, and difficulty labels.
+- Added `scripts/base/base_screen_stash_rows.gd` so dynamic stash row construction no longer lives in the main Base screen controller.
+- Expanded `tools/validate_base_screen.gd` to check that Base is recognizable, section labels are Traditional Chinese, the phase banner is visible, and the primary action remains inside the panel at 1280x720 and 1920x1080.
+- Expanded `tools/validate_ui_text_quality.gd` to require the new Base phase localization keys and check the Base phase banner in layout validation.
+- Marked 可視化任務三 complete in `player_visibility_task_queue.md`.
+
+### Project Health Check After Visibility Task Three
+
+- Player flow reachability: `validate_base_flow.gd` confirms New Game and Continue both enter `res://scenes/base/base_screen.tscn`.
+- Traditional Chinese text quality: Base title, phase banner, hint, section labels, status, and primary action are validated as Traditional Chinese; CSV keys remain unique.
+- UI layout spacing and hierarchy: Base now has title, subtitle, phase banner, account row, section scroll area, status, and action row with validated 1280x720 / 1920x1080 fit.
+- Godot node-first UI ownership: stable Base structure remains in `.tscn` Control/Container nodes; script-created UI is limited to dynamic stash rows and moved into a focused helper.
+- Gameplay responsibility boundaries: Base display text and stash row construction were split out of `base_screen.gd`; Base UI still emits actions and does not own authoritative save/gameplay truth.
+- Save safety: `validate_save_slots.gd`, `validate_base_progression.gd`, and `validate_three_raid_loop.gd` still pass.
+- Scene loadability: main project, Base scene, and current Raid gameplay scene load in Godot 4.7 headless checks.
+- Validation health: Base screen, Base flow, UI text quality, UI foundation, gameplay architecture, save slots, base progression, and three-raid validations pass.
+- Remaining architecture note: `base_screen.gd` was reduced from 547 to 405 lines by extracting helpers; it is healthier but should continue shrinking if future Base tasks add more behavior.
+
+### Verified
+
+- Base screen validation reports `[base_screen] OK node_first=true base=recognizable empty=shown stash=shown layout=fits`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Save slots validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- CSV key uniqueness check reports `CSV keys unique: 212 rows`.
+- Main project, Base scene, and current Raid gameplay scene load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 可視化任務四：讓 Raid Result 明確顯示戰利品與回基地流程.
