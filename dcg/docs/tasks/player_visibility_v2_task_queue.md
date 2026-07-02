@@ -436,7 +436,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十九：刪除錯誤捷徑
 
-狀態：未開始
+狀態：完成
 
 目標：移除或停用直接給槍、直接開箱入背包、2D Base 當完整基地等錯誤流程。
 

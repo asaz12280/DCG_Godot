@@ -2326,3 +2326,30 @@
 ### Next
 
 - Continue with V2 任務二十九：刪除錯誤捷徑.
+
+## 2026-07-03 Player Visibility V2 Shortcut Removal Guard
+
+### Completed
+
+- Added `tools/validate_player_visible_v2_slice.gd` as the V2 player-visible guard for wrong shortcuts.
+- The new validator confirms normal player flow uses 3D Base, not the old 2D BaseScreen route.
+- The new validator confirms the Raid scene and Player scene do not hardwire No.5 pistol, No.7 ammo, starter inventory, or weapon definitions.
+- The new validator confirms starter loadout does not grant No.5 pistol or No.7 ammo.
+- The new validator opens a normal loot container and confirms No.5 pistol and No.7 ammo stay in the container grid until the player clicks a slot.
+- The new validator confirms opening a container does not directly alter the player backpack or grant No.5/No.7.
+- Added the V2 slice validator to the V2 health baseline.
+- Marked V2 任務二十九 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Player-visible V2 slice validation reports `[player_visible_v2_slice] OK shortcuts=removed base=3d raid_loadout=earned container=grid_owned`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Base to Raid loadout validation reports `[base_to_raid_loadout] OK base=prepares_pending raid=consumes backpack=ammo equipment=pistol weapon=synced`.
+- Container open flow validation reports `[container_open_flow] OK interaction=opens_ui contents=container_owned ui_manager=owner`.
+- Container transfer validation reports `[container_transfer] OK click=moves_to_backpack full=feedback boundaries=clean`.
+- Raid return to 3D Base validation reports `[raid_return_to_base_3d] OK result=applied destination=base_3d stash=visible`.
+- Base 3D and gameplay scene launch checks completed with Godot headless `--quit-after 1`.
+
+### Next
+
+- Continue with V2 任務三十：玩家可見 V2 Smoke Test.

@@ -30,6 +30,7 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_codex_item_consistency.gd",
 	"res://tools/validate_base_to_raid_loadout.gd",
 	"res://tools/validate_raid_return_to_base_3d.gd",
+	"res://tools/validate_player_visible_v2_slice.gd",
 	"res://scripts/ui/status_top_menu_panel.gd",
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
@@ -201,6 +202,7 @@ func _validate_queue_mentions_health_check() -> void:
 	var queue_text := _read_text(QUEUE_DOC)
 	_expect_contains(queue_text, "validate_gameplay_architecture.gd", "V2 task queue should keep gameplay architecture validation.")
 	_expect_contains(queue_text, "validate_player_visibility_v2_health.gd", "V2 task queue should name the V2 health check validator.")
+	_expect_contains(queue_text, "validate_player_visible_v2_slice.gd", "V2 task queue should name the player-visible slice validator.")
 
 
 func _read_text(path: String) -> String:
