@@ -16,6 +16,7 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_container_open_flow.gd",
 	"res://tools/validate_equipment_model.gd",
 	"res://tools/validate_ammo_reload_model.gd",
+	"res://tools/validate_reload_flow.gd",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",

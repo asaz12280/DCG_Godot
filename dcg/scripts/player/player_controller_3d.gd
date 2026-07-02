@@ -14,6 +14,7 @@ signal died(event: DamageEvent)
 signal stamina_changed(current: float, maximum: float)
 signal inventory_changed
 signal equipment_changed
+signal reload_feedback_changed(result: Dictionary)
 
 var max_health: float:
 	get:
@@ -71,6 +72,14 @@ var _stats: PlayerStats3D
 var _input_reader := PlayerInputReaderScript.new(self)
 var _locomotion: PlayerLocomotion3D
 var _weapon_controller: Node = null
+var _last_reload_result := {
+	"reloaded": false,
+	"blocked_reason": "",
+	"rounds_loaded": 0,
+	"current_ammo": 0,
+	"reserve_ammo": 0,
+	"backpack_ammo_remaining": 0,
+}
 
 
 func _ready() -> void:
@@ -96,6 +105,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _input_reader.is_gameplay_blocked():
+		return
+	if _is_reload_event(event):
+		reload_equipped_weapon()
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_fire_equipped_weapon()
@@ -137,6 +150,10 @@ func get_equipment_model() -> RefCounted:
 	return equipment_model
 
 
+func get_last_reload_result() -> Dictionary:
+	return _last_reload_result.duplicate(true)
+
+
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
 
@@ -168,6 +185,42 @@ func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
 	if not equipment_model.equip_stack(target_slot, removed_stack):
 		inventory_model.add_stack(removed_stack)
 		return false
+	return true
+
+
+func reload_equipped_weapon() -> bool:
+	if _weapon_controller == null or not _weapon_controller.has_method("reload_from_item"):
+		_record_reload_feedback(false, &"no_weapon", 0)
+		return false
+	_sync_weapon_from_equipment()
+	if not _weapon_controller.has_method("has_weapon") or not bool(_weapon_controller.call("has_weapon")):
+		_record_reload_feedback(false, &"no_weapon", 0)
+		return false
+
+	var current_rounds := int(_weapon_controller.get("current_ammo"))
+	var magazine_capacity := int(_weapon_controller.get("magazine_size"))
+	var needed_rounds := magazine_capacity - current_rounds
+	if needed_rounds <= 0:
+		_record_reload_feedback(false, &"magazine_full", 0)
+		return false
+
+	var ammo_stack := _find_compatible_ammo_stack()
+	if ammo_stack.is_empty():
+		_record_reload_feedback(false, &"no_compatible_ammo", 0)
+		return false
+
+	var ammo_index := int(ammo_stack.get("index", -1))
+	var ammo_def := ammo_stack.get("item_def") as ItemDef
+	var available_quantity := int(ammo_stack.get("quantity", 0))
+	var quantity_to_load := mini(needed_rounds, available_quantity)
+	var loaded_rounds := int(_weapon_controller.call("reload_from_item", ammo_def, quantity_to_load))
+	if loaded_rounds <= 0:
+		var weapon_result: Dictionary = _weapon_controller.get("last_reload_result")
+		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0)
+		return false
+
+	inventory_model.consume_stack_quantity(ammo_index, loaded_rounds)
+	_record_reload_feedback(true, &"", loaded_rounds)
 	return true
 
 
@@ -263,6 +316,49 @@ func _fire_equipped_weapon() -> void:
 	_weapon_controller.fire_forward(ray_origin, ray_direction, get_world_3d().direct_space_state)
 
 
+func _is_reload_event(event: InputEvent) -> bool:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_R or event.physical_keycode == KEY_R:
+			return true
+	if InputMap.has_action("reload") and event.is_action_pressed("reload"):
+		return true
+	return false
+
+
+func _find_compatible_ammo_stack() -> Dictionary:
+	if _weapon_controller == null or not _weapon_controller.has_method("get_ammo_model"):
+		return {}
+	var ammo_model: Variant = _weapon_controller.call("get_ammo_model")
+	if ammo_model == null or not ammo_model.has_method("can_use_ammo"):
+		return {}
+	for index in range(inventory_model.stacks.size()):
+		var stack := inventory_model.stacks[index]
+		if int(stack.get("quantity", 0)) <= 0:
+			continue
+		var item_def := _load_item_from_stack(stack)
+		if item_def == null or item_def.item_type != "ammo":
+			continue
+		if bool(ammo_model.call("can_use_ammo", item_def)):
+			return {
+				"index": index,
+				"item_def": item_def,
+				"quantity": int(stack.get("quantity", 1)),
+			}
+	return {}
+
+
+func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, rounds_loaded: int) -> void:
+	_last_reload_result = {
+		"reloaded": did_reload,
+		"blocked_reason": str(blocked_reason),
+		"rounds_loaded": rounds_loaded,
+		"current_ammo": int(_weapon_controller.get("current_ammo")) if _weapon_controller != null else 0,
+		"reserve_ammo": int(_weapon_controller.get("reserve_ammo")) if _weapon_controller != null else 0,
+		"backpack_ammo_remaining": _count_compatible_backpack_ammo(),
+	}
+	reload_feedback_changed.emit(_last_reload_result.duplicate(true))
+
+
 func _load_starter_inventory() -> void:
 	if inventory_model.get_used_slots() > 0:
 		return
@@ -318,6 +414,14 @@ func _get_equipped_weapon_item() -> ItemDef:
 		if item is ItemDef:
 			return item
 	return null
+
+
+func _count_compatible_backpack_ammo() -> int:
+	var total := 0
+	var ammo_stack := _find_compatible_ammo_stack()
+	if not ammo_stack.is_empty():
+		total += int(ammo_stack.get("quantity", 0))
+	return total
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:

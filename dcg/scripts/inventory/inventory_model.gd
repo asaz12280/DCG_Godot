@@ -64,6 +64,24 @@ func remove_stack_at(index: int) -> Dictionary:
 	return stack
 
 
+func consume_stack_quantity(index: int, quantity: int) -> int:
+	if index < 0 or index >= stacks.size() or quantity <= 0:
+		return 0
+	var stack := stacks[index]
+	var current_quantity := int(stack.get("quantity", 1))
+	var consumed := mini(current_quantity, quantity)
+	if consumed <= 0:
+		return 0
+	var remaining := current_quantity - consumed
+	if remaining <= 0:
+		stacks.remove_at(index)
+	else:
+		stack["quantity"] = remaining
+		stacks[index] = stack
+	changed.emit()
+	return consumed
+
+
 func split_stack_at(index: int, quantity: int) -> bool:
 	if index < 0 or index >= stacks.size():
 		return false

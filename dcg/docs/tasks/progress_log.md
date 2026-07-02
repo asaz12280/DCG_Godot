@@ -1888,3 +1888,41 @@
 ### Next
 
 - Continue with V2 任務十五：R 鍵裝填.
+
+## 2026-07-03 Player Visibility V2 R Key Reload
+
+### Completed
+
+- Added `WeaponController3D` reload result signals/state: `reloaded`, `reload_blocked`, and `last_reload_result`.
+- Added `WeaponController3D.reload_from_item()` so combat can load compatible ammo without reading backpack or UI state directly.
+- Added `InventoryModel.consume_stack_quantity()` for partial stack consumption owned by the inventory data model.
+- Updated `PlayerController3D` so pressing `R` requests reload on the equipped weapon, finds compatible No.7 ammo in the backpack, consumes only loaded rounds, and emits reload feedback.
+- Added `tools/validate_reload_flow.gd` to verify no-weapon blocking, no-compatible-ammo blocking, R-key reload, backpack ammo consumption, HUD ammo update, and ownership boundaries.
+- Added the reload flow validator to the V2 health required-file set.
+- Marked V2 任務十五 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Reload flow validation reports `[reload_flow] OK r_key=bound backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Project Health Check After V2 Task Fifteen
+
+- Base boundary: unchanged in this slice; no Base scene or flow code was touched.
+- Inventory boundary: `InventoryModel` owns generic partial stack consumption and still has no combat, UI, equipment, loot-container, or player references.
+- Equipment boundary: equipped weapon selection remains in `EquipmentModel`/`PlayerController3D`; weapon legality was not moved into UI.
+- Weapon boundary: `WeaponController3D` owns reload results and ammo movement inside the combat model, but still does not read backpack/UI directly.
+- Player boundary: `PlayerController3D` coordinates player input and bridges player-owned backpack/equipment to weapon reload through narrow APIs.
+- UI boundary and layout: no stable UI was hardcoded; player-visible success is the existing HUD ammo count updating after R reload.
+- Validation health: new reload flow, ammo model, equipment binding, inventory equipment, combat domain, HUD, gameplay architecture, V2 health, and scene launch checks pass.
+
+### Next
+
+- Continue with V2 任務十六：空彈左鍵自動裝填.

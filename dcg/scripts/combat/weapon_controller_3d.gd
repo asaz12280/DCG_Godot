@@ -8,6 +8,8 @@ signal fired(item_def: ItemDef)
 signal hit(target: Node, event: DamageEvent)
 signal missed(item_def: ItemDef)
 signal fire_blocked(reason: StringName)
+signal reloaded(rounds_loaded: int, current: int, reserve: int)
+signal reload_blocked(reason: StringName)
 
 @export var weapon_def: ItemDef
 @export var fallback_damage: float = 10.0
@@ -21,6 +23,13 @@ var last_fire_result := {
 	"fired": false,
 	"hit": false,
 	"blocked_reason": "",
+	"current_ammo": 0,
+	"reserve_ammo": 0,
+}
+var last_reload_result := {
+	"reloaded": false,
+	"blocked_reason": "",
+	"rounds_loaded": 0,
 	"current_ammo": 0,
 	"reserve_ammo": 0,
 }
@@ -92,6 +101,17 @@ func get_fire_block_reason() -> StringName:
 	return &""
 
 
+func get_reload_block_reason() -> StringName:
+	_sync_ammo_model_from_public_counts()
+	if weapon_def == null:
+		return &"no_weapon"
+	if magazine_size <= 0 or current_ammo >= magazine_size:
+		return &"magazine_full"
+	if reserve_ammo <= 0:
+		return &"no_ammo"
+	return &""
+
+
 func equip_weapon(item_def: ItemDef) -> bool:
 	if item_def == null or item_def.item_type != "weapon":
 		clear_weapon()
@@ -135,11 +155,55 @@ func add_reserve_ammo_from_item(ammo_item: ItemDef, quantity: int) -> bool:
 
 func reload_from_reserve() -> bool:
 	_sync_ammo_model_from_public_counts()
+	var block_reason := get_reload_block_reason()
+	if block_reason != &"":
+		_record_reload_result(false, block_reason, 0)
+		reload_blocked.emit(block_reason)
+		return false
 	var moved := _ammo_model.reload_from_reserve()
 	if moved <= 0:
+		_record_reload_result(false, &"no_ammo", 0)
+		reload_blocked.emit(&"no_ammo")
 		return false
 	_sync_public_ammo_counts()
+	_record_reload_result(true, &"", moved)
+	reloaded.emit(moved, current_ammo, reserve_ammo)
 	return true
+
+
+func reload_from_item(ammo_item: ItemDef, quantity: int) -> int:
+	_sync_ammo_model_from_public_counts()
+	if weapon_def == null:
+		_record_reload_result(false, &"no_weapon", 0)
+		reload_blocked.emit(&"no_weapon")
+		return 0
+	if magazine_size <= 0 or current_ammo >= magazine_size:
+		_record_reload_result(false, &"magazine_full", 0)
+		reload_blocked.emit(&"magazine_full")
+		return 0
+	if quantity <= 0:
+		_record_reload_result(false, &"no_ammo", 0)
+		reload_blocked.emit(&"no_ammo")
+		return 0
+	if not _ammo_model.can_use_ammo(ammo_item):
+		_record_reload_result(false, &"incompatible_ammo", 0)
+		reload_blocked.emit(&"incompatible_ammo")
+		return 0
+
+	var rounds_requested := mini(magazine_size - current_ammo, quantity)
+	if not _ammo_model.add_reserve_ammo(ammo_item, rounds_requested):
+		_record_reload_result(false, &"incompatible_ammo", 0)
+		reload_blocked.emit(&"incompatible_ammo")
+		return 0
+	var moved := _ammo_model.reload_from_reserve()
+	_sync_public_ammo_counts()
+	if moved <= 0:
+		_record_reload_result(false, &"no_ammo", 0)
+		reload_blocked.emit(&"no_ammo")
+		return 0
+	_record_reload_result(true, &"", moved)
+	reloaded.emit(moved, current_ammo, reserve_ammo)
+	return moved
 
 
 func force_cooldown_ready() -> void:
@@ -201,6 +265,16 @@ func _record_fire_result(did_hit: bool, blocked_reason: String) -> void:
 	}
 
 
+func _record_reload_result(did_reload: bool, blocked_reason: StringName, rounds_loaded: int) -> void:
+	last_reload_result = {
+		"reloaded": did_reload,
+		"blocked_reason": str(blocked_reason),
+		"rounds_loaded": rounds_loaded,
+		"current_ammo": current_ammo,
+		"reserve_ammo": reserve_ammo,
+	}
+
+
 func _sync_ammo_result() -> void:
 	_sync_ammo_model_from_public_counts()
 	_sync_public_ammo_counts()
@@ -217,6 +291,8 @@ func _sync_public_ammo_counts() -> void:
 	reserve_ammo = int(_ammo_model.get_state().get("reserve_ammo", reserve_ammo))
 	last_fire_result["current_ammo"] = current_ammo
 	last_fire_result["reserve_ammo"] = reserve_ammo
+	last_reload_result["current_ammo"] = current_ammo
+	last_reload_result["reserve_ammo"] = reserve_ammo
 
 
 func _sync_ammo_model_from_public_counts() -> void:

@@ -243,7 +243,7 @@ Each Project Health Check must inspect:
 
 ## 任務十五：R 鍵裝填
 
-狀態：未開始
+狀態：完成
 
 目標：玩家按 `R` 可裝填子彈。
 
