@@ -1515,3 +1515,16 @@
 ### Next
 
 - Continue with 可視化任務六：讓手槍與射擊回饋可見.
+
+## 2026-07-02 Player Visibility V2 Automation Setup
+
+### Completed
+
+- Added `docs/design/player_visibility_v2_direction.md` to record the corrected player-visible target: 3D Base, visible container capacity, pistol/ammo pickup, equipment, reload bar, and 3D projectiles.
+- Added `docs/tasks/player_visibility_v2_task_queue.md` as the new automation queue, superseding the earlier player visibility queue for future work.
+- Marked V2 任務一 complete because the corrected direction and task queue are now in the repository.
+- Documented parallel work policy so automation can work non-linearly only when dependencies and file ownership do not conflict.
+
+### Next
+
+- Continue with V2 任務二：建立專案健康檢查基準.
