@@ -2239,3 +2239,27 @@
 ### Next
 
 - Continue with V2 任務二十六：圖鑑一致性檢查.
+
+## 2026-07-03 Player Visibility V2 Codex Item Consistency
+
+### Completed
+
+- Added `tools/validate_codex_item_consistency.gd` to guard No.5 手槍-S and No.7 彈藥-S across item data, stack data, container UI, backpack UI, equipment UI, and codex UI.
+- Added the new consistency validator to the V2 health baseline so future automation catches mismatched or invisible item naming.
+- Confirmed container capacity display still shows used/total slots such as `2/4`.
+- Marked V2 任務二十六 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Codex item consistency validation reports `[codex_item_consistency] OK no5=手槍-S no7=彈藥-S surfaces=container/backpack/equipment/codex`.
+- Item catalog validation reports `[item_catalog] OK items=21 max_no=21`.
+- Container transfer validation reports `[container_transfer] OK click=moves_to_backpack full=feedback boundaries=clean`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Top Menu panels validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務二十七：3D Base 到 Raid 裝備帶入.

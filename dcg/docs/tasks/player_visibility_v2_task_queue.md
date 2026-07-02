@@ -395,7 +395,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十六：圖鑑一致性檢查
 
-狀態：未開始
+狀態：完成
 
 目標：No.5 手槍、No.7 子彈在箱子、背包、裝備欄、圖鑑名稱一致。
 

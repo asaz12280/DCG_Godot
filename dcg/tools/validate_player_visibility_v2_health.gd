@@ -26,6 +26,7 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_projectile_hit.gd",
 	"res://tools/validate_shooting_feedback_hud.gd",
 	"res://tools/validate_top_menu_panels.gd",
+	"res://tools/validate_codex_item_consistency.gd",
 	"res://scripts/ui/status_top_menu_panel.gd",
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
