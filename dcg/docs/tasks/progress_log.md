@@ -1859,3 +1859,32 @@
 ### Next
 
 - Continue with V2 任務十四：建立 Ammo/Magazine 裝彈資料.
+
+## 2026-07-03 Player Visibility V2 Ammo Magazine Model
+
+### Completed
+
+- Added ammo/magazine metadata to `ItemDef` and item stacks: magazine capacity, compatible ammo tags, and ammo tag.
+- Updated No.5 `手槍-S` with 8-round magazine capacity and 9mm compatibility.
+- Updated No.7 `彈藥-S` as 9mm ammo data.
+- Added `scripts/combat/weapon_ammo_model.gd` as the focused combat data model for weapon capacity, loaded ammo, reserve ammo, compatible ammo, reload movement, and round consumption.
+- Updated `WeaponController3D` so reload and firing consume ammo through `WeaponAmmoModel` while keeping `current_ammo` and `reserve_ammo` as temporary HUD/legacy bridge fields.
+- Updated Workbench starter ammo validation so the old hidden 24-round starter reserve pile does not return; Workbench Level 1 now validates only its +1 reserve ammo effect.
+- Updated V2 health audit/validation to guard the Ammo/Magazine model boundary.
+- Updated Raid HUD validation so the V2-correct initial state is `未裝備` instead of the old hardwired pistol.
+- Added `tools/validate_ammo_reload_model.gd`.
+- Marked V2 任務十四 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務十五：R 鍵裝填.

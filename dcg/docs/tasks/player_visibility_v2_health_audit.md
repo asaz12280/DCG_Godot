@@ -34,9 +34,9 @@ The health check does not mean these debts are acceptable forever. It means the 
    - `ContainerInventoryUI` is a stable `.tscn`/Control panel that shows box name, `2/4` capacity text, and visible item slots.
    - Target: later tasks connect item transfer actions without moving layout ownership out of the UI panel.
 
-7. fake ammo counters
-   - `WeaponController3D` owns `current_ammo` and `reserve_ammo` as local counters.
-   - Target: ammo and magazine state should come from inventory/equipment/ammo models, not hidden controller numbers.
+7. Ammo/Magazine model baseline resolved in V2 task fourteen
+   - `WeaponController3D` now delegates magazine capacity, loaded ammo, reserve ammo, reload movement, and round consumption to `WeaponAmmoModel`.
+   - Guardrail: `current_ammo` and `reserve_ammo` are temporary HUD/legacy bridge fields only; future reload and HUD tasks should keep the model as the source of truth.
 
 8. hitscan firing
    - `WeaponController3D` uses `intersect_ray()` and has no visible projectile bullet.

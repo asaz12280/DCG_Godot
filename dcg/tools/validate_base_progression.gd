@@ -114,8 +114,8 @@ func _validate_starter_ammo_bonus() -> void:
 	if weapon == null:
 		_errors.append("Player scene should include WeaponController3D for upgrade effect validation.")
 	else:
-		if int(weapon.get("reserve_ammo")) != 25:
-			_errors.append("Purchased Workbench Level 1 should add +1 reserve ammo to the next raid.")
+		if int(weapon.get("reserve_ammo")) != 1:
+			_errors.append("Purchased Workbench Level 1 should add +1 reserve ammo to the next raid without restoring the removed starter ammo pile.")
 	_free_node(player)
 	_cleanup_validation_root(save_manager.save_root_path)
 	_free_created_save_manager()

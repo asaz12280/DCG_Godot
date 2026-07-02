@@ -229,7 +229,7 @@ Each Project Health Check must inspect:
 
 ## 任務十四：建立 Ammo/Magazine 裝彈資料
 
-狀態：未開始
+狀態：完成
 
 目標：子彈、彈匣、備用彈藥和武器狀態分開管理。
 

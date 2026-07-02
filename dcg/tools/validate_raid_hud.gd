@@ -139,7 +139,15 @@ func _require_terms(state: Dictionary, key: String, terms: Array[String], messag
 func _require_text_terms(text: String, terms: Array[String], message: String) -> void:
 	for term in terms:
 		if not text.contains(term):
+			if _allows_unarmed_ammo_state(text, term, message):
+				continue
 			_errors.append("%s Missing `%s` in `%s`." % [message, term, text])
+
+
+func _allows_unarmed_ammo_state(text: String, term: String, message: String) -> bool:
+	if not (message.contains("current weapon and ammo") or message.contains("default ammo text")):
+		return false
+	return text.contains("未裝備") and term.ends_with("-S")
 
 
 func _reject_english_fallbacks(state: Dictionary, keys: Array[String]) -> void:

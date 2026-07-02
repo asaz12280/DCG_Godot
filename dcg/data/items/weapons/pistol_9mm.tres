@@ -14,4 +14,6 @@ weight = 1.1
 value = 120
 max_stack = 1
 damage = 24
+magazine_capacity = 8
+compatible_ammo_tags = Array[StringName]([&"9mm"])
 tags = Array[StringName]([&"gun", &"pistol", &"9mm"])

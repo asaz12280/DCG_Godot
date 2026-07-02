@@ -13,4 +13,5 @@ item_type = "ammo"
 weight = 0.012
 value = 3
 max_stack = 60
+ammo_tag = &"9mm"
 tags = Array[StringName]([&"9mm"])

@@ -8,12 +8,14 @@ var _required_files := PackedStringArray([
 	"res://scripts/ui/ui_manager.gd",
 	"res://scripts/inventory/inventory_model.gd",
 	"res://scripts/combat/weapon_controller_3d.gd",
+	"res://scripts/combat/weapon_ammo_model.gd",
 	"res://scripts/loot/loot_container_3d.gd",
 	"res://scripts/inventory/container_inventory_model.gd",
 	"res://scripts/equipment/equipment_model.gd",
 	"res://scenes/ui/container_inventory_ui.tscn",
 	"res://tools/validate_container_open_flow.gd",
 	"res://tools/validate_equipment_model.gd",
+	"res://tools/validate_ammo_reload_model.gd",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
@@ -28,7 +30,7 @@ var _audit_required_terms := PackedStringArray([
 	"starter loadout coupling",
 	"direct container-to-backpack grant resolved",
 	"missing container capacity UI resolved",
-	"fake ammo counters",
+	"Ammo/Magazine model baseline resolved",
 	"hitscan firing",
 	"EquipmentModel baseline resolved",
 	"Top Menu placeholder panels",
@@ -151,9 +153,16 @@ func _validate_known_current_risks_are_visible() -> void:
 	var weapon_text := _read_text("res://scripts/combat/weapon_controller_3d.gd")
 	for required in PackedStringArray(["no_weapon", "equip_weapon", "clear_weapon", "has_weapon"]):
 		_expect_contains(weapon_text, required, "WeaponController3D should expose equipment-bound weapon API %s." % required)
+	for required in PackedStringArray(["WeaponAmmoModelScript", "get_ammo_model", "add_reserve_ammo_from_item", "set_reserve_ammo_from_item"]):
+		_expect_contains(weapon_text, required, "WeaponController3D should keep ammo state model-backed through %s." % required)
 	_expect_contains(weapon_text, "current_ammo", "Current fake ammo counter risk should remain visible until ammo model tasks remove it.")
 	_expect_contains(weapon_text, "reserve_ammo", "Current reserve ammo counter risk should remain visible until ammo model tasks remove it.")
 	_expect_contains(weapon_text, "intersect_ray", "Current hitscan firing risk should remain visible until projectile tasks remove it.")
+
+	var ammo_model_text := _read_text("res://scripts/combat/weapon_ammo_model.gd")
+	for forbidden in PackedStringArray(["Control", "InventoryEquipmentUI", "UIManager", "PlayerController3D", "LootContainer3D"]):
+		if ammo_model_text.contains(forbidden):
+			_errors.append("WeaponAmmoModel should stay combat-data only and independent from %s." % forbidden)
 
 	var container_text := _read_text("res://scripts/loot/loot_container_3d.gd")
 	if container_text.contains("add_item_resource"):
