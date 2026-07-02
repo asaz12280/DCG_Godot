@@ -1776,3 +1776,27 @@
 ### Next
 
 - Continue with V2 任務十一：建立 EquipmentModel.
+
+## 2026-07-02 Player Visibility V2 EquipmentModel
+
+### Completed
+
+- Added `scripts/equipment/equipment_model.gd` as the standalone equipment domain model.
+- Added equipment slots for primary weapon, sidearm, melee, helmet, armor, glasses, headset, backpack, and two charm slots.
+- Added slot legality checks so pistol/gun, melee weapon, helmet, armor, and backpack items only enter valid equipment slots.
+- Added equip, equip-from-stack, unequip, slot inspection, equipped item lookup, and save/load round-trip support.
+- Kept `EquipmentModel` independent from UI, player controller, loot containers, weapon controller, and save services.
+- Updated the V2 health audit so the previous missing EquipmentModel debt is now recorded as resolved in V2 task eleven.
+- Added `tools/validate_equipment_model.gd` and strengthened `tools/validate_player_visibility_v2_health.gd` to guard the new model boundary.
+- Marked V2 任務十一 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Equipment model validation reports `[equipment_model] OK slots=ready equip=legal reject=invalid save=round_trip coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Item catalog validation reports `[item_catalog] OK items=21 max_no=21`.
+
+### Next
+
+- Continue with V2 任務十二：背包物品可裝備.

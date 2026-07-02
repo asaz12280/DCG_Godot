@@ -188,7 +188,7 @@ Each Project Health Check must inspect:
 
 ## 任務十一：建立 EquipmentModel
 
-狀態：未開始
+狀態：完成
 
 目標：裝備欄獨立於背包，支援主武器、副武器、近戰、護甲等欄位。
 

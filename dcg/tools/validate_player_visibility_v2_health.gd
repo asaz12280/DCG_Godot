@@ -10,8 +10,10 @@ var _required_files := PackedStringArray([
 	"res://scripts/combat/weapon_controller_3d.gd",
 	"res://scripts/loot/loot_container_3d.gd",
 	"res://scripts/inventory/container_inventory_model.gd",
+	"res://scripts/equipment/equipment_model.gd",
 	"res://scenes/ui/container_inventory_ui.tscn",
 	"res://tools/validate_container_open_flow.gd",
+	"res://tools/validate_equipment_model.gd",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
@@ -28,7 +30,7 @@ var _audit_required_terms := PackedStringArray([
 	"missing container capacity UI resolved",
 	"fake ammo counters",
 	"hitscan firing",
-	"missing EquipmentModel",
+	"EquipmentModel baseline resolved",
 	"Top Menu placeholder panels",
 	"oversized Raid HUD",
 ])
@@ -71,6 +73,7 @@ func _initialize() -> void:
 	_validate_guarded_boundaries()
 	_validate_ui_manager_surface()
 	_validate_inventory_independence()
+	_validate_equipment_independence()
 	_validate_known_current_risks_are_visible()
 	_validate_queue_mentions_health_check()
 	if _errors.is_empty():
@@ -125,6 +128,15 @@ func _validate_inventory_independence() -> void:
 		var term := String(raw_term)
 		if inventory_text.contains(term):
 			_errors.append("InventoryModel should stay UI/equipment/combat independent, but contains %s." % term)
+
+
+func _validate_equipment_independence() -> void:
+	var equipment_text := _read_text("res://scripts/equipment/equipment_model.gd")
+	for term in PackedStringArray(["Control", "UIManager", "WeaponController3D", "PlayerController3D", "LootContainer3D", "SaveGameManager"]):
+		if equipment_text.contains(term):
+			_errors.append("EquipmentModel should stay UI/player/combat/save-service independent, but contains %s." % term)
+	for required in PackedStringArray(["class_name EquipmentModel", "can_equip", "equip_item", "unequip", "to_save_data", "load_save_data"]):
+		_expect_contains(equipment_text, required, "EquipmentModel should expose %s." % required)
 
 
 func _validate_known_current_risks_are_visible() -> void:

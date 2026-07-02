@@ -42,9 +42,9 @@ The health check does not mean these debts are acceptable forever. It means the 
    - `WeaponController3D` uses `intersect_ray()` and has no visible projectile bullet.
    - Target: firing spawns a visible 3D projectile that travels, hits, or expires.
 
-9. missing EquipmentModel
-   - Equipment slots are currently visible UI concepts, but there is no standalone equipment domain model.
-   - Target: equipment data is independent from UI and validates legal slots.
+9. EquipmentModel baseline resolved in V2 task eleven
+   - Equipment slots now have a standalone domain model that validates legal slots and supports equip, unequip, and save/load round trips.
+   - Target: later tasks connect backpack UI and WeaponController to `EquipmentModel` without moving slot legality into UI scripts.
 
 10. Top Menu placeholder panels
    - Top Menu has backpack, quests, status, map, and codex IDs, but not every tab has a real player-facing panel.
