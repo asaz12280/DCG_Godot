@@ -7,8 +7,8 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 @export var raid_session_path: NodePath = NodePath("../../RaidSession")
 @export var extraction_zone_path: NodePath = NodePath("../../SceneProps/ExtractionZone")
 @export var player_path: NodePath = NodePath("../../Player3D")
-@export var safe_margin := Vector2(36.0, 36.0)
-@export var panel_size := Vector2(430.0, 216.0)
+@export var safe_margin := Vector2(24.0, 24.0)
+@export var panel_size := Vector2(380.0, 152.0)
 
 @onready var main_panel: PanelContainer = %MainPanel
 @onready var goal_title_label: Label = %GoalTitleLabel
@@ -55,10 +55,12 @@ func get_display_state() -> Dictionary:
 		"goal_title": goal_title_label.text,
 		"objective": objective_label.text,
 		"route_hint": route_hint_label.text,
+		"route_hint_visible": route_hint_label.visible,
 		"status": status_label.text,
 		"vitals": vitals_label.text,
 		"extraction": extraction_label.text,
 		"extraction_progress": extraction_progress.value,
+		"extraction_progress_visible": extraction_progress.visible,
 		"ammo": ammo_label.text,
 		"weapon_status": weapon_status_label.text,
 		"reload": reload_label.text,
@@ -160,7 +162,7 @@ func _layout_for_viewport(viewport_size: Vector2) -> Rect2:
 		minf(safe_margin.y, maxf(24.0, viewport_size.y * 0.034))
 	)
 	var target_size := Vector2(
-		minf(panel_size.x, maxf(340.0, viewport_size.x * 0.30)),
+		minf(panel_size.x, maxf(320.0, viewport_size.x * 0.28)),
 		panel_size.y
 	)
 	target_size.x = minf(target_size.x, maxf(1.0, viewport_size.x - margin.x * 2.0))
@@ -172,6 +174,7 @@ func _update_objective() -> void:
 	goal_title_label.text = _text(&"ui.raid_hud.goal_title", "目前目標")
 	objective_label.text = _text(&"ui.raid_hud.objective", "搜索物資 / 小心敵人 / 前往撤離點")
 	route_hint_label.text = _text(&"ui.raid_hud.route_hint", "搜完箱子後，確認血量與彈藥，再站進撤離區倒數。")
+	route_hint_label.visible = false
 
 
 func _update_raid_status() -> void:
@@ -209,6 +212,7 @@ func _update_extraction_idle() -> void:
 	_extraction_active = false
 	_extraction_remaining = 0.0
 	extraction_label.text = _text(&"ui.raid_hud.extraction_hint", "前往撤離區即可離開")
+	extraction_progress.visible = false
 	extraction_progress.value = 0.0
 
 
@@ -292,12 +296,14 @@ func _on_raid_completed(_result: Dictionary) -> void:
 func _on_extraction_started(_body: Node3D) -> void:
 	_extraction_active = true
 	extraction_label.text = _text(&"ui.raid_hud.extracting", "撤離中...")
+	extraction_progress.visible = true
 	extraction_progress.value = 0.0
 
 
 func _on_extraction_progress(progress: float, remaining_time: float) -> void:
 	_extraction_active = true
 	_extraction_remaining = remaining_time
+	extraction_progress.visible = true
 	extraction_progress.value = clampf(progress, 0.0, 1.0) * 100.0
 	extraction_label.text = "%s %.1f 秒" % [_text(&"ui.raid_hud.extraction_remaining", "撤離"), _extraction_remaining]
 
@@ -308,6 +314,7 @@ func _on_extraction_cancelled(_body: Node3D) -> void:
 
 func _on_extraction_completed(_body: Node3D) -> void:
 	_extraction_active = false
+	extraction_progress.visible = true
 	extraction_progress.value = 100.0
 	extraction_label.text = _text(&"ui.raid_hud.extracted", "已撤離")
 

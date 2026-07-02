@@ -7,8 +7,8 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 36.0
 offset_top = 36.0
-offset_right = 466.0
-offset_bottom = 252.0
+offset_right = 416.0
+offset_bottom = 188.0
 mouse_filter = 2
 script = ExtResource("1_raid_hud_panel")
 
@@ -24,13 +24,14 @@ grow_vertical = 2
 [node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
+theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_bottom = 12
 
 [node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
+alignment = 1
 
 [node name="GoalTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
@@ -45,6 +46,7 @@ autowrap_mode = 3
 
 [node name="RouteHintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 text = "搜完箱子後，確認血量與彈藥，再站進撤離區倒數。"
 autowrap_mode = 3
@@ -67,7 +69,8 @@ autowrap_mode = 3
 
 [node name="ExtractionProgress" type="ProgressBar" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 16)
+visible = false
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 show_percentage = false
 

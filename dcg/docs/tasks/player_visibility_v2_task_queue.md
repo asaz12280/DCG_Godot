@@ -340,7 +340,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十二：修正 Raid HUD 大面板問題
 
-狀態：未開始
+狀態：完成
 
 目標：HUD 不像大面板遮住畫面，詳細任務移到任務頁籤。
 

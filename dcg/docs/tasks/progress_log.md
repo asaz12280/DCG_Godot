@@ -2119,3 +2119,27 @@
 ### Next
 
 - Continue with V2 任務二十二：修正 Raid HUD 大面板問題.
+
+## 2026-07-03 Player Visibility V2 Compact Raid HUD
+
+### Completed
+
+- Reduced `RaidHudPanel` from a large panel-like block to a compact 380x152 top-left combat summary.
+- Kept the core visible HUD information: current objective, raid status, health/stamina, weapon ammo, weapon combat state, reload feedback, and extraction status.
+- Hid the long route hint from the main HUD so detailed task text can move into the Top Menu quest tab in the next task.
+- Changed extraction progress to stay hidden until extraction begins, reducing idle HUD footprint.
+- Tightened `validate_raid_hud.gd` so it now catches oversized HUD layouts, visible long route hints, and always-visible extraction progress.
+- Marked V2 任務二十二 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Reload UI validation reports `[reload_ui] OK node_first=progress_bar visible=reload_progress completion=clears layout=fit boundaries=clean`.
+- Shooting feedback HUD validation reports `[shooting_feedback_hud] OK status=unarmed_empty_ready_reloading node_first=true zh_tw=true boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務二十三：任務清單移入 Top Menu 第二頁籤.

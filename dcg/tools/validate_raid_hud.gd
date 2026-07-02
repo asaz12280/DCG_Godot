@@ -39,7 +39,8 @@ func _validate_gameplay_hud_wiring() -> void:
 	var state: Dictionary = hud.call("get_display_state")
 	_require_exact(state, "goal_title", "目前目標", "Raid HUD should show a Traditional Chinese current-objective title.")
 	_require_terms(state, "objective", ["搜索物資", "小心敵人", "前往撤離點"], "Raid HUD objective should list the visible raid route.")
-	_require_terms(state, "route_hint", ["箱子", "血量", "彈藥", "撤離區"], "Raid HUD route hint should tell the player what to do next.")
+	if bool(state.get("route_hint_visible", true)):
+		_errors.append("Raid HUD should hide long route instructions; detailed tasks belong in the top-menu quest tab.")
 	_require_terms(state, "status", ["行動中"], "Raid HUD should show active raid status in Traditional Chinese.")
 	_require_terms(state, "vitals", ["生命", "體力"], "Raid HUD should show player health and stamina.")
 	_require_terms(state, "ammo", ["武器", "手槍-S", "彈藥"], "Raid HUD should show current weapon and ammo.")
@@ -49,6 +50,11 @@ func _validate_gameplay_hud_wiring() -> void:
 
 	if int(state.get("mouse_filter", -1)) != Control.MOUSE_FILTER_IGNORE:
 		_errors.append("Raid HUD should ignore mouse input so it does not block gameplay or panels.")
+	var idle_rect: Rect2 = state.get("panel_rect", Rect2())
+	if idle_rect.size.x > 390.0 or idle_rect.size.y > 160.0:
+		_errors.append("Raid HUD should be a compact combat summary, not a large panel. Got %s." % idle_rect.size)
+	if bool(state.get("extraction_progress_visible", true)):
+		_errors.append("Raid HUD extraction progress should stay hidden until the player starts extracting.")
 
 	var player := scene.get_node_or_null("Player3D") as Node3D
 	var extraction_zone := scene.get_node_or_null("SceneProps/ExtractionZone")
@@ -63,6 +69,8 @@ func _validate_gameplay_hud_wiring() -> void:
 	_require_terms(state, "extraction", ["撤離"], "Raid HUD should show extraction countdown/status while player is in the zone.")
 	if float(state.get("extraction_progress", 0.0)) <= 0.0:
 		_errors.append("Raid HUD extraction progress should increase while extracting.")
+	if not bool(state.get("extraction_progress_visible", false)):
+		_errors.append("Raid HUD extraction progress should become visible while extracting.")
 
 	var ui_manager := root.get_node_or_null("UIManager")
 	if ui_manager != null and ui_manager.has_method("open_ui"):
@@ -86,10 +94,10 @@ func _validate_layout_quality() -> void:
 			_errors.append("Raid HUD should keep a safe top-left margin at %s." % viewport_size)
 		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
 			_errors.append("Raid HUD should fit within viewport at %s." % viewport_size)
-		if rect.size.x > viewport_size.x * 0.36:
-			_errors.append("Raid HUD should not cover too much horizontal gameplay view at %s." % viewport_size)
-		if rect.size.y > viewport_size.y * 0.30:
-			_errors.append("Raid HUD should not cover too much vertical gameplay view at %s." % viewport_size)
+		if rect.size.x > viewport_size.x * 0.30:
+			_errors.append("Compact Raid HUD should not cover too much horizontal gameplay view at %s." % viewport_size)
+		if rect.size.y > viewport_size.y * 0.23:
+			_errors.append("Compact Raid HUD should not cover too much vertical gameplay view at %s." % viewport_size)
 	_free_node(hud)
 
 
@@ -120,6 +128,12 @@ func _validate_node_first_structure() -> void:
 		if objective.get_theme_font_size("font_size") < 16:
 			_errors.append("Raid HUD objective text should remain readable at early target resolutions.")
 		_require_text_terms(objective.text, ["搜索物資", "小心敵人", "前往撤離點"], "Raid HUD scene default objective should be readable before runtime refresh.")
+	var route_hint := hud.get_node_or_null("MainPanel/PanelMargin/Content/RouteHintLabel") as Label
+	if route_hint != null and route_hint.visible:
+		_errors.append("Raid HUD scene should keep RouteHintLabel hidden for compact mode.")
+	var extraction_bar := hud.get_node_or_null("MainPanel/PanelMargin/Content/ExtractionProgress") as ProgressBar
+	if extraction_bar != null and extraction_bar.visible:
+		_errors.append("Raid HUD scene should hide extraction progress until extraction starts.")
 	var ammo := hud.get_node_or_null("MainPanel/PanelMargin/Content/AmmoLabel") as Label
 	if ammo != null:
 		_require_text_terms(ammo.text, ["武器", "手槍-S", "彈藥"], "Raid HUD scene default ammo text should be Traditional Chinese.")
