@@ -1528,3 +1528,23 @@
 ### Next
 
 - Continue with V2 任務二：建立專案健康檢查基準.
+
+## 2026-07-02 Player Visibility V2 Health Baseline
+
+### Completed
+
+- Added `docs/tasks/player_visibility_v2_health_audit.md` to name the current coupling debts before refactoring them.
+- Documented ownership guardrails for Base, LootContainer3D, InventoryModel, EquipmentModel, WeaponController3D, ContainerInventoryUI, UIManager, and PlayerController3D.
+- Added `tools/validate_player_visibility_v2_health.gd` to verify the V2 audit exists, known player-visible debts are documented, UI surface IDs are present, and InventoryModel remains independent from UI/equipment/combat/player/controller coupling.
+- Marked V2 任務二 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Main project and current 3D gameplay test scene load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務三：建立 3D Base 場景雛形.

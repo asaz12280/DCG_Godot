@@ -59,7 +59,7 @@ Each Project Health Check must inspect:
 
 ## 任務二：建立專案健康檢查基準
 
-狀態：未開始
+狀態：完成
 
 目標：先盤點目前 Base、Loot、Inventory、Equipment、Weapon、Quest、UIManager 的耦合狀況。
 
@@ -69,7 +69,7 @@ Each Project Health Check must inspect:
 
 驗證：
 - `validate_gameplay_architecture.gd`
-- 新增的 V2 health check script。
+- `validate_player_visibility_v2_health.gd`
 
 ## 任務三：建立 3D Base 場景雛形
 
@@ -467,4 +467,3 @@ Each Project Health Check must inspect:
 驗證：
 - `validate_player_visible_v2_slice.gd`
 - Standard Validation Set。
-
