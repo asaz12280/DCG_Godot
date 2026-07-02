@@ -450,7 +450,7 @@ Each Project Health Check must inspect:
 
 ## 任務三十：玩家可見 V2 Smoke Test
 
-狀態：未開始
+狀態：完成
 
 目標：驗證完整可見流程。
 

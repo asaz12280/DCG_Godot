@@ -2353,3 +2353,37 @@
 ### Next
 
 - Continue with V2 任務三十：玩家可見 V2 Smoke Test.
+
+## 2026-07-03 Player Visibility V2 Smoke Test
+
+### Completed
+
+- Upgraded `tools/validate_player_visible_v2_slice.gd` from a shortcut guard into a full player-visible V2 smoke test.
+- The smoke test now starts in 3D Base, prepares a sortie loadout, enters Raid, opens a loot container grid, clicks No.5 pistol and No.7 ammo into the backpack, equips No.5, reloads with a visible HUD progress bar, fires a visible 3D projectile, extracts remaining loot, and confirms the result continue button returns to `Base3D`.
+- Kept the existing shortcut guards that prevent normal player flow from routing through the old 2D BaseScreen, prevent pistol/ammo hardwiring, and prevent containers from directly granting loot without player slot clicks.
+- Marked V2 任務三十 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Player-visible V2 slice validation reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Standard Validation Set passes: item catalog, UI foundation, inventory drag rules, gameplay architecture, combat domain, difficulty system, save slots, save slot panel, audio settings, pause menu, main scene launch, and gameplay scene launch.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+
+### Project Health Check After V2 Task Thirty
+
+- Trigger: completed V2 tasks twenty eight, twenty nine, and thirty after the previous health check.
+- Player flow reachability: the validated flow is now 3D Base -> Raid -> container grid -> backpack/equipment/reload/projectile -> extraction result -> 3D Base.
+- Base boundary: Base only prepares sortie loadout and routes the player to Raid; it does not directly grant loot, equip weapons, reload, fire, or write combat state.
+- Inventory/equipment/weapon boundaries: container slots transfer into backpack through UIManager, `EquipmentModel` owns equipped No.5, and `WeaponController3D` syncs from equipment before reload/fire.
+- Container boundary: `LootContainer3D` owns container inventory and only opens the UI; the player must click slots to move No.5 and No.7.
+- UIManager boundary: UIManager remains the owner of active container/top-menu state and slot transfer requests.
+- Quest boundary: no quest logic was changed in the smoke test update.
+- Traditional Chinese text quality and UI layout: `validate_ui_text_quality.gd` and scene launch checks still pass.
+- Save/load safety: validation uses a temporary `user://validation_player_visible_v2_slice` save root and cleans it up after the smoke test; extraction persists remaining No.7 ammo to stash before returning to Base.
+- Scene loadability: main scene and gameplay scene both load headless after the final smoke test change.
+- Validation health: `validate_player_visible_v2_slice.gd` now guards the exact player-visible V2 acceptance path instead of only checking that shortcuts were removed.
+
+### Next
+
+- V2 player visibility task queue is complete. Stop `dcg-v2` automation after commit/push and final status report.
