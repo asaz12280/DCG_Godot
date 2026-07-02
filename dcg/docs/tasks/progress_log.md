@@ -1716,3 +1716,36 @@
 ### Next
 
 - Continue with V2 任務九：箱子物品轉移到背包.
+
+## 2026-07-02 Player Visibility V2 Container Transfer
+
+### Completed
+
+- Wired `ContainerInventoryUI.slot_pressed` into `UIManager` so clicking a visible container slot transfers that stack to the player backpack.
+- Kept `ContainerInventoryUI` as a node-first display/intent panel; transfer coordination now lives in `UIManager`.
+- Added visible Traditional Chinese transfer feedback for success, empty slots, unavailable transfer state, and full backpack state.
+- Preserved the corrected container flow: `LootContainer3D` opens/owns container contents and no longer silently grants all loot to the backpack.
+- Added `tools/validate_container_transfer.gd` to prove normal gameplay can open a container, click a slot, update container/backpack capacity, and show full-backpack feedback.
+- Marked V2 任務九 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Container transfer validation reports `[container_transfer] OK click=moves_to_backpack full=feedback boundaries=clean`.
+- Container open flow validation reports `[container_open_flow] OK interaction=opens_ui contents=container_owned ui_manager=owner`.
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- Loot container validation reports `[loot_container] OK roll=container_inventory one_shot=no_reroll map=spawn_loot_extract ui_coupling=clean scene=wired`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+
+### Project Health Check After V2 Task Nine
+
+- Player flow reachability: normal raid gameplay can open a visible loot container and click a slot to move loot into the player backpack.
+- Inventory/container boundary: `ContainerInventoryModel` still owns container slots, `InventoryModel` still owns player backpack stacks, and `UIManager` is the bridge for player intent.
+- UI boundary: `ContainerInventoryUI` displays capacity, slots, and status text but does not search for Player, roll loot, or mutate backpack state directly.
+- Loot boundary: `LootContainer3D` still opens/holds container contents and does not write directly to `InventoryEquipmentUI` or `InventoryModel`.
+- UI layout quality: container panel remains node-first, stable at 1280x720 and 1920x1080, and all visible transfer feedback is Traditional Chinese.
+- Validation health: transfer, open flow, UI, loot container, text quality, and V2 health validations pass.
+
+### Next
+
+- Continue with V2 任務十：把 No.5 手槍與 No.7 子彈放入早期箱子.

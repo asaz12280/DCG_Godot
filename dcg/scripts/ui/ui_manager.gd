@@ -151,6 +151,10 @@ func _bind_ui_nodes() -> void:
 			var close_callback := Callable(self, "_on_container_inventory_close_requested")
 			if not _container_inventory_ui.is_connected("close_requested", close_callback):
 				_container_inventory_ui.connect("close_requested", close_callback)
+		if _container_inventory_ui != null and _container_inventory_ui.has_signal("slot_pressed"):
+			var slot_callback := Callable(self, "_on_container_slot_pressed")
+			if not _container_inventory_ui.is_connected("slot_pressed", slot_callback):
+				_container_inventory_ui.connect("slot_pressed", slot_callback)
 
 	if _pause_menu == null or not is_instance_valid(_pause_menu):
 		_pause_menu = _find_control("PauseMenu")
@@ -299,6 +303,98 @@ func _on_tree_changed() -> void:
 func _on_container_inventory_close_requested() -> void:
 	if active_ui == UI_CONTAINER:
 		close_active_ui()
+
+
+func _on_container_slot_pressed(slot_index: int, stack: Dictionary) -> void:
+	if active_ui != UI_CONTAINER:
+		return
+	if _active_container == null or not is_instance_valid(_active_container):
+		return
+	if stack.is_empty():
+		_set_container_status("這個格子是空的。")
+		return
+	if not _active_container.has_method("get_container_inventory_model"):
+		_set_container_status("目前無法轉移物品。")
+		return
+
+	var container_model: RefCounted = _active_container.call("get_container_inventory_model")
+	var backpack_model := _get_player_inventory_model()
+	if container_model == null or backpack_model == null:
+		_set_container_status("目前無法轉移物品。")
+		return
+	if not _can_backpack_accept_stack(backpack_model, stack):
+		_set_container_status("背包已滿，無法放入。")
+		return
+
+	var moved_quantity := int(stack.get("quantity", 1))
+	var removed_stack: Dictionary = container_model.call("remove_from_slot", slot_index, moved_quantity)
+	if removed_stack.is_empty():
+		_set_container_status("這個格子是空的。")
+		return
+	if not _add_stack_to_backpack(backpack_model, removed_stack):
+		container_model.call("add_stack", removed_stack)
+		_set_container_status("背包已滿，無法放入。")
+		return
+	_set_container_status("已移入背包。")
+
+
+func _get_player_inventory_model() -> RefCounted:
+	var search_root: Node = null
+	if is_inside_tree() and get_tree() != null:
+		search_root = get_tree().current_scene
+		if search_root == null:
+			search_root = get_tree().root
+	if search_root == null:
+		return null
+	var player := search_root.find_child("Player3D", true, false)
+	if player == null or not player.has_method("get_inventory_model"):
+		return null
+	return player.call("get_inventory_model") as RefCounted
+
+
+func _can_backpack_accept_stack(backpack_model: RefCounted, stack: Dictionary) -> bool:
+	var remaining := int(stack.get("quantity", 1))
+	if remaining <= 0:
+		return false
+	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	var max_stack := maxi(int(stack.get("max_stack", 1)), 1)
+	var existing_stacks: Array = backpack_model.call("get_display_items")
+	for existing in existing_stacks:
+		if typeof(existing) != TYPE_DICTIONARY:
+			continue
+		var existing_stack := existing as Dictionary
+		if str(existing_stack.get("resource_path", "")) != item_path:
+			continue
+		if max_stack <= 1:
+			continue
+		var room := max_stack - int(existing_stack.get("quantity", 1))
+		if room <= 0:
+			continue
+		remaining -= mini(room, remaining)
+		if remaining <= 0:
+			return true
+
+	var slot_limit := int(backpack_model.get("slot_limit"))
+	var free_slots := maxi(slot_limit - existing_stacks.size(), 0)
+	while remaining > 0 and free_slots > 0:
+		remaining -= mini(max_stack, remaining)
+		free_slots -= 1
+	return remaining <= 0
+
+
+func _add_stack_to_backpack(backpack_model: RefCounted, stack: Dictionary) -> bool:
+	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	if item_path == "" or not ResourceLoader.exists(item_path):
+		return backpack_model.call("add_stack", stack)
+	var item_def := load(item_path) as ItemDef
+	if item_def == null:
+		return backpack_model.call("add_stack", stack)
+	return bool(backpack_model.call("add_item", item_def, int(stack.get("quantity", 1))))
+
+
+func _set_container_status(message: String) -> void:
+	if _container_inventory_ui != null and _container_inventory_ui.has_method("set_status_message"):
+		_container_inventory_ui.call("set_status_message", message)
 
 
 func _find_control(node_name: String) -> Control:

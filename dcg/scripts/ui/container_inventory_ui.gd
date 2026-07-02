@@ -15,11 +15,13 @@ const InventoryItemResolverScript := preload("res://scripts/ui/inventory_item_re
 @onready var slot_scroll: ScrollContainer = %SlotScroll
 @onready var slot_grid: GridContainer = %SlotGrid
 @onready var empty_label: Label = %EmptyLabel
+@onready var status_label: Label = %StatusLabel
 @onready var close_button: Button = %CloseButton
 
 var container_model: RefCounted = null
 var container_display_name := "物資箱"
 var slot_button_size := Vector2(96.0, 74.0)
+var status_message := "點擊物品移入背包。"
 
 var _item_resolver := InventoryItemResolverScript.new()
 
@@ -36,6 +38,8 @@ func _ready() -> void:
 	UIStyle.apply_font_color(help_label, UIStyle.COLOR_TEXT_HELP)
 	UIStyle.apply_font_size(empty_label, UIStyle.FONT_BODY)
 	UIStyle.apply_font_color(empty_label, UIStyle.COLOR_TEXT_HELP)
+	UIStyle.apply_font_size(status_label, UIStyle.FONT_PLACEHOLDER)
+	UIStyle.apply_font_color(status_label, UIStyle.COLOR_TEXT_SUBTITLE)
 	UIStyle.apply_font_size(close_button, UIStyle.FONT_BODY)
 	slot_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close_panel)
@@ -54,6 +58,7 @@ func open_container(model: RefCounted, display_name: String = "物資箱") -> vo
 		container_model.changed.disconnect(refresh)
 	container_model = model
 	container_display_name = display_name if display_name != "" else "物資箱"
+	status_message = "點擊物品移入背包。"
 	if container_model != null and not container_model.changed.is_connected(refresh):
 		container_model.changed.connect(refresh)
 	visible = true
@@ -75,17 +80,25 @@ func refresh() -> void:
 	if container_model == null:
 		capacity_label.text = "0/0"
 		empty_label.visible = true
+		status_label.text = status_message
 		return
 
 	var slots: Array[Dictionary] = container_model.call("get_slots")
 	capacity_label.text = "%d/%d" % [container_model.get_used_slots(), container_model.get_capacity()]
 	empty_label.visible = container_model.get_used_slots() == 0
+	status_label.text = status_message
 	for index in range(slots.size()):
 		slot_grid.add_child(_make_slot_button(index, slots[index]))
 
 
+func set_status_message(message: String) -> void:
+	status_message = message
+	if status_label != null:
+		status_label.text = status_message
+
+
 func preview_layout(viewport_size: Vector2) -> Rect2:
-	var rect := UILayout.centered_top_rect(viewport_size, Vector2(480.0, 220.0), 92.0, 1.0, 1.0)
+	var rect := UILayout.centered_top_rect(viewport_size, Vector2(480.0, 250.0), 92.0, 1.0, 1.0)
 	main_panel.anchor_left = 0.0
 	main_panel.anchor_top = 0.0
 	main_panel.anchor_right = 0.0
@@ -107,6 +120,7 @@ func get_display_state() -> Dictionary:
 		"capacity": capacity_label.text if capacity_label != null else "",
 		"help": help_label.text if help_label != null else "",
 		"empty": empty_label.text if empty_label != null else "",
+		"status": status_label.text if status_label != null else "",
 		"close": close_button.text if close_button != null else "",
 		"panel_rect": main_panel.get_global_rect() if main_panel != null else Rect2(),
 		"grid_rect": slot_grid.get_global_rect() if slot_grid != null else Rect2(),
