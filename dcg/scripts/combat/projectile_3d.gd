@@ -4,9 +4,12 @@ extends Area3D
 signal projectile_hit(target: Node, event: DamageEvent)
 signal projectile_missed
 
+const DEFAULT_HIT_FEEDBACK_SCENE := preload("res://scenes/combat/projectile_hit_feedback_3d.tscn")
+
 @export var speed := 34.0
 @export var max_distance := 28.0
 @export var lifetime_seconds := 1.25
+@export var hit_feedback_scene: PackedScene = DEFAULT_HIT_FEEDBACK_SCENE
 
 var damage_event: DamageEvent = null
 var shooter: Node = null
@@ -54,14 +57,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node) -> void:
-	_try_hit(body)
+	_try_hit(body, global_position)
 
 
 func _on_area_entered(area: Area3D) -> void:
-	_try_hit(area)
+	_try_hit(area, global_position)
 
 
-func _try_hit(target: Node) -> void:
+func _try_hit(target: Node, hit_position: Vector3) -> void:
 	if _has_finished or target == null or target == shooter:
 		return
 	var damage_target := _resolve_damage_target(target)
@@ -70,6 +73,7 @@ func _try_hit(target: Node) -> void:
 	var did_hit: bool = damage_target.apply_damage(damage_event)
 	_has_finished = true
 	if did_hit:
+		_spawn_hit_feedback(hit_position)
 		projectile_hit.emit(damage_target, damage_event)
 	else:
 		projectile_missed.emit()
@@ -87,7 +91,8 @@ func _try_segment_hit(from_position: Vector3, to_position: Vector3) -> bool:
 	if result.is_empty():
 		return false
 	var collider := result.get("collider") as Node
-	_try_hit(collider)
+	var hit_position := result.get("position", to_position) as Vector3
+	_try_hit(collider, hit_position)
 	return _has_finished
 
 
@@ -95,6 +100,21 @@ func _finish_miss() -> void:
 	_has_finished = true
 	projectile_missed.emit()
 	queue_free()
+
+
+func _spawn_hit_feedback(hit_position: Vector3) -> void:
+	if hit_feedback_scene == null:
+		return
+	var feedback := hit_feedback_scene.instantiate()
+	if not (feedback is Node3D):
+		if feedback != null:
+			feedback.queue_free()
+		return
+	var parent := get_parent()
+	if parent == null:
+		return
+	parent.add_child(feedback)
+	feedback.global_position = hit_position
 
 
 func _resolve_damage_target(target: Node) -> Node:

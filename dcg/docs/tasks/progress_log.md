@@ -2024,3 +2024,32 @@
 ### Next
 
 - Continue with V2 任務十九：Projectile 命中處理.
+
+## 2026-07-03 Player Visibility V2 Projectile Hit Feedback
+
+### Completed
+
+- Added `scripts/combat/projectile_hit_feedback_3d.gd` as a short-lived combat visual feedback node.
+- Added `scenes/combat/projectile_hit_feedback_3d.tscn` with a simple visible 3D mesh placeholder for hit confirmation.
+- Updated `Projectile3D` so successful damage hits spawn feedback near the hit position before the projectile disappears.
+- Added `tools/validate_projectile_hit.gd` to verify damage application, projectile cleanup, visible hit feedback, feedback cleanup, and clean combat-only boundaries.
+- Added projectile hit feedback files and validation to V2 health required paths.
+- Marked V2 任務十九 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Projectile hit validation reports `[projectile_hit] OK damage=applied projectile=removed feedback=visible boundaries=clean`.
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages hitscan=removed boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Reload flow validation reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Reload UI validation reports `[reload_ui] OK node_first=progress_bar visible=reload_progress completion=clears layout=fit boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務二十：Projectile 未命中處理.

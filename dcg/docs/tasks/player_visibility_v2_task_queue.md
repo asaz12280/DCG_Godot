@@ -298,7 +298,7 @@ Each Project Health Check must inspect:
 
 ## 任務十九：Projectile 命中處理
 
-狀態：未開始
+狀態：完成
 
 目標：Projectile 命中敵人或物件時產生命中回饋並套用傷害。
 
