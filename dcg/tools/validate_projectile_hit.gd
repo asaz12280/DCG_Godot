@@ -101,10 +101,7 @@ func _validate_projectile_hit_feedback() -> void:
 		if not is_instance_valid(feedback):
 			_errors.append("Hit feedback should remain visible for at least one frame.")
 
-	for _frame in range(30):
-		await process_frame
-		if feedback == null or not is_instance_valid(feedback):
-			break
+	await create_timer(0.35).timeout
 	if feedback != null and is_instance_valid(feedback):
 		_errors.append("Hit feedback should clean itself up after its short lifetime.")
 

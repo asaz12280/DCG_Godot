@@ -313,7 +313,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十：Projectile 未命中處理
 
-狀態：未開始
+狀態：完成
 
 目標：子彈飛到距離上限或撞牆後消失。
 
