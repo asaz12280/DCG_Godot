@@ -1,0 +1,245 @@
+[gd_scene load_steps=23 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/gameplay/top_down_camera_3d.gd" id="2_camera"]
+
+[sub_resource type="Environment" id="Environment_base"]
+background_mode = 1
+background_color = Color(0.07, 0.09, 0.1, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.62, 0.72, 0.68, 1)
+ambient_light_energy = 0.75
+tonemap_mode = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(14, 0.2, 10)
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.2, 0.24, 0.25, 1)
+roughness = 0.9
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(14, 0.2, 10)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_horizontal"]
+size = Vector3(14.4, 1.8, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_vertical"]
+size = Vector3(0.35, 1.8, 10.4)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.28, 0.34, 0.34, 1)
+roughness = 0.88
+
+[sub_resource type="BoxShape3D" id="Shape_wall_horizontal"]
+size = Vector3(14.4, 1.8, 0.35)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_vertical"]
+size = Vector3(0.35, 1.8, 10.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_marker"]
+size = Vector3(1.1, 0.18, 1.1)
+
+[sub_resource type="StandardMaterial3D" id="Material_stash"]
+albedo_color = Color(0.24, 0.48, 0.64, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="Material_quest"]
+albedo_color = Color(0.75, 0.56, 0.18, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="Material_workbench"]
+albedo_color = Color(0.28, 0.56, 0.42, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="Material_raid"]
+albedo_color = Color(0.66, 0.26, 0.22, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_workbench"]
+size = Vector3(1.7, 0.65, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_locker"]
+size = Vector3(0.65, 1.25, 0.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_board"]
+size = Vector3(1.35, 1.05, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gate"]
+size = Vector3(1.55, 1.75, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="Material_prop_dark"]
+albedo_color = Color(0.16, 0.19, 0.19, 1)
+roughness = 0.85
+
+[node name="Base3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_base")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.50000006, -0.6123724, 0.6123724, 0, 0.70710677, 0.70710677, -0.8660254, -0.35355344, 0.35355344, 4, 6, 3)
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("Material_floor")
+
+[node name="FloorCollision" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FloorCollision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("Shape_floor")
+
+[node name="Boundaries" type="Node3D" parent="."]
+
+[node name="NorthWall" type="StaticBody3D" parent="Boundaries"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -5)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundaries/NorthWall"]
+mesh = SubResource("BoxMesh_wall_horizontal")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundaries/NorthWall"]
+shape = SubResource("Shape_wall_horizontal")
+
+[node name="SouthWall" type="StaticBody3D" parent="Boundaries"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 5)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundaries/SouthWall"]
+mesh = SubResource("BoxMesh_wall_horizontal")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundaries/SouthWall"]
+shape = SubResource("Shape_wall_horizontal")
+
+[node name="WestWall" type="StaticBody3D" parent="Boundaries"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.9, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundaries/WestWall"]
+mesh = SubResource("BoxMesh_wall_vertical")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundaries/WestWall"]
+shape = SubResource("Shape_wall_vertical")
+
+[node name="EastWall" type="StaticBody3D" parent="Boundaries"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.9, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundaries/EastWall"]
+mesh = SubResource("BoxMesh_wall_vertical")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundaries/EastWall"]
+shape = SubResource("Shape_wall_vertical")
+
+[node name="SceneProps" type="Node3D" parent="."]
+
+[node name="PlayerSpawnMarker" type="Node3D" parent="SceneProps" groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.4)
+
+[node name="InteractionPoints" type="Node3D" parent="."]
+
+[node name="StashPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0, -2.8)
+metadata/interaction_id = "stash"
+metadata/display_name_zh = "倉庫"
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoints/StashPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("BoxMesh_marker")
+surface_material_override/0 = SubResource("Material_stash")
+
+[node name="LockerA" type="MeshInstance3D" parent="InteractionPoints/StashPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.72, -0.1)
+mesh = SubResource("BoxMesh_locker")
+surface_material_override/0 = SubResource("Material_prop_dark")
+
+[node name="LockerB" type="MeshInstance3D" parent="InteractionPoints/StashPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.72, -0.1)
+mesh = SubResource("BoxMesh_locker")
+surface_material_override/0 = SubResource("Material_prop_dark")
+
+[node name="Label3D" type="Label3D" parent="InteractionPoints/StashPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
+billboard = 1
+text = "倉庫"
+font_size = 42
+outline_size = 8
+
+[node name="QuestBoardPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.55, 0, -3.35)
+metadata/interaction_id = "quests"
+metadata/display_name_zh = "任務板"
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoints/QuestBoardPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("BoxMesh_marker")
+surface_material_override/0 = SubResource("Material_quest")
+
+[node name="Board" type="MeshInstance3D" parent="InteractionPoints/QuestBoardPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88, -0.32)
+mesh = SubResource("BoxMesh_board")
+surface_material_override/0 = SubResource("Material_prop_dark")
+
+[node name="Label3D" type="Label3D" parent="InteractionPoints/QuestBoardPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
+billboard = 1
+text = "任務板"
+font_size = 42
+outline_size = 8
+
+[node name="WorkbenchPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 0, -3.15)
+metadata/interaction_id = "workbench"
+metadata/display_name_zh = "工作台"
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoints/WorkbenchPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("BoxMesh_marker")
+surface_material_override/0 = SubResource("Material_workbench")
+
+[node name="Bench" type="MeshInstance3D" parent="InteractionPoints/WorkbenchPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.38, -0.15)
+mesh = SubResource("BoxMesh_workbench")
+surface_material_override/0 = SubResource("Material_prop_dark")
+
+[node name="Label3D" type="Label3D" parent="InteractionPoints/WorkbenchPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
+billboard = 1
+text = "工作台"
+font_size = 42
+outline_size = 8
+
+[node name="RaidGatePoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0, 0.6)
+metadata/interaction_id = "raid_gate"
+metadata/display_name_zh = "出擊門"
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoints/RaidGatePoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("BoxMesh_marker")
+surface_material_override/0 = SubResource("Material_raid")
+
+[node name="Gate" type="MeshInstance3D" parent="InteractionPoints/RaidGatePoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.12, 0.98, -0.32)
+mesh = SubResource("BoxMesh_gate")
+surface_material_override/0 = SubResource("Material_prop_dark")
+
+[node name="Label3D" type="Label3D" parent="InteractionPoints/RaidGatePoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.75, 0)
+billboard = 1
+text = "出擊門"
+font_size = 42
+outline_size = 8
+
+[node name="Player3D" parent="." instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.4)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, 7.2)
+current = true
+fov = 42.0
+script = ExtResource("2_camera")
+target_path = NodePath("../Player3D")

@@ -10,13 +10,14 @@ var _required_files := PackedStringArray([
 	"res://scripts/combat/weapon_controller_3d.gd",
 	"res://scripts/loot/loot_container_3d.gd",
 	"res://scripts/player/player_controller_3d.gd",
+	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
 	"res://data/items/weapons/pistol_9mm.tres",
 	"res://data/items/ammo/ammo_9mm.tres",
 ])
 
 var _audit_required_terms := PackedStringArray([
-	"missing 3D Base",
+	"3D Base interaction wiring pending",
 	"2D Base screen",
 	"hardwired starter pistol",
 	"starter loadout coupling",

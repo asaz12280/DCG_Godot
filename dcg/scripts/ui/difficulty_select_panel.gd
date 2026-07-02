@@ -2,7 +2,7 @@ class_name DifficultySelectPanel
 extends PanelContainer
 
 const PanelUIStyle := preload("res://scripts/ui/ui_style.gd")
-const BASE_SCENE := "res://scenes/base/base_screen.tscn"
+const BASE_SCENE := "res://scenes/base/base_3d.tscn"
 
 var title_label: Label
 var description_label: Label

@@ -1548,3 +1548,29 @@
 ### Next
 
 - Continue with V2 任務三：建立 3D Base 場景雛形.
+
+## 2026-07-02 Player Visibility V2 3D Base Scene
+
+### Completed
+
+- Added `scenes/base/base_3d.tscn` as the first playable 3D Base shell with floor, boundary collision, player, camera, lighting, and visible placeholder Base stations.
+- Added visible Traditional Chinese station labels for `倉庫`, `任務板`, `工作台`, and `出擊門` without adding final art or extra gameplay content.
+- Updated difficulty selection and save defaults so new game and continue flows enter the 3D Base scene instead of the old full-screen Base panel.
+- Updated V2 health audit from `missing 3D Base` to `3D Base interaction wiring pending`, because the scene now exists but interaction behavior belongs to later tasks.
+- Added `tools/validate_base_3d_scene.gd` to verify Base 3D loadability, player/camera presence, boundary collision, visible interaction point markers, and Traditional Chinese labels.
+- Marked V2 任務三 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Base 3D scene validation reports `[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=4`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- Save slots validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- Base screen validation reports `[base_screen] OK node_first=true base=recognizable empty=shown stash=shown layout=fits`.
+- Main project and new `res://scenes/base/base_3d.tscn` load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務四：建立 Base 互動點.

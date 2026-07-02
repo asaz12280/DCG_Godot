@@ -10,9 +10,9 @@ The health check does not mean these debts are acceptable forever. It means the 
 
 ## Current Coupling Debts
 
-1. missing 3D Base
-   - The current player flow still reaches a 2D Base panel as if it were the full Base.
-   - Target: difficulty selection should enter a small 3D Base scene with player movement and interaction points.
+1. 3D Base interaction wiring pending
+   - The current player flow now has a small 3D Base scene target, but its interaction points are still position markers.
+   - Target: difficulty selection enters 3D Base, then stash, quests, workbench, and raid start are opened through player interaction.
 
 2. 2D Base screen
    - `BaseScreen` currently carries too much of the Base experience.

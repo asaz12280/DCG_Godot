@@ -3,7 +3,7 @@ extends Node
 const DEFAULT_SAVE_ROOT := "user://saves"
 const SLOT_COUNT := 3
 const SAVE_SCHEMA_VERSION := 1
-const DEFAULT_BASE_SCENE := "res://scenes/base/base_screen.tscn"
+const DEFAULT_BASE_SCENE := "res://scenes/base/base_3d.tscn"
 const DEFAULT_GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const DEFAULT_MONEY := 0
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")

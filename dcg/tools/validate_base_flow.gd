@@ -3,7 +3,7 @@ extends SceneTree
 const MainMenuScene := preload("res://scenes/ui/main_menu.tscn")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const DifficultyManagerScript := preload("res://scripts/difficulty/difficulty_manager.gd")
-const BASE_SCENE := "res://scenes/base/base_screen.tscn"
+const BASE_SCENE := "res://scenes/base/base_3d.tscn"
 
 var _errors: Array[String] = []
 var _created_nodes: Array[Node] = []
@@ -45,7 +45,7 @@ func _validate_new_game_enters_base() -> void:
 		if str(save_data.get("difficulty_id", "")) != "hard":
 			_errors.append("Confirming hard difficulty should save the hard difficulty id.")
 		if _current_scene_path() != BASE_SCENE:
-			_errors.append("New game flow should enter the base scene.")
+			_errors.append("New game flow should enter the 3D base scene.")
 
 	_cleanup_validation_root(save_manager.save_root_path)
 	_free_if_created(difficulty_manager)
@@ -66,7 +66,7 @@ func _validate_continue_enters_base() -> void:
 	if save_manager.get_current_slot_index() != 2:
 		_errors.append("Continue from slot 2 should track current slot 2.")
 	if _current_scene_path() != BASE_SCENE:
-		_errors.append("Continue flow should enter the base scene.")
+		_errors.append("Continue flow should enter the 3D base scene.")
 
 	_cleanup_validation_root(save_manager.save_root_path)
 	_free_if_created(difficulty_manager)

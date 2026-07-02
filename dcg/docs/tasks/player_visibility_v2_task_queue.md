@@ -73,7 +73,7 @@ Each Project Health Check must inspect:
 
 ## 任務三：建立 3D Base 場景雛形
 
-狀態：未開始
+狀態：完成
 
 目標：選難度後進入簡單 3D 基地，而不是全螢幕 2D Base 面板。
 
@@ -83,8 +83,8 @@ Each Project Health Check must inspect:
 - 不使用最終美術。
 
 驗證：
+- `validate_base_3d_scene.gd`
 - Base 3D scene headless startup。
-- 3D Base hierarchy validation。
 
 ## 任務四：建立 Base 互動點
 
