@@ -1636,3 +1636,24 @@
 ### Next
 
 - Continue with V2 任務六：建立 ContainerInventoryModel.
+
+## 2026-07-02 Player Visibility V2 ContainerInventoryModel
+
+### Completed
+
+- Added `scripts/inventory/container_inventory_model.gd` as an independent fixed-slot container inventory model.
+- Supports container capacity, visible slot dictionaries, stack merging, partial/full removal, clearing, and save/load round trips.
+- Keeps container inventory separate from player backpack, LootContainer3D, WeaponController, UIManager, and Control/scene code.
+- Added `tools/validate_container_inventory_model.gd` to guard capacity, stacking, transactional rejection when full, removal, serialization, invalid save entries, and responsibility boundaries.
+- Marked V2 任務六 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Container inventory model validation reports `[container_inventory_model] OK capacity=slots stack=merge remove=works save=round_trip coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Main project loads in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務七：建立箱子內容 UI.

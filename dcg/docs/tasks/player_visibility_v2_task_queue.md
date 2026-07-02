@@ -117,7 +117,7 @@ Each Project Health Check must inspect:
 
 ## 任務六：建立 ContainerInventoryModel
 
-狀態：未開始
+狀態：完成
 
 目標：箱子有自己的容量格子與物品堆疊，不直接把物品塞進玩家背包。
 
