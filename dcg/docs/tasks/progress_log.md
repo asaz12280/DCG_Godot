@@ -1953,3 +1953,34 @@
 ### Next
 
 - Continue with V2 任務十七：建立裝填時間條 UI.
+
+## 2026-07-03 Player Visibility V2 Reload Progress UI
+
+### Completed
+
+- Converted player reload from instant completion into a short timed reload state owned by `PlayerController3D`.
+- Added `reload_progress_changed`, `get_reload_state()`, `reload_duration_seconds`, and active reload state tracking so UI can display progress without owning ammo mutation.
+- Reload now consumes backpack ammo and updates the weapon magazine only after progress completes.
+- Firing is blocked while reload is active, preserving the empty-fire auto reload behavior from 任務十六.
+- Added node-first HUD reload UI to `scenes/ui/raid_hud_panel.tscn`: `ReloadLabel` and `ReloadProgress`.
+- Updated `RaidHudPanel` to bind player reload progress, show `裝填中` progress, briefly show completion/cancel status, and then clear the UI.
+- Added `tools/validate_reload_ui.gd` and added it to V2 health validation.
+- Updated `tools/validate_reload_flow.gd` so R reload and empty-fire auto reload wait for timed completion.
+- Marked V2 任務十七 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Reload UI validation reports `[reload_ui] OK node_first=progress_bar visible=reload_progress completion=clears layout=fit boundaries=clean`.
+- Reload flow validation reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Next
+
+- Continue with V2 任務十八：射擊生成可見 3D 子彈.

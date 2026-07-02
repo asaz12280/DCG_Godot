@@ -15,6 +15,7 @@ signal stamina_changed(current: float, maximum: float)
 signal inventory_changed
 signal equipment_changed
 signal reload_feedback_changed(result: Dictionary)
+signal reload_progress_changed(state: Dictionary)
 
 var max_health: float:
 	get:
@@ -64,6 +65,7 @@ var is_dead := false
 
 @export var stats_profile: PlayerStatsProfile = PlayerStatsProfileScript.new()
 @export var starter_loadout: Resource = DEFAULT_STARTER_LOADOUT
+@export_range(0.05, 5.0, 0.05) var reload_duration_seconds := 0.8
 
 var inventory_model := InventoryModel.new()
 var equipment_model := EquipmentModelScript.new()
@@ -72,6 +74,9 @@ var _stats: PlayerStats3D
 var _input_reader := PlayerInputReaderScript.new(self)
 var _locomotion: PlayerLocomotion3D
 var _weapon_controller: Node = null
+var _is_reloading := false
+var _reload_elapsed := 0.0
+var _pending_reload := {}
 var _last_reload_result := {
 	"reloaded": false,
 	"blocked_reason": "",
@@ -80,6 +85,13 @@ var _last_reload_result := {
 	"reserve_ammo": 0,
 	"backpack_ammo_remaining": 0,
 	"source": "",
+}
+var _last_reload_state := {
+	"active": false,
+	"progress": 0.0,
+	"remaining_time": 0.0,
+	"source": "",
+	"status": "idle",
 }
 
 
@@ -155,6 +167,10 @@ func get_last_reload_result() -> Dictionary:
 	return _last_reload_result.duplicate(true)
 
 
+func get_reload_state() -> Dictionary:
+	return _last_reload_state.duplicate(true)
+
+
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
 
@@ -190,12 +206,17 @@ func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
 
 
 func reload_equipped_weapon(reload_source: StringName = &"manual") -> bool:
+	if _is_reloading:
+		_record_reload_feedback(false, &"reloading", 0, reload_source)
+		return false
 	if _weapon_controller == null or not _weapon_controller.has_method("reload_from_item"):
 		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
+		_emit_reload_state(false, 0.0, reload_source, &"blocked")
 		return false
 	_sync_weapon_from_equipment()
 	if not _weapon_controller.has_method("has_weapon") or not bool(_weapon_controller.call("has_weapon")):
 		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
+		_emit_reload_state(false, 0.0, reload_source, &"blocked")
 		return false
 
 	var current_rounds := int(_weapon_controller.get("current_ammo"))
@@ -203,25 +224,20 @@ func reload_equipped_weapon(reload_source: StringName = &"manual") -> bool:
 	var needed_rounds := magazine_capacity - current_rounds
 	if needed_rounds <= 0:
 		_record_reload_feedback(false, &"magazine_full", 0, reload_source)
+		_emit_reload_state(false, 1.0, reload_source, &"blocked")
 		return false
 
 	var ammo_stack := _find_compatible_ammo_stack()
 	if ammo_stack.is_empty():
 		_record_reload_feedback(false, &"no_compatible_ammo", 0, reload_source)
+		_emit_reload_state(false, 0.0, reload_source, &"blocked")
 		return false
 
 	var ammo_index := int(ammo_stack.get("index", -1))
 	var ammo_def := ammo_stack.get("item_def") as ItemDef
 	var available_quantity := int(ammo_stack.get("quantity", 0))
 	var quantity_to_load := mini(needed_rounds, available_quantity)
-	var loaded_rounds := int(_weapon_controller.call("reload_from_item", ammo_def, quantity_to_load))
-	if loaded_rounds <= 0:
-		var weapon_result: Dictionary = _weapon_controller.get("last_reload_result")
-		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0, reload_source)
-		return false
-
-	inventory_model.consume_stack_quantity(ammo_index, loaded_rounds)
-	_record_reload_feedback(true, &"", loaded_rounds, reload_source)
+	_start_reload(reload_source, ammo_index, ammo_def, quantity_to_load)
 	return true
 
 
@@ -259,6 +275,27 @@ func get_default_equipment_slot_for_stack(stack: Dictionary) -> StringName:
 	return &""
 
 
+func _complete_reload() -> bool:
+	if _pending_reload.is_empty() or _weapon_controller == null:
+		_cancel_reload(&"cancelled")
+		return false
+	var reload_source := StringName(str(_pending_reload.get("source", "manual")))
+	var ammo_index := int(_pending_reload.get("ammo_index", -1))
+	var ammo_def := _pending_reload.get("ammo_def") as ItemDef
+	var quantity_to_load := int(_pending_reload.get("quantity_to_load", 0))
+	var loaded_rounds := int(_weapon_controller.call("reload_from_item", ammo_def, quantity_to_load))
+	if loaded_rounds <= 0:
+		var weapon_result: Dictionary = _weapon_controller.get("last_reload_result")
+		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0, reload_source)
+		_cancel_reload(StringName(str(weapon_result.get("blocked_reason", "no_ammo"))))
+		return false
+
+	inventory_model.consume_stack_quantity(ammo_index, loaded_rounds)
+	_record_reload_feedback(true, &"", loaded_rounds, reload_source)
+	_finish_reload(reload_source)
+	return true
+
+
 func apply_damage(event: DamageEvent) -> bool:
 	if event == null or event.amount <= 0.0 or is_dead:
 		return false
@@ -275,6 +312,7 @@ func is_alive() -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	_update_reload(delta)
 	var input_blocked := _locomotion.physics_update(delta, _input_reader)
 
 	move_and_slide()
@@ -306,6 +344,8 @@ func _face_mouse_on_ground() -> void:
 
 func _fire_equipped_weapon() -> void:
 	if _weapon_controller == null or not _weapon_controller.has_method("fire_forward"):
+		return
+	if _is_reloading:
 		return
 	_sync_weapon_from_equipment()
 	if _should_auto_reload_before_fire():
@@ -358,6 +398,56 @@ func _find_compatible_ammo_stack() -> Dictionary:
 				"quantity": int(stack.get("quantity", 1)),
 			}
 	return {}
+
+
+func _start_reload(reload_source: StringName, ammo_index: int, ammo_def: ItemDef, quantity_to_load: int) -> void:
+	_is_reloading = true
+	_reload_elapsed = 0.0
+	_pending_reload = {
+		"source": str(reload_source),
+		"ammo_index": ammo_index,
+		"ammo_def": ammo_def,
+		"quantity_to_load": quantity_to_load,
+	}
+	_emit_reload_state(true, 0.0, reload_source, &"reloading")
+
+
+func _update_reload(delta: float) -> void:
+	if not _is_reloading:
+		return
+	_reload_elapsed += maxf(delta, 0.0)
+	var duration := maxf(reload_duration_seconds, 0.05)
+	var progress := clampf(_reload_elapsed / duration, 0.0, 1.0)
+	var source := StringName(str(_pending_reload.get("source", "manual")))
+	_emit_reload_state(true, progress, source, &"reloading")
+	if progress >= 1.0:
+		_complete_reload()
+
+
+func _finish_reload(reload_source: StringName) -> void:
+	_is_reloading = false
+	_reload_elapsed = 0.0
+	_pending_reload = {}
+	_emit_reload_state(false, 1.0, reload_source, &"complete")
+
+
+func _cancel_reload(reason: StringName) -> void:
+	var source := StringName(str(_pending_reload.get("source", "manual"))) if not _pending_reload.is_empty() else &"manual"
+	_is_reloading = false
+	_reload_elapsed = 0.0
+	_pending_reload = {}
+	_emit_reload_state(false, 0.0, source, reason)
+
+
+func _emit_reload_state(active: bool, progress: float, reload_source: StringName, status: StringName) -> void:
+	_last_reload_state = {
+		"active": active,
+		"progress": clampf(progress, 0.0, 1.0),
+		"remaining_time": maxf(reload_duration_seconds * (1.0 - clampf(progress, 0.0, 1.0)), 0.0) if active else 0.0,
+		"source": str(reload_source),
+		"status": str(status),
+	}
+	reload_progress_changed.emit(_last_reload_state.duplicate(true))
 
 
 func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, rounds_loaded: int, reload_source: StringName = &"manual") -> void:

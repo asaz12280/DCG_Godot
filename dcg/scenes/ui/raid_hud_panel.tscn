@@ -8,7 +8,7 @@ anchors_preset = 0
 offset_left = 36.0
 offset_top = 36.0
 offset_right = 466.0
-offset_bottom = 232.0
+offset_bottom = 252.0
 mouse_filter = 2
 script = ExtResource("1_raid_hud_panel")
 
@@ -75,3 +75,15 @@ show_percentage = false
 unique_name_in_owner = true
 layout_mode = 2
 text = "武器：手槍-S　彈藥：8 / 24"
+[node name="ReloadLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "裝填中"
+
+[node name="ReloadProgress" type="ProgressBar" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+show_percentage = false

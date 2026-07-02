@@ -8,7 +8,7 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 @export var extraction_zone_path: NodePath = NodePath("../../SceneProps/ExtractionZone")
 @export var player_path: NodePath = NodePath("../../Player3D")
 @export var safe_margin := Vector2(36.0, 36.0)
-@export var panel_size := Vector2(430.0, 196.0)
+@export var panel_size := Vector2(430.0, 216.0)
 
 @onready var main_panel: PanelContainer = %MainPanel
 @onready var goal_title_label: Label = %GoalTitleLabel
@@ -19,6 +19,8 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 @onready var extraction_label: Label = %ExtractionLabel
 @onready var extraction_progress: ProgressBar = %ExtractionProgress
 @onready var ammo_label: Label = %AmmoLabel
+@onready var reload_label: Label = %ReloadLabel
+@onready var reload_progress: ProgressBar = %ReloadProgress
 
 var _raid_session: Node = null
 var _extraction_zone: Node = null
@@ -26,6 +28,7 @@ var _player: Node = null
 var _weapon_controller: Node = null
 var _extraction_active := false
 var _extraction_remaining := 0.0
+var _reload_status_hold := 0.0
 
 
 func _ready() -> void:
@@ -42,6 +45,7 @@ func _process(_delta: float) -> void:
 	_update_raid_status()
 	_update_vitals()
 	_update_ammo()
+	_update_reload_hold(_delta)
 
 
 func get_display_state() -> Dictionary:
@@ -54,6 +58,9 @@ func get_display_state() -> Dictionary:
 		"extraction": extraction_label.text,
 		"extraction_progress": extraction_progress.value,
 		"ammo": ammo_label.text,
+		"reload": reload_label.text,
+		"reload_progress": reload_progress.value,
+		"reload_visible": reload_progress.visible,
 		"panel_rect": Rect2(global_position, size),
 		"mouse_filter": mouse_filter,
 		"visible": visible,
@@ -71,11 +78,13 @@ func _bind_world_nodes() -> void:
 	_weapon_controller = _player.get_node_or_null("WeaponController3D") if _player != null else null
 	_connect_raid_session()
 	_connect_extraction_zone()
+	_connect_player_reload()
 	_update_objective()
 	_update_raid_status()
 	_update_vitals()
 	_update_extraction_idle()
 	_update_ammo()
+	_update_reload_idle()
 
 
 func _connect_raid_session() -> void:
@@ -102,6 +111,13 @@ func _connect_extraction_zone() -> void:
 		_extraction_zone.extraction_completed.connect(_on_extraction_completed)
 
 
+func _connect_player_reload() -> void:
+	if _player == null:
+		return
+	if _player.has_signal("reload_progress_changed") and not _player.reload_progress_changed.is_connected(_on_reload_progress_changed):
+		_player.reload_progress_changed.connect(_on_reload_progress_changed)
+
+
 func _apply_styles() -> void:
 	RaidHUDStyle.apply_overlay_panel_style(main_panel)
 	RaidHUDStyle.apply_font_size(goal_title_label, RaidHUDStyle.FONT_HELP)
@@ -118,6 +134,8 @@ func _apply_styles() -> void:
 	RaidHUDStyle.apply_font_color(extraction_label, RaidHUDStyle.COLOR_TEXT_HELP)
 	RaidHUDStyle.apply_font_size(ammo_label, RaidHUDStyle.FONT_PLACEHOLDER)
 	RaidHUDStyle.apply_font_color(ammo_label, RaidHUDStyle.COLOR_TEXT_STATUS)
+	RaidHUDStyle.apply_font_size(reload_label, RaidHUDStyle.FONT_HELP)
+	RaidHUDStyle.apply_font_color(reload_label, RaidHUDStyle.COLOR_TEXT_SUBTITLE)
 
 
 func _apply_responsive_layout() -> void:
@@ -205,6 +223,21 @@ func _update_ammo() -> void:
 	]
 
 
+func _update_reload_idle() -> void:
+	reload_label.visible = false
+	reload_progress.visible = false
+	reload_progress.value = 0.0
+	reload_label.text = _text(&"ui.raid_hud.reload_ready", "裝填：待命")
+
+
+func _update_reload_hold(delta: float) -> void:
+	if _reload_status_hold <= 0.0:
+		return
+	_reload_status_hold = maxf(_reload_status_hold - delta, 0.0)
+	if _reload_status_hold <= 0.0:
+		_update_reload_idle()
+
+
 func _on_raid_state_changed(_state: Dictionary) -> void:
 	_update_raid_status()
 
@@ -234,6 +267,33 @@ func _on_extraction_completed(_body: Node3D) -> void:
 	_extraction_active = false
 	extraction_progress.value = 100.0
 	extraction_label.text = _text(&"ui.raid_hud.extracted", "已撤離")
+
+
+func _on_reload_progress_changed(state: Dictionary) -> void:
+	var active := bool(state.get("active", false))
+	var status := str(state.get("status", "idle"))
+	var progress := clampf(float(state.get("progress", 0.0)), 0.0, 1.0)
+	reload_progress.value = progress * 100.0
+	if active:
+		_reload_status_hold = 0.0
+		reload_label.visible = true
+		reload_progress.visible = true
+		reload_label.text = "%s %.0f%%" % [_text(&"ui.raid_hud.reloading", "裝填中"), progress * 100.0]
+		return
+	if status == "complete":
+		reload_label.visible = true
+		reload_progress.visible = true
+		reload_progress.value = 100.0
+		reload_label.text = _text(&"ui.raid_hud.reload_complete", "裝填完成")
+		_reload_status_hold = 0.55
+		return
+	if status != "idle":
+		reload_label.visible = true
+		reload_progress.visible = false
+		reload_label.text = _text(&"ui.raid_hud.reload_cancelled", "裝填取消")
+		_reload_status_hold = 0.55
+		return
+	_update_reload_idle()
 
 
 func _text(key: StringName, fallback: String) -> String:

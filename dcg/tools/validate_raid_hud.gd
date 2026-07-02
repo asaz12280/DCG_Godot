@@ -104,9 +104,14 @@ func _validate_node_first_structure() -> void:
 		"MainPanel/PanelMargin/Content/ExtractionLabel",
 		"MainPanel/PanelMargin/Content/ExtractionProgress",
 		"MainPanel/PanelMargin/Content/AmmoLabel",
+		"MainPanel/PanelMargin/Content/ReloadLabel",
+		"MainPanel/PanelMargin/Content/ReloadProgress",
 	]:
 		if hud.get_node_or_null(path) == null:
 			_errors.append("Raid HUD scene should provide node-first UI path: %s" % path)
+	var reload_progress := hud.get_node_or_null("MainPanel/PanelMargin/Content/ReloadProgress") as ProgressBar
+	if reload_progress == null:
+		_errors.append("Raid HUD reload progress should be a ProgressBar node.")
 	var objective := hud.get_node_or_null("MainPanel/PanelMargin/Content/ObjectiveLabel") as Label
 	if objective != null:
 		if objective.get_theme_font_size("font_size") < 16:

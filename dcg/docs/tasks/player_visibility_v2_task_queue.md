@@ -270,7 +270,7 @@ Each Project Health Check must inspect:
 
 ## 任務十七：建立裝填時間條 UI
 
-狀態：未開始
+狀態：完成
 
 目標：裝填過程中玩家能看到進度條。
 
