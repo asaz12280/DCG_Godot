@@ -17,6 +17,7 @@ var player: Node = null
 var money: int = 0
 var premium_money: int = 0
 var backpack_model := InventoryModel.new()
+var equipment_model = null
 var backpack_items: Array[Dictionary] = []
 var safe_pocket_items: Array[Dictionary] = []
 
@@ -31,6 +32,19 @@ var equipment_slot_label_keys: Array[StringName] = [
 	&"ui.equipment.backpack",
 	&"ui.equipment.charm_1",
 	&"ui.equipment.charm_2",
+]
+
+var equipment_slot_ids: Array[StringName] = [
+	&"primary_weapon",
+	&"sidearm",
+	&"melee",
+	&"helmet",
+	&"armor",
+	&"glasses",
+	&"headset",
+	&"backpack",
+	&"charm_1",
+	&"charm_2",
 ]
 
 var _organize_button_rect: Rect2 = Rect2()
@@ -54,11 +68,16 @@ func _ready() -> void:
 		backpack_model = player.get_inventory_model()
 	else:
 		backpack_model.setup(_get_backpack_slots())
+	if player != null and player.has_method("get_equipment_model"):
+		equipment_model = player.get_equipment_model()
 
 	_drop_controller.setup(self, _painter, _item_resolver)
 	_context_menu.setup(self, _painter, backpack_model)
 	_context_menu.drop_requested.connect(_on_context_drop_requested)
+	_context_menu.equip_requested.connect(_on_context_equip_requested)
 	backpack_model.changed.connect(_on_backpack_changed)
+	if equipment_model != null:
+		equipment_model.changed.connect(_on_equipment_changed)
 	_on_backpack_changed()
 
 
@@ -91,7 +110,7 @@ func _gui_input(event: InputEvent) -> void:
 		var hit_stack_index := _get_backpack_stack_index_at(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			_drop_controller.clear()
-		if _context_menu.handle_mouse_button(event, hit_stack_index, backpack_items, _get_backpack_slots()):
+		if _context_menu.handle_mouse_button(event, hit_stack_index, backpack_items, _get_backpack_slots(), _can_equip_stack_index(hit_stack_index)):
 			accept_event()
 			return
 
@@ -150,6 +169,36 @@ func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return backpack_model.add_item(item_def, quantity)
 
 
+func equip_backpack_stack(stack_index: int) -> bool:
+	if player == null or not player.has_method("equip_inventory_stack"):
+		return false
+	if not player.call("equip_inventory_stack", stack_index):
+		return false
+	_context_menu.close_all()
+	_drop_controller.clear()
+	queue_redraw()
+	return true
+
+
+func get_display_state() -> Dictionary:
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else Vector2(1920.0, 1080.0)
+	return get_display_state_for_viewport(viewport_size)
+
+
+func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
+	_update_layout_scale(viewport_size)
+	return {
+		"visible": visible,
+		"is_open": is_open,
+		"backpack_items": backpack_items.duplicate(true),
+		"equipment_slots": _get_equipment_slots_state(),
+		"equipment_text": _get_equipment_visible_text(),
+		"panel_rect": _panel_rect(),
+		"backpack_used": backpack_model.get_used_slots(),
+		"backpack_slots": _get_backpack_slots(),
+	}
+
+
 func _reset_interaction_state() -> void:
 	_drop_controller.clear()
 	_context_menu.close_all()
@@ -157,6 +206,10 @@ func _reset_interaction_state() -> void:
 
 func _on_backpack_changed() -> void:
 	backpack_items = backpack_model.get_display_items()
+	queue_redraw()
+
+
+func _on_equipment_changed() -> void:
 	queue_redraw()
 
 
@@ -237,6 +290,9 @@ func _paint_equipment_panel(rect: Rect2) -> void:
 		var slot_rect := Rect2(start + Vector2(float(column) * step_x, float(row) * step_y), slot_size_local)
 		_painter.slot(slot_rect, Color(0.56, 0.58, 0.53, 0.52), Color(1.0, 1.0, 1.0, 0.22))
 		_painter.equipment_icon(slot_rect, index)
+		var equipped_stack := _get_equipment_stack_at(index)
+		if not equipped_stack.is_empty():
+			_paint_item_label(slot_rect, equipped_stack)
 		_painter.text(_localized_text(equipment_slot_label_keys[index], ""), slot_rect.position + Vector2(0.0, slot_rect.size.y + 22.0 * _ui_scale), 17, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, slot_rect.size.x)
 
 
@@ -289,6 +345,10 @@ func _get_backpack_stack_index_at(mouse_position: Vector2) -> int:
 
 func _on_context_drop_requested(stack_index: int, stack: Dictionary, screen_position: Vector2, random_near_player: bool) -> void:
 	_drop_controller.drop_stack_at(backpack_model, stack_index, stack, screen_position, player, random_near_player)
+
+
+func _on_context_equip_requested(stack_index: int, _stack: Dictionary) -> void:
+	equip_backpack_stack(stack_index)
 
 
 func _paint_weight_panel(rect: Rect2) -> void:
@@ -377,3 +437,32 @@ func _get_carry_weight_limit() -> float:
 
 func _get_current_weight() -> float:
 	return backpack_model.get_total_weight()
+
+
+func _can_equip_stack_index(stack_index: int) -> bool:
+	if player == null or not player.has_method("can_equip_inventory_stack"):
+		return false
+	return bool(player.call("can_equip_inventory_stack", stack_index))
+
+
+func _get_equipment_stack_at(index: int) -> Dictionary:
+	if equipment_model == null or index < 0 or index >= equipment_slot_ids.size():
+		return {}
+	return equipment_model.call("get_slot", equipment_slot_ids[index])
+
+
+func _get_equipment_slots_state() -> Dictionary:
+	if equipment_model == null:
+		return {}
+	return equipment_model.call("get_slots")
+
+
+func _get_equipment_visible_text() -> String:
+	var parts: PackedStringArray = []
+	for slot_id in equipment_slot_ids:
+		if equipment_model == null:
+			break
+		var stack: Dictionary = equipment_model.call("get_slot", slot_id)
+		if not stack.is_empty():
+			parts.append(_get_stack_display_name(stack))
+	return "\n".join(parts)

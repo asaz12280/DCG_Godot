@@ -1800,3 +1800,36 @@
 ### Next
 
 - Continue with V2 任務十二：背包物品可裝備.
+
+## 2026-07-02 Player Visibility V2 Backpack Equip Flow
+
+### Completed
+
+- Connected `PlayerController3D` to the existing `EquipmentModel` so the player now owns a separate equipment state beside the backpack inventory.
+- Added `can_equip_inventory_stack`, `equip_inventory_stack`, and default slot selection so No.5 `手槍-S` moves from backpack into the sidearm slot without coupling `InventoryModel` to UI or combat.
+- Added a visible right-click `裝備` action to `InventoryContextMenu`; it is enabled for valid gear and disabled for non-equipment stacks.
+- Updated `InventoryEquipmentUI` to display equipped item labels in the equipment panel, expose a stable UI equip API, and report display state for player-visible validation.
+- Added localization key `ui.inventory.equip`.
+- Added `tools/validate_inventory_equipment_flow.gd` to prove visible backpack-to-equipment flow, ammo rejection, layout fit, and ownership boundaries.
+- Marked V2 任務十二 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Equipment model validation reports `[equipment_model] OK slots=ready equip=legal reject=invalid save=round_trip coupling=clean`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Project Health Check After V2 Task Twelve
+
+- Player/equipment boundary: `PlayerController3D` coordinates moving a stack from `InventoryModel` into `EquipmentModel`; the data models do not reference UI or combat.
+- Inventory boundary: `InventoryModel` remains a generic backpack stack model and does not know about equipment, weapons, players, or UI.
+- Equipment boundary: `EquipmentModel` remains data-only and validation still rejects UI/player/combat/save-service coupling.
+- UI boundary: `InventoryEquipmentUI` shows and requests equipment actions, but equipment legality and mutation stay on the player/equipment side.
+- UI layout quality: inventory panel preview fits 1280x720 and 1920x1080 through the new validation path; visible equip action uses Traditional Chinese text.
+- Validation health: new flow validation, equipment model validation, gameplay architecture validation, V2 health validation, and scene launch check pass.
+
+### Next
+
+- Continue with V2 任務十三：解除玩家預設手槍耦合.

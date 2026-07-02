@@ -202,7 +202,7 @@ Each Project Health Check must inspect:
 
 ## 任務十二：背包物品可裝備
 
-狀態：未開始
+狀態：完成
 
 目標：玩家能把背包中的手槍放到裝備欄。
 

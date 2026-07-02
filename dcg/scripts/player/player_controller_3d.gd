@@ -7,11 +7,13 @@ const PlayerInputReaderScript := preload("res://scripts/player/player_input_read
 const PlayerLocomotionScript := preload("res://scripts/player/player_locomotion_3d.gd")
 const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
+const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
 
 signal health_changed(current: float, maximum: float)
 signal died(event: DamageEvent)
 signal stamina_changed(current: float, maximum: float)
 signal inventory_changed
+signal equipment_changed
 
 var max_health: float:
 	get:
@@ -63,6 +65,7 @@ var is_dead := false
 @export var starter_loadout: Resource = DEFAULT_STARTER_LOADOUT
 
 var inventory_model := InventoryModel.new()
+var equipment_model := EquipmentModelScript.new()
 
 var _stats: PlayerStats3D
 var _input_reader := PlayerInputReaderScript.new(self)
@@ -81,6 +84,7 @@ func _ready() -> void:
 	_apply_base_upgrade_effects()
 	inventory_model.setup(backpack_slots)
 	inventory_model.changed.connect(_on_inventory_changed)
+	equipment_model.changed.connect(_on_equipment_changed)
 	_load_starter_inventory()
 	health = get_total_max_health()
 	stamina = max_stamina
@@ -128,8 +132,76 @@ func get_inventory_model() -> InventoryModel:
 	return inventory_model
 
 
+func get_equipment_model() -> RefCounted:
+	return equipment_model
+
+
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
+
+
+func can_equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
+	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
+		return false
+	var stack := inventory_model.stacks[stack_index]
+	var target_slot := slot_id
+	if target_slot == &"":
+		target_slot = get_default_equipment_slot_for_stack(stack)
+	if target_slot == &"" or not equipment_model.has_slot(target_slot) or not equipment_model.is_empty(target_slot):
+		return false
+	var item_def := _load_item_from_stack(stack)
+	return equipment_model.can_equip(target_slot, item_def)
+
+
+func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
+	if not can_equip_inventory_stack(stack_index, slot_id):
+		return false
+	var stack := inventory_model.stacks[stack_index]
+	var target_slot := slot_id
+	if target_slot == &"":
+		target_slot = get_default_equipment_slot_for_stack(stack)
+
+	var removed_stack := inventory_model.remove_stack_at(stack_index)
+	if removed_stack.is_empty():
+		return false
+	if not equipment_model.equip_stack(target_slot, removed_stack):
+		inventory_model.add_stack(removed_stack)
+		return false
+	return true
+
+
+func get_default_equipment_slot_for_stack(stack: Dictionary) -> StringName:
+	var item_def := _load_item_from_stack(stack)
+	if item_def == null:
+		return &""
+
+	if item_def.item_type == "weapon":
+		if item_def.tags.has(&"pistol"):
+			if equipment_model.is_empty(&"sidearm"):
+				return &"sidearm"
+			if equipment_model.is_empty(&"primary_weapon"):
+				return &"primary_weapon"
+		if item_def.tags.has(&"gun") and equipment_model.is_empty(&"primary_weapon"):
+			return &"primary_weapon"
+		if item_def.tags.has(&"melee") and equipment_model.is_empty(&"melee"):
+			return &"melee"
+	if item_def.item_type == "armor":
+		if (item_def.tags.has(&"helmet") or str(item_def.id).contains("helmet")) and equipment_model.is_empty(&"helmet"):
+			return &"helmet"
+		if equipment_model.is_empty(&"armor"):
+			return &"armor"
+	if item_def.item_type == "backpack" and equipment_model.is_empty(&"backpack"):
+		return &"backpack"
+	if item_def.item_type == "attachment":
+		if item_def.tags.has(&"glasses") and equipment_model.is_empty(&"glasses"):
+			return &"glasses"
+		if item_def.tags.has(&"headset") and equipment_model.is_empty(&"headset"):
+			return &"headset"
+		if equipment_model.is_empty(&"charm_1"):
+			return &"charm_1"
+		if equipment_model.is_empty(&"charm_2"):
+			return &"charm_2"
+	return &""
 
 
 func apply_damage(event: DamageEvent) -> bool:
@@ -215,6 +287,17 @@ func _apply_base_upgrade_effects() -> void:
 func _on_inventory_changed() -> void:
 	current_carry_weight = inventory_model.get_total_weight()
 	inventory_changed.emit()
+
+
+func _on_equipment_changed() -> void:
+	equipment_changed.emit()
+
+
+func _load_item_from_stack(stack: Dictionary) -> ItemDef:
+	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	if item_path == "" or not ResourceLoader.exists(item_path):
+		return null
+	return load(item_path) as ItemDef
 
 
 func _die(event: DamageEvent) -> void:

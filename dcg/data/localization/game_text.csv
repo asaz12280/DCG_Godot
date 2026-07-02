@@ -8,6 +8,7 @@ ui.inventory.equipment,裝備,Equipment,Equipment,装备
 ui.inventory.safe_pocket,保險格,Safe Pocket,Safe Pocket,保险格
 ui.inventory.backpack_format,背包 (%d/%d),Backpack (%d/%d),Backpack (%d/%d),背包 (%d/%d)
 ui.inventory.sort,整理,Sort,Sort,整理
+ui.inventory.equip,裝備,Equip,Equip,装备
 ui.inventory.split,拆分,Split,Split,拆分
 ui.inventory.drop,丟棄,Drop,Drop,丢弃
 ui.inventory.split_amount,拆分數量,Split Amount,Split Amount,拆分数量
