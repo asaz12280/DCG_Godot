@@ -22,6 +22,11 @@ const REQUIRED_KEYS: Array[String] = [
 	"ui.raid_hud.ammo",
 	"ui.raid_hud.extraction_hint",
 	"ui.raid_result.title",
+	"ui.raid_result.transfer_title",
+	"ui.raid_result.transfer_extracted",
+	"ui.raid_result.transfer_empty",
+	"ui.raid_result.transfer_dead",
+	"ui.raid_result.status_dead",
 	"ui.raid_result.continue_to_base",
 	"ui.raid_result.extracted_items",
 	"ui.raid_result.lost_items",
@@ -39,6 +44,11 @@ const REQUIRED_ZH_TW_TEXT := {
 	"ui.raid_hud.objective": "搜索物資並前往撤離點",
 	"ui.raid_hud.ammo": "彈藥",
 	"ui.raid_result.title": "行動結算",
+	"ui.raid_result.transfer_title": "物資轉移",
+	"ui.raid_result.transfer_extracted": "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。",
+	"ui.raid_result.transfer_empty": "本次沒有帶回物品。按「回到基地」整理下一場行動。",
+	"ui.raid_result.transfer_dead": "行動失敗：%d 種背包物資列為遺失，%d 種保險格物品會保留。按「回到基地」查看狀態。",
+	"ui.raid_result.status_dead": "遺失物品不會進入基地倉庫；保險格物品會保留。",
 	"ui.raid_result.continue_to_base": "回到基地",
 	"ui.raid_result.extracted_items": "帶回物品",
 	"ui.raid_result.lost_items": "遺失物品",
@@ -232,11 +242,18 @@ func _validate_result_text_and_layout() -> void:
 		_assert_clean_tree_text(panel, "RaidResultPanel")
 		var state: Dictionary = panel.get_display_state()
 		var panel_rect := state.get("panel_rect") as Rect2
+		var transfer_rect := state.get("transfer_rect") as Rect2
 		var button_rect := state.get("button_rect") as Rect2
+		if str(state.get("transfer_title", "")) != "物資轉移":
+			_errors.append("Raid result UI should expose a readable transfer summary title.")
+		if not str(state.get("transfer_detail", "")).contains("基地倉庫"):
+			_errors.append("Raid result UI transfer detail should mention base stash.")
+		if str(state.get("continue_text", "")) != "回到基地":
+			_errors.append("Raid result UI continue button should use Traditional Chinese text.")
 		if panel_rect.end.x > viewport_size.x or panel_rect.end.y > viewport_size.y:
 			_errors.append("Raid result UI should fit inside %s." % viewport_size)
-		if not panel_rect.encloses(button_rect):
-			_errors.append("Raid result continue button should stay inside panel at %s." % viewport_size)
+		if not panel_rect.encloses(button_rect) or not panel_rect.encloses(transfer_rect):
+			_errors.append("Raid result transfer summary and continue button should stay inside panel at %s." % viewport_size)
 		_free_node(panel)
 
 

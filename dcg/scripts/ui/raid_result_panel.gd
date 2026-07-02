@@ -17,6 +17,9 @@ const BASE_SCENE := "res://scenes/base/base_screen.tscn"
 @onready var outcome_label: Label = %OutcomeLabel
 @onready var duration_label: Label = %DurationLabel
 @onready var money_label: Label = %MoneyLabel
+@onready var transfer_banner: PanelContainer = %TransferBanner
+@onready var transfer_title_label: Label = %TransferTitleLabel
+@onready var transfer_detail_label: Label = %TransferDetailLabel
 @onready var extracted_title_label: Label = %ExtractedTitleLabel
 @onready var lost_title_label: Label = %LostTitleLabel
 @onready var safe_pocket_title_label: Label = %SafePocketTitleLabel
@@ -54,23 +57,35 @@ func get_display_state() -> Dictionary:
 		"outcome": outcome_label.text,
 		"duration": duration_label.text,
 		"money": money_label.text,
+		"transfer_title": transfer_title_label.text,
+		"transfer_detail": transfer_detail_label.text,
+		"extracted_title": extracted_title_label.text,
+		"lost_title": lost_title_label.text,
+		"safe_pocket_title": safe_pocket_title_label.text,
 		"extracted_rows": extracted_rows.get_child_count(),
 		"lost_rows": lost_rows.get_child_count(),
 		"safe_pocket_rows": safe_pocket_rows.get_child_count(),
+		"status": status_label.text,
 		"continue_text": continue_button.text,
 		"panel_rect": Rect2(main_panel.position, main_panel.size),
+		"transfer_rect": Rect2(transfer_banner.global_position, transfer_banner.size),
 		"button_rect": Rect2(continue_button.global_position, continue_button.size),
 	}
 
 
 func _apply_styles() -> void:
 	ResultUIStyle.apply_overlay_panel_style(main_panel)
+	transfer_banner.add_theme_stylebox_override("panel", ResultUIStyle.make_transfer_panel_style())
 	ResultUIStyle.apply_font_size(title_label, ResultUIStyle.FONT_PANEL_TITLE)
 	ResultUIStyle.apply_font_color(title_label, ResultUIStyle.COLOR_TEXT_PRIMARY)
 	ResultUIStyle.apply_font_size(subtitle_label, ResultUIStyle.FONT_BODY)
 	ResultUIStyle.apply_font_color(subtitle_label, ResultUIStyle.COLOR_TEXT_HELP)
 	for label in [outcome_label, duration_label, money_label]:
 		ResultUIStyle.apply_font_size(label, ResultUIStyle.FONT_BODY)
+	ResultUIStyle.apply_font_size(transfer_title_label, ResultUIStyle.FONT_BODY)
+	ResultUIStyle.apply_font_color(transfer_title_label, ResultUIStyle.COLOR_TEXT_PRIMARY)
+	ResultUIStyle.apply_font_size(transfer_detail_label, ResultUIStyle.FONT_PLACEHOLDER)
+	ResultUIStyle.apply_font_color(transfer_detail_label, ResultUIStyle.COLOR_TEXT_HELP)
 	for label in [%ExtractedTitleLabel, %LostTitleLabel, %SafePocketTitleLabel]:
 		ResultUIStyle.apply_font_size(label, ResultUIStyle.FONT_BODY)
 		ResultUIStyle.apply_font_color(label, ResultUIStyle.COLOR_TEXT_SUBTITLE)
@@ -106,19 +121,21 @@ func _connect_raid_session() -> void:
 
 
 func _bind_result() -> void:
-	title_label.text = _text(&"ui.raid_result.title", "Raid Result")
-	subtitle_label.text = _text(&"ui.raid_result.subtitle", "Review what happened before returning to base.")
-	outcome_label.text = "%s: %s" % [_text(&"ui.raid_result.outcome", "Outcome"), _outcome_text(str(current_result.get("outcome", "")))]
-	duration_label.text = "%s: %.1fs" % [_text(&"ui.raid_result.duration", "Duration"), float(current_result.get("duration", 0.0))]
-	money_label.text = "%s: %+d" % [_text(&"ui.raid_result.money_delta", "Money"), int(current_result.get("money_delta", 0))]
-	extracted_title_label.text = _text(&"ui.raid_result.extracted_items", "Extracted")
-	lost_title_label.text = _text(&"ui.raid_result.lost_items", "Lost")
-	safe_pocket_title_label.text = _text(&"ui.raid_result.safe_pocket_items", "Safe Pocket")
-	continue_button.text = _text(&"ui.raid_result.continue_to_base", "Continue to Base")
-	status_label.text = _text(&"ui.raid_result.status", "Inventory transfer is handled by the raid result flow.")
-	_rebuild_rows(extracted_rows, current_result.get("extracted_items", []), _text(&"ui.raid_result.empty_extracted", "No extracted items."))
-	_rebuild_rows(lost_rows, current_result.get("lost_items", []), _text(&"ui.raid_result.empty_lost", "No lost items."))
-	_rebuild_rows(safe_pocket_rows, current_result.get("kept_safe_pocket_items", []), _text(&"ui.raid_result.empty_safe_pocket", "No safe pocket items."))
+	title_label.text = _text(&"ui.raid_result.title", "行動結算")
+	subtitle_label.text = _text(&"ui.raid_result.subtitle", "查看本次結果，確認哪些物資會回到基地。")
+	outcome_label.text = "%s: %s" % [_text(&"ui.raid_result.outcome", "結果"), _outcome_text(str(current_result.get("outcome", "")))]
+	duration_label.text = "%s: %.1fs" % [_text(&"ui.raid_result.duration", "時間"), float(current_result.get("duration", 0.0))]
+	money_label.text = "%s: %+d" % [_text(&"ui.raid_result.money_delta", "金錢"), int(current_result.get("money_delta", 0))]
+	transfer_title_label.text = _text(&"ui.raid_result.transfer_title", "物資轉移")
+	transfer_detail_label.text = _transfer_detail_text()
+	extracted_title_label.text = _text(&"ui.raid_result.extracted_items", "帶回物品")
+	lost_title_label.text = _text(&"ui.raid_result.lost_items", "遺失物品")
+	safe_pocket_title_label.text = _text(&"ui.raid_result.safe_pocket_items", "保險格")
+	continue_button.text = _text(&"ui.raid_result.continue_to_base", "回到基地")
+	status_label.text = _status_text()
+	_rebuild_rows(extracted_rows, current_result.get("extracted_items", []), _text(&"ui.raid_result.empty_extracted", "沒有帶回物品。"))
+	_rebuild_rows(lost_rows, current_result.get("lost_items", []), _text(&"ui.raid_result.empty_lost", "沒有遺失物品。"))
+	_rebuild_rows(safe_pocket_rows, current_result.get("kept_safe_pocket_items", []), _text(&"ui.raid_result.empty_safe_pocket", "保險格沒有物品。"))
 
 
 func _rebuild_rows(container: VBoxContainer, entries: Variant, empty_text: String) -> void:
@@ -160,17 +177,46 @@ func _make_item_row(item_name: String, quantity_text: String) -> HBoxContainer:
 
 
 func _item_name_from_path(item_path: String) -> String:
-	return UITextScript.item_name(self, item_path, "Unknown item")
+	return UITextScript.item_name(self, item_path, "未知物品")
 
 
 func _outcome_text(outcome: String) -> String:
 	match outcome:
 		RaidResultSchema.OUTCOME_EXTRACTED:
-			return _text(&"ui.raid_result.extracted", "Extracted")
+			return _text(&"ui.raid_result.extracted", "撤離成功")
 		RaidResultSchema.OUTCOME_DEAD:
-			return _text(&"ui.raid_result.dead", "Dead")
+			return _text(&"ui.raid_result.dead", "死亡")
 		_:
-			return _text(&"ui.raid_result.unknown", "Unknown")
+			return _text(&"ui.raid_result.unknown", "未知")
+
+
+func _transfer_detail_text() -> String:
+	var outcome := str(current_result.get("outcome", ""))
+	var extracted_count := _entry_count(current_result.get("extracted_items", []))
+	var lost_count := _entry_count(current_result.get("lost_items", []))
+	var safe_count := _entry_count(current_result.get("kept_safe_pocket_items", []))
+	if outcome == RaidResultSchema.OUTCOME_DEAD:
+		return _text(&"ui.raid_result.transfer_dead", "行動失敗：背包物資列為遺失，保險格會保留。按「回到基地」查看狀態。") % [lost_count, safe_count]
+	if extracted_count <= 0:
+		return _text(&"ui.raid_result.transfer_empty", "本次沒有帶回物品。按「回到基地」整理下一場行動。")
+	return _text(&"ui.raid_result.transfer_extracted", "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。") % extracted_count
+
+
+func _status_text() -> String:
+	var outcome := str(current_result.get("outcome", ""))
+	if outcome == RaidResultSchema.OUTCOME_DEAD:
+		return _text(&"ui.raid_result.status_dead", "遺失物品不會進入基地倉庫；保險格物品會保留。")
+	return _text(&"ui.raid_result.status", "帶回物資會依結算結果轉入基地倉庫。")
+
+
+func _entry_count(entries: Variant) -> int:
+	if typeof(entries) != TYPE_ARRAY:
+		return 0
+	var count := 0
+	for entry in entries as Array:
+		if typeof(entry) == TYPE_DICTIONARY:
+			count += 1
+	return count
 
 
 func _text(key: StringName, fallback: String) -> String:

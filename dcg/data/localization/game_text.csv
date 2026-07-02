@@ -194,12 +194,17 @@ ui.raid_hud.extracting,撤離中...,Extracting...,Extracting...,撤离中...
 ui.raid_hud.extraction_remaining,撤離,Extraction,Extraction,撤离
 ui.raid_hud.extracted,已撤離,Extracted,Extracted,已撤离
 ui.raid_result.title,行動結算,Raid Result,Raid Result,行动结算
-ui.raid_result.subtitle,查看本次結果，然後回到基地。,Review what happened before returning to base,Review what happened before returning to base,查看本次结果，然后回到基地。
+ui.raid_result.subtitle,查看本次結果，確認哪些物資會回到基地。,Review result and confirm what returns to base,Review result and confirm what returns to base,查看本次结果，确认哪些物资会回到基地。
 ui.raid_result.outcome,結果,Outcome,Outcome,结果
 ui.raid_result.duration,時間,Duration,Duration,时间
 ui.raid_result.money_delta,金錢,Money,Money,金钱
 ui.raid_result.continue_to_base,回到基地,Continue to Base,Continue to Base,回到基地
-ui.raid_result.status,物資會依結算結果轉入基地倉庫。,Inventory transfer is handled by the raid result flow,Inventory transfer is handled by the raid result flow,物资会依结算结果转入基地仓库。
+ui.raid_result.status,帶回物資會依結算結果轉入基地倉庫。,Extracted supplies move to base stash,Extracted supplies move to base stash,带回物资会依结算结果转入基地仓库。
+ui.raid_result.status_dead,遺失物品不會進入基地倉庫；保險格物品會保留。,Lost items do not enter base stash. Safe pocket items are kept,Lost items do not enter base stash. Safe pocket items are kept,遗失物品不会进入基地仓库；保险格物品会保留。
+ui.raid_result.transfer_title,物資轉移,Transfer Summary,Transfer Summary,物资转移
+ui.raid_result.transfer_extracted,帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。,Extracted %d item groups to base stash. Return to base to inspect stash,Extracted %d item groups to base stash. Return to base to inspect stash,带回成功：%d 种物资已转入基地仓库。按「回到基地」查看仓库。
+ui.raid_result.transfer_empty,本次沒有帶回物品。按「回到基地」整理下一場行動。,No items were extracted. Return to base to prepare the next raid,No items were extracted. Return to base to prepare the next raid,本次没有带回物品。按「回到基地」整理下一场行动。
+ui.raid_result.transfer_dead,行動失敗：%d 種背包物資列為遺失，%d 種保險格物品會保留。按「回到基地」查看狀態。,Raid failed. %d backpack item groups are lost and %d safe pocket item groups are kept. Return to base to review,Raid failed. %d backpack item groups are lost and %d safe pocket item groups are kept. Return to base to review,行动失败：%d 种背包物资列为遗失，%d 种保险格物品会保留。按「回到基地」查看状态。
 ui.raid_result.empty_extracted,沒有帶回物品。,No extracted items,No extracted items,没有带回物品。
 ui.raid_result.empty_lost,沒有遺失物品。,No lost items,No lost items,没有遗失物品。
 ui.raid_result.empty_safe_pocket,保險格沒有物品。,No safe pocket items,No safe pocket items,保险格没有物品。

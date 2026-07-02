@@ -163,7 +163,7 @@ Run these after tasks touching shared UI, scene flow, save, combat, or raid stat
 
 ## 可視化任務四：結算畫面接回基地並可見化物資轉移
 
-狀態：未開始
+狀態：完成
 
 目標：玩家撤離後能看懂本局結果，並知道物資已進倉庫。
 

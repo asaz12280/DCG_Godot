@@ -1462,3 +1462,33 @@
 ### Next
 
 - Continue with 可視化任務四：讓 Raid Result 明確顯示戰利品與回基地流程.
+
+## 2026-07-02 Raid Result Visibility Task
+
+### Completed
+
+- Updated `scenes/ui/raid_result_panel.tscn` so the stable Result layout defaults to readable Traditional Chinese text.
+- Added a node-first `TransferBanner` to the Raid Result panel so players can see how loot is transferred before pressing the next action.
+- Updated `scripts/ui/raid_result_panel.gd` to show a visible `物資轉移` summary for extraction, empty extraction, and death results.
+- Changed Raid Result fallback text to Traditional Chinese for title, subtitle, outcome, money, list titles, empty states, unknown items, outcome names, and `回到基地`.
+- Added Result localization keys for transfer summary text and death transfer status.
+- Added shared `UIStyle.make_transfer_panel_style()` so the Result transfer banner does not own scattered color values.
+- Rebuilt `tools/validate_raid_result_panel.gd` so it now fails if the Result panel does not visibly show extracted loot, lost loot, safe pocket state, transfer-to-base-stash text, death loss text, or the `回到基地` action.
+- Expanded `tools/validate_ui_text_quality.gd` to require the new Result transfer localization keys and check the transfer banner within 1280x720 / 1920x1080 layout validation.
+- Marked 可視化任務四 complete in `player_visibility_task_queue.md`.
+
+### Verified
+
+- Raid result panel validation reports `[raid_result_panel] OK node_first=true transfer=visible loot=shown continue=base layout=fits`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Extraction flow validation reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Base screen validation reports `[base_screen] OK node_first=true base=recognizable empty=shown stash=shown layout=fits`.
+- Base flow validation reports `[base_flow] OK new_game=base continue=base current_slot=tracked`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- CSV key uniqueness check reports `CSV keys unique: 217 rows`.
+- Main project, Base scene, and current Raid gameplay scene load in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with 可視化任務五：Raid HUD 顯示玩家當下目標.
