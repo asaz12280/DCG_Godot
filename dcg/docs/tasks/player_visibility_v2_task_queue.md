@@ -284,7 +284,7 @@ Each Project Health Check must inspect:
 
 ## 任務十八：建立 3D 子彈 Projectile
 
-狀態：未開始
+狀態：完成
 
 目標：射擊時生成可見 3D 子彈模型，從槍口或玩家方向射出。
 

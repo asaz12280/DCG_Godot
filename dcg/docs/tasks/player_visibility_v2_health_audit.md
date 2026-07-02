@@ -38,9 +38,10 @@ The health check does not mean these debts are acceptable forever. It means the 
    - `WeaponController3D` now delegates magazine capacity, loaded ammo, reserve ammo, reload movement, and round consumption to `WeaponAmmoModel`.
    - Guardrail: `current_ammo` and `reserve_ammo` are temporary HUD/legacy bridge fields only; future reload and HUD tasks should keep the model as the source of truth.
 
-8. hitscan firing
-   - `WeaponController3D` uses `intersect_ray()` and has no visible projectile bullet.
-   - Target: firing spawns a visible 3D projectile that travels, hits, or expires.
+8. visible projectile baseline resolved in V2 task eighteen
+   - `WeaponController3D.fire_forward()` now spawns a visible `Projectile3D` scene instead of doing direct player-fire hitscan.
+   - `Projectile3D` owns movement, lifetime, simple hit detection, and damage application while staying combat-only.
+   - Guardrail: player firing must not return to direct `intersect_ray()` inside `WeaponController3D`.
 
 9. EquipmentModel baseline resolved in V2 task eleven
    - Equipment slots now have a standalone domain model that validates legal slots and supports equip, unequip, and save/load round trips.

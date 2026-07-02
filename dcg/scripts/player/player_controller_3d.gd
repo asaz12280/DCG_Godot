@@ -356,7 +356,23 @@ func _fire_equipped_weapon() -> void:
 	var mouse_position := get_viewport().get_mouse_position()
 	var ray_origin := camera.project_ray_origin(mouse_position)
 	var ray_direction := camera.project_ray_normal(mouse_position)
-	_weapon_controller.fire_forward(ray_origin, ray_direction, get_world_3d().direct_space_state)
+	var projectile_origin: Vector3 = _weapon_controller.global_position + Vector3.UP * 0.72
+	var projectile_direction: Vector3 = _projectile_direction_from_camera_ray(projectile_origin, ray_origin, ray_direction)
+	_weapon_controller.fire_forward(projectile_origin, projectile_direction, get_world_3d().direct_space_state)
+
+
+func _projectile_direction_from_camera_ray(origin: Vector3, ray_origin: Vector3, ray_direction: Vector3) -> Vector3:
+	if absf(ray_direction.y) < 0.001:
+		var fallback := ray_direction
+		fallback.y = 0.0
+		return fallback.normalized() if fallback != Vector3.ZERO else -global_transform.basis.z.normalized()
+	var ground_distance := -ray_origin.y / ray_direction.y
+	var ground_position := ray_origin + ray_direction * ground_distance
+	var direction := ground_position - origin
+	direction.y = 0.0
+	if direction.length() < 0.001:
+		return -global_transform.basis.z.normalized()
+	return direction.normalized()
 
 
 func _should_auto_reload_before_fire() -> bool:

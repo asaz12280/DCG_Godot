@@ -3,6 +3,7 @@ extends Node3D
 
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.gd")
+const DEFAULT_PROJECTILE_SCENE := preload("res://scenes/combat/projectile_3d.tscn")
 
 signal fired(item_def: ItemDef)
 signal hit(target: Node, event: DamageEvent)
@@ -14,6 +15,7 @@ signal reload_blocked(reason: StringName)
 @export var weapon_def: ItemDef
 @export var fallback_damage: float = 10.0
 @export var weapon_range: float = 28.0
+@export var projectile_scene: PackedScene = DEFAULT_PROJECTILE_SCENE
 @export_range(0.0, 5.0, 0.01) var fire_cooldown_seconds := 0.28
 @export_range(0, 999, 1) var magazine_size := 8
 @export_range(0, 999, 1) var current_ammo := 0
@@ -67,23 +69,22 @@ func fire_at(target: Node) -> bool:
 	return did_hit
 
 
-func fire_forward(origin: Vector3, direction: Vector3, space_state: PhysicsDirectSpaceState3D) -> bool:
+func fire_forward(origin: Vector3, direction: Vector3, _space_state: PhysicsDirectSpaceState3D) -> bool:
 	if not _begin_fire_attempt():
 		return false
-	if space_state == null or direction == Vector3.ZERO:
+	if projectile_scene == null or direction == Vector3.ZERO:
 		fired.emit(weapon_def)
 		missed.emit(weapon_def)
 		_record_fire_result(false, "")
 		return false
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * weapon_range)
-	query.exclude = [get_parent()]
-	var result := space_state.intersect_ray(query)
-	if result.is_empty():
+	if not _spawn_projectile(origin, direction.normalized()):
 		fired.emit(weapon_def)
 		missed.emit(weapon_def)
 		_record_fire_result(false, "")
 		return false
-	return _apply_shot_to_target(result.get("collider") as Node)
+	fired.emit(weapon_def)
+	_record_fire_result(false, "")
+	return true
 
 
 func can_fire() -> bool:
@@ -253,6 +254,40 @@ func _apply_shot_to_target(target: Node) -> bool:
 		missed.emit(weapon_def)
 	_record_fire_result(did_hit, "")
 	return did_hit
+
+
+func _spawn_projectile(origin: Vector3, direction: Vector3) -> bool:
+	var projectile := projectile_scene.instantiate()
+	if not (projectile is Node3D):
+		if projectile != null:
+			projectile.queue_free()
+		return false
+	var parent := get_tree().current_scene if is_inside_tree() and get_tree().current_scene != null else null
+	if parent == null and get_parent() != null:
+		parent = get_parent().get_parent() if get_parent().get_parent() != null else get_parent()
+	if parent == null:
+		return false
+	parent.add_child(projectile)
+	var event := _make_damage_event()
+	if projectile.has_method("setup"):
+		projectile.call("setup", origin, direction, event, weapon_def, get_parent())
+	else:
+		projectile.global_position = origin
+	if projectile.has_signal("projectile_hit"):
+		projectile.projectile_hit.connect(_on_projectile_hit)
+	if projectile.has_signal("projectile_missed"):
+		projectile.projectile_missed.connect(_on_projectile_missed)
+	return true
+
+
+func _on_projectile_hit(target: Node, _event: DamageEvent) -> void:
+	hit.emit(target, _event)
+	_record_fire_result(true, "")
+
+
+func _on_projectile_missed() -> void:
+	missed.emit(weapon_def)
+	_record_fire_result(false, "")
 
 
 func _record_fire_result(did_hit: bool, blocked_reason: String) -> void:

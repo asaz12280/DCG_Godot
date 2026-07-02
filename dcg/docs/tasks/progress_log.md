@@ -1984,3 +1984,43 @@
 ### Next
 
 - Continue with V2 任務十八：射擊生成可見 3D 子彈.
+
+## 2026-07-03 Player Visibility V2 Visible Projectile
+
+### Completed
+
+- Added `scripts/combat/projectile_3d.gd` as a combat-only visible projectile with movement, lifetime, hit detection, and damage application.
+- Added `scenes/combat/projectile_3d.tscn` with a simple 3D mesh and collision shape so fired bullets are visible in the world.
+- Updated `WeaponController3D.fire_forward()` to spawn the projectile scene instead of doing direct player-fire hitscan.
+- Updated `PlayerController3D` so left-click firing uses a camera-to-world aim direction and launches the projectile from the weapon/player position.
+- Added `tools/validate_projectile_3d.gd` to catch invisible bullets, missing projectile scene pieces, returned hitscan behavior, and projectile coupling with inventory/UI/player systems.
+- Updated V2 health audit and validation so the old hitscan debt is now recorded as resolved and guarded.
+- Marked V2 任務十八 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages hitscan=removed boundaries=clean`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Ammo reload model validation reports `[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean`.
+- Weapon/equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Reload flow validation reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Reload UI validation reports `[reload_ui] OK node_first=progress_bar visible=reload_progress completion=clears layout=fit boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Project Health Check After V2 Task Eighteen
+
+- Base boundary: unchanged in this slice; no Base scene or flow code was touched.
+- Inventory and equipment boundaries: unchanged; projectile and weapon code do not read backpack UI, container UI, or equipment internals.
+- Weapon boundary: `WeaponController3D` owns firing and projectile spawning; it no longer uses direct `intersect_ray()` hitscan for player forward fire.
+- Projectile boundary: `Projectile3D` owns travel, lifetime, hit resolution, and damage application while staying independent from `InventoryModel`, `EquipmentModel`, `UIManager`, and `PlayerController3D`.
+- Player boundary: `PlayerController3D` only chooses player-facing aim direction and asks the weapon controller to fire.
+- UI and layout: no new stable UI was introduced; existing reload HUD and raid HUD layout validators still pass.
+- Validation health: projectile, combat, reload, HUD, UI text, gameplay architecture, V2 health, and scene launch checks pass.
+
+### Next
+
+- Continue with V2 任務十九：Projectile 命中處理.

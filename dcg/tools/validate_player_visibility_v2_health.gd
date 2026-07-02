@@ -9,15 +9,18 @@ var _required_files := PackedStringArray([
 	"res://scripts/inventory/inventory_model.gd",
 	"res://scripts/combat/weapon_controller_3d.gd",
 	"res://scripts/combat/weapon_ammo_model.gd",
+	"res://scripts/combat/projectile_3d.gd",
 	"res://scripts/loot/loot_container_3d.gd",
 	"res://scripts/inventory/container_inventory_model.gd",
 	"res://scripts/equipment/equipment_model.gd",
+	"res://scenes/combat/projectile_3d.tscn",
 	"res://scenes/ui/container_inventory_ui.tscn",
 	"res://tools/validate_container_open_flow.gd",
 	"res://tools/validate_equipment_model.gd",
 	"res://tools/validate_ammo_reload_model.gd",
 	"res://tools/validate_reload_flow.gd",
 	"res://tools/validate_reload_ui.gd",
+	"res://tools/validate_projectile_3d.gd",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
@@ -33,7 +36,7 @@ var _audit_required_terms := PackedStringArray([
 	"direct container-to-backpack grant resolved",
 	"missing container capacity UI resolved",
 	"Ammo/Magazine model baseline resolved",
-	"hitscan firing",
+	"visible projectile baseline resolved",
 	"EquipmentModel baseline resolved",
 	"Top Menu placeholder panels",
 	"oversized Raid HUD",
@@ -159,7 +162,15 @@ func _validate_known_current_risks_are_visible() -> void:
 		_expect_contains(weapon_text, required, "WeaponController3D should keep ammo state model-backed through %s." % required)
 	_expect_contains(weapon_text, "current_ammo", "Current fake ammo counter risk should remain visible until ammo model tasks remove it.")
 	_expect_contains(weapon_text, "reserve_ammo", "Current reserve ammo counter risk should remain visible until ammo model tasks remove it.")
-	_expect_contains(weapon_text, "intersect_ray", "Current hitscan firing risk should remain visible until projectile tasks remove it.")
+	for required in PackedStringArray(["DEFAULT_PROJECTILE_SCENE", "projectile_scene", "_spawn_projectile", "_on_projectile_hit"]):
+		_expect_contains(weapon_text, required, "WeaponController3D should keep visible projectile firing through %s." % required)
+	if weapon_text.contains("intersect_ray"):
+		_errors.append("WeaponController3D should not return to direct hitscan intersect_ray after V2 task eighteen.")
+
+	var projectile_text := _read_text("res://scripts/combat/projectile_3d.gd")
+	for forbidden in PackedStringArray(["InventoryModel", "EquipmentModel", "UIManager", "PlayerController3D"]):
+		if projectile_text.contains(forbidden):
+			_errors.append("Projectile3D should stay combat-only and independent from %s." % forbidden)
 
 	var ammo_model_text := _read_text("res://scripts/combat/weapon_ammo_model.gd")
 	for forbidden in PackedStringArray(["Control", "InventoryEquipmentUI", "UIManager", "PlayerController3D", "LootContainer3D"]):
