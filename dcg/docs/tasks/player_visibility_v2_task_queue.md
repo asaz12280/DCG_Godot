@@ -368,7 +368,7 @@ Each Project Health Check must inspect:
 
 ## 任務二十四：角色狀態頁籤
 
-狀態：未開始
+狀態：完成
 
 目標：Top Menu 第三頁籤顯示生命、體力、負重、裝備、武器彈藥。
 

@@ -1,0 +1,105 @@
+[gd_scene load_steps=2 format=3 uid="uid://status_top_menu_panel_001"]
+
+[ext_resource type="Script" path="res://scripts/ui/status_top_menu_panel.gd" id="1_status_top_menu_panel"]
+
+[node name="StatusTopMenuPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 580.0
+offset_top = 126.0
+offset_right = 1340.0
+offset_bottom = 546.0
+mouse_filter = 2
+script = ExtResource("1_status_top_menu_panel")
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 22
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "角色狀態"
+
+[node name="HintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "查看生命、體力、負重、裝備與武器彈藥。"
+autowrap_mode = 3
+
+[node name="VitalsPanel" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/VitalsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/VitalsPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HealthLabel" type="Label" parent="MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "生命：-- / --"
+
+[node name="StaminaLabel" type="Label" parent="MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "體力：-- / --"
+
+[node name="WeightLabel" type="Label" parent="MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "負重：-- / --"
+
+[node name="WeaponAmmoLabel" type="Label" parent="MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "武器彈藥：無"
+autowrap_mode = 3
+
+[node name="EquipmentPanel" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/EquipmentPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/EquipmentPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipmentTitleLabel" type="Label" parent="MainPanel/PanelMargin/Content/EquipmentPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "裝備"
+
+[node name="EquipmentListLabel" type="Label" parent="MainPanel/PanelMargin/Content/EquipmentPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "無"
+autowrap_mode = 3

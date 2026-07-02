@@ -8,6 +8,24 @@ ui.top.quest_panel_title,任務清單,Quest List,Quest List,任务清单
 ui.top.quest_panel_hint,追蹤目前可完成的回收與擊殺目標。,Track current salvage and hunt objectives,Track current salvage and hunt objectives,追踪目前可完成的回收与击杀目标。
 ui.top.quest_empty,沒有任務,No quests,No quests,没有任务
 ui.top.quest_inactive,未啟用,Inactive,Inactive,未启用
+ui.top.status_panel_title,角色狀態,Character Status,Character Status,角色状态
+ui.top.status_panel_hint,查看生命、體力、負重、裝備與武器彈藥。,Review health stamina carry weight equipment and ammo,Review health stamina carry weight equipment and ammo,查看生命、体力、负重、装备与武器弹药。
+ui.top.status_health,生命,Health,Health,生命
+ui.top.status_stamina,體力,Stamina,Stamina,体力
+ui.top.status_weight,負重,Carry weight,Carry weight,负重
+ui.top.status_weapon_ammo,武器彈藥,Weapon ammo,Weapon ammo,武器弹药
+ui.top.status_equipment,裝備,Equipment,Equipment,装备
+ui.top.status_none,無,None,None,无
+ui.top.status_slot_primary_weapon,主武器,Primary weapon,Primary weapon,主武器
+ui.top.status_slot_sidearm,副武器,Sidearm,Sidearm,副武器
+ui.top.status_slot_melee,近戰,Melee,Melee,近战
+ui.top.status_slot_helmet,頭盔,Helmet,Helmet,头盔
+ui.top.status_slot_armor,護甲,Armor,Armor,护甲
+ui.top.status_slot_glasses,眼鏡,Glasses,Glasses,眼镜
+ui.top.status_slot_headset,耳機,Headset,Headset,耳机
+ui.top.status_slot_backpack,背包,Backpack,Backpack,背包
+ui.top.status_slot_charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
+ui.top.status_slot_charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
 ui.inventory.equipment,裝備,Equipment,Equipment,装备
 ui.inventory.safe_pocket,保險格,Safe Pocket,Safe Pocket,保险格
 ui.inventory.backpack_format,背包 (%d/%d),Backpack (%d/%d),Backpack (%d/%d),背包 (%d/%d)

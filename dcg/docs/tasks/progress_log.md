@@ -2169,3 +2169,45 @@
 ### Next
 
 - Continue with V2 任務二十四：角色狀態頁籤.
+
+## 2026-07-03 Player Visibility V2 Character Status Top Menu Tab
+
+### Completed
+
+- Added node-first `scenes/ui/status_top_menu_panel.tscn` for the Top Menu character status tab.
+- Added `scripts/ui/status_top_menu_panel.gd` to display player health, stamina, carry weight, equipped gear, and weapon ammo without owning or copying gameplay state.
+- Wired `UIManager` so `UI_STATUS` opens/closes the status panel and keeps Top Menu selection/focus ownership centralized.
+- Instanced `StatusTopMenuPanel` under the gameplay HUD so the third Top Menu icon opens a visible character status page.
+- Added Traditional Chinese localization keys for the status panel title, hint, vitals, weapon ammo, equipment, empty state, and slot labels.
+- Expanded `tools/validate_top_menu_panels.gd` to verify quest and status tab reachability, player/equipment/weapon model reads, layout fit, node-first structure, and display-only boundaries.
+- Added status panel scene/script paths to V2 health validation.
+- Marked V2 任務二十四 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Top Menu panels validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- UI foundation validation reports `[ui_foundation] OK theme=loaded layout=centered grid=stable`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay architecture validation reports `[gameplay_architecture] OK player_stats=resource inventory=player_owned ui_coupling=clean`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean`.
+- Weapon equipment binding validation reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Gameplay scene launch check completed with Godot headless `--quit-after 1 res://scenes/gameplay/player_test_world_3d.tscn`.
+
+### Project Health Check After V2 Task Twenty Four
+
+- Trigger: completed V2 tasks twenty two, twenty three, and twenty four after the previous health check.
+- Player flow reachability: the compact Raid HUD, quest tab, and status tab are all reachable from the existing gameplay HUD through `UIManager`.
+- Base boundary: unchanged in this slice; 3D Base and Base panel responsibilities were not expanded or mixed into status UI.
+- Inventory/equipment/weapon boundaries: `StatusTopMenuPanel` only reads `get_inventory_model()`, `get_equipment_model()`, and `WeaponController3D` display fields; it does not move stacks, equip items, reload, or mutate saves.
+- Container boundary: container inventory and transfer code were not touched; status UI does not depend on container models.
+- UIManager boundary: Top Menu active panel state remains centralized in `UIManager`; panels expose open/close methods and do not manage global input state.
+- Traditional Chinese text quality: new player-facing status labels use localization keys with Traditional Chinese values.
+- Node-first UI layout: the status page is a `.tscn` Control/Container layout and passes 1280x720 and 1920x1080 fit checks through `validate_top_menu_panels.gd`.
+- Save/load safety: no save schema or persistence writes were added.
+- Scene loadability: gameplay scene loads headless after the status panel instance was added.
+- Validation health: `validate_top_menu_panels.gd` now covers both task and status tab visibility plus ownership boundaries.
+
+### Next
+
+- Continue with V2 任務二十五：地圖頁籤早期版.

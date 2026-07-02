@@ -3,6 +3,10 @@ extends SceneTree
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const QuestTopMenuScene := preload("res://scenes/ui/quest_top_menu_panel.tscn")
 const QuestTopMenuScript := preload("res://scripts/ui/quest_top_menu_panel.gd")
+const StatusTopMenuScene := preload("res://scenes/ui/status_top_menu_panel.tscn")
+const StatusTopMenuScript := preload("res://scripts/ui/status_top_menu_panel.gd")
+const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
 
 var _errors: Array[String] = []
 
@@ -10,11 +14,13 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
 	await _validate_quest_tab_opens_panel()
+	await _validate_status_tab_opens_panel()
 	await _validate_quest_panel_layout()
+	await _validate_status_panel_layout()
 	_validate_node_first_structure()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[top_menu_panels] OK quests_tab=opens list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean")
+		print("[top_menu_panels] OK quests_tab=opens status_tab=player_model list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -61,6 +67,49 @@ func _validate_quest_tab_opens_panel() -> void:
 	_free_node(scene)
 
 
+func _validate_status_tab_opens_panel() -> void:
+	var scene := GameplayScene.instantiate()
+	root.add_child(scene)
+	await process_frame
+	await process_frame
+
+	var ui_manager := root.get_node_or_null("UIManager")
+	var top_menu := scene.get_node_or_null("HUD/TopMenuBar")
+	var status_panel := scene.get_node_or_null("HUD/StatusTopMenuPanel")
+	var quest_panel := scene.get_node_or_null("HUD/QuestTopMenuPanel")
+	var player := scene.get_node_or_null("Player3D")
+	if ui_manager == null or top_menu == null or status_panel == null or player == null:
+		_errors.append("Gameplay scene should include UIManager, TopMenuBar, StatusTopMenuPanel, and Player3D.")
+		_free_node(scene)
+		return
+	if status_panel.get_script() != StatusTopMenuScript:
+		_errors.append("StatusTopMenuPanel should use StatusTopMenuPanel script.")
+
+	_prepare_player_status_sample(player)
+	ui_manager.call("open_ui", &"status")
+	await process_frame
+	var state: Dictionary = status_panel.call("get_display_state")
+	if not bool(state.get("visible", false)):
+		_errors.append("Opening top-menu status tab should show StatusTopMenuPanel.")
+	if str(ui_manager.call("get_active_ui")) != "status":
+		_errors.append("UIManager active UI should be `status` after opening the status tab.")
+	if not bool(top_menu.get("visible")):
+		_errors.append("TopMenuBar should remain visible while the status panel is open.")
+	if str(top_menu.call("get_selected_item_id")) != "status":
+		_errors.append("TopMenuBar should select the status icon when the status panel is open.")
+	_validate_status_summary(state)
+
+	ui_manager.call("open_ui", &"quests")
+	await process_frame
+	state = status_panel.call("get_display_state")
+	if bool(state.get("visible", true)):
+		_errors.append("Opening quest tab should close the status panel.")
+	if quest_panel != null and not bool(quest_panel.call("get_display_state").get("visible", false)):
+		_errors.append("Switching from status to quests should still open the quest panel.")
+
+	_free_node(scene)
+
+
 func _validate_quest_panel_layout() -> void:
 	var panel := QuestTopMenuScene.instantiate()
 	root.add_child(panel)
@@ -79,6 +128,27 @@ func _validate_quest_panel_layout() -> void:
 			_errors.append("Quest top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 		_validate_quest_summaries(state)
+	_free_node(panel)
+
+
+func _validate_status_panel_layout() -> void:
+	var panel := StatusTopMenuScene.instantiate()
+	root.add_child(panel)
+	await process_frame
+	panel.call("open_status")
+	await process_frame
+	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
+		var rect: Rect2 = panel.call("preview_layout", viewport_size)
+		if rect.position.y < 70.0:
+			_errors.append("Status top-menu panel should sit below the icon bar at %s." % viewport_size)
+		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
+			_errors.append("Status top-menu panel should fit inside viewport at %s." % viewport_size)
+		if rect.size.x > viewport_size.x * 0.55:
+			_errors.append("Status top-menu panel should not cover too much horizontal gameplay view at %s." % viewport_size)
+		if rect.size.y > viewport_size.y * 0.50:
+			_errors.append("Status top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
+		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
+		_require_terms(str(state.get("title", "")), ["角色", "狀態"], "Status panel title should be Traditional Chinese.")
 	_free_node(panel)
 
 
@@ -102,12 +172,32 @@ func _validate_node_first_structure() -> void:
 			_errors.append("Quest panel scene should provide node-first UI path: %s" % path)
 	_free_node(panel)
 
+	panel = StatusTopMenuScene.instantiate()
+	root.add_child(panel)
+	await process_frame
+	for path in [
+		"MainPanel/PanelMargin/Content/TitleLabel",
+		"MainPanel/PanelMargin/Content/HintLabel",
+		"MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows/HealthLabel",
+		"MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows/StaminaLabel",
+		"MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows/WeightLabel",
+		"MainPanel/PanelMargin/Content/VitalsPanel/Margin/Rows/WeaponAmmoLabel",
+		"MainPanel/PanelMargin/Content/EquipmentPanel/Margin/Rows/EquipmentTitleLabel",
+		"MainPanel/PanelMargin/Content/EquipmentPanel/Margin/Rows/EquipmentListLabel",
+	]:
+		if panel.get_node_or_null(path) == null:
+			_errors.append("Status panel scene should provide node-first UI path: %s" % path)
+	_free_node(panel)
+
 
 func _validate_source_boundaries() -> void:
 	var ui_manager_source := FileAccess.get_file_as_string("res://scripts/ui/ui_manager.gd")
 	for required in ["QuestTopMenuPanel", "open_quests", "close_quests", "UI_QUESTS"]:
 		if not ui_manager_source.contains(required):
 			_errors.append("UIManager should own quest panel state through %s." % required)
+	for required in ["StatusTopMenuPanel", "open_status", "close_status", "UI_STATUS"]:
+		if not ui_manager_source.contains(required):
+			_errors.append("UIManager should own status panel state through %s." % required)
 
 	var panel_source := FileAccess.get_file_as_string("res://scripts/ui/quest_top_menu_panel.gd")
 	for required in ["BaseScreenViewModelScript.quest_defs", "QuestStateScript", "get_slot_data"]:
@@ -120,6 +210,16 @@ func _validate_source_boundaries() -> void:
 	var scene_text := FileAccess.get_file_as_string("res://scenes/gameplay/player_test_world_3d.tscn")
 	if not scene_text.contains("QuestTopMenuPanel"):
 		_errors.append("Gameplay HUD should instance QuestTopMenuPanel.")
+	if not scene_text.contains("StatusTopMenuPanel"):
+		_errors.append("Gameplay HUD should instance StatusTopMenuPanel.")
+
+	panel_source = FileAccess.get_file_as_string("res://scripts/ui/status_top_menu_panel.gd")
+	for required in ["get_total_max_health", "get_total_carry_weight_limit", "get_inventory_model", "get_equipment_model", "WeaponController3D"]:
+		if not panel_source.contains(required):
+			_errors.append("StatusTopMenuPanel should read player/equipment/weapon model state through %s." % required)
+	for forbidden in ["save_slot_data", "claim_reward", "ContainerInventoryModel", "LootContainer3D", "equip_inventory_stack", "reload_equipped_weapon", "add_item_resource"]:
+		if panel_source.contains(forbidden):
+			_errors.append("StatusTopMenuPanel should stay display-only and not mutate gameplay state: %s." % forbidden)
 
 
 func _validate_quest_summaries(state: Dictionary) -> void:
@@ -142,6 +242,45 @@ func _validate_quest_summaries(state: Dictionary) -> void:
 	for token in ["Quest List", "Track current", "Active", "Ready", "Completed"]:
 		if text.contains(token) or str(state.get("title", "")).contains(token) or str(state.get("hint", "")).contains(token):
 			_errors.append("Quest top-menu panel should not show English fallback text.")
+
+
+func _validate_status_summary(state: Dictionary) -> void:
+	_require_terms(str(state.get("title", "")), ["角色", "狀態"], "Status panel title should be Traditional Chinese.")
+	_require_terms(str(state.get("health", "")), ["生命"], "Status panel should show health.")
+	_require_terms(str(state.get("stamina", "")), ["體力"], "Status panel should show stamina.")
+	_require_terms(str(state.get("weight", "")), ["負重"], "Status panel should show carry weight.")
+	_require_terms(str(state.get("weapon_ammo", "")), ["武器", "彈藥", "手槍-S"], "Status panel should show weapon ammo from WeaponController.")
+	_require_terms(str(state.get("equipment", "")), ["副武器", "手槍-S"], "Status panel should show equipment from EquipmentModel.")
+	var text := "%s\n%s\n%s\n%s\n%s\n%s" % [
+		state.get("title", ""),
+		state.get("hint", ""),
+		state.get("health", ""),
+		state.get("stamina", ""),
+		state.get("weight", ""),
+		state.get("equipment", ""),
+	]
+	for token in ["Character Status", "Health", "Stamina", "Equipment", "Weapon ammo"]:
+		if text.contains(token) or str(state.get("weapon_ammo", "")).contains(token):
+			_errors.append("Status top-menu panel should not show English fallback text.")
+
+
+func _prepare_player_status_sample(player: Node) -> void:
+	if player == null:
+		return
+	if player.has_method("add_item_resource"):
+		player.call("add_item_resource", PistolItem, 1)
+	if player.has_method("get_inventory_model"):
+		var backpack: RefCounted = player.call("get_inventory_model")
+		if backpack != null and backpack.has_method("get_display_items"):
+			var stacks: Array = backpack.call("get_display_items")
+			for index in range(stacks.size()):
+				var stack: Dictionary = stacks[index]
+				if str(stack.get("resource_path", "")) == PistolItem.resource_path and player.has_method("equip_inventory_stack"):
+					player.call("equip_inventory_stack", index, &"sidearm")
+					break
+	var weapon := player.get_node_or_null("WeaponController3D")
+	if weapon != null and weapon.has_method("set_reserve_ammo_from_item"):
+		weapon.call("set_reserve_ammo_from_item", AmmoItem, 24)
 
 
 func _require_terms(text: String, terms: Array[String], message: String) -> void:
