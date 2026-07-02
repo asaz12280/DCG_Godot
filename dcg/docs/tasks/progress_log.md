@@ -1657,3 +1657,36 @@
 ### Next
 
 - Continue with V2 任務七：建立箱子內容 UI.
+
+## 2026-07-02 Project Health Check Before V2 Task Seven
+
+### Health Check
+
+- Player flow reachability: current V2 Base and raid flow checks remain covered by existing Base and startup validations.
+- 3D Base vs 2D panel responsibility: unchanged; 3D Base remains the playable space and old BaseScreen remains a panel/helper surface.
+- Inventory/equipment/weapon boundaries: ContainerInventoryModel remains separate from player backpack and weapon/equipment state.
+- Container inventory boundary: `validate_container_inventory_model.gd` confirms fixed-slot container state is UI-independent.
+- UIManager ownership: unchanged this slice; ContainerInventoryUI is only a reusable panel and does not own global UI focus routing yet.
+- Traditional Chinese text quality: `validate_ui_text_quality.gd` passes before adding the new panel.
+- Scene loadability and validation health: V2 health, container model, UI text quality, and main startup validations pass.
+
+## 2026-07-02 Player Visibility V2 Container Inventory UI
+
+### Completed
+
+- Added node-first `scenes/ui/container_inventory_ui.tscn` with a dimmer, panel, header, capacity label, help text, scroll/grid area, empty state, and close button.
+- Added `scripts/ui/container_inventory_ui.gd` to bind a `ContainerInventoryModel`, display container name, show used/capacity like `2/4`, generate one visible slot per capacity, and emit slot intent without owning loot rolling or player backpack transfer.
+- Added `tools/validate_container_inventory_ui.gd` to verify node-first structure, visible capacity, visible slots, Traditional Chinese text, responsibility boundaries, and 1280x720 / 1920x1080 fit.
+- Marked V2 任務七 complete in `docs/tasks/player_visibility_v2_task_queue.md`.
+
+### Verified
+
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Container inventory model validation reports `[container_inventory_model] OK capacity=slots stack=merge remove=works save=round_trip coupling=clean`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Main project loads in Godot 4.7 headless checks.
+
+### Next
+
+- Continue with V2 任務八：改造箱子開啟流程.

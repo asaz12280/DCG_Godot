@@ -130,7 +130,7 @@ Each Project Health Check must inspect:
 
 ## 任務七：建立箱子內容 UI
 
-狀態：未開始
+狀態：完成
 
 目標：像參考圖五一樣，打開箱子後顯示箱子名稱、容量例如 `2/4`、物品格子。
 
