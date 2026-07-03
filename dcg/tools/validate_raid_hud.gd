@@ -77,8 +77,9 @@ func _validate_gameplay_hud_wiring() -> void:
 		ui_manager.call("open_ui", &"backpack")
 		await process_frame
 		state = hud.call("get_display_state")
-		if not bool(state.get("visible", false)):
-			_errors.append("Raid HUD should remain valid when backpack UI is opened.")
+		if bool(state.get("visible", false)):
+			_errors.append("Legacy top-left Raid HUD should stay hidden when backpack UI is opened.")
+		_require_terms(state, "objective", ["搜索物資", "小心敵人", "前往撤離點"], "Hidden Raid HUD state should remain readable for preview/debug use while backpack is opened.")
 		ui_manager.call("close_active_ui")
 
 	_free_node(scene)

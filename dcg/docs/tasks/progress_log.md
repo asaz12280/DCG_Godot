@@ -2788,3 +2788,24 @@
 ### Next
 
 - Continue with task fifteen: Raid objective hint cleanup.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Fifteen
+
+### Completed
+
+- Added `tools/validate_raid_hud_minimal_goal.gd` to lock the intended player-facing HUD direction: the large top-left Raid objective panel stays hidden during normal gameplay, while `PlayerHud3D` remains the visible combat HUD.
+- Confirmed detailed quest and route information remains reachable from the Top Menu quest/map tabs instead of returning to the large overlay.
+- Updated `tools/validate_raid_hud.gd` so the legacy Raid HUD preview can still validate text/layout without forcing the hidden top-left panel to appear when backpack UI opens.
+- Preserved TAB backpack, ESC pause, crosshair visibility, reload UI, and the hidden legacy panel behavior.
+- Marked Dev Slice 0.2 enemy-first task fifteen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Raid HUD minimal goal validation reports `[raid_hud_minimal_goal] OK legacy_panel=hidden combat_hud=visible route_detail=top_menu layout=fit boundaries=clean`.
+- Raid HUD validation reports `[raid_hud] OK objective=visible route=clear vitals=visible ammo=weapon extraction=status ui_manager=compatible layout=fit`.
+- Reload UI validation reports `[reload_ui] OK minimal_hud=reload_progress visible=true completion=clears legacy_panel=hidden boundaries=clean`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+
+### Next
+
+- Continue with task sixteen: Project Health Check D.
