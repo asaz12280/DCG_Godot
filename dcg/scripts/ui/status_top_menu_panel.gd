@@ -180,9 +180,24 @@ func _equipment_text(player: Node) -> String:
 		if stack.is_empty():
 			continue
 		rows.append("%s：%s" % [_slot_label(StringName(slot_id)), _stack_name(stack)])
+	var armor_effect := _armor_effect_text(player)
+	if armor_effect != "":
+		rows.append(armor_effect)
 	if rows.is_empty():
 		return _none_text()
 	return "\n".join(rows)
+
+
+func _armor_effect_text(player: Node) -> String:
+	if not player.has_method("get_armor_effect_state"):
+		return ""
+	var state: Dictionary = player.call("get_armor_effect_state")
+	if not bool(state.get("equipped", false)):
+		return ""
+	var defense_bonus := float(state.get("defense_bonus", 0.0))
+	if defense_bonus <= 0.0:
+		return "防護效果：尚未提供減傷"
+	return "防護效果：每次受擊 -%.0f 傷害" % defense_bonus
 
 
 func _stack_name(stack: Dictionary) -> String:

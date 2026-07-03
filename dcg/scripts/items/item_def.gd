@@ -12,6 +12,7 @@ extends Resource
 @export var max_stack: int = 1
 # // Gun damage used by the early codex and combat planning slice. Non-gun items keep this at 0. //
 @export var damage: int = 0
+@export_range(0.0, 100.0, 0.5) var defense_bonus: float = 0.0
 @export_range(0, 999, 1) var magazine_capacity: int = 0
 @export var compatible_ammo_tags: Array[StringName] = []
 @export var ammo_tag: StringName = &""
@@ -33,6 +34,7 @@ func to_stack(quantity: int = 1) -> Dictionary:
 		"max_stack": maxi(max_stack, 1),
 		"resource_path": resource_path,
 		"damage": maxi(damage, 0),
+		"defense_bonus": maxf(defense_bonus, 0.0),
 		"magazine_capacity": maxi(magazine_capacity, 0),
 		"compatible_ammo_tags": compatible_ammo_tags.duplicate(),
 		"ammo_tag": ammo_tag,

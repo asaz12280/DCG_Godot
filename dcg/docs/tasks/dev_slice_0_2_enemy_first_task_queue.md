@@ -420,7 +420,7 @@ The player should be able to:
 
 ### 任務十九：護甲效果可視化
 
-狀態：未開始
+狀態：完成
 
 優先度：中
 

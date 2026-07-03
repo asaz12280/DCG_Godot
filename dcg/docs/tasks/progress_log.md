@@ -2882,3 +2882,26 @@
 ### Next
 
 - Continue with task nineteen: armor effect visibility.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Nineteen
+
+### Completed
+
+- Added a data-driven `defense_bonus` field to `ItemDef` and assigned the No.8 light armor a `+4` defense effect.
+- Updated `PlayerController3D` so equipped body armor contributes to total defense and reduces incoming damage.
+- Added player armor effect state for UI display without moving combat authority into UI scripts.
+- Updated the Status Top Menu equipment summary to show the visible armor effect: each hit reduces damage by the armor value.
+- Added `tools/validate_equipment_armor_effect.gd` to verify armor equipment, damage reduction, UI visibility, and clean ownership boundaries.
+- Marked Dev Slice 0.2 enemy-first task nineteen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Armor effect validation reports `[equipment_armor_effect] OK equip=armor damage=reduced ui=visible boundaries=clean`.
+- Enemy attack validation reports `[enemy_attack_player] OK raid=normal attack=damages_player hud=updates cooldown=guarded status=visible`.
+- Equipment model validation reports `[equipment_model] OK slots=ready equip=legal reject=invalid save=round_trip coupling=clean`.
+- Top Menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- Player damage flow validation reports `[player_damage_flow] OK damage=accepted health_signal=emits hud=updates death=guarded`.
+
+### Next
+
+- Continue with task twenty: Project Health Check E.

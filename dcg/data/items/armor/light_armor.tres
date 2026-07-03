@@ -12,3 +12,4 @@ item_type = "armor"
 weight = 4.5
 value = 260
 max_stack = 1
+defense_bonus = 4.0

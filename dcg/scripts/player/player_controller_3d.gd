@@ -56,7 +56,7 @@ var safe_pocket_slots: int:
 
 var defense: float:
 	get:
-		return _stats.defense()
+		return _stats.defense() + get_equipment_defense_bonus()
 
 var health: float = 0.0
 var stamina: float = 0.0
@@ -147,6 +147,24 @@ func get_total_safe_pocket_slots() -> int:
 
 func get_total_defense() -> float:
 	return defense
+
+
+func get_equipment_defense_bonus() -> float:
+	var armor := equipment_model.get_equipped_item(&"armor")
+	if armor == null:
+		return 0.0
+	return maxf(armor.defense_bonus, 0.0)
+
+
+func get_armor_effect_state() -> Dictionary:
+	var armor := equipment_model.get_equipped_item(&"armor")
+	var bonus := get_equipment_defense_bonus()
+	return {
+		"equipped": armor != null,
+		"armor_name": _item_display_name(armor),
+		"defense_bonus": bonus,
+		"effect_text": _armor_effect_text(armor, bonus),
+	}
 
 
 func set_current_carry_weight(value: float) -> void:
@@ -585,6 +603,22 @@ func _load_item_from_stack(stack: Dictionary) -> ItemDef:
 	if item_path == "" or not ResourceLoader.exists(item_path):
 		return null
 	return load(item_path) as ItemDef
+
+
+func _item_display_name(item_def: ItemDef) -> String:
+	if item_def == null:
+		return ""
+	if item_def.display_name != "":
+		return item_def.display_name
+	return str(item_def.id)
+
+
+func _armor_effect_text(item_def: ItemDef, bonus: float) -> String:
+	if item_def == null:
+		return "未裝備護甲"
+	if bonus <= 0.0:
+		return "%s：無防護效果" % _item_display_name(item_def)
+	return "%s：每次受擊減少 %.0f 傷害" % [_item_display_name(item_def), bonus]
 
 
 func _die(event: DamageEvent) -> void:
