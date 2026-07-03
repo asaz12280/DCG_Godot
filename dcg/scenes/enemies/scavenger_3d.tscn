@@ -45,6 +45,14 @@ position = Vector3(0, 1.28, 0)
 mesh = SubResource("SphereMesh_head")
 surface_material_override/0 = SubResource("StandardMaterial3D_head")
 
+[node name="NameLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.75, 0)
+billboard = 1
+text = "拾荒者"
+font_size = 30
+outline_size = 6
+modulate = Color(1, 0.88, 0.66, 1)
+
 [node name="DetectRadiusMarker" type="Node3D" parent="."]
 metadata/detect_radius = 9.0
 

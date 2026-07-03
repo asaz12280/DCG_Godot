@@ -2434,6 +2434,26 @@
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task One
+
+### Completed
+
+- Created a 5-minute heartbeat automation for the Dev Slice 0.2 enemy-first task queue.
+- Added `ScavengerPatrol01` to the normal Raid scene so the player can encounter a visible 3D enemy during regular sortie flow.
+- Added a `NameLabel` to `scenes/enemies/scavenger_3d.tscn` so the enemy is clearly identifiable in 3D space.
+- Added `tools/validate_enemy_visible_in_raid.gd` to guard against the system-existing-but-player-invisible enemy failure.
+- Marked Dev Slice 0.2 enemy-first task one complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy visibility validation reports `[enemy_visible_in_raid] OK raid=scavenger_visible route=reachable label=visible controller=wired`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Raid scene launch check completed with Godot headless `--quit-after 1`.
+
+### Next
+
+- Continue with task two: 3D enemy health, injured, and death state readability.
+
 ## 2026-07-03 Loaded Bullet And Backpack Ammo HUD
 
 ### Completed
