@@ -620,7 +620,7 @@ The player should be able to:
 
 ### 任務三十：Dev Slice 0.2 完成報告與備份
 
-狀態：未開始
+狀態：完成
 
 優先度：中低
 
