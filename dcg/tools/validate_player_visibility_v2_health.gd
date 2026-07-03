@@ -41,11 +41,20 @@ var _required_files := PackedStringArray([
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
 	"res://scenes/ui/map_top_menu_panel.tscn",
+	"res://scripts/ui/raid_briefing_panel.gd",
+	"res://scenes/ui/raid_briefing_panel.tscn",
+	"res://scripts/ui/player_hud_3d.gd",
+	"res://scripts/ui/raid_hud_panel.gd",
+	"res://scenes/ui/raid_hud_panel.tscn",
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
 	"res://data/items/weapons/pistol_9mm.tres",
 	"res://data/items/ammo/ammo_9mm.tres",
+	"res://tools/validate_raid_briefing_ui.gd",
+	"res://tools/validate_top_menu_map_panel.gd",
+	"res://tools/validate_raid_hud.gd",
+	"res://tools/validate_raid_hud_minimal_goal.gd",
 ])
 
 var _audit_required_terms := PackedStringArray([
@@ -102,6 +111,7 @@ func _initialize() -> void:
 	_validate_inventory_independence()
 	_validate_equipment_independence()
 	_validate_known_current_risks_are_visible()
+	_validate_health_d_ui_boundaries()
 	_validate_queue_mentions_health_check()
 	if _errors.is_empty():
 		print("[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded")
@@ -202,6 +212,41 @@ func _validate_known_current_risks_are_visible() -> void:
 		_errors.append("Direct container-to-backpack grant should stay removed after V2 task eight.")
 	_expect_contains(container_text, "ContainerInventoryModelScript", "LootContainer3D should prepare container-owned inventory after V2 task eight.")
 	_expect_contains(container_text, "open_container_inventory", "LootContainer3D should request UIManager container UI after V2 task eight.")
+
+
+func _validate_health_d_ui_boundaries() -> void:
+	var ui_manager_text := _read_text("res://scripts/ui/ui_manager.gd")
+	for required in PackedStringArray(["KEY_TAB", "KEY_ESCAPE", "Input.mouse_mode", "is_gameplay_action_blocked", "is_gameplay_movement_blocked", "active_ui_changed"]):
+		_expect_contains(ui_manager_text, required, "Health Check D requires UIManager to keep owning UI input/mouse/focus term %s." % required)
+	if ui_manager_text.contains("RaidBriefingPanel") or ui_manager_text.contains("RaidHudPanel"):
+		_errors.append("UIManager should not directly couple to raid briefing or legacy Raid HUD panels.")
+
+	var briefing_text := _read_text("res://scripts/ui/raid_briefing_panel.gd")
+	for required in PackedStringArray(["signal start_raid_requested", "signal cancel_requested", "open_briefing", "confirm_start", "cancel"]):
+		_expect_contains(briefing_text, required, "RaidBriefingPanel should stay signal-driven and expose %s." % required)
+	for forbidden in PackedStringArray(["change_scene", "set_pending_raid_loadout", "InventoryModel", "WeaponController3D", "SaveGameManager", "RaidSession"]):
+		if briefing_text.contains(forbidden):
+			_errors.append("RaidBriefingPanel should stay display-only and not own gameplay/save/loadout logic: %s." % forbidden)
+
+	var map_text := _read_text("res://scripts/ui/map_top_menu_panel.gd")
+	for required in PackedStringArray(["RaidSession", "ExtractionZone", "Scavenger", "LootContainer", "get_display_state"]):
+		_expect_contains(map_text, required, "MapTopMenuPanel should read visible route state through %s." % required)
+	for forbidden in PackedStringArray(["register_extraction", "register_player_death", "change_scene", "save_slot_data", "equip_inventory_stack", "reload_equipped_weapon", "add_item_resource"]):
+		if map_text.contains(forbidden):
+			_errors.append("MapTopMenuPanel should stay display-only and not control gameplay state: %s." % forbidden)
+
+	var player_hud_text := _read_text("res://scripts/ui/player_hud_3d.gd")
+	for required in PackedStringArray(["_paint_lower_left_health", "_paint_ammo_panel", "_paint_reload_progress", "_paint_crosshair", "get_display_state"]):
+		_expect_contains(player_hud_text, required, "PlayerHud3D should keep minimal combat HUD term %s." % required)
+	for forbidden in PackedStringArray(["QuestTopMenuPanel", "MapTopMenuPanel", "QuestState", "change_scene_to_file"]):
+		if player_hud_text.contains(forbidden):
+			_errors.append("PlayerHud3D should not own detailed route/quest/scene state: %s." % forbidden)
+
+	var raid_hud_text := _read_text("res://scripts/ui/raid_hud_panel.gd")
+	_expect_contains(raid_hud_text, "route_hint_label.visible = false", "Legacy RaidHudPanel should keep long route hints hidden by default.")
+	for forbidden in PackedStringArray(["InventoryEquipmentUI", "QuestTopMenuPanel", "MapTopMenuPanel", "LootContainer3D", "change_scene_to_file"]):
+		if raid_hud_text.contains(forbidden):
+			_errors.append("Legacy RaidHudPanel should stay display-only and not couple to panels or scene flow: %s." % forbidden)
 
 
 func _validate_queue_mentions_health_check() -> void:

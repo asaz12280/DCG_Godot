@@ -2809,3 +2809,28 @@
 ### Next
 
 - Continue with task sixteen: Project Health Check D.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check D
+
+### Completed
+
+- Strengthened `tools/validate_player_visibility_v2_health.gd` so Health Check D now protects the UIManager input/mouse/focus contract, raid briefing ownership, map panel display-only ownership, PlayerHud3D minimal combat HUD, and hidden legacy Raid HUD boundaries.
+- Confirmed UIManager still owns TAB, ESC, active UI state, gameplay input blocking, focus, and mouse mode.
+- Confirmed `RaidBriefingPanel` remains signal-driven and does not own scene loading, save, inventory, weapon, or raid-session logic.
+- Confirmed `MapTopMenuPanel` reads visible route/area/danger/loot state without changing scene, quest, inventory, weapon, save, or extraction state.
+- Confirmed normal gameplay keeps `PlayerHud3D` visible for crosshair, health, ammo, and reload feedback while the legacy top-left Raid HUD stays hidden.
+- Marked Dev Slice 0.2 enemy-first Project Health Check D complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Raid briefing validation reports `[raid_briefing_ui] OK open=briefing cancel=base confirm=raid layout=fit text=zh boundaries=clean`.
+- Top Menu map panel validation reports `[top_menu_map_panel] OK area=visible route=visible extraction=visible danger=visible loot=visible layout=fit boundaries=clean`.
+- Raid HUD minimal goal validation reports `[raid_hud_minimal_goal] OK legacy_panel=hidden combat_hud=visible route_detail=top_menu layout=fit boundaries=clean`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Base 3D scene and gameplay scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task seventeen: base station interaction readability.
