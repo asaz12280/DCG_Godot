@@ -3,7 +3,6 @@ extends SceneTree
 const Base3DScene := preload("res://scenes/base/base_3d.tscn")
 const BaseScreenScene := preload("res://scenes/base/base_screen.tscn")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const RaidBriefingScene := preload("res://scenes/ui/raid_briefing_panel.tscn")
 const RaidHudScene := preload("res://scenes/ui/raid_hud_panel.tscn")
 const RaidResultScene := preload("res://scenes/ui/raid_result_panel.tscn")
 const ContainerInventoryScene := preload("res://scenes/ui/container_inventory_ui.tscn")
@@ -36,7 +35,6 @@ func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
 	await _validate_base_screen()
 	await _validate_base_3d_station_ui()
-	await _validate_raid_briefing()
 	await _validate_gameplay_hud_cluster()
 	await _validate_top_menu_panels()
 	await _validate_inventory_equipment()
@@ -104,13 +102,25 @@ func _validate_base_3d_station_ui() -> void:
 		await process_frame
 		var controller := scene.get_node_or_null("BaseInteractionController3D")
 		var panel := scene.get_node_or_null("HUD/BaseInteractionPanel") as Control
-		var briefing := scene.get_node_or_null("HUD/RaidBriefingPanel") as Control
-		if controller == null or panel == null or briefing == null:
-			_errors.append("Base 3D scene should expose interaction controller, station panel, and raid briefing panel.")
+		var stash_panel := scene.get_node_or_null("HUD/BaseStashInventoryUI") as Control
+		if controller == null or panel == null or stash_panel == null:
+			_errors.append("Base 3D scene should expose interaction controller, station panel, and stash storage panel.")
 			_free_node(scene)
 			_free_node(save_manager)
 			continue
-		for interaction_id in ["stash", "workbench", "medical"]:
+		if not bool(controller.call("open_interaction_by_id", "stash")):
+			_errors.append("Base 3D should open stash storage UI.")
+		else:
+			await process_frame
+			var stash_state: Dictionary = stash_panel.call("get_display_state_for_viewport", viewport_size)
+			_assert_rect_inside(stash_state.get("left_panel_rect", Rect2()), viewport_size, "Base 3D stash loadout panel")
+			_assert_rect_inside(stash_state.get("right_panel_rect", Rect2()), viewport_size, "Base 3D stash warehouse panel")
+			_assert_rect_inside(stash_state.get("stash_grid_rect", Rect2()), viewport_size, "Base 3D stash grid")
+			_assert_rect_inside(stash_state.get("backpack_grid_rect", Rect2()), viewport_size, "Base 3D stash backpack grid")
+			_assert_visible_text_not_empty(stash_state, ["title", "status_text"], "Base 3D stash")
+			if stash_panel.has_method("close_stash"):
+				stash_panel.call("close_stash")
+		for interaction_id in ["workbench", "medical"]:
 			if not bool(controller.call("open_interaction_by_id", interaction_id)):
 				_errors.append("Base 3D should open interaction panel for %s." % interaction_id)
 				continue
@@ -121,42 +131,8 @@ func _validate_base_3d_station_ui() -> void:
 			_assert_no_english_fallback_tree(panel, "Base 3D %s panel" % interaction_id)
 			if panel.has_method("close_panel"):
 				panel.call("close_panel")
-		if not bool(controller.call("open_interaction_by_id", "raid_gate")):
-			_errors.append("Base 3D should open raid briefing from raid gate.")
-		else:
-			await process_frame
-			var state: Dictionary = briefing.call("get_display_state_for_viewport", viewport_size)
-			_assert_rect_inside(state.get("panel_rect", Rect2()), viewport_size, "Base 3D raid briefing")
-			_assert_button_size(state.get("start_button_min_size", Vector2.ZERO), "Base 3D raid briefing start button")
-			_assert_button_size(state.get("cancel_button_min_size", Vector2.ZERO), "Base 3D raid briefing cancel button")
-			_assert_no_english_fallback_tree(briefing, "Base 3D raid briefing")
 		_free_node(scene)
 		_free_node(save_manager)
-
-
-func _validate_raid_briefing() -> void:
-	for viewport_size in VIEWPORTS:
-		_set_root_viewport(viewport_size)
-		var panel := RaidBriefingScene.instantiate() as Control
-		root.add_child(panel)
-		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		panel.size = viewport_size
-		await process_frame
-		panel.call("open_briefing", {
-			"location": "測試出擊門",
-			"risk": "低威脅",
-			"objective": "確認裝備後開始出擊",
-			"loadout_summary": "背包 2 件，裝備 1 件",
-		})
-		await process_frame
-		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
-		_assert_rect_inside(state.get("panel_rect", Rect2()), viewport_size, "Raid briefing panel")
-		_assert_panel_not_dominating(state.get("panel_rect", Rect2()), viewport_size, "Raid briefing panel", 0.76, 0.70)
-		_assert_button_size(state.get("start_button_min_size", Vector2.ZERO), "Raid briefing start button")
-		_assert_button_size(state.get("cancel_button_min_size", Vector2.ZERO), "Raid briefing cancel button")
-		_assert_visible_text_not_empty(state, ["title", "location", "objective", "start_button", "cancel_button"], "Raid briefing")
-		_assert_no_english_fallback_tree(panel, "Raid briefing")
-		_free_node(panel)
 
 
 func _validate_gameplay_hud_cluster() -> void:
@@ -306,7 +282,7 @@ func _validate_scene_ownership_boundaries() -> void:
 		if not gameplay_scene.contains(required):
 			_errors.append("Gameplay scene should keep player-visible UI node in scene: %s." % required)
 	var base_scene := FileAccess.get_file_as_string("res://scenes/base/base_3d.tscn")
-	for required in ["BaseInteractionPanel", "RaidBriefingPanel", "TopMenuBar", "InventoryEquipmentUI", "PauseMenu"]:
+	for required in ["BaseInteractionPanel", "BaseStashInventoryUI", "TopMenuBar", "InventoryEquipmentUI", "PauseMenu"]:
 		if not base_scene.contains(required):
 			_errors.append("Base 3D scene should keep player-visible UI node in scene: %s." % required)
 	var ui_manager_source := FileAccess.get_file_as_string("res://scripts/ui/ui_manager.gd")

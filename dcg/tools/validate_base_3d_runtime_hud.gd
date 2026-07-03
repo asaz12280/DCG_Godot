@@ -85,25 +85,10 @@ func _validate_raid_gate_scene_change() -> void:
 		_errors.append("3D Base should include BaseInteractionController3D for raid gate testing.")
 		_free_current_scene()
 		return
-	var briefing := scene.get_node_or_null("HUD/RaidBriefingPanel")
-	if briefing == null:
-		_errors.append("3D Base should include RaidBriefingPanel before loading gameplay.")
-		_free_current_scene()
-		return
 	if not bool(controller.call("open_interaction_by_id", "raid_gate")):
-		_errors.append("Raid gate interaction should open the pre-sortie briefing.")
+		_errors.append("Raid gate interaction should start the raid.")
 		_free_current_scene()
 		return
-	await _wait_frames(3)
-	if not bool(briefing.call("is_open")):
-		_errors.append("Raid gate should show a readable briefing before loading gameplay.")
-		_free_current_scene()
-		return
-	if current_scene == null or current_scene.scene_file_path != BASE_3D_SCENE:
-		_errors.append("Raid gate should keep Base3D loaded until the briefing is confirmed.")
-		_free_current_scene()
-		return
-	briefing.call("confirm_start")
 	await _wait_frames(12)
 
 	if current_scene == null:

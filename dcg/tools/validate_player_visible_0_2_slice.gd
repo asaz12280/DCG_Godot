@@ -32,7 +32,7 @@ func _initialize() -> void:
 		_free_node(_save_manager)
 
 	if _errors.is_empty():
-		print("[player_visible_0_2_slice] OK base=3d briefing=visible raid=enemy_chase_attack loot=equip_reload projectile_hit=enemy_dead quest=result=base")
+		print("[player_visible_0_2_slice] OK base=3d raid_gate=direct_start raid=enemy_chase_attack loot=equip_reload projectile_hit=enemy_dead quest=result=base")
 		quit(0)
 	else:
 		for error in _errors:
@@ -90,7 +90,7 @@ func _validate_full_player_visible_0_2_smoke() -> void:
 	current_scene = base_scene
 	await _wait_frames(3)
 
-	var gameplay := await _open_base_briefing_and_confirm(base_scene)
+	var gameplay := await _open_base_raid_gate(base_scene)
 	if gameplay == null:
 		_free_current_scene()
 		return
@@ -102,36 +102,25 @@ func _validate_full_player_visible_0_2_smoke() -> void:
 	_free_current_scene()
 
 
-func _open_base_briefing_and_confirm(base_scene: Node) -> Node:
+func _open_base_raid_gate(base_scene: Node) -> Node:
 	if base_scene.scene_file_path != BASE_3D_SCENE:
 		_errors.append("Smoke should start in the 3D Base scene.")
 	var base_player := base_scene.find_child("Player3D", true, false)
 	var controller := base_scene.get_node_or_null("BaseInteractionController3D")
-	var briefing := base_scene.get_node_or_null("HUD/RaidBriefingPanel")
-	if base_player == null or controller == null or briefing == null:
-		_errors.append("3D Base should include Player3D, BaseInteractionController3D, and RaidBriefingPanel.")
+	if base_player == null or controller == null:
+		_errors.append("3D Base should include Player3D and BaseInteractionController3D.")
 		return null
 	if _player_has_catalog(base_player, 5) or _player_has_catalog(base_player, 7):
 		_errors.append("3D Base player should not already hold No.5 or No.7 before the raid.")
 	if not bool(controller.call("open_interaction_by_id", "raid_gate")):
-		_errors.append("Raid gate should open the pre-sortie briefing.")
+		_errors.append("Raid gate should directly start the raid.")
 		return null
-	await _wait_frames(3)
-	if not bool(briefing.call("is_open")):
-		_errors.append("Raid briefing should be visibly open before entering the raid.")
-	var briefing_state: Dictionary = briefing.call("get_display_state")
-	if not bool(briefing_state.get("visible", false)):
-		_errors.append("Raid briefing display state should be visible.")
-	if str(briefing_state.get("start_button", "")).strip_edges() == "":
-		_errors.append("Raid briefing should expose a readable start action.")
-
-	briefing.call("confirm_start")
 	await _wait_frames(16)
 	if current_scene == null:
-		_errors.append("Confirming raid briefing should leave a loaded gameplay scene.")
+		_errors.append("Starting raid from the gate should leave a loaded gameplay scene.")
 		return null
 	if current_scene.scene_file_path != GAMEPLAY_SCENE:
-		_errors.append("Confirming raid briefing should load gameplay, got `%s`." % current_scene.scene_file_path)
+		_errors.append("Starting raid from the gate should load gameplay, got `%s`." % current_scene.scene_file_path)
 		return null
 	return current_scene
 

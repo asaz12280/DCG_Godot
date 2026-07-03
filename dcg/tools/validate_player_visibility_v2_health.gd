@@ -42,6 +42,7 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_quest_kill_enemy_flow.gd",
 	"res://tools/validate_enemy_player_death_result.gd",
 	"res://tools/validate_raid_loss_rules.gd",
+	"res://tools/validate_user_reported_correctness.gd",
 	"res://tools/validate_enemy_architecture_health.gd",
 	"res://tools/validate_locked_container_flow.gd",
 	"res://tools/validate_location_quest_flow.gd",
@@ -52,8 +53,6 @@ var _required_files := PackedStringArray([
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
 	"res://scenes/ui/map_top_menu_panel.tscn",
-	"res://scripts/ui/raid_briefing_panel.gd",
-	"res://scenes/ui/raid_briefing_panel.tscn",
 	"res://scripts/ui/player_hud_3d.gd",
 	"res://scripts/ui/raid_hud_panel.gd",
 	"res://scenes/ui/raid_hud_panel.tscn",
@@ -66,6 +65,8 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_top_menu_map_panel.gd",
 	"res://tools/validate_raid_hud.gd",
 	"res://tools/validate_raid_hud_minimal_goal.gd",
+	"res://scripts/ui/base_stash_inventory_ui.gd",
+	"res://tools/validate_base_stash_storage_ui.gd",
 	"res://docs/tasks/dev_slice_0_2_enemy_first_task_queue.md",
 	"res://docs/design/duckov_gap_minimal_feature_plan.md",
 	"res://tools/validate_player_visible_0_2_slice.gd",
@@ -243,12 +244,12 @@ func _validate_health_d_ui_boundaries() -> void:
 	if ui_manager_text.contains("RaidBriefingPanel") or ui_manager_text.contains("RaidHudPanel"):
 		_errors.append("UIManager should not directly couple to raid briefing or legacy Raid HUD panels.")
 
-	var briefing_text := _read_text("res://scripts/ui/raid_briefing_panel.gd")
-	for required in PackedStringArray(["signal start_raid_requested", "signal cancel_requested", "open_briefing", "confirm_start", "cancel"]):
-		_expect_contains(briefing_text, required, "RaidBriefingPanel should stay signal-driven and expose %s." % required)
-	for forbidden in PackedStringArray(["change_scene", "set_pending_raid_loadout", "InventoryModel", "WeaponController3D", "SaveGameManager", "RaidSession"]):
-		if briefing_text.contains(forbidden):
-			_errors.append("RaidBriefingPanel should stay display-only and not own gameplay/save/loadout logic: %s." % forbidden)
+	var base_controller_text := _read_text("res://scripts/base/base_interaction_controller_3d.gd")
+	for required in PackedStringArray(["_start_raid_from_gate", "prepare_raid_loadout", "change_scene_to_file"]):
+		_expect_contains(base_controller_text, required, "Raid gate should directly start gameplay through %s." % required)
+	for forbidden in PackedStringArray(["open_briefing", "RaidBriefingPanel", "raid_briefing_panel_path"]):
+		if base_controller_text.contains(forbidden):
+			_errors.append("Raid gate should stay free of removed briefing coupling: %s." % forbidden)
 
 	var map_text := _read_text("res://scripts/ui/map_top_menu_panel.gd")
 	for required in PackedStringArray(["RaidSession", "ExtractionZone", "Scavenger", "LootContainer", "get_display_state"]):
@@ -356,7 +357,7 @@ func _validate_health_f_result_location_container_boundaries() -> void:
 			_errors.append("RaidResultPanel should display results and route to Base, not own save/loss/inventory/quest behavior: %s." % forbidden)
 
 	var loss_rules_text := _read_text("res://scripts/raid/raid_loss_rules.gd")
-	for required in PackedStringArray(["build_death_context_from_player", "collect_backpack_items", "collect_safe_pocket_items", "lost_items", "kept_safe_pocket_items"]):
+	for required in PackedStringArray(["build_death_context_from_player", "collect_backpack_items", "collect_equipment_items", "collect_safe_pocket_items", "lost_items", "kept_safe_pocket_items"]):
 		_expect_contains(loss_rules_text, required, "Health Check F requires RaidLossRules death loss authority through %s." % required)
 	for forbidden in PackedStringArray(["RaidResultPanel", "SaveGameManager", "change_scene", "EnemyController3D", "UIManager"]):
 		if loss_rules_text.contains(forbidden):
@@ -428,7 +429,6 @@ func _validate_health_g_enemy_first_0_2_boundaries() -> void:
 		"1920x1080",
 		"text=zh",
 		"boundaries=clean",
-		"RaidBriefingScene",
 		"ContainerInventoryScene",
 		"RaidResultScene",
 		"PlayerHud3D",
@@ -464,7 +464,6 @@ func _validate_health_g_enemy_first_0_2_boundaries() -> void:
 
 	for scene_path in PackedStringArray([
 		"res://scenes/ui/container_inventory_ui.tscn",
-		"res://scenes/ui/raid_briefing_panel.tscn",
 		"res://scenes/ui/raid_result_panel.tscn",
 		"res://scenes/ui/quest_top_menu_panel.tscn",
 		"res://scenes/ui/status_top_menu_panel.tscn",

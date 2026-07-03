@@ -17,6 +17,7 @@ var player: Node = null
 var money: int = 0
 var premium_money: int = 0
 var backpack_model := InventoryModel.new()
+var safe_pocket_model := InventoryModel.new()
 var equipment_model = null
 var backpack_items: Array[Dictionary] = []
 var safe_pocket_items: Array[Dictionary] = []
@@ -68,6 +69,10 @@ func _ready() -> void:
 		backpack_model = player.get_inventory_model()
 	else:
 		backpack_model.setup(_get_backpack_slots())
+	if player != null and player.has_method("get_safe_pocket_model"):
+		safe_pocket_model = player.get_safe_pocket_model()
+	else:
+		safe_pocket_model.setup(_get_safe_pocket_slots())
 	if player != null and player.has_method("get_equipment_model"):
 		equipment_model = player.get_equipment_model()
 
@@ -76,9 +81,11 @@ func _ready() -> void:
 	_context_menu.drop_requested.connect(_on_context_drop_requested)
 	_context_menu.equip_requested.connect(_on_context_equip_requested)
 	backpack_model.changed.connect(_on_backpack_changed)
+	safe_pocket_model.changed.connect(_on_safe_pocket_changed)
 	if equipment_model != null:
 		equipment_model.changed.connect(_on_equipment_changed)
 	_on_backpack_changed()
+	_on_safe_pocket_changed()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -108,6 +115,8 @@ func _gui_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 		var hit_stack_index := _get_backpack_stack_index_at(event.position)
+		var hit_safe_pocket_index := _get_safe_pocket_slot_index_at(event.position)
+		var hit_equipment_slot := _get_equipment_slot_id_at(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			_drop_controller.clear()
 		if _context_menu.handle_mouse_button(event, hit_stack_index, backpack_items, _get_backpack_slots(), _can_equip_stack_index(hit_stack_index)):
@@ -119,6 +128,12 @@ func _gui_input(event: InputEvent) -> void:
 				organize_backpack()
 				accept_event()
 				return
+			if hit_equipment_slot != &"" and _unequip_equipment_slot(hit_equipment_slot):
+				accept_event()
+				return
+			if hit_safe_pocket_index >= 0 and hit_safe_pocket_index < safe_pocket_items.size() and _move_safe_pocket_stack_to_backpack(hit_safe_pocket_index):
+				accept_event()
+				return
 			if hit_stack_index >= 0 and hit_stack_index < backpack_items.size():
 				_context_menu.close_all()
 				_drop_controller.start_drag(hit_stack_index, backpack_items[hit_stack_index], event.position)
@@ -128,7 +143,8 @@ func _gui_input(event: InputEvent) -> void:
 		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _drop_controller.is_dragging():
 			var target_stack_index := _get_backpack_stack_index_at(event.position)
 			var target_equipment_slot := _get_equipment_slot_id_at(event.position)
-			_drop_controller.finish_drag(backpack_model, event.position, _panel_rect(), target_stack_index, player, target_equipment_slot)
+			var target_safe_pocket_slot := _get_safe_pocket_slot_index_at(event.position)
+			_drop_controller.finish_drag(backpack_model, event.position, _panel_rect(), target_stack_index, player, target_equipment_slot, target_safe_pocket_slot)
 			accept_event()
 
 
@@ -192,12 +208,15 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"visible": visible,
 		"is_open": is_open,
 		"backpack_items": backpack_items.duplicate(true),
+		"safe_pocket_items": safe_pocket_items.duplicate(true),
 		"equipment_slots": _get_equipment_slots_state(),
 		"equipment_slot_rects": _get_equipment_slot_rects_state(),
 		"equipment_text": _get_equipment_visible_text(),
 		"panel_rect": _panel_rect(),
 		"backpack_used": backpack_model.get_used_slots(),
 		"backpack_slots": _get_backpack_slots(),
+		"safe_pocket_used": safe_pocket_model.get_used_slots(),
+		"safe_pocket_slots": _get_safe_pocket_slots(),
 	}
 
 
@@ -208,6 +227,11 @@ func _reset_interaction_state() -> void:
 
 func _on_backpack_changed() -> void:
 	backpack_items = backpack_model.get_display_items()
+	queue_redraw()
+
+
+func _on_safe_pocket_changed() -> void:
+	safe_pocket_items = safe_pocket_model.get_display_items()
 	queue_redraw()
 
 
@@ -275,8 +299,10 @@ func _paint_safe_pocket_panel(rect: Rect2) -> void:
 	_painter.panel(rect, Color(0.76, 0.77, 0.70, 0.56), Color(1.0, 1.0, 1.0, 0.14), 1, 18)
 	_paint_header(Rect2(rect.position + _v(12.0, 8.0), Vector2(rect.size.x - 24.0 * _ui_scale, 28.0 * _ui_scale)), _localized_text(&"ui.inventory.safe_pocket", ""))
 	for index in range(_get_safe_pocket_slots()):
-		var pocket_slot := Rect2(rect.position + _v(47.0, 48.0 + float(index) * 86.0), _v(74.0, 74.0))
+		var pocket_slot := _safe_pocket_slot_rect(rect, index)
 		_painter.slot(pocket_slot, Color(0.70, 0.72, 0.66, 0.25), Color(1.0, 1.0, 1.0, 0.28))
+		if index < safe_pocket_items.size():
+			_paint_item_label(pocket_slot, safe_pocket_items[index])
 
 
 func _paint_equipment_panel(rect: Rect2) -> void:
@@ -365,12 +391,50 @@ func _equipment_slot_rect(equipment_rect: Rect2, index: int) -> Rect2:
 	return Rect2(start + Vector2(float(column) * step_x, float(row) * step_y), slot_size_local)
 
 
+func _get_safe_pocket_slot_index_at(mouse_position: Vector2) -> int:
+	var viewport_size := get_viewport_rect().size
+	_update_layout_scale(viewport_size)
+	var safe_rect := _layout.safe_pocket_rect(_panel_rect(), _get_safe_pocket_slots())
+	if not _layout.can_show_safe_pocket(safe_rect, viewport_size):
+		return -1
+	for index in range(_get_safe_pocket_slots()):
+		if _safe_pocket_slot_rect(safe_rect, index).has_point(mouse_position):
+			return index
+	return -1
+
+
+func _safe_pocket_slot_rect(safe_rect: Rect2, index: int) -> Rect2:
+	return Rect2(safe_rect.position + _v(47.0, 48.0 + float(index) * 86.0), _v(74.0, 74.0))
+
+
 func _on_context_drop_requested(stack_index: int, stack: Dictionary, screen_position: Vector2, random_near_player: bool) -> void:
 	_drop_controller.drop_stack_at(backpack_model, stack_index, stack, screen_position, player, random_near_player)
 
 
 func _on_context_equip_requested(stack_index: int, _stack: Dictionary) -> void:
 	equip_backpack_stack(stack_index)
+
+
+func _unequip_equipment_slot(slot_id: StringName) -> bool:
+	if player == null or not player.has_method("unequip_equipment_slot"):
+		return false
+	if not bool(player.call("unequip_equipment_slot", slot_id)):
+		return false
+	_context_menu.close_all()
+	_drop_controller.clear()
+	queue_redraw()
+	return true
+
+
+func _move_safe_pocket_stack_to_backpack(stack_index: int) -> bool:
+	if player == null or not player.has_method("move_safe_pocket_stack_to_inventory"):
+		return false
+	if not bool(player.call("move_safe_pocket_stack_to_inventory", stack_index)):
+		return false
+	_context_menu.close_all()
+	_drop_controller.clear()
+	queue_redraw()
+	return true
 
 
 func _paint_weight_panel(rect: Rect2) -> void:
@@ -458,7 +522,10 @@ func _get_carry_weight_limit() -> float:
 
 
 func _get_current_weight() -> float:
-	return backpack_model.get_total_weight()
+	var current_weight: Variant = player.get("current_carry_weight") if player != null else null
+	if typeof(current_weight) == TYPE_FLOAT or typeof(current_weight) == TYPE_INT:
+		return float(current_weight)
+	return backpack_model.get_total_weight() + safe_pocket_model.get_total_weight()
 
 
 func _can_equip_stack_index(stack_index: int) -> bool:

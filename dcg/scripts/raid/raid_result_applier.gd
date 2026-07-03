@@ -25,12 +25,14 @@ func apply_raid_result(result: Dictionary) -> bool:
 		"reason": "",
 	}
 	if str(result.get("outcome", "")) == RaidResultSchema.OUTCOME_DEAD:
+		var safe_pocket_stored := _store_safe_pocket_items(result.get("kept_safe_pocket_items", []))
 		_clear_player_inventory()
 		last_apply_result = {
 			"attempted": true,
 			"applied": true,
 			"death_loss": true,
-			"reason": "dead_inventory_cleared",
+			"safe_pocket_stored": safe_pocket_stored,
+			"reason": "dead_inventory_cleared_safe_pocket_returned" if safe_pocket_stored else "dead_inventory_cleared",
 		}
 		return true
 	if str(result.get("outcome", "")) != RaidResultSchema.OUTCOME_EXTRACTED:
@@ -99,11 +101,17 @@ func _get_save_manager() -> Node:
 
 func _clear_player_inventory() -> void:
 	var player := get_node_or_null(player_path)
-	if player == null or not player.has_method("get_inventory_model"):
+	if player == null:
 		return
-	var inventory: Variant = player.get_inventory_model()
+	var inventory: Variant = player.get_inventory_model() if player.has_method("get_inventory_model") else null
 	if inventory != null and inventory.has_method("clear"):
 		inventory.clear()
+	var safe_pocket: Variant = player.get_safe_pocket_model() if player.has_method("get_safe_pocket_model") else null
+	if safe_pocket != null and safe_pocket.has_method("clear"):
+		safe_pocket.clear()
+	var equipment: Variant = player.get_equipment_model() if player.has_method("get_equipment_model") else null
+	if equipment != null and equipment.has_method("clear"):
+		equipment.clear()
 
 
 func _to_stash_stack(stack: Dictionary) -> Dictionary:
@@ -111,6 +119,36 @@ func _to_stash_stack(stack: Dictionary) -> Dictionary:
 	if not normalized.has("resource_path"):
 		normalized["resource_path"] = str(normalized.get("item_path", ""))
 	return normalized
+
+
+func _store_safe_pocket_items(items: Variant) -> bool:
+	if typeof(items) != TYPE_ARRAY:
+		return false
+	var safe_items := items as Array
+	if safe_items.is_empty():
+		return true
+	var save_manager := _get_save_manager()
+	if save_manager == null:
+		return false
+	if not save_manager.has_method("get_current_slot_index") or not save_manager.has_method("get_slot_data") or not save_manager.has_method("save_slot_data"):
+		return false
+
+	var slot_index := int(save_manager.get_current_slot_index())
+	var save_data: Dictionary = save_manager.get_slot_data(slot_index)
+	if save_data.is_empty():
+		return false
+
+	var stash := StashModelScript.new()
+	var stash_data: Array = []
+	var existing_stash: Variant = save_data.get("stash", [])
+	if typeof(existing_stash) == TYPE_ARRAY:
+		stash_data = existing_stash as Array
+	stash.load_save_data(stash_data)
+	for stack in safe_items:
+		if typeof(stack) == TYPE_DICTIONARY:
+			stash.add_stack(_to_stash_stack(stack as Dictionary))
+	save_data["stash"] = stash.to_save_data()
+	return bool(save_manager.save_slot_data(slot_index, save_data))
 
 
 func _update_first_salvage_quest(save_data: Dictionary, extracted_items: Variant) -> void:

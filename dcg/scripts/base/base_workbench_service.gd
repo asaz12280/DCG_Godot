@@ -11,7 +11,7 @@ static func get_panel_context(save_manager: Node) -> Dictionary:
 		"body": describe(state),
 		"action_visible": true,
 		"action_enabled": bool(state.get("can_upgrade", false)),
-		"action_text": str(state.get("action_text", "升級工作台")),
+		"action_text": str(state.get("action_text", _text(&"ui.base.workbench.action", "升級工作台"))),
 	}
 
 
@@ -23,7 +23,7 @@ static func get_state(save_manager: Node) -> Dictionary:
 			"can_upgrade": false,
 			"is_purchased": false,
 			"reason": "no_save",
-			"action_text": "升級工作台",
+			"action_text": _text(&"ui.base.workbench.action", "升級工作台"),
 		}
 	var is_purchased := BaseProgressionScript.is_upgrade_purchased(save_data, WorkbenchUpgrade.id)
 	var check: Dictionary = BaseProgressionScript.can_purchase_upgrade(save_data, WorkbenchUpgrade)
@@ -32,7 +32,7 @@ static func get_state(save_manager: Node) -> Dictionary:
 		"can_upgrade": bool(check.get("can_purchase", false)),
 		"is_purchased": is_purchased,
 		"reason": "already_owned" if is_purchased else str(check.get("reason", "unknown")),
-		"action_text": "已升級" if is_purchased else "升級工作台",
+		"action_text": _text(&"ui.base.workbench.upgraded", "已升級") if is_purchased else _text(&"ui.base.workbench.action", "升級工作台"),
 	}
 
 
@@ -53,33 +53,33 @@ static func purchase(save_manager: Node) -> Dictionary:
 
 static func describe(state: Dictionary) -> String:
 	var lines: Array[String] = [
-		"%s" % str(WorkbenchUpgrade.display_name),
-		"效果：下一場行動備用彈藥 +%d。" % int(WorkbenchUpgrade.starter_ammo_bonus),
-		"需求：%s。" % BaseProgressionScript.describe_cost(WorkbenchUpgrade),
+		"%s" % _text(&"base_upgrade.workbench_level_1.name", str(WorkbenchUpgrade.display_name)),
+		_text(&"ui.base.workbench.effect_format", "效果：下一場行動備用彈藥 +%d。") % int(WorkbenchUpgrade.starter_ammo_bonus),
+		_text(&"ui.base.workbench.cost_format", "需求：%s。") % BaseProgressionScript.describe_cost(WorkbenchUpgrade),
 	]
 	if bool(state.get("is_purchased", false)):
-		lines.append("狀態：已升級。進入下一場 Raid 時會直接套用。")
+		lines.append(_text(&"ui.base.workbench.status_upgraded", "狀態：已升級。進入下一場 Raid 時會直接套用。"))
 	elif not bool(state.get("has_save", false)):
-		lines.append("狀態：先建立存檔才能升級。")
+		lines.append(_text(&"ui.base.workbench.status_no_save", "狀態：先建立存檔才能升級。"))
 	elif bool(state.get("can_upgrade", false)):
-		lines.append("狀態：材料足夠，可以升級。")
+		lines.append(_text(&"ui.base.workbench.status_ready", "狀態：材料足夠，可以升級。"))
 	else:
-		lines.append("狀態：%s" % _blocked_reason_text(str(state.get("reason", "unknown"))))
+		lines.append(_text(&"ui.base.workbench.status_format", "狀態：%s") % _blocked_reason_text(str(state.get("reason", "unknown"))))
 	return "\n".join(lines)
 
 
 static func _blocked_reason_text(reason: String) -> String:
 	match reason:
 		"missing_money":
-			return "金錢不足。"
+			return _text(&"ui.base.workbench.blocked_money", "金錢不足。")
 		"missing_items":
-			return "材料不足。"
+			return _text(&"ui.base.workbench.blocked_items", "材料不足。")
 		"already_owned":
-			return "已升級。"
+			return _text(&"ui.base.workbench.blocked_owned", "已升級。")
 		"invalid_upgrade":
-			return "升級資料異常。"
+			return _text(&"ui.base.workbench.blocked_invalid", "升級資料異常。")
 		_:
-			return "暫時無法升級。"
+			return _text(&"ui.base.workbench.blocked_unknown", "暫時無法升級。")
 
 
 static func _get_save_data(save_manager: Node) -> Dictionary:
@@ -93,3 +93,9 @@ static func _current_slot_index(save_manager: Node) -> int:
 	if save_manager != null and save_manager.has_method("get_current_slot_index"):
 		return int(save_manager.call("get_current_slot_index"))
 	return 1
+
+
+static func _text(key: StringName, fallback: String) -> String:
+	var key_text := str(key)
+	var translated := TranslationServer.translate(key_text)
+	return fallback if translated == key_text or translated == "" else translated

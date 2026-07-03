@@ -142,8 +142,8 @@ func _validate_source_boundaries() -> void:
 	)
 	_assert_source_includes(
 		"res://scripts/ai/enemy_loot_drop_3d.gd",
-		["LootPickupScene", "drop_loot", "_on_enemy_died"],
-		"Enemy loot should spawn world pickups through the loot path."
+		["LootContainerScript", "drop_loot", "_spawn_corpse_container", "_on_enemy_died"],
+		"Enemy loot should create a corpse container through the loot path."
 	)
 	_assert_source_includes(
 		"res://scripts/quests/quest_kill_tracker_3d.gd",

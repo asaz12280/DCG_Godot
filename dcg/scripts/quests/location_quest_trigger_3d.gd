@@ -8,7 +8,9 @@ const RadioTowerScoutQuest := preload("res://data/quests/radio_tower_scout.tres"
 
 @export var quest_def: Resource = RadioTowerScoutQuest
 @export var location_id := "radio_tower"
+@export var prompt_key: StringName = &"prompt.record_location"
 @export var prompt_text := "按 E 調查訊號塔"
+@export var completed_key: StringName = &"prompt.location_recorded"
 @export var completed_text := "地點已記錄"
 
 var _player_in_range: Node3D = null
@@ -21,6 +23,11 @@ func _ready() -> void:
 	body_exited.connect(_on_body_exited)
 	_prompt_label = find_child("PromptLabel", true, false) as Label3D
 	_update_prompt()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		_update_prompt()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -90,7 +97,13 @@ func _update_prompt() -> void:
 
 
 func _current_prompt_text() -> String:
-	return completed_text if _has_recorded else prompt_text
+	return _localized_text(completed_key, completed_text) if _has_recorded else _localized_text(prompt_key, prompt_text)
+
+
+func _localized_text(key: StringName, fallback: String) -> String:
+	var key_text := str(key)
+	var translated := tr(key_text)
+	return fallback if translated == key_text or translated == "" else translated
 
 
 func _get_save_manager() -> Node:

@@ -4,6 +4,7 @@ extends Control
 signal action_requested(interaction_id: String)
 
 const UIStyle := preload("res://scripts/ui/ui_style.gd")
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
 
 @onready var panel: PanelContainer = %Panel
 @onready var title_label: Label = %TitleLabel
@@ -34,8 +35,8 @@ func open_interaction(interaction_id: String, display_name: String, context: Dic
 	body_label.text = str(context.get("body", _body_text(interaction_id)))
 	action_button.visible = bool(context.get("action_visible", false))
 	action_button.disabled = not bool(context.get("action_enabled", false))
-	action_button.text = str(context.get("action_text", "執行"))
-	close_button.text = "關閉"
+	action_button.text = str(context.get("action_text", _text(&"ui.common.execute", "執行")))
+	close_button.text = _text(&"ui.common.close", "關閉")
 	visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if action_button.visible and not action_button.disabled:
@@ -80,15 +81,19 @@ func get_display_state() -> Dictionary:
 func _body_text(interaction_id: String) -> String:
 	match interaction_id:
 		"stash":
-			return "倉庫面板已連接。後續會在這裡整理戰利品與裝備。"
+			return _text(&"ui.base.interaction.stash_body", "倉庫面板已連接。後續會在這裡整理戰利品與裝備。")
 		"quests":
-			return "任務板已連接。後續會在這裡查看與回報任務。"
+			return _text(&"ui.base.interaction.quests_body", "任務板已連接。後續會在這裡查看與回報任務。")
 		"workbench":
-			return "工作台已連接。後續會在這裡升級基地功能。"
+			return _text(&"ui.base.interaction.workbench_body", "工作台已連接。後續會在這裡升級基地功能。")
 		"medical":
-			return "醫療站已連接。支付少量金錢即可回復生命。"
+			return _text(&"ui.base.interaction.medical_body", "醫療站已連接。支付少量金錢即可回復生命。")
 		_:
-			return "基地互動點已連接。"
+			return _text(&"ui.base.interaction.default_body", "基地互動點已連接。")
+
+
+func _text(key: StringName, fallback: String) -> String:
+	return UITextScript.text(self, key, fallback)
 
 
 func _on_action_button_pressed() -> void:

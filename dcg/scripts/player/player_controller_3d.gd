@@ -69,6 +69,7 @@ var is_dead := false
 @export_range(0.05, 5.0, 0.05) var reload_duration_seconds := 0.8
 
 var inventory_model := InventoryModel.new()
+var safe_pocket_model := InventoryModel.new()
 var equipment_model := EquipmentModelScript.new()
 
 var _stats: PlayerStats3D
@@ -106,7 +107,9 @@ func _ready() -> void:
 	_weapon_controller = get_node_or_null("WeaponController3D")
 	_apply_base_upgrade_effects()
 	inventory_model.setup(backpack_slots)
+	safe_pocket_model.setup(safe_pocket_slots)
 	inventory_model.changed.connect(_on_inventory_changed)
+	safe_pocket_model.changed.connect(_on_safe_pocket_changed)
 	equipment_model.changed.connect(_on_equipment_changed)
 	if not _load_pending_raid_loadout():
 		_load_starter_inventory()
@@ -179,6 +182,10 @@ func get_inventory_model() -> InventoryModel:
 	return inventory_model
 
 
+func get_safe_pocket_model() -> InventoryModel:
+	return safe_pocket_model
+
+
 func get_equipment_model() -> RefCounted:
 	return equipment_model
 
@@ -197,6 +204,42 @@ func get_compatible_backpack_ammo_count() -> int:
 
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
+
+
+func can_move_inventory_stack_to_safe_pocket(stack_index: int) -> bool:
+	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
+		return false
+	return safe_pocket_model.can_accept_stack(inventory_model.stacks[stack_index])
+
+
+func move_inventory_stack_to_safe_pocket(stack_index: int) -> bool:
+	if not can_move_inventory_stack_to_safe_pocket(stack_index):
+		return false
+	var removed_stack := inventory_model.remove_stack_at(stack_index)
+	if removed_stack.is_empty():
+		return false
+	if not safe_pocket_model.add_stack(removed_stack):
+		inventory_model.add_stack(removed_stack)
+		return false
+	return true
+
+
+func can_move_safe_pocket_stack_to_inventory(stack_index: int) -> bool:
+	if stack_index < 0 or stack_index >= safe_pocket_model.stacks.size():
+		return false
+	return inventory_model.can_accept_stack(safe_pocket_model.stacks[stack_index])
+
+
+func move_safe_pocket_stack_to_inventory(stack_index: int) -> bool:
+	if not can_move_safe_pocket_stack_to_inventory(stack_index):
+		return false
+	var removed_stack := safe_pocket_model.remove_stack_at(stack_index)
+	if removed_stack.is_empty():
+		return false
+	if not inventory_model.add_stack(removed_stack):
+		safe_pocket_model.add_stack(removed_stack)
+		return false
+	return true
 
 
 func can_equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
@@ -225,6 +268,27 @@ func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
 		return false
 	if not equipment_model.equip_stack(target_slot, removed_stack):
 		inventory_model.add_stack(removed_stack)
+		return false
+	return true
+
+
+func can_unequip_equipment_slot(slot_id: StringName) -> bool:
+	if equipment_model == null or not equipment_model.has_slot(slot_id):
+		return false
+	var stack: Dictionary = equipment_model.get_slot(slot_id)
+	if stack.is_empty():
+		return false
+	return inventory_model.can_accept_stack(stack)
+
+
+func unequip_equipment_slot(slot_id: StringName) -> bool:
+	if not can_unequip_equipment_slot(slot_id):
+		return false
+	var removed_stack: Dictionary = equipment_model.unequip(slot_id)
+	if removed_stack.is_empty():
+		return false
+	if not inventory_model.add_stack(removed_stack):
+		equipment_model.equip_stack(slot_id, removed_stack)
 		return false
 	return true
 
@@ -547,11 +611,17 @@ func _apply_base_upgrade_effects() -> void:
 
 
 func _on_inventory_changed() -> void:
-	current_carry_weight = inventory_model.get_total_weight()
+	current_carry_weight = _get_carried_weight()
+	inventory_changed.emit()
+
+
+func _on_safe_pocket_changed() -> void:
+	current_carry_weight = _get_carried_weight()
 	inventory_changed.emit()
 
 
 func _on_equipment_changed() -> void:
+	current_carry_weight = _get_carried_weight()
 	_sync_weapon_from_equipment()
 	equipment_changed.emit()
 
@@ -608,17 +678,42 @@ func _load_item_from_stack(stack: Dictionary) -> ItemDef:
 func _item_display_name(item_def: ItemDef) -> String:
 	if item_def == null:
 		return ""
+	var name_key := str(item_def.name_key)
+	if name_key != "":
+		var translated := _localized_text(StringName(name_key), "")
+		if translated != "":
+			return translated
 	if item_def.display_name != "":
 		return item_def.display_name
 	return str(item_def.id)
 
 
+func _localized_text(key: StringName, fallback: String) -> String:
+	var key_text := str(key)
+	var translated := tr(key_text)
+	return fallback if translated == key_text or translated == "" else translated
+
+
+func _get_carried_weight() -> float:
+	return inventory_model.get_total_weight() + safe_pocket_model.get_total_weight() + _get_equipment_weight()
+
+
+func _get_equipment_weight() -> float:
+	var total := 0.0
+	for stack in equipment_model.get_slots().values():
+		if typeof(stack) != TYPE_DICTIONARY:
+			continue
+		var equipment_stack := stack as Dictionary
+		total += float(equipment_stack.get("weight", 0.0)) * float(equipment_stack.get("quantity", 1))
+	return total
+
+
 func _armor_effect_text(item_def: ItemDef, bonus: float) -> String:
 	if item_def == null:
-		return "未裝備護甲"
+		return _localized_text(&"ui.top.status_armor_missing", "未裝備護甲")
 	if bonus <= 0.0:
-		return "%s：無防護效果" % _item_display_name(item_def)
-	return "%s：每次受擊減少 %.0f 傷害" % [_item_display_name(item_def), bonus]
+		return _localized_text(&"ui.top.status_armor_item_no_bonus_format", "%s：無防護效果") % _item_display_name(item_def)
+	return _localized_text(&"ui.top.status_armor_item_bonus_format", "%s：每次受擊減少 %.0f 傷害") % [_item_display_name(item_def), bonus]
 
 
 func _die(event: DamageEvent) -> void:

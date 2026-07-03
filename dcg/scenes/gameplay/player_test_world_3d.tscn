@@ -211,6 +211,7 @@ transform = Transform3D(0.86, 0, 0, 0, 0.86, 0, 0, 0, 0.86, 2.8, 0, -3.25)
 is_locked = true
 required_key = ExtResource("25_warehouse_key")
 display_name = "上鎖箱"
+display_name_key = &"ui.container.locked_name"
 prompt_text = "按 E 開啟上鎖箱"
 opened_prompt_text = "按 E 查看上鎖箱"
 locked_prompt_text = "需要鑰匙"

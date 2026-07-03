@@ -1,14 +1,16 @@
 class_name EnemyLootDrop3D
 extends Node
 
-const LootPickupScene := preload("res://scenes/items/loot_pickup_wood.tscn")
+const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 
 @export_range(1, 12, 1) var roll_count := 1
 @export_range(0.0, 6.0, 0.1) var drop_radius := 0.85
+@export_range(1, 12, 1) var corpse_container_capacity := 4
 @export var roll_seed := 0
 
 var has_dropped := false
 var spawned_pickups: Array[NodePath] = []
+var spawned_containers: Array[NodePath] = []
 
 var _enemy_body: Node3D = null
 
@@ -30,12 +32,11 @@ func drop_loot() -> Array[Node3D]:
 		return spawned
 
 	var stacks: Array[Dictionary] = table.roll(roll_count, roll_seed)
-	for index in range(stacks.size()):
-		var pickup := _spawn_pickup(stacks[index], index, stacks.size())
-		if pickup == null:
-			continue
-		spawned.append(pickup)
-		spawned_pickups.append(pickup.get_path())
+	var corpse_container := _spawn_corpse_container(stacks)
+	if corpse_container != null:
+		spawned.append(corpse_container)
+		spawned_pickups.append(corpse_container.get_path())
+		spawned_containers.append(corpse_container.get_path())
 	return spawned
 
 
@@ -55,26 +56,46 @@ func _load_loot_table() -> Resource:
 	return load(loot_table_path) as Resource
 
 
-func _spawn_pickup(stack: Dictionary, index: int, total_count: int) -> Node3D:
-	var item_path := str(stack.get("item_path", ""))
-	var quantity := maxi(int(stack.get("quantity", 0)), 0)
-	if item_path == "" or quantity <= 0 or not ResourceLoader.exists(item_path):
+func _spawn_corpse_container(stacks: Array[Dictionary]) -> Node3D:
+	if stacks.is_empty():
 		return null
+	var corpse := LootContainerScript.new() as LootContainer3D
+	if corpse == null:
+		return null
+	corpse.name = "EnemyCorpseLoot"
+	corpse.container_capacity = maxi(corpse_container_capacity, stacks.size())
+	corpse.interact_keycode = KEY_F
+	corpse.display_name_key = &"ui.container.enemy_corpse"
+	corpse.display_name = "拾荒者屍體"
+	corpse.prompt_key = &"prompt.loot_corpse"
+	corpse.prompt_text = "按 F 搜刮屍體"
+	corpse.opened_prompt_key = &"prompt.view_corpse"
+	corpse.opened_prompt_text = "按 F 查看屍體"
 
-	var item_def: Resource = load(item_path) as Resource
-	if item_def == null:
-		return null
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var shape := SphereShape3D.new()
+	shape.radius = 1.35
+	collision.shape = shape
+	collision.position = Vector3(0.0, 0.55, 0.0)
+	corpse.add_child(collision)
 
-	var pickup := LootPickupScene.instantiate() as Node3D
-	if pickup == null:
-		return null
-	pickup.set("item_def", item_def)
-	pickup.set("quantity", quantity)
+	var prompt_label := Label3D.new()
+	prompt_label.name = "PromptLabel"
+	prompt_label.visible = false
+	prompt_label.position = Vector3(0.0, 1.35, 0.0)
+	prompt_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	prompt_label.font_size = 34
+	prompt_label.modulate = Color(1.0, 0.92, 0.58, 1.0)
+	prompt_label.outline_size = 8
+	prompt_label.outline_modulate = Color(0.05, 0.05, 0.04, 1.0)
+	corpse.add_child(prompt_label)
 
 	var spawn_parent := _get_spawn_parent()
-	spawn_parent.add_child(pickup)
-	pickup.global_position = _get_drop_position(index, total_count)
-	return pickup
+	spawn_parent.add_child(corpse)
+	corpse.global_position = _get_drop_position()
+	corpse.load_static_contents(stacks)
+	return corpse
 
 
 func _get_spawn_parent() -> Node:
@@ -83,10 +104,8 @@ func _get_spawn_parent() -> Node:
 	return get_tree().root
 
 
-func _get_drop_position(index: int, total_count: int) -> Vector3:
+func _get_drop_position() -> Vector3:
 	if _enemy_body == null:
 		return Vector3.ZERO
-	var safe_count := maxi(total_count, 1)
-	var angle := TAU * float(index) / float(safe_count)
-	var offset := Vector3(cos(angle), 0.0, sin(angle)) * drop_radius
+	var offset := Vector3.FORWARD * drop_radius
 	return _enemy_body.global_position + offset + Vector3(0.0, 0.08, 0.0)

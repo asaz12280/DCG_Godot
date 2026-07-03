@@ -10,18 +10,25 @@ const ContainerInventoryModelScript := preload("res://scripts/inventory/containe
 @export var loot_table: Resource
 @export_range(1, 12, 1) var roll_count := 1
 @export_range(1, 24, 1) var container_capacity := 4
+@export var interact_keycode := KEY_E
 @export var one_shot := true
 @export var is_locked := false
 @export var required_key: ItemDef
+@export var display_name_key: StringName = &"ui.container.default_name"
 @export var display_name := "愛心箱"
 @export var prompt_key: StringName = &"prompt.open_container"
 @export var prompt_text := "按 E 開啟箱子"
+@export var opened_prompt_key: StringName = &"prompt.view_container"
 @export var opened_prompt_text := "按 E 查看箱子"
+@export var locked_prompt_key: StringName = &"prompt.locked_container"
 @export var locked_prompt_text := "需要鑰匙"
+@export var unlocked_prompt_key: StringName = &"prompt.open_locked_container"
 @export var unlocked_prompt_text := "按 E 開啟上鎖箱"
+@export var missing_key_feedback_key: StringName = &"prompt.missing_warehouse_key"
 @export var missing_key_feedback := "需要倉庫鑰匙"
 
 var has_opened := false
+var has_contents := false
 var container_inventory: RefCounted = ContainerInventoryModelScript.new()
 var _player_in_range: Node3D
 var _prompt_label: Label3D
@@ -29,6 +36,7 @@ var _last_blocked_message := ""
 
 
 func _ready() -> void:
+	add_to_group("loot_container")
 	container_inventory.setup(container_capacity)
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -39,7 +47,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _player_in_range == null:
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == interact_keycode:
 		if try_open(_player_in_range):
 			get_viewport().set_input_as_handled()
 
@@ -55,6 +63,7 @@ func try_open(player: Node) -> bool:
 	if not _ensure_container_contents():
 		return false
 	_last_blocked_message = ""
+	has_opened = true
 	_update_prompt()
 	var ui_manager := get_node_or_null("/root/UIManager") if is_inside_tree() else null
 	if ui_manager != null and ui_manager.has_method("open_container_inventory"):
@@ -85,11 +94,24 @@ func get_container_inventory_model() -> RefCounted:
 
 
 func get_container_display_name() -> String:
-	return display_name
+	return _localized_text(display_name_key, display_name)
+
+
+func load_static_contents(stacks: Array[Dictionary]) -> bool:
+	container_inventory.setup(maxi(container_capacity, stacks.size()))
+	container_inventory.clear()
+	var stored_any := false
+	for stack in stacks:
+		if container_inventory.add_stack(stack):
+			stored_any = true
+	has_contents = stored_any
+	has_opened = false
+	_update_prompt()
+	return stored_any
 
 
 func _ensure_container_contents() -> bool:
-	if has_opened:
+	if has_contents:
 		return true
 	if loot_table == null or not loot_table.has_method("roll"):
 		return false
@@ -107,7 +129,7 @@ func _ensure_container_contents() -> bool:
 	if not stored_any:
 		return false
 
-	has_opened = true
+	has_contents = true
 	opened.emit(rolled_stacks)
 	return true
 
@@ -133,9 +155,9 @@ func _update_prompt() -> void:
 		if _player_in_range != null and not _can_open_locked_container(_player_in_range):
 			_prompt_label.text = _lock_message()
 		else:
-			_prompt_label.text = unlocked_prompt_text
+			_prompt_label.text = _localized_text(unlocked_prompt_key, unlocked_prompt_text)
 		return
-	_prompt_label.text = opened_prompt_text if has_opened else prompt
+	_prompt_label.text = _localized_text(opened_prompt_key, opened_prompt_text) if has_opened else prompt
 
 
 func _can_open_locked_container(player: Node) -> bool:
@@ -171,14 +193,22 @@ func _stack_matches_key(stack: Dictionary, key_item: ItemDef) -> bool:
 
 func _lock_message() -> String:
 	if required_key == null:
-		return locked_prompt_text
+		return _localized_text(locked_prompt_key, locked_prompt_text)
 	var key_name := _item_display_name(required_key)
-	return missing_key_feedback if key_name == "" else "需要%s" % key_name
+	if key_name == "":
+		return _localized_text(missing_key_feedback_key, missing_key_feedback)
+	var format := _localized_text(&"prompt.missing_key_format", "需要%s")
+	return format % key_name
 
 
 func _item_display_name(item_def: ItemDef) -> String:
 	if item_def == null:
 		return ""
+	var name_key := str(item_def.name_key)
+	if name_key != "":
+		var translated := tr(name_key)
+		if translated != name_key and translated != "":
+			return translated
 	if item_def.display_name != "":
 		return item_def.display_name
 	return str(item_def.id)

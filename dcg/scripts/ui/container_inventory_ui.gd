@@ -6,6 +6,7 @@ signal slot_pressed(index: int, stack: Dictionary)
 
 const UIStyle := preload("res://scripts/ui/ui_style.gd")
 const UILayout := preload("res://scripts/ui/ui_layout.gd")
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const InventoryItemResolverScript := preload("res://scripts/ui/inventory_item_resolver.gd")
 
 @onready var main_panel: PanelContainer = %MainPanel
@@ -44,6 +45,7 @@ func _ready() -> void:
 	slot_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close_panel)
 	resized.connect(_on_resized)
+	_apply_localized_static_text()
 	_on_resized()
 
 
@@ -57,8 +59,8 @@ func open_container(model: RefCounted, display_name: String = "物資箱") -> vo
 	if container_model != null and container_model.changed.is_connected(refresh):
 		container_model.changed.disconnect(refresh)
 	container_model = model
-	container_display_name = display_name if display_name != "" else "物資箱"
-	status_message = "點擊物品移入背包。"
+	container_display_name = display_name if display_name != "" else _text(&"ui.container.default_name", "物資箱")
+	status_message = _text(&"ui.container.status_take", "點擊物品移入背包。")
 	if container_model != null and not container_model.changed.is_connected(refresh):
 		container_model.changed.connect(refresh)
 	visible = true
@@ -75,6 +77,9 @@ func close_panel() -> void:
 
 
 func refresh() -> void:
+	if title_label == null or capacity_label == null or empty_label == null or status_label == null or slot_grid == null:
+		return
+	_apply_localized_static_text()
 	title_label.text = container_display_name
 	_clear_grid()
 	if container_model == null:
@@ -145,7 +150,7 @@ func _make_slot_button(index: int, stack: Dictionary) -> Button:
 
 func _slot_text(index: int, stack: Dictionary) -> String:
 	if stack.is_empty():
-		return "%02d\n空格" % [index + 1]
+		return "%02d\n%s" % [index + 1, _text(&"ui.container.empty_slot", "空格")]
 	var item_def := _item_resolver.item_def_from_stack(stack)
 	var name := str(stack.get("name", "物品"))
 	if item_def != null:
@@ -158,14 +163,14 @@ func _slot_text(index: int, stack: Dictionary) -> String:
 
 func _slot_tooltip(stack: Dictionary) -> String:
 	if stack.is_empty():
-		return "空格"
+		return _text(&"ui.container.empty_slot", "空格")
 	var item_def := _item_resolver.item_def_from_stack(stack)
 	if item_def == null:
-		return "未知物品"
-	return "%s\n重量 %.2f kg\n價值 %d" % [
+		return _text(&"item.unknown.name", "未知物品")
+	return "%s\n%s\n%s" % [
 		tr(str(item_def.description_key)),
-		item_def.weight,
-		item_def.value,
+		_text(&"ui.item.weight_format", "重量 %.2f kg") % item_def.weight,
+		_text(&"ui.item.value_format", "價值 %d") % item_def.value,
 	]
 
 
@@ -173,3 +178,21 @@ func _clear_grid() -> void:
 	for child in slot_grid.get_children():
 		slot_grid.remove_child(child)
 		child.queue_free()
+
+
+func _on_localization_changed() -> void:
+	_apply_localized_static_text()
+	refresh()
+
+
+func _apply_localized_static_text() -> void:
+	if help_label != null:
+		help_label.text = _text(&"ui.container.help", "點擊物品移入背包。")
+	if empty_label != null:
+		empty_label.text = _text(&"ui.container.empty", "箱子是空的。")
+	if close_button != null:
+		close_button.text = _text(&"ui.common.close", "關閉")
+
+
+func _text(key: StringName, fallback: String) -> String:
+	return UITextScript.text(self, key, fallback)

@@ -2,6 +2,7 @@ extends SceneTree
 
 const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
 const EnemyLootDropScript := preload("res://scripts/ai/enemy_loot_drop_3d.gd")
+const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 
 var _errors: Array[String] = []
@@ -21,10 +22,10 @@ class FakePlayer:
 
 
 func _initialize() -> void:
-	await _validate_scavenger_drops_pickup_once()
+	await _validate_scavenger_creates_lootable_body_once()
 	_validate_ui_independence()
 	if _errors.is_empty():
-		print("[enemy_loot_drop] OK death=spawns_pickup pickup=adds_inventory repeat=blocked ui_coupling=clean")
+		print("[enemy_loot_drop] OK death=corpse_container key=F grid=container repeat=blocked ui_coupling=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -32,7 +33,7 @@ func _initialize() -> void:
 		quit(1)
 
 
-func _validate_scavenger_drops_pickup_once() -> void:
+func _validate_scavenger_creates_lootable_body_once() -> void:
 	var map_root := Node3D.new()
 	root.add_child(map_root)
 	var enemy := ScavengerScene.instantiate()
@@ -53,57 +54,53 @@ func _validate_scavenger_drops_pickup_once() -> void:
 	enemy.apply_damage(lethal)
 	await process_frame
 
-	var pickups := _find_pickups(map_root)
-	if pickups.is_empty():
-		_errors.append("Killing Scavenger should spawn at least one loot pickup.")
+	var containers := _find_loot_containers(map_root)
+	if containers.is_empty():
+		_errors.append("Killing Scavenger should create a lootable corpse container.")
 		_free_node(map_root)
 		return
 
-	var pickup := pickups[0]
-	if pickup.get("item_def") == null:
-		_errors.append("Spawned enemy loot pickup should bind an item_def.")
-	if int(pickup.get("quantity")) <= 0:
-		_errors.append("Spawned enemy loot pickup should have positive quantity.")
-	if pickup.global_position.distance_to(enemy.global_position) > 2.0:
-		_errors.append("Spawned enemy loot pickup should stay close to the enemy death position.")
-	var pickup_mesh := pickup.get_node_or_null("MeshInstance3D") as MeshInstance3D
-	if pickup_mesh == null or not pickup_mesh.visible:
-		_errors.append("Spawned enemy loot pickup should have a visible 3D mesh.")
-	var prompt_label := pickup.get_node_or_null("PromptLabel") as Label3D
+	var corpse := containers[0]
+	if int(corpse.get("interact_keycode")) != KEY_F:
+		_errors.append("Enemy corpse loot should use F for looting.")
+	if corpse.global_position.distance_to(enemy.global_position) > 2.0:
+		_errors.append("Enemy corpse loot container should stay close to the enemy death position.")
+	var prompt_label := corpse.get_node_or_null("PromptLabel") as Label3D
 	if prompt_label == null:
-		_errors.append("Spawned enemy loot pickup should include a 3D prompt label.")
+		_errors.append("Enemy corpse loot should include a 3D prompt label.")
+	var model: RefCounted = corpse.call("get_container_inventory_model")
+	if model == null or int(model.call("get_capacity")) < 1:
+		_errors.append("Enemy corpse loot should expose a container inventory model.")
+	elif int(model.call("get_used_slots")) <= 0:
+		_errors.append("Enemy corpse loot container should own dropped item slots.")
 
-	var pickup_count_after_death := pickups.size()
+	var container_count_after_death := containers.size()
 	dropper.call("drop_loot")
 	await process_frame
-	if _find_pickups(map_root).size() != pickup_count_after_death:
-		_errors.append("EnemyLootDrop3D should not spawn repeat drops for the same enemy.")
+	if _find_loot_containers(map_root).size() != container_count_after_death:
+		_errors.append("EnemyLootDrop3D should not create repeat corpse containers for the same enemy.")
 
 	var player := FakePlayer.new()
 	map_root.add_child(player)
-	pickup.call("_on_body_entered", player)
+	corpse.call("_on_body_entered", player)
 	if prompt_label != null:
 		if not prompt_label.visible:
-			_errors.append("Enemy loot pickup prompt should become visible when the player is in range.")
+			_errors.append("Enemy corpse loot prompt should become visible when the player is in range.")
 		if prompt_label.text.strip_edges() == "":
-			_errors.append("Enemy loot pickup prompt should show readable pickup text and quantity.")
-	if not bool(pickup.call("_try_pickup")):
-		_errors.append("Spawned enemy loot pickup should be collectible by a player.")
-	if player.inventory_model.get_used_slots() <= 0:
-		_errors.append("Collecting spawned enemy loot should add an inventory stack.")
+			_errors.append("Enemy corpse loot prompt should show readable loot text.")
+	if not bool(corpse.call("try_open", player)):
+		_errors.append("Enemy corpse loot should open through the container interaction path.")
 
 	_free_node(map_root)
 
 
-func _find_pickups(parent: Node) -> Array[Node3D]:
-	var pickups: Array[Node3D] = []
-	for child in parent.get_children():
+func _find_loot_containers(parent: Node) -> Array[Node3D]:
+	var containers: Array[Node3D] = []
+	for child in parent.find_children("*", "Area3D", true, false):
 		var node_3d := child as Node3D
-		if node_3d == null:
-			continue
-		if child.has_method("_try_pickup"):
-			pickups.append(node_3d)
-	return pickups
+		if node_3d != null and child.get_script() == LootContainerScript:
+			containers.append(node_3d)
+	return containers
 
 
 func _validate_ui_independence() -> void:

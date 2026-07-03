@@ -3,10 +3,12 @@ extends RefCounted
 
 
 static func build_death_context_from_player(player: Node) -> Dictionary:
+	var lost_items := collect_backpack_items(player)
+	lost_items.append_array(collect_equipment_items(player))
 	return {
-		"lost_items": collect_backpack_items(player),
+		"lost_items": lost_items,
 		"kept_safe_pocket_items": collect_safe_pocket_items(player),
-		"loss_rule": "backpack_lost_safe_pocket_kept",
+		"loss_rule": "backpack_equipment_lost_safe_pocket_returned",
 	}
 
 
@@ -38,6 +40,20 @@ static func collect_safe_pocket_items(player: Node) -> Array[Dictionary]:
 		if safe_pocket != null and safe_pocket.has_method("get_display_items"):
 			return _normalize_stacks(safe_pocket.get_display_items())
 	return []
+
+
+static func collect_equipment_items(player: Node) -> Array[Dictionary]:
+	if player == null or not player.has_method("get_equipment_model"):
+		return []
+	var equipment: Variant = player.get_equipment_model()
+	if equipment == null or not equipment.has_method("get_slots"):
+		return []
+	var stacks: Array[Dictionary] = []
+	var slots: Dictionary = equipment.call("get_slots")
+	for stack in slots.values():
+		if typeof(stack) == TYPE_DICTIONARY:
+			stacks.append((stack as Dictionary).duplicate(true))
+	return _normalize_stacks(stacks)
 
 
 static func _normalize_stacks(stacks: Variant) -> Array[Dictionary]:

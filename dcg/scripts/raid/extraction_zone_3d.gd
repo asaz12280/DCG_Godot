@@ -84,7 +84,7 @@ func _complete_extraction() -> void:
 	var context := {
 		"source": "extraction_zone",
 		"zone_path": str(get_path()) if is_inside_tree() else name,
-		"extracted_items": _collect_player_inventory(_tracked_player),
+		"extracted_items": _collect_player_carried_items(_tracked_player),
 	}
 	if not bool(session.call("register_extraction", context)):
 		return
@@ -109,14 +109,40 @@ func _is_player_body(body: Node3D) -> bool:
 	return body.name == "Player3D" or body.is_in_group(player_group) or body.has_method("get_inventory_model")
 
 
+func _collect_player_carried_items(player: Node) -> Array[Dictionary]:
+	var items: Array[Dictionary] = []
+	items.append_array(_collect_inventory_model(player.call("get_inventory_model") if player != null and player.has_method("get_inventory_model") else null))
+	items.append_array(_collect_inventory_model(player.call("get_safe_pocket_model") if player != null and player.has_method("get_safe_pocket_model") else null))
+	items.append_array(_collect_equipment_model(player.call("get_equipment_model") if player != null and player.has_method("get_equipment_model") else null))
+	return items
+
+
 func _collect_player_inventory(player: Node) -> Array[Dictionary]:
-	if player == null or not player.has_method("get_inventory_model"):
-		return []
-	var inventory: Variant = player.get_inventory_model()
+	return _collect_player_carried_items(player)
+
+
+func _collect_inventory_model(inventory: Variant) -> Array[Dictionary]:
 	if inventory == null or not inventory.has_method("get_display_items"):
 		return []
+	return _normalize_stack_list(inventory.get_display_items())
+
+
+func _collect_equipment_model(equipment: Variant) -> Array[Dictionary]:
+	if equipment == null or not equipment.has_method("get_slots"):
+		return []
+	var stacks: Array[Dictionary] = []
+	var slots: Dictionary = equipment.call("get_slots")
+	for stack in slots.values():
+		if typeof(stack) == TYPE_DICTIONARY:
+			stacks.append((stack as Dictionary).duplicate(true))
+	return _normalize_stack_list(stacks)
+
+
+func _normalize_stack_list(stacks: Variant) -> Array[Dictionary]:
+	if typeof(stacks) != TYPE_ARRAY:
+		return []
 	var items: Array[Dictionary] = []
-	for stack in inventory.get_display_items():
+	for stack in stacks as Array:
 		if typeof(stack) != TYPE_DICTIONARY:
 			continue
 		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
@@ -134,8 +160,16 @@ func _update_prompt() -> void:
 	if _prompt_label == null:
 		return
 	if _completed:
-		_prompt_label.text = "已撤離"
+		_prompt_label.text = _localized_text(&"prompt.extracted", "已撤離")
 	elif _tracked_player != null:
-		_prompt_label.text = "撤離中 %.1f 秒" % maxf(required_time - _elapsed, 0.0)
+		_prompt_label.text = _localized_text(&"prompt.extracting_format", "撤離中 %.1f 秒") % maxf(required_time - _elapsed, 0.0)
 	else:
-		_prompt_label.text = "撤離點"
+		_prompt_label.text = _localized_text(&"prompt.extraction_point", "撤離點")
+
+
+func _localized_text(key: StringName, fallback: String) -> String:
+	var key_text := str(key)
+	if key_text == "":
+		return fallback
+	var translated := tr(key_text)
+	return fallback if translated == key_text or translated == "" else translated

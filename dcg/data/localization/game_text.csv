@@ -26,6 +26,11 @@ ui.top.status_slot_headset,耳機,Headset,Headset,耳机
 ui.top.status_slot_backpack,背包,Backpack,Backpack,背包
 ui.top.status_slot_charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
 ui.top.status_slot_charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
+ui.top.status_armor_no_bonus,防護效果：尚未提供減傷,Armor effect: no damage reduction yet,Armor effect: no damage reduction yet,防护效果：尚未提供减伤
+ui.top.status_armor_bonus_format,防護效果：每次受擊 -%.0f 傷害,Armor effect: -%.0f damage per hit,Armor effect: -%.0f damage per hit,防护效果：每次受击 -%.0f 伤害
+ui.top.status_armor_missing,未裝備護甲,No armor equipped,No armor equipped,未装备护甲
+ui.top.status_armor_item_no_bonus_format,%s：無防護效果,%s: no armor effect,%s: no armor effect,%s：无防护效果
+ui.top.status_armor_item_bonus_format,%s：每次受擊減少 %.0f 傷害,%s: reduces %.0f damage per hit,%s: reduces %.0f damage per hit,%s：每次受击减少 %.0f 伤害
 ui.top.map_panel_title,區域地圖,Area Map,Area Map,区域地图
 ui.top.map_panel_hint,早期導覽：確認目前位置、撤離方向與行動狀態。,Early guide for area extraction and raid state,Early guide for area extraction and raid state,早期导览：确认目前位置、撤离方向与行动状态。
 ui.top.map_area,目前區域,Current area,Current area,目前区域
@@ -53,7 +58,7 @@ ui.top.map_dir_sw,西南,Southwest,Southwest,西南
 ui.top.map_dir_w,西,West,West,西
 ui.top.map_dir_nw,西北,Northwest,Northwest,西北
 ui.inventory.equipment,裝備,Equipment,Equipment,装备
-ui.inventory.safe_pocket,保險格,Safe Pocket,Safe Pocket,保险格
+ui.inventory.safe_pocket,安全口袋,Safe Pocket,Safe Pocket,安全口袋
 ui.inventory.backpack_format,背包 (%d/%d),Backpack (%d/%d),Backpack (%d/%d),背包 (%d/%d)
 ui.inventory.sort,整理,Sort,Sort,整理
 ui.inventory.equip,裝備,Equip,Equip,装备
@@ -62,6 +67,16 @@ ui.inventory.drop,丟棄,Drop,Drop,丢弃
 ui.inventory.split_amount,拆分數量,Split Amount,Split Amount,拆分数量
 ui.inventory.split_confirm,確認拆分,Confirm Split,Confirm Split,确认拆分
 ui.inventory.load,裝備,Load,Load,装备
+ui.stash.loadout,裝備與背包,Loadout,Loadout,装备与背包
+ui.stash.title_format,倉庫 (%d/%d),Warehouse (%d/%d),Warehouse (%d/%d),仓库 (%d/%d)
+ui.stash.store_hint,點擊左側物品存入倉庫；點擊右側物品取回背包。,Click left-side items to store them; click warehouse items to withdraw.,Click left-side items to store them; click warehouse items to withdraw.,点击左侧物品存入仓库；点击右侧物品取回背包。
+ui.stash.sort,整理,Sort,Sort,整理
+ui.stash.ready,準備存取物品。,Ready to store or withdraw items.,Ready to store or withdraw items.,准备存取物品。
+ui.stash.saved,倉庫已保存。,Warehouse saved.,Warehouse saved.,仓库已保存。
+ui.stash.stash_full,倉庫空間不足。,Warehouse has no room.,Warehouse has no room.,仓库空间不足。
+ui.stash.backpack_full,背包空間不足。,Backpack has no room.,Backpack has no room.,背包空间不足。
+ui.stash.save_failed,無法保存倉庫。,Could not save warehouse.,Could not save warehouse.,无法保存仓库。
+ui.stash.withdraw_failed,無法取回物品。,Could not withdraw item.,Could not withdraw item.,无法取回物品。
 ui.equipment.primary,主武器,Primary,Primary,主武器
 ui.equipment.sidearm,副武器,Sidearm,Sidearm,副武器
 ui.equipment.melee,近戰,Melee,Melee,近战
@@ -73,6 +88,34 @@ ui.equipment.backpack,背包,Backpack,Backpack,背包
 ui.equipment.charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
 ui.equipment.charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
 prompt.pickup,按 E 拾取,Press E,Press E,按 E 拾取
+prompt.base_interact_format,按 E 互動：%s,Press E: %s,Press E: %s,按 E 互动：%s
+prompt.start_raid_format,按 E 開始出擊：%s,Press E to raid: %s,Press E to raid: %s,按 E 开始出击：%s
+prompt.open_container,按 E 開啟箱子,Press E to open container,Press E to open container,按 E 开启箱子
+prompt.view_container,按 E 查看箱子,Press E to inspect container,Press E to inspect container,按 E 查看箱子
+prompt.locked_container,需要鑰匙,Key required,Key required,需要钥匙
+prompt.open_locked_container,按 E 開啟上鎖箱,Press E to open locked container,Press E to open locked container,按 E 开启上锁箱
+prompt.missing_warehouse_key,需要倉庫鑰匙,Warehouse key required,Warehouse key required,需要仓库钥匙
+prompt.missing_key_format,需要%s,%s required,%s required,需要%s
+prompt.loot_corpse,按 F 搜刮屍體,Press F to loot body,Press F to loot body,按 F 搜刮尸体
+prompt.view_corpse,按 F 查看屍體,Press F to inspect body,Press F to inspect body,按 F 查看尸体
+prompt.record_location,按 E 調查訊號塔,Press E to inspect signal tower,Press E to inspect signal tower,按 E 调查讯号塔
+prompt.location_recorded,地點已記錄,Location recorded,Location recorded,地点已记录
+prompt.extraction_point,撤離點,Extraction point,Extraction point,撤离点
+prompt.extracting_format,撤離中 %.1f 秒,Extracting %.1f sec,Extracting %.1f sec,撤离中 %.1f 秒
+prompt.extracted,已撤離,Extracted,Extracted,已撤离
+ui.container.default_name,物資箱,Supply Crate,Supply Crate,物资箱
+ui.container.locked_name,上鎖箱,Locked Cache,Locked Cache,上锁箱
+ui.container.enemy_corpse,拾荒者屍體,Scavenger Body,Scavenger Body,拾荒者尸体
+ui.container.help,點擊物品移入背包。,Click an item to move it to backpack,Click an item to move it to backpack,点击物品移入背包。
+ui.container.status_take,點擊物品移入背包。,Click an item to move it to backpack,Click an item to move it to backpack,点击物品移入背包。
+ui.container.empty,箱子是空的。,Container is empty,Container is empty,箱子是空的。
+ui.container.empty_slot,空格,Empty,Empty,空格
+ui.container.slot_empty,這個格子是空的。,This slot is empty,This slot is empty,这个格子是空的。
+ui.container.transfer_unavailable,目前無法轉移物品。,Cannot transfer item now,Cannot transfer item now,目前无法转移物品。
+ui.container.backpack_full,背包已滿，無法放入。,Backpack is full,Backpack is full,背包已满，无法放入。
+ui.container.moved_to_backpack,已移入背包。,Moved to backpack,Moved to backpack,已移入背包。
+ui.item.weight_format,重量 %.2f kg,Weight %.2f kg,Weight %.2f kg,重量 %.2f kg
+ui.item.value_format,價值 %d,Value %d,Value %d,价值 %d
 item.unknown.name,未知物品,Unknown Item,Unknown Item,未知物品
 item.wood.name,木頭,Wood,Wood,木头
 item.wood.desc,基礎製作材料。可用於建造與修理。,Basic crafting material for building and repair,Basic crafting material,基础制作材料。可用于建造与修理。
@@ -148,6 +191,8 @@ ui.main.load,讀取存檔,Load Save,Load Save,读取存档
 ui.main.settings,設定,Settings,Settings,设置
 ui.main.quit,退出遊戲,Quit Game,Quit Game,退出游戏
 ui.main.back,返回,Back,Back,返回
+ui.common.close,關閉,Close,Close,关闭
+ui.common.execute,執行,Execute,Execute,执行
 ui.main.load_empty,尚未完成讀取存檔流程。,Save loading is not implemented yet,Save loading is not implemented yet,尚未完成读取存档流程。
 ui.settings.fullscreen,全螢幕,Fullscreen,Fullscreen,全屏幕
 ui.settings.language,語言,Language,Language,语言
@@ -218,6 +263,47 @@ ui.base.workbench_ready,可升級,Ready to upgrade,Ready to upgrade,可升级
 ui.base.workbench_need_money,金錢不足,Need more money,Need more money,金钱不足
 ui.base.workbench_need_items,材料不足,Need more materials,Need more materials,材料不足
 ui.base.workbench_unavailable,無法升級,Upgrade unavailable,Upgrade unavailable,无法升级
+ui.base.station.default,基地設施,Base station,Base station,基地设施
+ui.base.station.stash,倉庫,Stash,Stash,仓库
+ui.base.station.stash_hint,整理戰利品,Manage loot,Manage loot,整理战利品
+ui.base.station.quests,任務板,Quest Board,Quest Board,任务板
+ui.base.station.quests_hint,查看回報,Review and turn in,Review and turn in,查看回报
+ui.base.station.workbench,工作台,Workbench,Workbench,工作台
+ui.base.station.workbench_hint,升級基地,Upgrade base,Upgrade base,升级基地
+ui.base.station.raid_gate,出擊門,Raid Gate,Raid Gate,出击门
+ui.base.station.raid_gate_hint,開始行動,Start raid,Start raid,开始行动
+ui.base.station.medical,醫療站,Medical Station,Medical Station,医疗站
+ui.base.station.medical_hint,回復生命,Restore health,Restore health,回复生命
+ui.base.interaction.stash_body,倉庫面板已連接。後續會在這裡整理戰利品與裝備。,Stash panel is connected. Loot and equipment are managed here,Stash panel is connected. Loot and equipment are managed here,仓库面板已连接。后续会在这里整理战利品与装备。
+ui.base.interaction.quests_body,任務板已連接。後續會在這裡查看與回報任務。,Quest board is connected. Quests are reviewed and turned in here,Quest board is connected. Quests are reviewed and turned in here,任务板已连接。后续会在这里查看与回报任务。
+ui.base.interaction.workbench_body,工作台已連接。後續會在這裡升級基地功能。,Workbench is connected. Base upgrades are handled here,Workbench is connected. Base upgrades are handled here,工作台已连接。后续会在这里升级基地功能。
+ui.base.interaction.medical_body,醫療站已連接。支付少量金錢即可回復生命。,Medical station is connected. Pay a small fee to restore health,Medical station is connected. Pay a small fee to restore health,医疗站已连接。支付少量金钱即可回复生命。
+ui.base.interaction.default_body,基地互動點已連接。,Base interaction point is connected,Base interaction point is connected,基地互动点已连接。
+ui.base.medical.full_health,生命已滿，不需要治療。,Health is full. No treatment needed,Health is full. No treatment needed,生命已满，不需要治疗。
+ui.base.medical.no_save,找不到目前存檔，無法扣款治療。,No active save found. Treatment cannot be charged,No active save found. Treatment cannot be charged,找不到目前存档，无法扣款治疗。
+ui.base.medical.need_money,金錢不足，治療需要 $%d。,Not enough money. Treatment costs $%d,Not enough money. Treatment costs $%d,金钱不足，治疗需要 $%d。
+ui.base.medical.can_heal,可支付 $%d 將生命回復至滿。,Pay $%d to restore health,Pay $%d to restore health,可支付 $%d 将生命回复至满。
+ui.base.medical.action,治療 $%d,Treat $%d,Treat $%d,治疗 $%d
+ui.base.medical.body_format,醫療站已連接。生命 %d / %d，金錢 $%d。%s,Medical station connected. Health %d / %d money $%d. %s,Medical station connected. Health %d / %d money $%d. %s,医疗站已连接。生命 %d / %d，金钱 $%d。%s
+ui.base.medical.cannot_heal,無法治療。,Cannot treat,Cannot treat,无法治疗。
+ui.base.medical.save_failed,治療完成，但存檔扣款失敗。,Treatment completed but save payment failed,Treatment completed but save payment failed,治疗完成，但存档扣款失败。
+ui.base.medical.healed,治療完成，生命已回滿。,Treatment complete. Health restored,Treatment complete. Health restored,治疗完成，生命已回满。
+ui.base.workbench.action,升級工作台,Upgrade Workbench,Upgrade Workbench,升级工作台
+ui.base.workbench.upgraded,已升級,Upgraded,Upgraded,已升级
+ui.base.workbench.effect_format,效果：下一場行動備用彈藥 +%d。,Effect: next raid starts with +%d reserve ammo,Effect: next raid starts with +%d reserve ammo,效果：下一场行动备用弹药 +%d。
+ui.base.workbench.cost_format,需求：%s。,Cost: %s,Cost: %s,需求：%s。
+ui.base.workbench.status_upgraded,狀態：已升級。進入下一場 Raid 時會直接套用。,Status: upgraded. It applies on the next raid,Status: upgraded. It applies on the next raid,状态：已升级。进入下一场 Raid 时会直接套用。
+ui.base.workbench.status_no_save,狀態：先建立存檔才能升級。,Status: create a save before upgrading,Status: create a save before upgrading,状态：先建立存档才能升级。
+ui.base.workbench.status_ready,狀態：材料足夠，可以升級。,Status: materials ready. Upgrade available,Status: materials ready. Upgrade available,状态：材料足够，可以升级。
+ui.base.workbench.status_format,狀態：%s,Status: %s,Status: %s,状态：%s
+ui.base.workbench.blocked_money,金錢不足。,Need more money,Need more money,金钱不足。
+ui.base.workbench.blocked_items,材料不足。,Need more materials,Need more materials,材料不足。
+ui.base.workbench.blocked_owned,已升級。,Already upgraded,Already upgraded,已升级。
+ui.base.workbench.blocked_invalid,升級資料異常。,Upgrade data is invalid,Upgrade data is invalid,升级资料异常。
+ui.base.workbench.blocked_unknown,暫時無法升級。,Upgrade unavailable,Upgrade unavailable,暂时无法升级。
+ui.base.workbench_upgrade_done,升級完成。,Upgrade complete,Upgrade complete,升级完成。
+ui.base.workbench_upgrade_failed_short,升級失敗。,Upgrade failed,Upgrade failed,升级失败。
+base_upgrade.workbench_level_1.name,工作台 Lv.1,Workbench Lv.1,Workbench Lv.1,工作台 Lv.1
 ui.base.upgrade_missing_money,升級所需金錢不足。,Not enough money for upgrade,Not enough money for upgrade,升级所需金钱不足。
 ui.base.upgrade_missing_items,升級所需材料不足。,Not enough materials for upgrade,Not enough materials for upgrade,升级所需材料不足。
 ui.base.upgrade_already_owned,工作台已經升級。,Workbench is already upgraded,Workbench is already upgraded,工作台已经升级。
@@ -263,21 +349,27 @@ ui.raid_result.duration,時間,Duration,Duration,时间
 ui.raid_result.money_delta,金錢,Money,Money,金钱
 ui.raid_result.continue_to_base,回到基地,Continue to Base,Continue to Base,回到基地
 ui.raid_result.status,帶回物資會依結算結果轉入基地倉庫。,Extracted supplies move to base stash,Extracted supplies move to base stash,带回物资会依结算结果转入基地仓库。
-ui.raid_result.status_dead,遺失物品不會進入基地倉庫；保險格物品會保留。,Lost items do not enter base stash. Safe pocket items are kept,Lost items do not enter base stash. Safe pocket items are kept,遗失物品不会进入基地仓库；保险格物品会保留。
+ui.raid_result.status_dead,遺失物品不會進入基地倉庫；安全口袋物品會送回基地。,Lost items do not enter base stash. Safe pocket items return to base,Lost items do not enter base stash. Safe pocket items return to base,遗失物品不会进入基地仓库；安全口袋物品会送回基地。
 ui.raid_result.transfer_title,物資轉移,Transfer Summary,Transfer Summary,物资转移
 ui.raid_result.transfer_extracted,帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。,Extracted %d item groups to base stash. Return to base to inspect stash,Extracted %d item groups to base stash. Return to base to inspect stash,带回成功：%d 种物资已转入基地仓库。按「回到基地」查看仓库。
 ui.raid_result.transfer_empty,本次沒有帶回物品。按「回到基地」整理下一場行動。,No items were extracted. Return to base to prepare the next raid,No items were extracted. Return to base to prepare the next raid,本次没有带回物品。按「回到基地」整理下一场行动。
-ui.raid_result.transfer_dead,行動失敗：%d 種背包物資列為遺失，%d 種保險格物品會保留。按「回到基地」查看狀態。,Raid failed. %d backpack item groups are lost and %d safe pocket item groups are kept. Return to base to review,Raid failed. %d backpack item groups are lost and %d safe pocket item groups are kept. Return to base to review,行动失败：%d 种背包物资列为遗失，%d 种保险格物品会保留。按「回到基地」查看状态。
+ui.raid_result.transfer_dead,行動失敗：%d 種背包/裝備物資列為遺失，%d 種安全口袋物品已送回基地。按「回到基地」查看狀態。,Raid failed. %d backpack or equipment item groups are lost and %d safe pocket item groups returned to base. Return to base to review,Raid failed. %d backpack or equipment item groups are lost and %d safe pocket item groups returned to base. Return to base to review,行动失败：%d 种背包/装备物资列为遗失，%d 种安全口袋物品已送回基地。按「回到基地」查看状态。
 ui.raid_result.empty_extracted,沒有帶回物品。,No extracted items,No extracted items,没有带回物品。
 ui.raid_result.empty_lost,沒有遺失物品。,No lost items,No lost items,没有遗失物品。
-ui.raid_result.empty_safe_pocket,保險格沒有物品。,No safe pocket items,No safe pocket items,保险格没有物品。
+ui.raid_result.empty_safe_pocket,安全口袋沒有物品。,No safe pocket items,No safe pocket items,安全口袋没有物品。
 ui.raid_result.extracted,撤離成功：帶回物資,Extracted: supplies secured,Extracted: supplies secured,撤离成功：带回物资
 ui.raid_result.dead,行動失敗：死亡,Failed: dead,Failed: dead,行动失败：死亡
 ui.raid_result.unknown,未知,Unknown,Unknown,未知
 ui.raid_result.extracted_items,帶回物品,Extracted,Extracted,带回物品
 ui.raid_result.lost_items,遺失物品,Lost,Lost,遗失物品
-ui.raid_result.safe_pocket_items,保險格,Safe Pocket,Safe Pocket,保险格
+ui.raid_result.safe_pocket_items,安全口袋,Safe Pocket,Safe Pocket,安全口袋
 enemy.scavenger.name,拾荒者,Scavenger,Scavenger,拾荒者
 enemy.unknown.name,未知敵人,Unknown enemy,Unknown enemy,未知敌人
+enemy.status.idle,待機,Idle,Idle,待机
+enemy.status.dead,死亡,Dead,Dead,死亡
+enemy.status.injured,受傷,Injured,Injured,受伤
+enemy.status.chase,追蹤中,Chasing,Chasing,追踪中
+enemy.status.attack,攻擊,Attacking,Attacking,攻击
+enemy.status.alert,準備攻擊,Preparing attack,Preparing attack,准备攻击
 location.radio_tower.name,訊號塔,Signal tower,Signal tower,讯号塔
 location.unknown.name,未知地點,Unknown location,Unknown location,未知地点

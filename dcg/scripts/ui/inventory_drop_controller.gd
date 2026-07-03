@@ -33,9 +33,11 @@ func update_drag(mouse_position: Vector2) -> void:
 	_request_redraw()
 
 
-func finish_drag(backpack_model: InventoryModel, mouse_position: Vector2, panel_rect: Rect2, target_stack_index: int, player: Node, target_equipment_slot: StringName = &"") -> bool:
+func finish_drag(backpack_model: InventoryModel, mouse_position: Vector2, panel_rect: Rect2, target_stack_index: int, player: Node, target_equipment_slot: StringName = &"", target_safe_pocket_slot: int = -1) -> bool:
 	var handled := false
-	if target_equipment_slot != &"":
+	if target_safe_pocket_slot >= 0:
+		handled = _move_dragged_stack_to_safe_pocket(player)
+	elif target_equipment_slot != &"":
 		handled = _equip_dragged_stack(player, target_equipment_slot)
 	elif not panel_rect.has_point(mouse_position):
 		handled = drop_stack_at(backpack_model, dragging_stack_index, dragging_stack, mouse_position, player)
@@ -69,6 +71,14 @@ func _equip_dragged_stack(player: Node, target_equipment_slot: StringName) -> bo
 	if dragging_stack_index < 0:
 		return false
 	return bool(player.call("equip_inventory_stack", dragging_stack_index, target_equipment_slot))
+
+
+func _move_dragged_stack_to_safe_pocket(player: Node) -> bool:
+	if player == null or not player.has_method("move_inventory_stack_to_safe_pocket"):
+		return false
+	if dragging_stack_index < 0:
+		return false
+	return bool(player.call("move_inventory_stack_to_safe_pocket", dragging_stack_index))
 
 
 func drop_stack_at(backpack_model: InventoryModel, stack_index: int, stack: Dictionary, screen_position: Vector2, player: Node, random_near_player: bool = false) -> bool:

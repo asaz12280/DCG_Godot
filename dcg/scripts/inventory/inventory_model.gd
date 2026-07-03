@@ -48,11 +48,48 @@ func add_item(item_def: ItemDef, quantity: int = 1) -> bool:
 
 
 func add_stack(stack: Dictionary) -> bool:
+	if stack.is_empty():
+		return false
+	var item_def := _load_item_from_stack(stack)
+	if item_def != null:
+		return add_item(item_def, int(stack.get("quantity", 1)))
 	if stacks.size() >= slot_limit:
 		return false
 	stacks.append(stack.duplicate(true))
 	changed.emit()
 	return true
+
+
+func can_accept_stack(stack: Dictionary) -> bool:
+	if stack.is_empty():
+		return false
+	var quantity := int(stack.get("quantity", 1))
+	if quantity <= 0:
+		return false
+	var item_def := _load_item_from_stack(stack)
+	if item_def == null:
+		return stacks.size() < slot_limit
+
+	var remaining := quantity
+	for existing_stack in stacks:
+		if existing_stack.get("id") != item_def.id:
+			continue
+		var max_stack := int(existing_stack.get("max_stack", 1))
+		if max_stack <= 1:
+			continue
+		var room := max_stack - int(existing_stack.get("quantity", 1))
+		if room <= 0:
+			continue
+		remaining -= mini(room, remaining)
+		if remaining <= 0:
+			return true
+
+	var free_slots := maxi(slot_limit - stacks.size(), 0)
+	var item_max_stack := maxi(item_def.max_stack, 1)
+	while remaining > 0 and free_slots > 0:
+		remaining -= mini(item_max_stack, remaining)
+		free_slots -= 1
+	return remaining <= 0
 
 
 func remove_stack_at(index: int) -> Dictionary:
@@ -174,3 +211,10 @@ func get_total_weight() -> float:
 
 func get_display_items() -> Array[Dictionary]:
 	return stacks.duplicate(true)
+
+
+func _load_item_from_stack(stack: Dictionary) -> ItemDef:
+	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	if item_path == "" or not ResourceLoader.exists(item_path):
+		return null
+	return load(item_path) as ItemDef

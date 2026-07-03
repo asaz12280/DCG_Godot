@@ -2,6 +2,8 @@ extends Node
 
 signal active_ui_changed(id: StringName)
 
+const UITextScript := preload("res://scripts/ui/ui_text.gd")
+
 const UI_NONE := &""
 const UI_BACKPACK := &"backpack"
 const UI_QUESTS := &"quests"
@@ -234,7 +236,7 @@ func _set_container_inventory_open(should_open: bool) -> void:
 		if _active_container == null or not is_instance_valid(_active_container):
 			return
 		var model: RefCounted = _active_container.call("get_container_inventory_model")
-		var display_name := "物資箱"
+		var display_name := _text(&"ui.container.default_name", "物資箱")
 		if _active_container.has_method("get_container_display_name"):
 			display_name = str(_active_container.call("get_container_display_name"))
 		if _container_inventory_ui.has_method("open_container"):
@@ -368,31 +370,31 @@ func _on_container_slot_pressed(slot_index: int, stack: Dictionary) -> void:
 	if _active_container == null or not is_instance_valid(_active_container):
 		return
 	if stack.is_empty():
-		_set_container_status("這個格子是空的。")
+		_set_container_status(_text(&"ui.container.slot_empty", "這個格子是空的。"))
 		return
 	if not _active_container.has_method("get_container_inventory_model"):
-		_set_container_status("目前無法轉移物品。")
+		_set_container_status(_text(&"ui.container.transfer_unavailable", "目前無法轉移物品。"))
 		return
 
 	var container_model: RefCounted = _active_container.call("get_container_inventory_model")
 	var backpack_model := _get_player_inventory_model()
 	if container_model == null or backpack_model == null:
-		_set_container_status("目前無法轉移物品。")
+		_set_container_status(_text(&"ui.container.transfer_unavailable", "目前無法轉移物品。"))
 		return
 	if not _can_backpack_accept_stack(backpack_model, stack):
-		_set_container_status("背包已滿，無法放入。")
+		_set_container_status(_text(&"ui.container.backpack_full", "背包已滿，無法放入。"))
 		return
 
 	var moved_quantity := int(stack.get("quantity", 1))
 	var removed_stack: Dictionary = container_model.call("remove_from_slot", slot_index, moved_quantity)
 	if removed_stack.is_empty():
-		_set_container_status("這個格子是空的。")
+		_set_container_status(_text(&"ui.container.slot_empty", "這個格子是空的。"))
 		return
 	if not _add_stack_to_backpack(backpack_model, removed_stack):
 		container_model.call("add_stack", removed_stack)
-		_set_container_status("背包已滿，無法放入。")
+		_set_container_status(_text(&"ui.container.backpack_full", "背包已滿，無法放入。"))
 		return
-	_set_container_status("已移入背包。")
+	_set_container_status(_text(&"ui.container.moved_to_backpack", "已移入背包。"))
 
 
 func _get_player_inventory_model() -> RefCounted:
@@ -466,3 +468,7 @@ func _find_control(node_name: String) -> Control:
 		return null
 	var node := search_root.find_child(node_name, true, false)
 	return node as Control
+
+
+func _text(key: StringName, fallback: String) -> String:
+	return UITextScript.text(self, key, fallback)

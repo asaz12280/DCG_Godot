@@ -196,8 +196,8 @@ func _armor_effect_text(player: Node) -> String:
 		return ""
 	var defense_bonus := float(state.get("defense_bonus", 0.0))
 	if defense_bonus <= 0.0:
-		return "防護效果：尚未提供減傷"
-	return "防護效果：每次受擊 -%.0f 傷害" % defense_bonus
+		return _text(&"ui.top.status_armor_no_bonus", "防護效果：尚未提供減傷")
+	return _text(&"ui.top.status_armor_bonus_format", "防護效果：每次受擊 -%.0f 傷害") % defense_bonus
 
 
 func _stack_name(stack: Dictionary) -> String:

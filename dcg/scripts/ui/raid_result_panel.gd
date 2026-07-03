@@ -130,12 +130,12 @@ func _bind_result() -> void:
 	transfer_detail_label.text = _transfer_detail_text()
 	extracted_title_label.text = _text(&"ui.raid_result.extracted_items", "帶回物品")
 	lost_title_label.text = _text(&"ui.raid_result.lost_items", "遺失物品")
-	safe_pocket_title_label.text = _text(&"ui.raid_result.safe_pocket_items", "保險格")
+	safe_pocket_title_label.text = _text(&"ui.raid_result.safe_pocket_items", "安全口袋")
 	continue_button.text = _text(&"ui.raid_result.continue_to_base", "回到基地")
 	status_label.text = _status_text()
 	_rebuild_rows(extracted_rows, current_result.get("extracted_items", []), _text(&"ui.raid_result.empty_extracted", "沒有帶回物品。"))
 	_rebuild_rows(lost_rows, current_result.get("lost_items", []), _text(&"ui.raid_result.empty_lost", "沒有遺失物品。"))
-	_rebuild_rows(safe_pocket_rows, current_result.get("kept_safe_pocket_items", []), _text(&"ui.raid_result.empty_safe_pocket", "保險格沒有物品。"))
+	_rebuild_rows(safe_pocket_rows, current_result.get("kept_safe_pocket_items", []), _text(&"ui.raid_result.empty_safe_pocket", "安全口袋沒有物品。"))
 
 
 func _rebuild_rows(container: VBoxContainer, entries: Variant, empty_text: String) -> void:
@@ -196,7 +196,7 @@ func _transfer_detail_text() -> String:
 	var lost_count := _entry_count(current_result.get("lost_items", []))
 	var safe_count := _entry_count(current_result.get("kept_safe_pocket_items", []))
 	if outcome == RaidResultSchema.OUTCOME_DEAD:
-		return _text(&"ui.raid_result.transfer_dead", "行動失敗：背包物資列為遺失，保險格會保留。按「回到基地」查看狀態。") % [lost_count, safe_count]
+		return _text(&"ui.raid_result.transfer_dead", "行動失敗：背包/裝備物資列為遺失，安全口袋會送回基地。按「回到基地」查看狀態。") % [lost_count, safe_count]
 	if extracted_count <= 0:
 		return _text(&"ui.raid_result.transfer_empty", "本次沒有帶回物品。按「回到基地」整理下一場行動。")
 	return _text(&"ui.raid_result.transfer_extracted", "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。") % extracted_count
@@ -205,7 +205,7 @@ func _transfer_detail_text() -> String:
 func _status_text() -> String:
 	var outcome := str(current_result.get("outcome", ""))
 	if outcome == RaidResultSchema.OUTCOME_DEAD:
-		return _text(&"ui.raid_result.status_dead", "遺失物品不會進入基地倉庫；保險格物品會保留。")
+		return _text(&"ui.raid_result.status_dead", "遺失物品不會進入基地倉庫；安全口袋物品會送回基地。")
 	return _text(&"ui.raid_result.status", "帶回物資會依結算結果轉入基地倉庫。")
 
 

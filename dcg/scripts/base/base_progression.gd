@@ -136,4 +136,9 @@ static func _item_name(item_path: String) -> String:
 	var item_def := load(item_path) as ItemDef
 	if item_def == null:
 		return "Unknown"
+	var name_key := str(item_def.name_key)
+	if name_key != "":
+		var translated := TranslationServer.translate(name_key)
+		if translated != name_key and translated != "":
+			return translated
 	return item_def.display_name if item_def.display_name != "" else str(item_def.id)

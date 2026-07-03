@@ -140,7 +140,7 @@ func _validate_visible_transfer_summary(state: Dictionary, extracted: bool) -> v
 		if not str(state.get("status", "")).contains("基地倉庫"):
 			_errors.append("RaidResultPanel status should explain extracted supplies enter base stash.")
 	else:
-		for expected in ["行動失敗", "遺失", "保險格"]:
+		for expected in ["行動失敗", "遺失", "安全口袋"]:
 			if not detail.contains(expected):
 				_errors.append("RaidResultPanel death transfer detail should mention `%s`." % expected)
 		if not str(state.get("status", "")).contains("遺失物品"):
@@ -152,7 +152,7 @@ func _validate_list_titles(state: Dictionary) -> void:
 		_errors.append("RaidResultPanel should label extracted items in Traditional Chinese.")
 	if str(state.get("lost_title", "")) != "遺失物品":
 		_errors.append("RaidResultPanel should label lost items in Traditional Chinese.")
-	if str(state.get("safe_pocket_title", "")) != "保險格":
+	if str(state.get("safe_pocket_title", "")) != "安全口袋":
 		_errors.append("RaidResultPanel should label safe pocket items in Traditional Chinese.")
 
 
