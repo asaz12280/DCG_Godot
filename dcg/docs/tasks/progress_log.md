@@ -2834,3 +2834,25 @@
 ### Next
 
 - Continue with task seventeen: base station interaction readability.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Seventeen
+
+### Completed
+
+- Added readable 3D purpose hints to the four current Base stations: stash, quest board, workbench, and raid gate.
+- Added `tools/validate_base_station_readability.gd` to verify station title labels, purpose hints, near-player prompts, panel text, raid briefing text, and responsibility boundaries.
+- Updated `tools/validate_base_interactions.gd` so it matches the current player-facing prompts: `按 E 互動` and `按 E 查看出擊簡報`.
+- Preserved the 3D Base flow and avoided adding the next service-station content before task eighteen.
+- Marked Dev Slice 0.2 enemy-first task seventeen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Base station readability validation reports `[base_station_readability] OK stations=4 labels=readable prompts=clear panels=zh boundaries=clean`.
+- Base interaction validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Base 3D scene and gameplay scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task eighteen: add one clear Base service station.

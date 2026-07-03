@@ -67,7 +67,7 @@ func _validate_interactions(scene: Node) -> void:
 		player.global_position = point.global_position
 		await process_frame
 		var prompt := str(controller.call("get_current_prompt_text"))
-		if not prompt.contains("按 E 開啟") or not prompt.contains(str(expected_titles[id])):
+		if not prompt.contains("按 E 互動") or not prompt.contains(str(expected_titles[id])):
 			_errors.append("Prompt should show Traditional Chinese open text for %s, got: %s." % [id, prompt])
 		if not bool(controller.call("open_interaction_by_id", id)):
 			_errors.append("Controller should open panel for %s." % id)
@@ -88,8 +88,8 @@ func _validate_interactions(scene: Node) -> void:
 		player.global_position = raid_point.global_position
 		await process_frame
 		var raid_prompt := str(controller.call("get_current_prompt_text"))
-		if not raid_prompt.contains("按 E 開始出擊") or not raid_prompt.contains("出擊門"):
-			_errors.append("Raid gate prompt should show Traditional Chinese start-raid text.")
+		if not raid_prompt.contains("按 E 查看出擊簡報") or not raid_prompt.contains("出擊門"):
+			_errors.append("Raid gate prompt should show Traditional Chinese briefing text.")
 	var source := FileAccess.get_file_as_string("res://scripts/base/base_interaction_controller_3d.gd")
 	if not source.contains("res://scenes/gameplay/player_test_world_3d.tscn"):
 		_errors.append("Base interaction raid target scene should exist.")

@@ -179,6 +179,14 @@ text = "倉庫"
 font_size = 42
 outline_size = 8
 
+[node name="HintLabel3D" type="Label3D" parent="InteractionPoints/StashPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.12, 0)
+billboard = 1
+text = "整理戰利品"
+font_size = 24
+outline_size = 6
+modulate = Color(0.82, 0.95, 0.9, 1)
+
 [node name="QuestBoardPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.55, 0, -3.35)
 metadata/interaction_id = "quests"
@@ -200,6 +208,14 @@ billboard = 1
 text = "任務板"
 font_size = 42
 outline_size = 8
+
+[node name="HintLabel3D" type="Label3D" parent="InteractionPoints/QuestBoardPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.12, 0)
+billboard = 1
+text = "查看回報"
+font_size = 24
+outline_size = 6
+modulate = Color(0.88, 0.92, 1, 1)
 
 [node name="WorkbenchPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 0, -3.15)
@@ -223,6 +239,14 @@ text = "工作台"
 font_size = 42
 outline_size = 8
 
+[node name="HintLabel3D" type="Label3D" parent="InteractionPoints/WorkbenchPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.12, 0)
+billboard = 1
+text = "升級基地"
+font_size = 24
+outline_size = 6
+modulate = Color(1, 0.91, 0.76, 1)
+
 [node name="RaidGatePoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0, 0.6)
 metadata/interaction_id = "raid_gate"
@@ -244,6 +268,14 @@ billboard = 1
 text = "出擊門"
 font_size = 42
 outline_size = 8
+
+[node name="HintLabel3D" type="Label3D" parent="InteractionPoints/RaidGatePoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.32, 0)
+billboard = 1
+text = "開始行動"
+font_size = 24
+outline_size = 6
+modulate = Color(1, 0.84, 0.72, 1)
 
 [node name="Player3D" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.4)
