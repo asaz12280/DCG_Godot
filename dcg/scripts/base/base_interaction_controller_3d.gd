@@ -54,7 +54,7 @@ func open_interaction_by_id(interaction_id: String) -> bool:
 	var display_name := _display_name(point)
 	if interaction_id == "raid_gate":
 		prepare_raid_loadout()
-		get_tree().change_scene_to_file(GAMEPLAY_SCENE)
+		_change_to_gameplay_scene.call_deferred()
 		return true
 	if _panel == null or not _panel.has_method("open_interaction"):
 		return false
@@ -95,6 +95,13 @@ func prepare_raid_loadout() -> bool:
 
 func get_last_prepared_raid_loadout() -> Dictionary:
 	return _last_prepared_raid_loadout.duplicate(true)
+
+
+func _change_to_gameplay_scene() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	tree.change_scene_to_file(GAMEPLAY_SCENE)
 
 
 func _refresh_points() -> void:

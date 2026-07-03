@@ -2387,3 +2387,26 @@
 ### Next
 
 - V2 player visibility task queue is complete. Stop `dcg-v2` automation after commit/push and final status report.
+
+## 2026-07-03 Base 3D Runtime HUD Hotfix
+
+### Completed
+
+- Added the shared gameplay HUD surfaces to `scenes/base/base_3d.tscn`: `TopMenuBar`, quest/status/map panels, `PlayerHud3D`, `InventoryEquipmentUI`, `ItemCodexUI`, and `PauseMenu`.
+- Updated `BaseInteractionController3D` so raid-gate scene changes are deferred after the input event instead of changing scenes immediately during `_unhandled_input`.
+- Added `tools/validate_base_3d_runtime_hud.gd` to guard the player-facing failures reported after V2: TAB opens backpack, ESC opens pause, crosshair HUD exists, and the raid gate reaches the gameplay scene.
+- Added the new runtime HUD validator to the V2 health baseline.
+
+### Verified
+
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- Base interactions validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Base 3D scene validation reports `[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=4`.
+- Top Menu panels validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- Pause menu validation reports `[pause_menu] OK open_close=true`.
+- Player-visible V2 slice validation reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+
+### Notes
+
+- Root cause: the new 3D Base scene did not include the gameplay HUD nodes that `UIManager` needs for TAB, ESC, and crosshair behavior.

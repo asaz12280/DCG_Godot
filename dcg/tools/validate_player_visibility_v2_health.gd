@@ -31,6 +31,7 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_base_to_raid_loadout.gd",
 	"res://tools/validate_raid_return_to_base_3d.gd",
 	"res://tools/validate_player_visible_v2_slice.gd",
+	"res://tools/validate_base_3d_runtime_hud.gd",
 	"res://scripts/ui/status_top_menu_panel.gd",
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
