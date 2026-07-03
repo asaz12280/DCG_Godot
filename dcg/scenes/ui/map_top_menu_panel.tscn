@@ -5,10 +5,10 @@
 [node name="MapTopMenuPanel" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 580.0
+offset_left = 530.0
 offset_top = 126.0
-offset_right = 1340.0
-offset_bottom = 546.0
+offset_right = 1390.0
+offset_bottom = 626.0
 mouse_filter = 2
 script = ExtResource("1_map_top_menu_panel")
 
@@ -30,7 +30,7 @@ theme_override_constants/margin_bottom = 22
 
 [node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="TitleLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
@@ -40,7 +40,7 @@ text = "區域地圖"
 [node name="HintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "早期導覽：確認目前位置、撤離方向與行動狀態。"
+text = "早期導覽：確認撤離、危險區與箱子區，不新增第二張地圖。"
 autowrap_mode = 3
 
 [node name="InfoPanel" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
@@ -56,18 +56,36 @@ theme_override_constants/margin_bottom = 14
 
 [node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="AreaLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "目前區域：避難郊區"
+text = "目前區域：郊外回收區（避難郊區）"
+autowrap_mode = 3
+
+[node name="RouteLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "建議路線：出生點 → 北側箱子區 → 西北側撤離點。"
 autowrap_mode = 3
 
 [node name="ExtractionLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "撤離方向：往 西北 的撤離點前進"
+text = "撤離方向：往 西北側 的撤離點前進"
+autowrap_mode = 3
+
+[node name="DangerLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "危險區：北側巡邏區有拾荒者，靠近會追蹤並攻擊。"
+autowrap_mode = 3
+
+[node name="LootLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "箱子區：北側、東側、南側物資箱，優先搜尋後再撤離。"
 autowrap_mode = 3
 
 [node name="FlowStateLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
@@ -79,5 +97,5 @@ autowrap_mode = 3
 [node name="NoteLabel" type="Label" parent="MainPanel/PanelMargin/Content/InfoPanel/Margin/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "這是早期文字地圖，完整大地圖會在核心流程穩定後再製作。"
+text = "此頁是出擊用的資訊地圖；完整可探索大地圖會在核心流程穩定後再製作。"
 autowrap_mode = 3

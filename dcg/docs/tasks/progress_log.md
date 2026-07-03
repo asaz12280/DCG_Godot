@@ -2767,3 +2767,24 @@
 ### Next
 
 - Continue with task fourteen: Raid map information panel improvements.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Fourteen
+
+### Completed
+
+- Expanded the Top Menu map page into a readable early 2D information panel without adding a second raid map.
+- Added visible Traditional Chinese map rows for current area, suggested route, extraction direction, danger zone, loot container zone, and base/raid state.
+- Kept `MapTopMenuPanel` display-only: it reads `RaidSession`, `Player3D`, `ExtractionZone`, `Scavenger`, and `LootContainer` scene state, but does not change scene flow, quest, inventory, weapon, or save state.
+- Added `tools/validate_top_menu_map_panel.gd` to verify player-visible map information, layout fit, node-first structure, and display-only ownership.
+- Marked Dev Slice 0.2 enemy-first task fourteen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Top Menu map panel validation reports `[top_menu_map_panel] OK area=visible route=visible extraction=visible danger=visible loot=visible layout=fit boundaries=clean`.
+- Top Menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Base 3D scene and gameplay scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task fifteen: Raid objective hint cleanup.

@@ -327,7 +327,7 @@ The player should be able to:
 
 ### 任務十四：Raid 地圖資訊頁補強
 
-狀態：未開始
+狀態：完成
 
 優先度：中高
 
