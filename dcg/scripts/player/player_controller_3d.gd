@@ -313,6 +313,16 @@ func apply_damage(event: DamageEvent) -> bool:
 	return true
 
 
+func restore_health_to_full() -> bool:
+	var maximum := get_total_max_health()
+	if maximum <= 0.0 or health >= maximum:
+		return false
+	is_dead = false
+	health = maximum
+	health_changed.emit(health, maximum)
+	return true
+
+
 func is_alive() -> bool:
 	return not is_dead and health > 0.0
 

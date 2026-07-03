@@ -6,6 +6,7 @@ const REQUIRED_INTERACTIONS := {
 	"quests": "任務板",
 	"workbench": "工作台",
 	"raid_gate": "出擊門",
+	"medical": "醫療站",
 }
 
 var _errors: Array[String] = []
@@ -21,7 +22,7 @@ func _initialize() -> void:
 		_validate_not_old_base_panel(scene)
 		scene.queue_free()
 	if _errors.is_empty():
-		print("[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=4")
+		print("[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=5")
 		quit(0)
 	else:
 		for error in _errors:

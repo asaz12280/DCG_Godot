@@ -3,6 +3,7 @@ extends Node
 
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const RaidLoadoutTransferScript := preload("res://scripts/raid/raid_loadout_transfer.gd")
+const BaseMedicalServiceScript := preload("res://scripts/base/base_medical_service.gd")
 
 @export_node_path("Node3D") var player_path: NodePath
 @export_node_path("Label3D") var prompt_label_path: NodePath
@@ -24,6 +25,7 @@ func _ready() -> void:
 	_prompt_label = get_node_or_null(prompt_label_path) as Label3D
 	_panel = get_node_or_null(panel_path) as Control
 	_raid_briefing_panel = get_node_or_null(raid_briefing_panel_path) as Control
+	_connect_interaction_panel()
 	_connect_raid_briefing_panel()
 	_refresh_points()
 	_update_prompt()
@@ -61,6 +63,8 @@ func open_interaction_by_id(interaction_id: String) -> bool:
 	var display_name := _display_name(point)
 	if interaction_id == "raid_gate":
 		return _open_raid_briefing(display_name)
+	if interaction_id == "medical":
+		return _open_medical_station(display_name)
 	if _panel == null or not _panel.has_method("open_interaction"):
 		return false
 	_panel.call("open_interaction", interaction_id, display_name)
@@ -86,6 +90,10 @@ func get_panel_state() -> Dictionary:
 
 func get_raid_briefing_state() -> Dictionary:
 	return _raid_briefing_panel.call("get_display_state") if _raid_briefing_panel != null and _raid_briefing_panel.has_method("get_display_state") else {}
+
+
+func get_medical_station_state() -> Dictionary:
+	return BaseMedicalServiceScript.get_state(_player, _get_save_manager())
 
 
 func prepare_raid_loadout() -> bool:
@@ -120,6 +128,23 @@ func _open_raid_briefing(display_name: String) -> bool:
 	return true
 
 
+func _open_medical_station(display_name: String) -> bool:
+	if _panel == null or not _panel.has_method("open_interaction"):
+		return false
+	_panel.call("open_interaction", "medical", display_name, _medical_panel_context())
+	return true
+
+
+func _medical_panel_context() -> Dictionary:
+	var state := BaseMedicalServiceScript.get_state(_player, _get_save_manager())
+	return {
+		"body": BaseMedicalServiceScript.describe(_player, _get_save_manager()),
+		"action_visible": true,
+		"action_enabled": bool(state.get("can_heal", false)),
+		"action_text": str(state.get("action_text", "治療")),
+	}
+
+
 func _raid_briefing_context(display_name: String) -> Dictionary:
 	return {
 		"location": display_name if display_name != "" else "郊外回收區",
@@ -152,6 +177,27 @@ func _connect_raid_briefing_panel() -> void:
 		_raid_briefing_panel.connect("start_raid_requested", start_callable)
 	if _raid_briefing_panel.has_signal("cancel_requested") and not _raid_briefing_panel.is_connected("cancel_requested", cancel_callable):
 		_raid_briefing_panel.connect("cancel_requested", cancel_callable)
+
+
+func _connect_interaction_panel() -> void:
+	if _panel == null or not _panel.has_signal("action_requested"):
+		return
+	var action_callable := Callable(self, "_on_interaction_panel_action_requested")
+	if not _panel.is_connected("action_requested", action_callable):
+		_panel.connect("action_requested", action_callable)
+
+
+func _on_interaction_panel_action_requested(interaction_id: String) -> void:
+	if interaction_id != "medical":
+		return
+	var result := BaseMedicalServiceScript.apply_heal(_player, _get_save_manager())
+	if _panel != null and _panel.has_method("update_interaction_state"):
+		var context := _medical_panel_context()
+		if bool(result.get("success", false)):
+			context["body"] = "%s\n%s" % [str(result.get("reason", "")), BaseMedicalServiceScript.describe(_player, _get_save_manager())]
+		else:
+			context["body"] = "%s\n%s" % [str(result.get("reason", "")), BaseMedicalServiceScript.describe(_player, _get_save_manager())]
+		_panel.call("update_interaction_state", context)
 
 
 func _on_raid_briefing_start_requested() -> void:

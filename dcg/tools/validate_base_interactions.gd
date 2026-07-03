@@ -1,7 +1,7 @@
 extends SceneTree
 
 const Base3DScene := preload("res://scenes/base/base_3d.tscn")
-var _required_ids := PackedStringArray(["stash", "quests", "workbench", "raid_gate"])
+var _required_ids := PackedStringArray(["stash", "quests", "workbench", "raid_gate", "medical"])
 
 var _errors: Array[String] = []
 
@@ -58,6 +58,7 @@ func _validate_interactions(scene: Node) -> void:
 		"stash": "倉庫",
 		"quests": "任務板",
 		"workbench": "工作台",
+		"medical": "醫療站",
 	}
 	for id in expected_titles.keys():
 		var point := _find_point(scene, id)
@@ -79,6 +80,11 @@ func _validate_interactions(scene: Node) -> void:
 			_errors.append("Panel title for %s should be Traditional Chinese." % id)
 		if _contains_ascii_word(str(state.get("body", ""))):
 			_errors.append("Panel body for %s should not contain English fallback text." % id)
+		if id == "medical":
+			if not bool(state.get("action_visible", false)):
+				_errors.append("Medical station should show a treatment action button.")
+			if not str(state.get("action_text", "")).contains("治療"):
+				_errors.append("Medical station action should use readable Traditional Chinese text.")
 		var panel := scene.get_node_or_null("HUD/BaseInteractionPanel")
 		if panel != null and panel.has_method("close_panel"):
 			panel.call("close_panel")

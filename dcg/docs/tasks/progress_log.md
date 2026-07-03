@@ -2856,3 +2856,29 @@
 ### Next
 
 - Continue with task eighteen: add one clear Base service station.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Eighteen
+
+### Completed
+
+- Added a visible 3D Medical station to the Base with readable title, purpose hint, and interaction prompt.
+- Added `BaseMedicalService` so healing cost, save money deduction, and player health restoration stay outside UI scripts.
+- Added an action button path to `BaseInteractionPanel` while keeping the panel display-only and node-first.
+- Added `restore_health_to_full()` to the 3D player controller for service-driven recovery.
+- Updated Base interaction, station readability, and Base 3D scene validators for the fifth station.
+- Marked Dev Slice 0.2 enemy-first task eighteen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Base medical station validation reports `[base_medical_station] OK station=visible heal=works cost=deducted ui=zh boundaries=clean`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base interaction validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Base station readability validation reports `[base_station_readability] OK stations=5 labels=readable prompts=clear panels=zh boundaries=clean`.
+- Base 3D scene validation reports `[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=5`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Base 3D scene and gameplay scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task nineteen: armor effect visibility.

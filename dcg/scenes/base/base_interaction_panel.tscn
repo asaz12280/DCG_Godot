@@ -62,6 +62,14 @@ size_flags_vertical = 3
 text = "基地互動點已連接。"
 autowrap_mode = 3
 
+[node name="ActionButton" type="Button" parent="Panel/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "執行"
+
 [node name="CloseButton" type="Button" parent="Panel/Margin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 44)

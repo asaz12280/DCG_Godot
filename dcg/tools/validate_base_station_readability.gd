@@ -28,6 +28,13 @@ const REQUIRED_STATIONS := {
 		"prompt_terms": ["按 E", "查看出擊簡報", "出擊門"],
 		"briefing_terms": ["出擊簡報", "地點", "風險", "目標", "開始出擊", "取消"],
 	},
+	"medical": {
+		"title": "醫療站",
+		"hint_terms": ["回復", "生命"],
+		"prompt_terms": ["按 E", "互動", "醫療站"],
+		"panel_terms": ["生命", "金錢"],
+		"action_terms": ["治療"],
+	},
 }
 
 var _errors: Array[String] = []
@@ -44,7 +51,7 @@ func _initialize() -> void:
 	_validate_responsibility_boundaries()
 	scene.queue_free()
 	if _errors.is_empty():
-		print("[base_station_readability] OK stations=4 labels=readable prompts=clear panels=zh boundaries=clean")
+		print("[base_station_readability] OK stations=5 labels=readable prompts=clear panels=zh boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -142,6 +149,11 @@ func _validate_panel_state(panel_state: Dictionary, station_id: String, station:
 		_errors.append("Base station %s panel body should explain its purpose, got `%s`." % [station_id, body])
 	if button != "關閉":
 		_errors.append("Base station %s panel close button should read 關閉." % station_id)
+	if station.has("action_terms"):
+		if not bool(panel_state.get("action_visible", false)):
+			_errors.append("Base station %s should expose its action button." % station_id)
+		if not _has_all_terms(str(panel_state.get("action_text", "")), station.get("action_terms", [])):
+			_errors.append("Base station %s action button text should explain the action." % station_id)
 	_assert_clean_zh(title + body + button, "Base station %s panel text" % station_id)
 
 
