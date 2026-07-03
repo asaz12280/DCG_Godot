@@ -3074,3 +3074,22 @@
 ### Next
 
 - Continue with task twenty-seven: Dev Slice 0.2 player-visible smoke test.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Seven
+
+### Completed
+
+- Added `tools/validate_player_visible_0_2_slice.gd` as the Dev Slice 0.2 aggregate player-visible smoke test.
+- The smoke test now validates 3D Base -> raid briefing -> Gameplay Raid -> visible Scavenger chase/attack -> container loot -> No.5 equip/reload -> visible projectile/VFX hit kill -> kill quest progress -> extraction result -> return to 3D Base.
+- The smoke test also guards the player-visible runtime basics: TAB backpack, ESC pause, crosshair HUD, hidden legacy top-left Raid HUD, container capacity grid, primary weapon binding, reload bar, ammo text, and result persistence.
+- Marked Dev Slice 0.2 enemy-first task twenty-seven complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player-visible 0.2 smoke validation reports `[player_visible_0_2_slice] OK base=3d briefing=visible raid=enemy_chase_attack loot=equip_reload projectile_hit=enemy_dead quest=result=base`.
+- Standard Validation Set passed: player-visible V2 slice, enemy visible/damageable/chase/attack, projectile hit enemy, pistol fire VFX, enemy death result, raid return to Base 3D, kill quest flow, enemy loot drop, locked container flow, location quest flow, raid result panel, and UI layout quality 0.2.
+- Gameplay, Base 3D, and Main Menu scenes all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-eight: Project Health Check G.

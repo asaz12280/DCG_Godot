@@ -564,7 +564,7 @@ The player should be able to:
 
 ### 任務二十七：Dev Slice 0.2 玩家可見 Smoke Test
 
-狀態：未開始
+狀態：完成
 
 優先度：中低
 
