@@ -3093,3 +3093,26 @@
 ### Next
 
 - Continue with task twenty-eight: Project Health Check G.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check G
+
+### Completed
+
+- Strengthened `tools/validate_player_visibility_v2_health.gd` so Health Check G covers the enemy-first 0.2 queue, Duckov gap direction, full player-visible smoke path, UI fit gate, save/result safety, and node-first UI scene coverage.
+- Strengthened `tools/validate_enemy_architecture_health.gd` so enemy architecture health also guards the Dev Slice 0.2 smoke/UI validators and required TAB, ESC, crosshair, projectile, shot feedback, hit feedback, and save isolation checks.
+- Confirmed responsibility boundaries still separate Enemy, Quest, RaidResultApplier, RaidResultPanel, QuestTopMenuPanel, UIManager, SaveGameManager, and player-visible UI validation.
+- Marked Dev Slice 0.2 enemy-first task twenty-eight complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded health_g=covered`.
+- Enemy architecture health validation reports `[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered slice_0_2=covered`.
+- Player-visible 0.2 smoke validation completed with exit code 0.
+- UI layout quality validation reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- Enemy attack validation reports `[enemy_attack_player] OK raid=normal attack=damages_player hud=updates cooldown=guarded status=visible`.
+- Projectile hit enemy validation reports `[projectile_hit_enemy] OK equip_reload_fire=works projectile=kills_enemy death=visible controller=stops`.
+- Gameplay, Base 3D, and Main Menu scenes all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-nine: three consecutive playthrough validation.

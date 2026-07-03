@@ -581,7 +581,7 @@ The player should be able to:
 
 ### 任務二十八：Project Health Check G
 
-狀態：未開始
+狀態：完成
 
 優先度：中低
 

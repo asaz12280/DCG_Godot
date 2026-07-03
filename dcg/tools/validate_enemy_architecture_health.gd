@@ -17,8 +17,9 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	await _validate_raid_enemy_boundaries()
 	_validate_source_boundaries()
+	_validate_dev_slice_0_2_validator_coverage()
 	if _errors.is_empty():
-		print("[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered")
+		print("[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered slice_0_2=covered")
 		quit(0)
 	else:
 		for error in _errors:
@@ -173,9 +174,56 @@ func _validate_source_boundaries() -> void:
 		"res://tools/validate_enemy_player_death_result.gd",
 		"res://tools/validate_raid_loss_rules.gd",
 		"res://tools/validate_raid_return_to_base_3d.gd",
+		"res://tools/validate_player_visible_0_2_slice.gd",
+		"res://tools/validate_ui_layout_quality_0_2.gd",
+		"res://tools/validate_projectile_hit_enemy.gd",
+		"res://tools/validate_pistol_fire_vfx.gd",
 	]:
 		if not FileAccess.file_exists(validator):
 			_errors.append("Enemy-first health requires validator: %s" % validator)
+
+
+func _validate_dev_slice_0_2_validator_coverage() -> void:
+	var smoke_text := FileAccess.get_file_as_string("res://tools/validate_player_visible_0_2_slice.gd")
+	if smoke_text == "":
+		_errors.append("Could not read Dev Slice 0.2 player-visible smoke validator.")
+	else:
+		for required in [
+			"validate_enemy_chase_and_attack",
+			"validate_loot_equip_reload_projectile_kill",
+			"validate_extraction_result_return",
+			"validate_kill_quest_saved",
+			"crosshair_visible",
+			"KEY_TAB",
+			"KEY_ESCAPE",
+			"ProjectileScript",
+			"ShotFeedbackScript",
+			"HitFeedbackScript",
+			"VALIDATION_SAVE_ROOT",
+		]:
+			if not smoke_text.contains(required):
+				_errors.append("Player-visible 0.2 smoke validator should cover %s." % required)
+
+	var ui_text := FileAccess.get_file_as_string("res://tools/validate_ui_layout_quality_0_2.gd")
+	if ui_text == "":
+		_errors.append("Could not read Dev Slice 0.2 UI layout validator.")
+	else:
+		for required in ["1280x720", "1920x1080", "text=zh", "boundaries=clean"]:
+			if not ui_text.contains(required):
+				_errors.append("UI layout 0.2 validator should report %s." % required)
+
+	var queue_text := FileAccess.get_file_as_string("res://docs/tasks/dev_slice_0_2_enemy_first_task_queue.md")
+	if queue_text == "":
+		_errors.append("Could not read enemy-first task queue for Health Check G.")
+	else:
+		for required in [
+			"### 任務二十八：Project Health Check G",
+			"validate_player_visible_0_2_slice.gd",
+			"validate_enemy_architecture_health.gd",
+			"validate_player_visibility_v2_health.gd",
+		]:
+			if not queue_text.contains(required):
+				_errors.append("Enemy-first task queue should keep Health Check G term %s." % required)
 
 
 func _assert_source_excludes(path: String, forbidden_tokens: Array[String]) -> void:

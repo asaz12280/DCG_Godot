@@ -3,6 +3,8 @@ extends SceneTree
 const DIRECTION_DOC := "res://docs/design/player_visibility_v2_direction.md"
 const QUEUE_DOC := "res://docs/tasks/player_visibility_v2_task_queue.md"
 const AUDIT_DOC := "res://docs/tasks/player_visibility_v2_health_audit.md"
+const ENEMY_FIRST_QUEUE_DOC := "res://docs/tasks/dev_slice_0_2_enemy_first_task_queue.md"
+const DUCKOV_GAP_DOC := "res://docs/design/duckov_gap_minimal_feature_plan.md"
 
 var _required_files := PackedStringArray([
 	"res://scripts/ui/ui_manager.gd",
@@ -64,6 +66,13 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_top_menu_map_panel.gd",
 	"res://tools/validate_raid_hud.gd",
 	"res://tools/validate_raid_hud_minimal_goal.gd",
+	"res://docs/tasks/dev_slice_0_2_enemy_first_task_queue.md",
+	"res://docs/design/duckov_gap_minimal_feature_plan.md",
+	"res://tools/validate_player_visible_0_2_slice.gd",
+	"res://tools/validate_ui_layout_quality_0_2.gd",
+	"res://tools/validate_enemy_attack_player.gd",
+	"res://tools/validate_projectile_hit_enemy.gd",
+	"res://tools/validate_pistol_fire_vfx.gd",
 ])
 
 var _audit_required_terms := PackedStringArray([
@@ -123,9 +132,10 @@ func _initialize() -> void:
 	_validate_health_d_ui_boundaries()
 	_validate_health_e_base_service_and_armor_boundaries()
 	_validate_health_f_result_location_container_boundaries()
+	_validate_health_g_enemy_first_0_2_boundaries()
 	_validate_queue_mentions_health_check()
 	if _errors.is_empty():
-		print("[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded")
+		print("[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded health_g=covered")
 		quit(0)
 	else:
 		for error in _errors:
@@ -376,11 +386,101 @@ func _validate_health_f_result_location_container_boundaries() -> void:
 		_expect_contains(validator_text, "boundaries=clean", "Health Check F validator should report clean boundaries: %s." % validator_path)
 
 
+func _validate_health_g_enemy_first_0_2_boundaries() -> void:
+	var enemy_queue_text := _read_text(ENEMY_FIRST_QUEUE_DOC)
+	for required in PackedStringArray([
+		"### 任務二十八：Project Health Check G",
+		"validate_player_visible_0_2_slice.gd",
+		"validate_enemy_architecture_health.gd",
+		"validate_player_visibility_v2_health.gd",
+		"Standard Validation Set",
+	]):
+		_expect_contains(enemy_queue_text, required, "Enemy-first queue should keep Health Check G contract term %s." % required)
+
+	var gap_text := _read_text(DUCKOV_GAP_DOC)
+	for required in PackedStringArray(["3D Base", "Raid", "No.5", "No.7", "3D projectile", "tools/validate_*.gd"]):
+		_expect_contains(gap_text, required, "Duckov gap plan should keep player-visible 0.2 direction term %s." % required)
+
+	var smoke_text := _read_text("res://tools/validate_player_visible_0_2_slice.gd")
+	for required in PackedStringArray([
+		"validate_full_player_visible_0_2_smoke",
+		"validate_raid_runtime_ui",
+		"validate_enemy_chase_and_attack",
+		"validate_loot_equip_reload_projectile_kill",
+		"validate_extraction_result_return",
+		"validate_kill_quest_saved",
+		"crosshair_visible",
+		"KEY_TAB",
+		"KEY_ESCAPE",
+		"ProjectileScript",
+		"ShotFeedbackScript",
+		"HitFeedbackScript",
+		"KILL_QUEST_ID",
+		"VALIDATION_SAVE_ROOT",
+	]):
+		_expect_contains(smoke_text, required, "Player-visible 0.2 smoke should cover term %s." % required)
+
+	var ui_quality_text := _read_text("res://tools/validate_ui_layout_quality_0_2.gd")
+	for required in PackedStringArray([
+		"1280x720",
+		"1920x1080",
+		"text=zh",
+		"boundaries=clean",
+		"RaidBriefingScene",
+		"ContainerInventoryScene",
+		"RaidResultScene",
+		"PlayerHud3D",
+	]):
+		_expect_contains(ui_quality_text, required, "0.2 UI layout validator should cover term %s." % required)
+
+	var enemy_health_text := _read_text("res://tools/validate_enemy_architecture_health.gd")
+	for required in PackedStringArray([
+		"EnemyControllerScript",
+		"EnemyDamageableScript",
+		"EnemyLootDropScript",
+		"QuestKillTrackerScript",
+		"RaidResultApplierScript",
+		"QuestTopMenuPanelScript",
+		"RaidResultPanelScript",
+		"validate_player_visible_0_2_slice.gd",
+		"validate_ui_layout_quality_0_2.gd",
+	]):
+		_expect_contains(enemy_health_text, required, "Enemy architecture health should cover term %s." % required)
+
+	var save_text := _read_text("res://scripts/save/save_game_manager.gd")
+	_expect_contains(save_text, "const DEFAULT_BASE_SCENE := \"res://scenes/base/base_3d.tscn\"", "SaveGameManager should default normal flow to 3D Base.")
+	if save_text.contains("res://scenes/base/base_screen.tscn"):
+		_errors.append("SaveGameManager should not route new normal flow back to old BaseScreen.")
+
+	var result_applier_text := _read_text("res://scripts/raid/raid_result_applier.gd")
+	for required in PackedStringArray(["save_slot_data", "OUTCOME_DEAD", "OUTCOME_EXTRACTED"]):
+		_expect_contains(result_applier_text, required, "RaidResultApplier should keep save-backed result authority through %s." % required)
+	for forbidden in PackedStringArray(["RaidResultPanel", "QuestTopMenuPanel", "change_scene_to_file"]):
+		if result_applier_text.contains(forbidden):
+			_errors.append("RaidResultApplier should not directly own UI or scene flow: %s." % forbidden)
+
+	for scene_path in PackedStringArray([
+		"res://scenes/ui/container_inventory_ui.tscn",
+		"res://scenes/ui/raid_briefing_panel.tscn",
+		"res://scenes/ui/raid_result_panel.tscn",
+		"res://scenes/ui/quest_top_menu_panel.tscn",
+		"res://scenes/ui/status_top_menu_panel.tscn",
+		"res://scenes/ui/map_top_menu_panel.tscn",
+		"res://scenes/gameplay/player_test_world_3d.tscn",
+	]):
+		var scene_text := _read_text(scene_path)
+		if not scene_text.contains("Container") and not scene_text.contains("PanelContainer"):
+			_errors.append("Stable player-visible UI should stay node/container-first: %s." % scene_path)
+
+
 func _validate_queue_mentions_health_check() -> void:
 	var queue_text := _read_text(QUEUE_DOC)
 	_expect_contains(queue_text, "validate_gameplay_architecture.gd", "V2 task queue should keep gameplay architecture validation.")
 	_expect_contains(queue_text, "validate_player_visibility_v2_health.gd", "V2 task queue should name the V2 health check validator.")
 	_expect_contains(queue_text, "validate_player_visible_v2_slice.gd", "V2 task queue should name the player-visible slice validator.")
+	var enemy_queue_text := _read_text(ENEMY_FIRST_QUEUE_DOC)
+	_expect_contains(enemy_queue_text, "validate_player_visible_0_2_slice.gd", "Enemy-first queue should name the full player-visible 0.2 smoke validator.")
+	_expect_contains(enemy_queue_text, "validate_enemy_architecture_health.gd", "Enemy-first queue should name the enemy architecture health validator.")
 
 
 func _read_text(path: String) -> String:
