@@ -63,7 +63,12 @@ func _validate_chase_attack_and_death() -> void:
 		_errors.append("EnemyController3D should set velocity while chasing.")
 
 	player.global_position = Vector3(0.6, 0.0, 0.0)
-	controller._physics_process(1.2)
+	controller._physics_process(0.05)
+	if str(controller.state) != "alert":
+		_errors.append("EnemyController3D should show alert windup before melee damage.")
+	if player.damage_taken > 0.0:
+		_errors.append("EnemyController3D should not damage the player before the attack windup completes.")
+	controller._physics_process(0.5)
 	if str(controller.state) != "attack":
 		_errors.append("EnemyController3D should enter attack state inside attack range.")
 	if player.damage_taken <= 0.0 or _attack_count != 1:

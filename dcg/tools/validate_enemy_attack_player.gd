@@ -50,7 +50,7 @@ func _validate_raid_enemy_attacks_real_player() -> void:
 
 	var health_before := float(player.get("health"))
 	var hud_before := hud.call("get_display_state") as Dictionary
-	for _index in range(4):
+	for _index in range(36):
 		await physics_frame
 
 	var health_after := float(player.get("health"))

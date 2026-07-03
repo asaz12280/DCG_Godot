@@ -70,12 +70,16 @@ func _on_state_changed(state: StringName) -> void:
 	match state:
 		&"chase":
 			_set_status_text("追蹤中")
+			_set_body_color(_base_body_color, _base_head_color)
 		&"attack":
 			_set_status_text("攻擊")
+			_set_body_color(Color(0.82, 0.22, 0.16, 1.0), Color(0.9, 0.38, 0.28, 1.0))
 		&"alert":
-			_set_status_text("警戒")
+			_set_status_text("準備攻擊")
+			_set_body_color(Color(0.88, 0.58, 0.18, 1.0), Color(1.0, 0.72, 0.28, 1.0))
 		_:
 			_set_status_text("待機")
+			_set_body_color(_base_body_color, _base_head_color)
 
 
 func _on_died(_event: DamageEvent) -> void:

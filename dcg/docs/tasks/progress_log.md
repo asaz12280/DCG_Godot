@@ -2453,6 +2453,30 @@
 
 - Continue with task six: enemy attack warning and hit feedback visibility.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Six
+
+### Completed
+
+- Added a short melee windup to `EnemyController3D` so close-range enemy damage is preceded by a visible warning instead of landing instantly.
+- Added `attack_windup_started` signal and exposed `attack_windup` in `get_state()` for focused validation and later feedback hooks.
+- Updated `EnemyStatusDisplay3D` so the enemy shows `準備攻擊` and an orange placeholder color during windup, then `攻擊` with a red tint when the hit lands.
+- Added player hit feedback to `PlayerHud3D`: a brief red screen flash and border pulse when health decreases.
+- Added HUD display-state fields for damage feedback visibility and alpha so automated checks can prove the feedback is player-visible.
+- Added `tools/validate_combat_feedback_visibility.gd` to guard enemy warning, delayed damage, player hit feedback, and clean ownership boundaries.
+- Updated enemy AI and attack validators to account for the new warning windup.
+- Marked Dev Slice 0.2 enemy-first task six complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Combat feedback validation reports `[combat_feedback_visibility] OK enemy_warning=visible windup=delays_damage player_hit=visible boundaries=clean`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Enemy attack validation reports `[enemy_attack_player] OK raid=normal attack=damages_player hud=updates cooldown=guarded status=visible`.
+- Player damage flow validation reports `[player_damage_flow] OK damage=accepted health_signal=emits hud=updates death=guarded`.
+
+### Next
+
+- Continue with task seven: player projectile can hit and kill the enemy, including pistol fire VFX chain.
+
 ## 2026-07-03 Dev Slice 0.2 Enemy-First Task One
 
 ### Completed

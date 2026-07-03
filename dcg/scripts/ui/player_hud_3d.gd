@@ -13,12 +13,15 @@
 @export var reload_label_offset: Vector2 = Vector2(0.0, 72.0)
 @export var ammo_panel_position: Vector2 = Vector2(-250.0, -70.0)
 @export var ammo_panel_size: Vector2 = Vector2(210.0, 46.0)
+@export var damage_feedback_duration: float = 0.45
 
 var stamina: float = 100.0
 var max_stamina: float = 100.0
 var player: Node3D
 var weapon_controller: Node = null
 var stamina_visible_time: float = 0.0
+var damage_feedback_time: float = 0.0
+var last_health: float = -1.0
 var reload_state: Dictionary = {
 	"active": false,
 	"progress": 0.0,
@@ -48,11 +51,14 @@ func _ready() -> void:
 		player.reload_progress_changed.connect(_on_reload_progress_changed)
 	if player != null and player.has_method("get_reload_state"):
 		reload_state = player.call("get_reload_state")
+	if player != null:
+		last_health = _player_float(&"health", -1.0)
 	_setup_health_styles()
 
 
 func _process(delta: float) -> void:
 	stamina_visible_time = maxf(stamina_visible_time - delta, 0.0)
+	damage_feedback_time = maxf(damage_feedback_time - delta, 0.0)
 	queue_redraw()
 
 
@@ -63,7 +69,10 @@ func _on_stamina_changed(current: float, maximum: float) -> void:
 	max_stamina = maximum
 
 
-func _on_health_changed(_current: float, _maximum: float) -> void:
+func _on_health_changed(current: float, _maximum: float) -> void:
+	if last_health >= 0.0 and current < last_health - 0.05:
+		damage_feedback_time = damage_feedback_duration
+	last_health = current
 	queue_redraw()
 
 
@@ -80,6 +89,8 @@ func get_display_state() -> Dictionary:
 		"health_current": _player_float("health", 0.0),
 		"health_max": _player_max_health(),
 		"health_text": _health_display_text(),
+		"damage_feedback_visible": damage_feedback_time > 0.0,
+		"damage_feedback_alpha": _damage_feedback_alpha(),
 		"reload_visible": _is_reload_visible(),
 		"reload_progress": float(reload_state.get("progress", 0.0)),
 		"reload_status": str(reload_state.get("status", "idle")),
@@ -93,6 +104,7 @@ func get_display_state() -> Dictionary:
 func _draw() -> void:
 	_paint_player_health()
 	_paint_lower_left_health()
+	_paint_damage_feedback()
 	_paint_stamina_ring()
 	_paint_ammo_panel()
 	_paint_reload_progress()
@@ -190,6 +202,17 @@ func _paint_lower_left_health() -> void:
 	var text_size := font.get_string_size(health_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var text_position := bar_rect.position + (bar_rect.size - text_size) * 0.5 + Vector2(0.0, text_size.y * 0.72)
 	draw_string(font, text_position, health_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(1.0, 1.0, 1.0, 0.98))
+
+
+func _paint_damage_feedback() -> void:
+	var alpha := _damage_feedback_alpha()
+	if alpha <= 0.0:
+		return
+	var flash_color := Color(1.0, 0.12, 0.08, 0.16 * alpha)
+	draw_rect(Rect2(Vector2.ZERO, size), flash_color, true)
+	var border_color := Color(1.0, 0.2, 0.16, 0.55 * alpha)
+	var width := 8.0
+	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, width)
 
 
 func _paint_heart_icon(center: Vector2, icon_scale: float, color: Color) -> void:
@@ -340,6 +363,12 @@ func _health_display_text() -> String:
 	var current := _player_float(&"health", 0.0)
 	var maximum := _player_max_health()
 	return "%d / %d" % [roundi(current), roundi(maximum)]
+
+
+func _damage_feedback_alpha() -> float:
+	if damage_feedback_duration <= 0.0:
+		return 0.0
+	return clampf(damage_feedback_time / damage_feedback_duration, 0.0, 1.0)
 
 
 func _hud_text(key: StringName, fallback: String) -> String:

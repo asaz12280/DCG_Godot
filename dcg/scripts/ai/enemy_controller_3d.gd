@@ -2,6 +2,7 @@ class_name EnemyController3D
 extends Node
 
 signal state_changed(state: StringName)
+signal attack_windup_started(target: Node)
 signal attacked(target: Node, damage: float)
 
 const STATE_IDLE := &"idle"
@@ -13,6 +14,7 @@ const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 
 @export var target_group := "player"
 @export_range(0.1, 10.0, 0.1) var attack_range := 1.35
+@export_range(0.05, 2.0, 0.05) var attack_windup_duration := 0.35
 @export_range(0.1, 10.0, 0.1) var attack_cooldown := 1.0
 
 var state: StringName = STATE_IDLE
@@ -20,6 +22,8 @@ var target: Node3D
 var _enemy_body: CharacterBody3D
 var _enemy_def: Resource
 var _attack_timer := 0.0
+var _windup_timer := 0.0
+var _windup_target: Node3D = null
 
 
 func _ready() -> void:
@@ -37,18 +41,21 @@ func _physics_process(delta: float) -> void:
 	_attack_timer = maxf(_attack_timer - delta, 0.0)
 	target = _resolve_target()
 	if target == null:
+		_cancel_windup()
 		_stop_movement()
 		_set_state(STATE_IDLE)
 		return
 
 	var distance := _enemy_body.global_position.distance_to(target.global_position)
 	if distance > _detect_radius():
+		_cancel_windup()
 		_stop_movement()
 		_set_state(STATE_IDLE)
 	elif distance > attack_range:
+		_cancel_windup()
 		_chase_target(delta)
 	else:
-		_attack_target()
+		_prepare_or_attack(delta)
 
 
 func get_state() -> Dictionary:
@@ -56,6 +63,7 @@ func get_state() -> Dictionary:
 		"state": state,
 		"has_target": target != null,
 		"attack_ready": _attack_timer <= 0.0,
+		"attack_windup": _windup_timer,
 	}
 
 
@@ -97,6 +105,29 @@ func _attack_target() -> void:
 	if bool(target.call("apply_damage", event)):
 		attacked.emit(target, _damage())
 	_attack_timer = attack_cooldown
+
+
+func _prepare_or_attack(delta: float) -> void:
+	_stop_movement()
+	if _attack_timer > 0.0:
+		_cancel_windup()
+		_set_state(STATE_ATTACK)
+		return
+	if _windup_target != target or _windup_timer <= 0.0 or state != STATE_ALERT:
+		_windup_target = target
+		_windup_timer = attack_windup_duration
+		_set_state(STATE_ALERT)
+		attack_windup_started.emit(target)
+		return
+	_windup_timer = maxf(_windup_timer - delta, 0.0)
+	if _windup_timer <= 0.0:
+		_cancel_windup()
+		_attack_target()
+
+
+func _cancel_windup() -> void:
+	_windup_timer = 0.0
+	_windup_target = null
 
 
 func _stop_movement() -> void:
