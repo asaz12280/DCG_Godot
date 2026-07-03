@@ -16,7 +16,7 @@ func _initialize() -> void:
 	await _validate_gameplay_scene_wiring()
 	_validate_script_boundaries()
 	if _errors.is_empty():
-		print("[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits")
+		print("[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:

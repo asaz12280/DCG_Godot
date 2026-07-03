@@ -41,6 +41,11 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_enemy_player_death_result.gd",
 	"res://tools/validate_raid_loss_rules.gd",
 	"res://tools/validate_enemy_architecture_health.gd",
+	"res://tools/validate_locked_container_flow.gd",
+	"res://tools/validate_location_quest_flow.gd",
+	"res://tools/validate_raid_result_panel.gd",
+	"res://scripts/quests/location_quest_trigger_3d.gd",
+	"res://data/quests/radio_tower_scout.tres",
 	"res://scripts/ui/status_top_menu_panel.gd",
 	"res://scenes/ui/status_top_menu_panel.tscn",
 	"res://scripts/ui/map_top_menu_panel.gd",
@@ -117,6 +122,7 @@ func _initialize() -> void:
 	_validate_known_current_risks_are_visible()
 	_validate_health_d_ui_boundaries()
 	_validate_health_e_base_service_and_armor_boundaries()
+	_validate_health_f_result_location_container_boundaries()
 	_validate_queue_mentions_health_check()
 	if _errors.is_empty():
 		print("[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded")
@@ -296,6 +302,78 @@ func _validate_health_e_base_service_and_armor_boundaries() -> void:
 	var armor_validator_text := _read_text("res://tools/validate_equipment_armor_effect.gd")
 	for required in PackedStringArray(["damage=reduced", "ui=visible", "boundaries=clean"]):
 		_expect_contains(armor_validator_text, required, "Armor validator should guard Health Check E result %s." % required)
+
+
+func _validate_health_f_result_location_container_boundaries() -> void:
+	var container_text := _read_text("res://scripts/loot/loot_container_3d.gd")
+	for required in PackedStringArray(["ContainerInventoryModelScript", "container_inventory.setup", "required_key", "is_locked", "open_container_inventory", "open_blocked"]):
+		_expect_contains(container_text, required, "Health Check F requires locked containers to stay in LootContainer/ContainerInventory through %s." % required)
+	for forbidden in PackedStringArray(["QuestState", "RaidResult", "RaidLossRules", "change_scene", "add_item_resource"]):
+		if container_text.contains(forbidden):
+			_errors.append("LootContainer3D should not own quest/result/scene/backpack-grant behavior: %s." % forbidden)
+
+	var scene_text := _read_text("res://scenes/gameplay/player_test_world_3d.tscn")
+	for required in PackedStringArray(["LockedWarehouseCache", "is_locked = true", "required_key = ExtResource(\"25_warehouse_key\")", "RadioTowerQuestPoint", "location_quest_point", "按 E 調查訊號塔"]):
+		_expect_contains(scene_text, required, "Health Check F requires player-visible task 21-22 scene wiring through %s." % required)
+
+	var container_ui_text := _read_text("res://scripts/ui/container_inventory_ui.gd")
+	for forbidden in PackedStringArray(["required_key", "is_locked", "QuestState", "RaidResult", "SaveGameManager"]):
+		if container_ui_text.contains(forbidden):
+			_errors.append("ContainerInventoryUI should display container slots only, not own locked/quest/result/save logic: %s." % forbidden)
+
+	var location_trigger_text := _read_text("res://scripts/quests/location_quest_trigger_3d.gd")
+	for required in PackedStringArray(["update_from_location_reached", "get_current_slot_index", "save_slot_data", "location_recorded", "get_state"]):
+		_expect_contains(location_trigger_text, required, "Health Check F requires LocationQuestTrigger3D save-backed quest progress through %s." % required)
+	for forbidden in PackedStringArray(["QuestTopMenuPanel", "BaseScreen", "change_scene", "PlayerHud3D", "WeaponController3D", "InventoryModel", "LootContainer3D", "UIManager"]):
+		if location_trigger_text.contains(forbidden):
+			_errors.append("LocationQuestTrigger3D should not directly operate UI, scene flow, combat, inventory, or containers: %s." % forbidden)
+
+	var quest_state_text := _read_text("res://scripts/quests/quest_state.gd")
+	for required in PackedStringArray(["update_from_location_reached", "location_progress_key", "\"location\""]):
+		_expect_contains(quest_state_text, required, "Health Check F requires location quest state support through %s." % required)
+
+	var quest_panel_text := _read_text("res://scripts/ui/quest_top_menu_panel.gd")
+	for forbidden in PackedStringArray(["save_slot_data", "LocationQuestTrigger3D", "RadioTowerQuestPoint", "LootContainer3D"]):
+		if quest_panel_text.contains(forbidden):
+			_errors.append("QuestTopMenuPanel should remain display-only and not own location/container state: %s." % forbidden)
+
+	var result_panel_text := _read_text("res://scripts/ui/raid_result_panel.gd")
+	for required in PackedStringArray(["BASE_SCENE := \"res://scenes/base/base_3d.tscn\"", "change_scene_to_file(BASE_SCENE)", "lost_rows", "safe_pocket_rows", "transfer_dead"]):
+		_expect_contains(result_panel_text, required, "Health Check F requires RaidResultPanel visible result flow through %s." % required)
+	for forbidden in PackedStringArray(["SaveGameManager", "StashModel", "RaidLossRules", "InventoryModel", "QuestTopMenuPanel"]):
+		if result_panel_text.contains(forbidden):
+			_errors.append("RaidResultPanel should display results and route to Base, not own save/loss/inventory/quest behavior: %s." % forbidden)
+
+	var loss_rules_text := _read_text("res://scripts/raid/raid_loss_rules.gd")
+	for required in PackedStringArray(["build_death_context_from_player", "collect_backpack_items", "collect_safe_pocket_items", "lost_items", "kept_safe_pocket_items"]):
+		_expect_contains(loss_rules_text, required, "Health Check F requires RaidLossRules death loss authority through %s." % required)
+	for forbidden in PackedStringArray(["RaidResultPanel", "SaveGameManager", "change_scene", "EnemyController3D", "UIManager"]):
+		if loss_rules_text.contains(forbidden):
+			_errors.append("RaidLossRules should not depend on UI, save, scene flow, enemy logic, or UIManager: %s." % forbidden)
+
+	var result_applier_text := _read_text("res://scripts/raid/raid_result_applier.gd")
+	for required in PackedStringArray(["OUTCOME_DEAD", "_clear_player_inventory", "OUTCOME_EXTRACTED", "StashModelScript", "save_slot_data"]):
+		_expect_contains(result_applier_text, required, "Health Check F requires RaidResultApplier to apply extracted/dead outcomes through %s." % required)
+	for forbidden in PackedStringArray(["RaidResultPanel", "change_scene_to_file", "QuestTopMenuPanel", "LocationQuestTrigger3D"]):
+		if result_applier_text.contains(forbidden):
+			_errors.append("RaidResultApplier should not own UI, scene transition, or location trigger flow: %s." % forbidden)
+
+	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
+	for required in PackedStringArray(["RaidLossRulesScript.build_death_context_from_player", "register_player_death"]):
+		_expect_contains(player_text, required, "PlayerController3D should hand death context to RaidSession through %s." % required)
+
+	var extraction_text := _read_text("res://scripts/raid/extraction_zone_3d.gd")
+	for required in PackedStringArray(["register_extraction", "\"extracted_items\"", "_collect_player_inventory", "撤離點"]):
+		_expect_contains(extraction_text, required, "ExtractionZone3D should provide extracted result context through %s." % required)
+
+	for validator_path in PackedStringArray([
+		"res://tools/validate_locked_container_flow.gd",
+		"res://tools/validate_location_quest_flow.gd",
+		"res://tools/validate_raid_result_panel.gd",
+		"res://tools/validate_raid_loss_rules.gd",
+	]):
+		var validator_text := _read_text(validator_path)
+		_expect_contains(validator_text, "boundaries=clean", "Health Check F validator should report clean boundaries: %s." % validator_path)
 
 
 func _validate_queue_mentions_health_check() -> void:

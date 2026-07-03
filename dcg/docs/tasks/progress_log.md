@@ -2999,3 +2999,31 @@
 ### Next
 
 - Continue with task twenty-four: Project Health Check F.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check F
+
+### Completed
+
+- Strengthened `tools/validate_player_visibility_v2_health.gd` with Health Check F guards for tasks twenty-one through twenty-three.
+- Confirmed locked containers still run through `LootContainer3D` and `ContainerInventoryModel`, not direct backpack grants, quests, result flow, or scene transitions.
+- Confirmed `ContainerInventoryUI` remains display/transfer UI and does not own locked access, quest state, result state, or save state.
+- Confirmed `LocationQuestTrigger3D` updates save-backed quest progress without directly operating Top Menu UI, scene flow, combat, inventory, containers, or UIManager.
+- Confirmed `QuestTopMenuPanel` remains display-only for the location quest and refreshes from save/model state.
+- Confirmed `RaidResultPanel` displays extracted/dead outcomes and routes continue to 3D Base without owning save, inventory, quest, or loss-rule behavior.
+- Confirmed `RaidLossRules` owns death loss context while staying independent from UI, save, scene flow, enemy logic, and UIManager.
+- Confirmed `RaidResultApplier` applies extracted/dead results without owning UI, scene transition, or location trigger flow.
+- Marked Dev Slice 0.2 enemy-first Project Health Check F complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Locked container validation reports `[locked_container_flow] OK locked=visible key=required open=container_grid boundaries=clean`.
+- Location quest validation reports `[location_quest_flow] OK location=visible interact=saves_progress top_menu=live_update boundaries=clean`.
+- Raid result panel validation reports `[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits boundaries=clean`.
+- Raid loss rules validation reports `[raid_loss_rules] OK lost=backpack kept=safe_pocket stash=unchanged boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Gameplay, main menu, and Base 3D scenes all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-five: short base upgrade line.
