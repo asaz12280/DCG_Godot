@@ -2454,6 +2454,30 @@
 
 - Continue with task two: 3D enemy health, injured, and death state readability.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Two
+
+### Completed
+
+- Added `scripts/ai/enemy_status_display_3d.gd` as a dedicated 3D enemy status display helper.
+- Added a visible 3D health bar and status label to `scenes/enemies/scavenger_3d.tscn`.
+- The Scavenger now shows readable states: `待機`, `受傷`, `追蹤中`, `攻擊`, and `死亡`.
+- Non-lethal damage shrinks the health bar and changes the enemy's visible state to injured.
+- Lethal damage empties the health bar, changes the enemy's visible state to dead, and darkens the placeholder enemy body.
+- Added `tools/validate_enemy_damageable_3d.gd` to prove health, injured, and death state readability without coupling display logic to inventory, quest, or save systems.
+- Marked Dev Slice 0.2 enemy-first task two complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy damageable validation reports `[enemy_damageable_3d] OK healthbar=visible injured=readable death=readable display=decoupled`.
+- Combat domain validation reports `[combat_domain] OK damageable=works weapon=ammo_cooldown_damage scene=has_target`.
+- Enemy visibility validation reports `[enemy_visible_in_raid] OK raid=scavenger_visible route=reachable label=visible controller=wired`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Raid scene launch check completed with Godot headless `--quit-after 1`.
+
+### Next
+
+- Continue with task three: enemy detection and player chase in the normal Raid scene.
+
 ## 2026-07-03 Loaded Bullet And Backpack Ammo HUD
 
 ### Completed

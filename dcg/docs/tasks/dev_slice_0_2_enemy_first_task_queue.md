@@ -87,7 +87,7 @@ The player should be able to:
 
 ### 任務二：3D 敵人基礎狀態與生命
 
-狀態：未開始
+狀態：完成
 
 優先度：最高
 

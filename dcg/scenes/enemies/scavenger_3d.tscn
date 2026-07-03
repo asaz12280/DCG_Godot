@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://scavenger_3d_001"]
+[gd_scene load_steps=15 format=3 uid="uid://scavenger_3d_001"]
 
 [ext_resource type="Resource" path="res://data/enemies/scavenger.tres" id="1_enemy_def"]
 [ext_resource type="Script" path="res://scripts/ai/enemy_damageable_3d.gd" id="2_damageable"]
 [ext_resource type="Script" path="res://scripts/ai/enemy_controller_3d.gd" id="3_enemy_controller"]
 [ext_resource type="Script" path="res://scripts/ai/enemy_loot_drop_3d.gd" id="4_enemy_loot_drop"]
 [ext_resource type="Script" path="res://scripts/quests/quest_kill_tracker_3d.gd" id="5_quest_kill_tracker"]
+[ext_resource type="Script" path="res://scripts/ai/enemy_status_display_3d.gd" id="6_status_display"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_scavenger"]
 radius = 0.32
@@ -25,6 +26,20 @@ roughness = 0.82
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
 albedo_color = Color(0.64, 0.58, 0.45, 1)
 roughness = 0.86
+
+[sub_resource type="BoxMesh" id="BoxMesh_health_bar"]
+size = Vector3(0.9, 0.08, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_back"]
+albedo_color = Color(0.12, 0.08, 0.08, 0.92)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_fill"]
+albedo_color = Color(0.9, 0.16, 0.16, 1)
+emission_enabled = true
+emission = Color(0.65, 0.05, 0.04, 1)
+emission_energy_multiplier = 0.5
+roughness = 0.5
 
 [node name="Scavenger3D" type="CharacterBody3D" groups=["enemy", "damageable"]]
 metadata/enemy_def = ExtResource("1_enemy_def")
@@ -52,6 +67,28 @@ text = "拾荒者"
 font_size = 30
 outline_size = 6
 modulate = Color(1, 0.88, 0.66, 1)
+
+[node name="EnemyStatusDisplay3D" type="Node3D" parent="."]
+position = Vector3(0, 1.52, 0)
+script = ExtResource("6_status_display")
+
+[node name="StatusLabel" type="Label3D" parent="EnemyStatusDisplay3D"]
+position = Vector3(0, 0.1, 0)
+billboard = 1
+text = "待機"
+font_size = 22
+outline_size = 5
+modulate = Color(1, 0.94, 0.82, 1)
+
+[node name="HealthBarBack" type="MeshInstance3D" parent="EnemyStatusDisplay3D"]
+position = Vector3(0, -0.08, 0)
+mesh = SubResource("BoxMesh_health_bar")
+surface_material_override/0 = SubResource("StandardMaterial3D_health_back")
+
+[node name="HealthBarFill" type="MeshInstance3D" parent="EnemyStatusDisplay3D"]
+position = Vector3(0, -0.08, -0.01)
+mesh = SubResource("BoxMesh_health_bar")
+surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")
 
 [node name="DetectRadiusMarker" type="Node3D" parent="."]
 metadata/detect_radius = 9.0
