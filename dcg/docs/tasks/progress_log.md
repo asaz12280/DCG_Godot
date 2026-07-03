@@ -2716,3 +2716,34 @@
 ### Next
 
 - Continue with task twelve: Project Health Check C.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check C
+
+### Completed
+
+- Strengthened `tools/validate_enemy_architecture_health.gd` so Health Check C now protects the enemy death loot path, enemy kill quest path, player death/loss result path, and display-only UI boundaries.
+- Extended `tools/validate_player_visibility_v2_health.gd` to require the enemy loot, quest kill, death result, raid loss, and enemy architecture health validators.
+- Confirmed enemy loot remains `EnemyLootDrop3D -> LootPickup3D -> Inventory` and does not write directly to stash, result, quest, or UI state.
+- Confirmed enemy kill quest progress remains event-driven through `QuestKillTracker3D` and save-backed quest state, while `QuestTopMenuPanel` only refreshes/display reads.
+- Confirmed player death still routes through `Player3D -> RaidLossRules -> RaidSession -> RaidResultApplier -> RaidResultPanel`, with no enemy or UI shortcut owning loss rules.
+- Marked Dev Slice 0.2 enemy-first Project Health Check C complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy architecture health validation reports `[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered`.
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Enemy loot drop validation reports `[enemy_loot_drop] OK death=spawns_pickup pickup=adds_inventory repeat=blocked ui_coupling=clean`.
+- Quest kill enemy flow validation reports `[quest_kill_enemy_flow] OK enemy=normal_raid kill=saves_progress top_menu=live_update boundaries=clean`.
+- Enemy player death result validation reports `[enemy_player_death_result] OK enemy=attacks death=result_panel lost_items=visible return=base_3d`.
+- Raid loss rules validation reports `[raid_loss_rules] OK lost=backpack kept=safe_pocket stash=unchanged boundaries=clean`.
+- Raid return to Base validation reports `[raid_return_to_base_3d] OK result=applied destination=base_3d stash=visible`.
+- Top menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- Player-visible V2 smoke validation reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Projectile enemy-hit validation reports `[projectile_hit_enemy] OK equip_reload_fire=works projectile=kills_enemy death=visible controller=stops`.
+- Player damage validation reports `[player_damage] OK health=decreases death=once raid_result=dead hud_signal=emits`.
+- Gameplay scene and main scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task thirteen: Raid pre-sortie briefing UI.
