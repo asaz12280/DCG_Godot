@@ -2434,6 +2434,26 @@
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
 
+## 2026-07-03 Loaded Bullet And Backpack Ammo HUD
+
+### Completed
+
+- Changed the combat ammo HUD from `loaded / magazine capacity` to `loaded bullets / compatible backpack ammo total`.
+- Added `PlayerController3D.get_compatible_backpack_ammo_count()` as a read-only query so `PlayerHud3D` does not directly inspect inventory internals.
+- Updated the compatible ammo count to sum all matching backpack ammo stacks, not just the first stack.
+- Updated reload UI validation to guard the intended display: `0 發子彈 / 24` before reload and `8 發子彈 / 16` after an 8-round reload.
+
+### Verified
+
+- Reload UI validation reports `[reload_ui] OK minimal_hud=reload_progress visible=true completion=clears legacy_panel=hidden boundaries=clean`.
+- Reload flow reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Player-visible V2 smoke reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Weapon equipment binding, Base 3D runtime HUD, main scene launch, and gameplay scene launch pass headless validation.
+
+### Notes
+
+- Existing generated localization `.translation` changes and `.uid` files were left untouched.
+
 ## 2026-07-03 Inventory Drag-To-Equipment Hotfix
 
 ### Completed

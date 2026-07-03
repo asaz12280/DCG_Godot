@@ -173,6 +173,10 @@ func get_reload_state() -> Dictionary:
 	return _last_reload_state.duplicate(true)
 
 
+func get_compatible_backpack_ammo_count() -> int:
+	return _count_compatible_backpack_ammo()
+
+
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	return inventory_model.add_item(item_def, quantity)
 
@@ -549,10 +553,20 @@ func _get_equipped_weapon_item() -> ItemDef:
 
 
 func _count_compatible_backpack_ammo() -> int:
+	if _weapon_controller == null or not _weapon_controller.has_method("get_ammo_model"):
+		return 0
+	var ammo_model: Variant = _weapon_controller.call("get_ammo_model")
+	if ammo_model == null or not ammo_model.has_method("can_use_ammo"):
+		return 0
 	var total := 0
-	var ammo_stack := _find_compatible_ammo_stack()
-	if not ammo_stack.is_empty():
-		total += int(ammo_stack.get("quantity", 0))
+	for stack in inventory_model.stacks:
+		if int(stack.get("quantity", 0)) <= 0:
+			continue
+		var item_def := _load_item_from_stack(stack)
+		if item_def == null or item_def.item_type != "ammo":
+			continue
+		if bool(ammo_model.call("can_use_ammo", item_def)):
+			total += int(stack.get("quantity", 0))
 	return total
 
 

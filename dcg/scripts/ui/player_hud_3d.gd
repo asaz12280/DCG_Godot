@@ -82,7 +82,7 @@ func get_display_state() -> Dictionary:
 		"reload_status": str(reload_state.get("status", "idle")),
 		"ammo_visible": true,
 		"ammo_loaded": _weapon_int("current_ammo", 0),
-		"ammo_capacity": _weapon_int("magazine_size", 0),
+		"ammo_backpack": _backpack_compatible_ammo_count(),
 		"ammo_text": _ammo_display_text(),
 	}
 
@@ -294,10 +294,10 @@ func _has_equipped_weapon() -> bool:
 func _ammo_display_text() -> String:
 	if not _has_equipped_weapon():
 		return _hud_text(&"ui.raid_hud.weapon_missing", "未裝備")
-	return "%s %d / %d" % [
-		_hud_text(&"ui.player_hud.magazine", "彈匣"),
+	return "%d %s / %d" % [
 		_weapon_int("current_ammo", 0),
-		_weapon_int("magazine_size", 0),
+		_hud_text(&"ui.player_hud.loaded_bullets", "發子彈"),
+		_backpack_compatible_ammo_count(),
 	]
 
 
@@ -308,6 +308,12 @@ func _weapon_int(property_name: StringName, fallback: int) -> int:
 	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
 		return int(value)
 	return fallback
+
+
+func _backpack_compatible_ammo_count() -> int:
+	if player == null or not player.has_method("get_compatible_backpack_ammo_count"):
+		return 0
+	return int(player.call("get_compatible_backpack_ammo_count"))
 
 
 func _hud_text(key: StringName, fallback: String) -> String:

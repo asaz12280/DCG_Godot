@@ -54,8 +54,10 @@ func _validate_reload_progress_is_player_visible() -> void:
 	await process_frame
 
 	var ammo_state: Dictionary = hud.call("get_display_state")
-	if not str(ammo_state.get("ammo_text", "")).contains("0 / 8"):
-		_errors.append("PlayerHud3D should show loaded ammo and magazine capacity before reload, got `%s`." % str(ammo_state.get("ammo_text", "")))
+	if int(ammo_state.get("ammo_loaded", -1)) != 0 or int(ammo_state.get("ammo_backpack", -1)) != 24:
+		_errors.append("PlayerHud3D should show loaded ammo and matching backpack ammo before reload, got `%s`." % str(ammo_state))
+	if not str(ammo_state.get("ammo_text", "")).contains("0 發子彈 / 24"):
+		_errors.append("PlayerHud3D should show loaded bullets / matching backpack ammo before reload, got `%s`." % str(ammo_state.get("ammo_text", "")))
 
 	_press_reload(player)
 	await physics_frame
@@ -73,8 +75,10 @@ func _validate_reload_progress_is_player_visible() -> void:
 	state = hud.call("get_display_state")
 	if int(weapon.get("current_ammo")) != 8:
 		_errors.append("Reload UI flow should complete and load the pistol magazine.")
-	if not str(state.get("ammo_text", "")).contains("8 / 8"):
-		_errors.append("PlayerHud3D should show loaded ammo and magazine capacity after reload, got `%s`." % str(state.get("ammo_text", "")))
+	if int(state.get("ammo_loaded", -1)) != 8 or int(state.get("ammo_backpack", -1)) != 16:
+		_errors.append("PlayerHud3D should show loaded ammo and reduced matching backpack ammo after reload, got `%s`." % str(state))
+	if not str(state.get("ammo_text", "")).contains("8 發子彈 / 16"):
+		_errors.append("PlayerHud3D should show loaded bullets / matching backpack ammo after reload, got `%s`." % str(state.get("ammo_text", "")))
 
 	for _frame in range(40):
 		await physics_frame
@@ -99,6 +103,8 @@ func _validate_source_boundaries() -> void:
 	for required in ["reload_progress_changed", "reload_duration_seconds", "_update_reload", "_emit_reload_state"]:
 		if not player_source.contains(required):
 			_errors.append("PlayerController3D should expose timed reload state term: %s." % required)
+	if not player_source.contains("get_compatible_backpack_ammo_count"):
+		_errors.append("PlayerController3D should expose a read-only compatible backpack ammo count for PlayerHud3D.")
 
 
 func _press_reload(player: Node) -> void:
