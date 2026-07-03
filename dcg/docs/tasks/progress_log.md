@@ -2482,6 +2482,26 @@
 
 - Continue with task nine: enemy death loot/drop feedback.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Nine
+
+### Completed
+
+- Promoted the existing Scavenger `EnemyLootDrop3D` path into the Dev Slice 0.2 enemy-first queue.
+- Strengthened `tools/validate_enemy_loot_drop.gd` so enemy drops must be player-visible: spawned pickup has a 3D mesh, a prompt label, readable pickup text when the player is in range, and can be collected into the backpack.
+- Confirmed enemy loot uses the existing `LootPickup3D` and backpack flow instead of writing directly to stash, result, quest, or UI state.
+- Marked Dev Slice 0.2 enemy-first task nine complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy loot drop validation reports `[enemy_loot_drop] OK death=spawns_pickup pickup=adds_inventory repeat=blocked ui_coupling=clean`.
+- Inventory drag rules validation reports `[inventory_drag_rules] OK`.
+- Projectile enemy-hit validation reports `[projectile_hit_enemy] OK equip_reload_fire=works projectile=kills_enemy death=visible controller=stops`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+
+### Next
+
+- Continue with task ten: enemy kill quest visibility.
+
 ## 2026-07-03 Dev Slice 0.2 Enemy-First Task Five
 
 ### Completed

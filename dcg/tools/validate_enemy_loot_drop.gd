@@ -66,6 +66,12 @@ func _validate_scavenger_drops_pickup_once() -> void:
 		_errors.append("Spawned enemy loot pickup should have positive quantity.")
 	if pickup.global_position.distance_to(enemy.global_position) > 2.0:
 		_errors.append("Spawned enemy loot pickup should stay close to the enemy death position.")
+	var pickup_mesh := pickup.get_node_or_null("MeshInstance3D") as MeshInstance3D
+	if pickup_mesh == null or not pickup_mesh.visible:
+		_errors.append("Spawned enemy loot pickup should have a visible 3D mesh.")
+	var prompt_label := pickup.get_node_or_null("PromptLabel") as Label3D
+	if prompt_label == null:
+		_errors.append("Spawned enemy loot pickup should include a 3D prompt label.")
 
 	var pickup_count_after_death := pickups.size()
 	dropper.call("drop_loot")
@@ -76,6 +82,11 @@ func _validate_scavenger_drops_pickup_once() -> void:
 	var player := FakePlayer.new()
 	map_root.add_child(player)
 	pickup.call("_on_body_entered", player)
+	if prompt_label != null:
+		if not prompt_label.visible:
+			_errors.append("Enemy loot pickup prompt should become visible when the player is in range.")
+		if prompt_label.text.strip_edges() == "":
+			_errors.append("Enemy loot pickup prompt should show readable pickup text and quantity.")
 	if not bool(pickup.call("_try_pickup")):
 		_errors.append("Spawned enemy loot pickup should be collectible by a player.")
 	if player.inventory_model.get_used_slots() <= 0:
