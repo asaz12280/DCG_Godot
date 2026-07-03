@@ -7,7 +7,7 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const BaseScreenViewModelScript := preload("res://scripts/base/base_screen_view_model.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
-@export var design_panel_size := Vector2(760.0, 420.0)
+@export var design_panel_size := Vector2(760.0, 500.0)
 @export var design_top_margin := 126.0
 
 @onready var main_panel: PanelContainer = %MainPanel
@@ -21,6 +21,10 @@ const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 @onready var second_objective_label: Label = %SecondQuestObjectiveLabel
 @onready var second_progress_label: Label = %SecondQuestProgressLabel
 @onready var second_status_label: Label = %SecondQuestStatusLabel
+@onready var third_name_label: Label = %ThirdQuestNameLabel
+@onready var third_objective_label: Label = %ThirdQuestObjectiveLabel
+@onready var third_progress_label: Label = %ThirdQuestProgressLabel
+@onready var third_status_label: Label = %ThirdQuestStatusLabel
 
 var is_open := false
 var _quest_summaries: Array[Dictionary] = []
@@ -59,6 +63,7 @@ func refresh() -> void:
 	_quest_summaries = _build_quest_summaries(save_data)
 	_apply_quest_summary(0, first_name_label, first_objective_label, first_progress_label, first_status_label)
 	_apply_quest_summary(1, second_name_label, second_objective_label, second_progress_label, second_status_label)
+	_apply_quest_summary(2, third_name_label, third_objective_label, third_progress_label, third_status_label)
 
 
 func get_display_state() -> Dictionary:
@@ -86,13 +91,13 @@ func preview_layout(viewport_size: Vector2) -> Rect2:
 
 func _apply_styles() -> void:
 	UIStyleScript.apply_overlay_panel_style(main_panel)
-	for label in [title_label, first_name_label, second_name_label]:
+	for label in [title_label, first_name_label, second_name_label, third_name_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_BODY)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_PRIMARY)
-	for label in [hint_label, first_objective_label, second_objective_label]:
+	for label in [hint_label, first_objective_label, second_objective_label, third_objective_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_HELP)
-	for label in [first_progress_label, second_progress_label, first_status_label, second_status_label]:
+	for label in [first_progress_label, second_progress_label, third_progress_label, first_status_label, second_status_label, third_status_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_STATUS)
 

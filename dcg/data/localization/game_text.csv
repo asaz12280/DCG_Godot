@@ -230,6 +230,7 @@ ui.base.quest_active,進行中,Active,Active,进行中
 ui.base.submit_quest,回報任務,Submit,Submit,回报任务
 ui.base.quest_objective,帶回,Extract,Extract,带回
 ui.base.quest_kill_objective,擊倒,Eliminate,Eliminate,击倒
+ui.base.quest_location_objective,前往,Reach,Reach,前往
 ui.base.quest_progress,進度,Progress,Progress,进度
 ui.raid_hud.goal_title,目前目標,Current objective,Current objective,当前目标
 ui.raid_hud.objective,搜索物資 / 小心敵人 / 前往撤離點,Search supplies / Watch enemies / Reach extraction,Search supplies / Watch enemies / Reach extraction,搜索物资 / 小心敌人 / 前往撤离点
@@ -278,3 +279,5 @@ ui.raid_result.lost_items,遺失物品,Lost,Lost,遗失物品
 ui.raid_result.safe_pocket_items,保險格,Safe Pocket,Safe Pocket,保险格
 enemy.scavenger.name,拾荒者,Scavenger,Scavenger,拾荒者
 enemy.unknown.name,未知敵人,Unknown enemy,Unknown enemy,未知敌人
+location.radio_tower.name,訊號塔,Signal tower,Signal tower,讯号塔
+location.unknown.name,未知地點,Unknown location,Unknown location,未知地点

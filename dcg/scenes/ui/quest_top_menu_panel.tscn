@@ -8,7 +8,7 @@ anchors_preset = 0
 offset_left = 580.0
 offset_top = 126.0
 offset_right = 1340.0
-offset_bottom = 546.0
+offset_bottom = 626.0
 mouse_filter = 2
 script = ExtResource("1_quest_top_menu_panel")
 
@@ -118,6 +118,43 @@ text = "進度: 拾荒者 0/1"
 autowrap_mode = 3
 
 [node name="SecondQuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進行中"
+
+[node name="ThirdQuestCard" type="PanelContainer" parent="MainPanel/PanelMargin/Content/QuestCards"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ThirdQuestNameLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "偵察訊號塔"
+
+[node name="ThirdQuestObjectiveLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "前往: 訊號塔 x1"
+autowrap_mode = 3
+
+[node name="ThirdQuestProgressLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "進度: 訊號塔 0/1"
+autowrap_mode = 3
+
+[node name="ThirdQuestStatusLabel" type="Label" parent="MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "進行中"

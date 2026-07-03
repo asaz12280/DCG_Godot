@@ -5,6 +5,7 @@ const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const FIRST_SALVAGE_QUEST := preload("res://data/quests/first_salvage.tres")
 const FIRST_SCAVENGER_HUNT_QUEST := preload("res://data/quests/first_scavenger_hunt.tres")
+const RADIO_TOWER_SCOUT_QUEST := preload("res://data/quests/radio_tower_scout.tres")
 
 
 static func text(owner: Object, key: StringName, fallback: String) -> String:
@@ -17,6 +18,10 @@ static func first_salvage_quest() -> Resource:
 
 static func first_scavenger_hunt_quest() -> Resource:
 	return FIRST_SCAVENGER_HUNT_QUEST
+
+
+static func radio_tower_scout_quest() -> Resource:
+	return RADIO_TOWER_SCOUT_QUEST
 
 
 static func selected_quest_def(save_data: Dictionary) -> Resource:
@@ -42,11 +47,20 @@ static func quest_objective_text(owner: Object, quest_def: Resource) -> String:
 	var parts: Array[String] = []
 	var objectives: Array = quest_def.get("objectives") as Array
 	for objective in objectives:
-		if str(quest_def.get("objective_type")) == "kill":
-			parts.append("%s x%d" % [enemy_name(owner, str(objective.get("enemy_id", ""))), int(objective.get("quantity", 0))])
-		else:
-			parts.append("%s x%d" % [item_name_from_path(owner, str(objective.get("item_path", ""))), int(objective.get("quantity", 0))])
-	var verb := text(owner, &"ui.base.quest_kill_objective", "擊倒") if str(quest_def.get("objective_type")) == "kill" else text(owner, &"ui.base.quest_objective", "帶回")
+		match str(quest_def.get("objective_type")):
+			"kill":
+				parts.append("%s x%d" % [enemy_name(owner, str(objective.get("enemy_id", ""))), int(objective.get("quantity", 0))])
+			"location":
+				parts.append("%s x%d" % [location_name(owner, str(objective.get("location_id", ""))), int(objective.get("quantity", 0))])
+			_:
+				parts.append("%s x%d" % [item_name_from_path(owner, str(objective.get("item_path", ""))), int(objective.get("quantity", 0))])
+	var objective_type := str(quest_def.get("objective_type"))
+	var verb := text(owner, &"ui.base.quest_objective", "帶回")
+	match objective_type:
+		"kill":
+			verb = text(owner, &"ui.base.quest_kill_objective", "擊倒")
+		"location":
+			verb = text(owner, &"ui.base.quest_location_objective", "前往")
 	return "%s: %s" % [verb, " 或 ".join(parts)]
 
 
@@ -55,13 +69,24 @@ static func quest_progress_text(owner: Object, quest_state_data: Dictionary, que
 	var parts: Array[String] = []
 	var objectives: Array = quest_def.get("objectives") as Array
 	for objective in objectives:
-		var is_kill := str(quest_def.get("objective_type")) == "kill"
+		var objective_type := str(quest_def.get("objective_type"))
+		var is_kill := objective_type == "kill"
+		var is_location := objective_type == "location"
 		var item_path := str(objective.get("item_path", ""))
 		var enemy_id := str(objective.get("enemy_id", ""))
-		var progress_key := QuestStateScript.kill_progress_key(enemy_id) if is_kill else item_path
+		var location_id := str(objective.get("location_id", ""))
+		var progress_key := item_path
+		if is_kill:
+			progress_key = QuestStateScript.kill_progress_key(enemy_id)
+		elif is_location:
+			progress_key = QuestStateScript.location_progress_key(location_id)
 		var current := int(progress.get(progress_key, 0))
 		var required := int(objective.get("quantity", 0))
-		var label := enemy_name(owner, enemy_id) if is_kill else item_name_from_path(owner, item_path)
+		var label := item_name_from_path(owner, item_path)
+		if is_kill:
+			label = enemy_name(owner, enemy_id)
+		elif is_location:
+			label = location_name(owner, location_id)
 		parts.append("%s %d/%d" % [label, mini(current, required), required])
 	return "%s: %s" % [text(owner, &"ui.base.quest_progress", "進度"), " 或 ".join(parts)]
 
@@ -104,6 +129,14 @@ static func enemy_name(owner: Object, enemy_id: String) -> String:
 			return enemy_id.capitalize() if enemy_id != "" else text(owner, &"enemy.unknown.name", "未知敵人")
 
 
+static func location_name(owner: Object, location_id: String) -> String:
+	match location_id:
+		"radio_tower":
+			return text(owner, &"location.radio_tower.name", "訊號塔")
+		_:
+			return location_id.capitalize() if location_id != "" else text(owner, &"location.unknown.name", "未知地點")
+
+
 static func difficulty_name(owner: Object, difficulty_id: String) -> String:
 	match difficulty_id:
 		"easy":
@@ -115,7 +148,7 @@ static func difficulty_name(owner: Object, difficulty_id: String) -> String:
 
 
 static func quest_defs() -> Array[Resource]:
-	return [FIRST_SALVAGE_QUEST, FIRST_SCAVENGER_HUNT_QUEST]
+	return [FIRST_SALVAGE_QUEST, FIRST_SCAVENGER_HUNT_QUEST, RADIO_TOWER_SCOUT_QUEST]
 
 
 static func quests_dict(value: Variant) -> Dictionary:

@@ -82,8 +82,40 @@ static func update_from_enemy_killed(raw_state: Dictionary, quest_def: Resource,
 	return state
 
 
+static func update_from_location_reached(raw_state: Dictionary, quest_def: Resource, location_id: String, count: int = 1) -> Dictionary:
+	var state := normalize(raw_state, quest_def)
+	if quest_def == null or not bool(quest_def.call("is_valid")):
+		return state
+	if str(quest_def.get("objective_type")) != "location":
+		return state
+	if str(state.get("state", "")) == STATE_COMPLETED:
+		return state
+	if location_id == "" or count <= 0:
+		return state
+
+	var progress: Dictionary = state.get("progress", {}) as Dictionary
+	for objective in _objectives(quest_def):
+		if str(objective.get("location_id", "")) != location_id:
+			continue
+		var required := int(objective.get("quantity", 0))
+		var progress_key := location_progress_key(location_id)
+		var current := int(progress.get(progress_key, 0)) + count
+		progress[progress_key] = mini(current, required)
+
+	state["progress"] = progress
+	if _is_ready(progress, quest_def):
+		state["state"] = STATE_READY
+	else:
+		state["state"] = STATE_ACTIVE
+	return state
+
+
 static func kill_progress_key(enemy_id: String) -> String:
 	return "kill:%s" % enemy_id
+
+
+static func location_progress_key(location_id: String) -> String:
+	return "location:%s" % location_id
 
 
 static func can_claim(raw_state: Dictionary, quest_def: Resource) -> bool:
@@ -133,7 +165,12 @@ static func _is_ready(progress: Dictionary, quest_def: Resource) -> bool:
 		return false
 	for objective in objectives:
 		var item_path := str(objective.get("item_path", ""))
-		var progress_key := kill_progress_key(str(objective.get("enemy_id", ""))) if objective_type == "kill" else item_path
+		var progress_key := item_path
+		match objective_type:
+			"kill":
+				progress_key = kill_progress_key(str(objective.get("enemy_id", "")))
+			"location":
+				progress_key = location_progress_key(str(objective.get("location_id", "")))
 		var required := int(objective.get("quantity", 0))
 		if int(progress.get(progress_key, 0)) < required:
 			return false

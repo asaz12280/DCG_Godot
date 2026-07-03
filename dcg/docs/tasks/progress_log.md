@@ -2953,3 +2953,28 @@
 ### Next
 
 - Continue with task twenty-two: one location quest.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Two
+
+### Completed
+
+- Added a new `location` quest objective type to `QuestDef` and save-backed location progress to `QuestState`.
+- Added the `radio_tower_scout` quest as the first location interaction task: reach and investigate the signal tower.
+- Added `LocationQuestTrigger3D`, a player-visible Raid trigger that records `location:radio_tower` progress through `SaveGameManager`.
+- Added a visible `RadioTowerQuestPoint` to the existing Raid map with a blue zone marker, simple signal tower marker, and Traditional Chinese interaction prompt.
+- Expanded the Quest Top Menu to show a third node-first quest card for the location quest.
+- Updated Top Menu validation and added `tools/validate_location_quest_flow.gd` to prove the interaction updates saved progress and live Top Menu state.
+- Marked Dev Slice 0.2 enemy-first task twenty-two complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Location quest validation reports `[location_quest_flow] OK location=visible interact=saves_progress top_menu=live_update boundaries=clean`.
+- Top Menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt_location layout=fit ui_manager=owns_state boundaries=clean`.
+- Kill quest flow validation reports `[quest_kill_enemy_flow] OK enemy=normal_raid kill=saves_progress top_menu=live_update boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Player visibility health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay, main menu, and Base 3D scenes all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-three: extraction and death result differences.

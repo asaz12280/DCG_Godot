@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="QuestDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_def.gd" id="1_quest_def"]
+
+[resource]
+script = ExtResource("1_quest_def")
+id = &"radio_tower_scout"
+display_name = "偵察訊號塔"
+description = "前往地圖上的訊號塔，確認附近是否還有可用通訊。"
+objective_type = "location"
+objectives = Array[Dictionary]([{
+"location_id": "radio_tower",
+"quantity": 1
+}])
+reward_money = 40

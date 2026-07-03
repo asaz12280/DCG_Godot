@@ -24,7 +24,7 @@ func _initialize() -> void:
 	_validate_node_first_structure()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean")
+		print("[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt_location layout=fit ui_manager=owns_state boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -169,7 +169,7 @@ func _validate_quest_panel_layout() -> void:
 			_errors.append("Quest top-menu panel should fit inside viewport at %s." % viewport_size)
 		if rect.size.x > viewport_size.x * 0.55:
 			_errors.append("Quest top-menu panel should not cover too much horizontal gameplay view at %s." % viewport_size)
-		if rect.size.y > viewport_size.y * 0.50:
+		if rect.size.y > viewport_size.y * 0.70:
 			_errors.append("Quest top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 		_validate_quest_summaries(state)
@@ -233,6 +233,10 @@ func _validate_node_first_structure() -> void:
 		"MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows/SecondQuestObjectiveLabel",
 		"MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows/SecondQuestProgressLabel",
 		"MainPanel/PanelMargin/Content/QuestCards/SecondQuestCard/Margin/Rows/SecondQuestStatusLabel",
+		"MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows/ThirdQuestNameLabel",
+		"MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows/ThirdQuestObjectiveLabel",
+		"MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows/ThirdQuestProgressLabel",
+		"MainPanel/PanelMargin/Content/QuestCards/ThirdQuestCard/Margin/Rows/ThirdQuestStatusLabel",
 	]:
 		if panel.get_node_or_null(path) == null:
 			_errors.append("Quest panel scene should provide node-first UI path: %s" % path)
@@ -287,7 +291,7 @@ func _validate_source_boundaries() -> void:
 	for required in ["BaseScreenViewModelScript.quest_defs", "QuestStateScript", "get_slot_data"]:
 		if not panel_source.contains(required):
 			_errors.append("QuestTopMenuPanel should read quest model state through %s." % required)
-	for forbidden in ["claim_reward", "save_slot_data", "RaidResultApplier", "WeaponController3D", "InventoryModel", "LootContainer3D"]:
+	for forbidden in ["claim_reward", "save_slot_data", "RaidResultApplier", "WeaponController3D", "InventoryModel", "LootContainer3D", "LocationQuestTrigger3D", "RadioTowerQuestPoint"]:
 		if panel_source.contains(forbidden):
 			_errors.append("QuestTopMenuPanel should be display-only and not own gameplay state: %s." % forbidden)
 
@@ -318,21 +322,26 @@ func _validate_source_boundaries() -> void:
 
 func _validate_quest_summaries(state: Dictionary) -> void:
 	var quests: Array = state.get("quests", []) as Array
-	if quests.size() < 2:
-		_errors.append("Quest panel should show both early collect and kill quests.")
+	if quests.size() < 3:
+		_errors.append("Quest panel should show early collect, kill, and location quests.")
 		return
-	var text := "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
-		quests[0].get("name", ""),
-		quests[0].get("objective", ""),
-		quests[0].get("progress", ""),
-		quests[0].get("status", ""),
-		quests[1].get("name", ""),
-		quests[1].get("objective", ""),
-		quests[1].get("progress", ""),
-		quests[1].get("status", ""),
-	]
-	for term in ["首次回收", "帶回", "進度", "首次獵捕拾荒者", "擊倒", "拾荒者"]:
-		_require_terms(text, [term], "Quest top-menu panel should show collect and kill quest details.")
+	var text_parts: Array[String] = []
+	var quest_ids: Array[String] = []
+	for entry in quests:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var summary := entry as Dictionary
+		quest_ids.append(str(summary.get("id", "")))
+		text_parts.append(str(summary.get("name", "")))
+		text_parts.append(str(summary.get("objective", "")))
+		text_parts.append(str(summary.get("progress", "")))
+		text_parts.append(str(summary.get("status", "")))
+	var text := "\n".join(text_parts)
+	for required_id in ["first_salvage", "first_scavenger_hunt", "radio_tower_scout"]:
+		if not quest_ids.has(required_id):
+			_errors.append("Quest top-menu panel should include quest id `%s`." % required_id)
+	for term in ["首次回收", "帶回", "進度", "首次獵捕拾荒者", "擊倒", "拾荒者", "偵察訊號塔", "前往", "訊號塔"]:
+		_require_terms(text, [term], "Quest top-menu panel should show collect, kill, and location quest details.")
 	for token in ["Quest List", "Track current", "Active", "Ready", "Completed"]:
 		if text.contains(token) or str(state.get("title", "")).contains(token) or str(state.get("hint", "")).contains(token):
 			_errors.append("Quest top-menu panel should not show English fallback text.")

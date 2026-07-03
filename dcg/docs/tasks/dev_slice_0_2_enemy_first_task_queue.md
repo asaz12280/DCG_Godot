@@ -475,7 +475,7 @@ The player should be able to:
 
 ### 任務二十二：地點互動任務一種
 
-狀態：未開始
+狀態：完成
 
 優先度：中
 

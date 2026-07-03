@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene load_steps=35 format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -25,6 +25,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/map_top_menu_panel.tscn" id="23_map_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/scavenger_3d.tscn" id="24_scavenger"]
 [ext_resource type="Resource" path="res://data/items/keys/warehouse_key.tres" id="25_warehouse_key"]
+[ext_resource type="Script" path="res://scripts/quests/location_quest_trigger_3d.gd" id="26_location_quest"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -77,6 +78,26 @@ roughness = 0.68
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_extraction_zone"]
 radius = 1.6
 height = 1.8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_radio_zone"]
+top_radius = 1.1
+bottom_radius = 1.1
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_radio_zone"]
+albedo_color = Color(0.34, 0.54, 0.9, 0.7)
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_radio_tower"]
+size = Vector3(0.22, 2.2, 0.22)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_radio_tower"]
+albedo_color = Color(0.38, 0.44, 0.5, 1)
+roughness = 0.68
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_radio_zone"]
+radius = 1.15
+height = 1.6
 
 [node name="PlayerTestWorld3D" type="Node3D" unique_id=533737286]
 
@@ -204,6 +225,35 @@ font_size = 36
 outline_size = 8
 modulate = Color(1, 0.86, 0.32, 1)
 outline_modulate = Color(0.08, 0.07, 0.04, 1)
+
+[node name="RadioTowerQuestPoint" type="Area3D" parent="SceneProps" groups=["location_quest_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7, 0.85, -3.45)
+script = ExtResource("26_location_quest")
+location_id = "radio_tower"
+prompt_text = "按 E 調查訊號塔"
+completed_text = "訊號塔已記錄"
+
+[node name="ZoneMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
+mesh = SubResource("CylinderMesh_radio_zone")
+surface_material_override/0 = SubResource("StandardMaterial3D_radio_zone")
+
+[node name="TowerMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 0.25, 0)
+mesh = SubResource("BoxMesh_radio_tower")
+surface_material_override/0 = SubResource("StandardMaterial3D_radio_tower")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RadioTowerQuestPoint"]
+shape = SubResource("CylinderShape3D_radio_zone")
+
+[node name="PromptLabel" type="Label3D" parent="SceneProps/RadioTowerQuestPoint"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
+billboard = 1
+text = "按 E 調查訊號塔"
+font_size = 32
+outline_size = 8
+modulate = Color(0.64, 0.84, 1, 1)
+outline_modulate = Color(0.05, 0.08, 0.16, 1)
 
 [node name="ScavengerPatrol01" parent="SceneProps" unique_id=1735923851 instance=ExtResource("24_scavenger")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 4.8, 0, -1.6)
