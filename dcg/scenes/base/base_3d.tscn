@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/gameplay/top_down_camera_3d.gd" id="2_camera"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/quest_top_menu_panel.tscn" id="10_quest_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/status_top_menu_panel.tscn" id="11_status_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/map_top_menu_panel.tscn" id="12_map_top_menu_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/raid_briefing_panel.tscn" id="13_raid_briefing_panel"]
 
 [sub_resource type="Environment" id="Environment_base"]
 background_mode = 1
@@ -259,6 +260,7 @@ script = ExtResource("3_interaction_controller")
 player_path = NodePath("../Player3D")
 prompt_label_path = NodePath("../PromptLabel")
 panel_path = NodePath("../HUD/BaseInteractionPanel")
+raid_briefing_panel_path = NodePath("../HUD/RaidBriefingPanel")
 
 [node name="PromptLabel" type="Label3D" parent="."]
 visible = false
@@ -298,6 +300,8 @@ grow_vertical = 2
 script = ExtResource("5_player_hud")
 
 [node name="BaseInteractionPanel" parent="HUD" instance=ExtResource("4_interaction_panel")]
+
+[node name="RaidBriefingPanel" parent="HUD" instance=ExtResource("13_raid_briefing_panel")]
 
 [node name="InventoryEquipmentUI" type="Control" parent="HUD"]
 layout_mode = 3

@@ -1,0 +1,102 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/raid_briefing_panel.gd" id="1_panel_script"]
+
+[node name="RaidBriefingPanel" type="Control"]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_panel_script")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.38)
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 550.0
+offset_top = 320.0
+offset_right = 1370.0
+offset_bottom = 750.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 28
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "出擊簡報"
+
+[node name="Separator" type="HSeparator" parent="MainPanel/Margin/Content"]
+layout_mode = 2
+
+[node name="LocationLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "地點：郊外回收區"
+autowrap_mode = 3
+
+[node name="RiskLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "風險：偵測到拾荒者，會追蹤並近身攻擊。"
+autowrap_mode = 3
+
+[node name="ObjectiveLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "目標：搜索物資，保持距離，必要時裝填手槍反擊，前往撤離點。"
+autowrap_mode = 3
+
+[node name="LoadoutLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "攜帶：依目前裝備與背包出擊。"
+autowrap_mode = 3
+
+[node name="HintLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "確認後會離開基地並進入出擊關卡。"
+autowrap_mode = 3
+
+[node name="ActionRow" type="HBoxContainer" parent="MainPanel/Margin/Content"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 12
+
+[node name="CancelButton" type="Button" parent="MainPanel/Margin/Content/ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 46)
+layout_mode = 2
+text = "取消"
+
+[node name="StartButton" type="Button" parent="MainPanel/Margin/Content/ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 46)
+layout_mode = 2
+text = "開始出擊"

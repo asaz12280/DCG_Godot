@@ -2747,3 +2747,23 @@
 ### Next
 
 - Continue with task thirteen: Raid pre-sortie briefing UI.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Thirteen
+
+### Completed
+
+- Added the node-first `RaidBriefingPanel` scene under the 3D Base HUD so the raid gate now opens a Traditional Chinese sortie briefing before loading gameplay.
+- Updated `BaseInteractionController3D` so the raid gate only prepares the loadout and changes scene after the briefing confirms `開始出擊`.
+- Kept the briefing UI display-only: it does not own save, inventory, weapon, or gameplay scene responsibilities.
+- Updated the Base runtime HUD validation to preserve TAB backpack, ESC pause, visible crosshair, and confirm-through-briefing raid entry behavior.
+- Marked Dev Slice 0.2 enemy-first task thirteen complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Raid briefing validation reports `[raid_briefing_ui] OK open=briefing cancel=base confirm=raid layout=fit text=zh boundaries=clean`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- Base 3D scene and gameplay scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task fourteen: Raid map information panel improvements.
