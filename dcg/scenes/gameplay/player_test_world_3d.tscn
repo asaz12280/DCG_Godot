@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene load_steps=29 format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/status_top_menu_panel.tscn" id="22_status_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/map_top_menu_panel.tscn" id="23_map_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/scavenger_3d.tscn" id="24_scavenger"]
+[ext_resource type="Resource" path="res://data/items/keys/warehouse_key.tres" id="25_warehouse_key"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -183,6 +184,26 @@ transform = Transform3D(0.86, 0, 0.28, 0, 0.9, 0, -0.28, 0, 0.86, 5.2, 0, 1.9)
 
 [node name="LootContainerSouth" parent="SceneProps" unique_id=1499102481 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.72, 0, -0.42, 0, 0.84, 0, 0.42, 0, 0.72, -1.8, 0, 5.2)
+
+[node name="LockedWarehouseCache" parent="SceneProps" instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.86, 0, 0, 0, 0.86, 0, 0, 0, 0.86, 2.8, 0, -3.25)
+is_locked = true
+required_key = ExtResource("25_warehouse_key")
+display_name = "上鎖箱"
+prompt_text = "按 E 開啟上鎖箱"
+opened_prompt_text = "按 E 查看上鎖箱"
+locked_prompt_text = "需要鑰匙"
+unlocked_prompt_text = "按 E 開啟上鎖箱"
+missing_key_feedback = "需要倉庫鑰匙"
+
+[node name="LockedLabel" type="Label3D" parent="SceneProps/LockedWarehouseCache"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
+billboard = 1
+text = "上鎖箱"
+font_size = 36
+outline_size = 8
+modulate = Color(1, 0.86, 0.32, 1)
+outline_modulate = Color(0.08, 0.07, 0.04, 1)
 
 [node name="ScavengerPatrol01" parent="SceneProps" unique_id=1735923851 instance=ExtResource("24_scavenger")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 4.8, 0, -1.6)

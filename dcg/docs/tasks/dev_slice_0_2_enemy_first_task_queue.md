@@ -457,7 +457,7 @@ The player should be able to:
 
 ### 任務二十一：特殊物資來源一種
 
-狀態：未開始
+狀態：完成
 
 優先度：中
 

@@ -2928,3 +2928,28 @@
 ### Next
 
 - Continue with task twenty-one: one special material source.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-One
+
+### Completed
+
+- Added a player-visible locked warehouse cache to the existing Raid map without adding a second map or new content volume.
+- Extended `LootContainer3D` with locked access state, a required key item, blocked-open feedback, and state reporting while keeping the normal container grid and transfer bridge unchanged.
+- Used the existing No.11 warehouse key as the single unlock condition for the locked cache.
+- Added a visible `上鎖箱` label and locked prompt so the special material source is distinguishable from normal boxes in Raid.
+- Added `tools/validate_locked_container_flow.gd` to prove the locked box blocks without the key, opens with the key, rolls contents only after unlock, and uses the existing container capacity UI.
+- Marked Dev Slice 0.2 enemy-first task twenty-one complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Locked container validation reports `[locked_container_flow] OK locked=visible key=required open=container_grid boundaries=clean`.
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- Container transfer validation reports `[container_transfer] OK click=moves_to_backpack full=feedback boundaries=clean`.
+- Container open flow validation reports `[container_open_flow] OK interaction=opens_ui contents=container_owned ui_manager=owner`.
+- Player-visible V2 smoke validation reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Gameplay scene and main scene both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-two: one location quest.
