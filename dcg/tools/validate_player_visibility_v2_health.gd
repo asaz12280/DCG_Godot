@@ -70,6 +70,7 @@ var _required_files := PackedStringArray([
 	"res://docs/design/duckov_gap_minimal_feature_plan.md",
 	"res://tools/validate_player_visible_0_2_slice.gd",
 	"res://tools/validate_ui_layout_quality_0_2.gd",
+	"res://tools/validate_three_raid_loop_0_2.gd",
 	"res://tools/validate_enemy_attack_player.gd",
 	"res://tools/validate_projectile_hit_enemy.gd",
 	"res://tools/validate_pistol_fire_vfx.gd",
@@ -391,6 +392,7 @@ func _validate_health_g_enemy_first_0_2_boundaries() -> void:
 	for required in PackedStringArray([
 		"### 任務二十八：Project Health Check G",
 		"validate_player_visible_0_2_slice.gd",
+		"validate_three_raid_loop_0_2.gd",
 		"validate_enemy_architecture_health.gd",
 		"validate_player_visibility_v2_health.gd",
 		"Standard Validation Set",
@@ -444,6 +446,7 @@ func _validate_health_g_enemy_first_0_2_boundaries() -> void:
 		"RaidResultPanelScript",
 		"validate_player_visible_0_2_slice.gd",
 		"validate_ui_layout_quality_0_2.gd",
+		"validate_three_raid_loop_0_2.gd",
 	]):
 		_expect_contains(enemy_health_text, required, "Enemy architecture health should cover term %s." % required)
 
@@ -480,6 +483,7 @@ func _validate_queue_mentions_health_check() -> void:
 	_expect_contains(queue_text, "validate_player_visible_v2_slice.gd", "V2 task queue should name the player-visible slice validator.")
 	var enemy_queue_text := _read_text(ENEMY_FIRST_QUEUE_DOC)
 	_expect_contains(enemy_queue_text, "validate_player_visible_0_2_slice.gd", "Enemy-first queue should name the full player-visible 0.2 smoke validator.")
+	_expect_contains(enemy_queue_text, "validate_three_raid_loop_0_2.gd", "Enemy-first queue should name the three-raid 0.2 validator.")
 	_expect_contains(enemy_queue_text, "validate_enemy_architecture_health.gd", "Enemy-first queue should name the enemy architecture health validator.")
 
 

@@ -176,6 +176,7 @@ func _validate_source_boundaries() -> void:
 		"res://tools/validate_raid_return_to_base_3d.gd",
 		"res://tools/validate_player_visible_0_2_slice.gd",
 		"res://tools/validate_ui_layout_quality_0_2.gd",
+		"res://tools/validate_three_raid_loop_0_2.gd",
 		"res://tools/validate_projectile_hit_enemy.gd",
 		"res://tools/validate_pistol_fire_vfx.gd",
 	]:
@@ -212,6 +213,21 @@ func _validate_dev_slice_0_2_validator_coverage() -> void:
 			if not ui_text.contains(required):
 				_errors.append("UI layout 0.2 validator should report %s." % required)
 
+	var loop_text := FileAccess.get_file_as_string("res://tools/validate_three_raid_loop_0_2.gd")
+	if loop_text == "":
+		_errors.append("Could not read Dev Slice 0.2 three-raid loop validator.")
+	else:
+		for required in [
+			"Base3DScene",
+			"BaseWorkbenchServiceScript",
+			"GameplayScene",
+			"ScavengerScene",
+			"RaidResultApplierScript",
+			"VALIDATION_SAVE_ROOT",
+		]:
+			if not loop_text.contains(required):
+				_errors.append("Three-raid 0.2 validator should cover %s." % required)
+
 	var queue_text := FileAccess.get_file_as_string("res://docs/tasks/dev_slice_0_2_enemy_first_task_queue.md")
 	if queue_text == "":
 		_errors.append("Could not read enemy-first task queue for Health Check G.")
@@ -219,6 +235,7 @@ func _validate_dev_slice_0_2_validator_coverage() -> void:
 		for required in [
 			"### 任務二十八：Project Health Check G",
 			"validate_player_visible_0_2_slice.gd",
+			"validate_three_raid_loop_0_2.gd",
 			"validate_enemy_architecture_health.gd",
 			"validate_player_visibility_v2_health.gd",
 		]:

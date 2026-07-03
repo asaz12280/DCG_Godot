@@ -3116,3 +3116,26 @@
 ### Next
 
 - Continue with task twenty-nine: three consecutive playthrough validation.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Nine
+
+### Completed
+
+- Added `tools/validate_three_raid_loop_0_2.gd` as the Dev Slice 0.2 three-raid loop validator.
+- The validator now verifies raid one extraction into stash, First Salvage claim, visible 3D Base workbench upgrade, raid two enemy-caused player death through RaidSession/RaidResultApplier, and raid three upgraded loadout effect, Scavenger kill quest progress, extraction, quest claim, and save reload persistence.
+- Kept the 0.2 loop independent from the old 2D BaseScreen flow by using 3D Base, `BaseWorkbenchService`, `RaidResultApplier`, `QuestState`, and normal Raid/Scavenger scenes.
+- Added the new validator to player visibility and enemy architecture health coverage.
+- Marked Dev Slice 0.2 enemy-first task twenty-nine complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Dev Slice 0.2 three-raid loop validation reports `[three_raid_loop_0_2] OK raid1=extract_3d_base_upgrade raid2=enemy_death_preserves raid3=upgrade_kill_extract reload=persistent`.
+- Original three-raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded health_g=covered`.
+- Enemy architecture health validation reports `[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered slice_0_2=covered`.
+- Player-visible 0.2 smoke validation completed with exit code 0.
+- Main scene, Main Menu scene, and Gameplay Raid scene all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task thirty: Dev Slice 0.2 completion report and backup.
