@@ -2696,3 +2696,23 @@
 ### Next
 
 - Continue with task eleven: enemy-caused player death and result flow.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Eleven
+
+### Completed
+
+- Added `tools/validate_enemy_player_death_result.gd` to validate the normal Raid Scavenger can attack, kill the player, show the death result panel, list lost backpack items, and return to 3D Base.
+- Added `tools/validate_raid_loss_rules.gd` to validate backpack loss, safe-pocket retention, unchanged base stash, and clean RaidLossRules/RaidResultApplier boundaries.
+- Updated `tools/validate_raid_return_to_base_3d.gd` so result-to-base validation covers both extraction and death outcomes.
+- Confirmed existing gameplay systems already route player death through `Player3D -> RaidSession -> RaidResultApplier -> RaidResultPanel` without adding enemy/UI shortcuts.
+- Marked Dev Slice 0.2 enemy-first task eleven complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy player death result validation reports `[enemy_player_death_result] OK enemy=attacks death=result_panel lost_items=visible return=base_3d`.
+- Raid loss rules validation reports `[raid_loss_rules] OK lost=backpack kept=safe_pocket stash=unchanged boundaries=clean`.
+- Raid return to Base validation reports `[raid_return_to_base_3d] OK result=applied destination=base_3d stash=visible`.
+
+### Next
+
+- Continue with task twelve: Project Health Check C.

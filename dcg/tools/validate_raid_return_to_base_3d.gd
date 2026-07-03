@@ -15,6 +15,7 @@ var _created_save_manager := false
 func _initialize() -> void:
 	_setup_save_manager()
 	await _validate_extraction_result_returns_to_3d_base()
+	await _validate_death_result_returns_to_3d_base()
 	_cleanup_validation_root(_save_manager.save_root_path)
 	if _created_save_manager:
 		_free_node(_save_manager)
@@ -99,6 +100,54 @@ func _validate_extraction_result_returns_to_3d_base() -> void:
 		_errors.append("Base return should preserve extracted stash state.")
 	if int(returned_save.get("money", 0)) != 12:
 		_errors.append("Base return should preserve extracted money state.")
+
+	_free_current_scene()
+
+
+func _validate_death_result_returns_to_3d_base() -> void:
+	_setup_save_manager()
+	var gameplay := GameplayScene.instantiate()
+	root.add_child(gameplay)
+	current_scene = gameplay
+	await process_frame
+	await process_frame
+
+	var session := gameplay.get_node_or_null("RaidSession")
+	var panel := gameplay.get_node_or_null("HUD/RaidResultPanel")
+	var applier := gameplay.get_node_or_null("RaidResultApplier")
+	if session == null or panel == null or applier == null:
+		_errors.append("Gameplay scene should include session, result panel, and applier for death return.")
+		_free_current_scene()
+		return
+
+	if not session.register_player_death({
+		"lost_items": [{"item_path": WOOD_PATH, "quantity": 2}],
+		"kept_safe_pocket_items": [{"item_path": AMMO_PATH, "quantity": 6}],
+		"loss_rule": "backpack_lost_safe_pocket_kept",
+	}):
+		_errors.append("Validation raid should be able to register death.")
+	await process_frame
+	await process_frame
+
+	if not bool(panel.visible):
+		_errors.append("RaidResultPanel should be visible after death.")
+	var state: Dictionary = panel.get_display_state()
+	if not str(state.get("outcome", "")).contains("死亡"):
+		_errors.append("Death return validation should show death result text.")
+	if not bool(applier.last_apply_result.get("death_loss", false)):
+		_errors.append("RaidResultApplier should apply death loss before returning to base.")
+	var after_death: Dictionary = _save_manager.get_slot_data(1)
+	if _stash_quantity(after_death, WOOD_PATH) != 0:
+		_errors.append("Death return should not save lost wood to base stash.")
+
+	panel.continue_button.pressed.emit()
+	for _index in range(6):
+		await process_frame
+
+	if current_scene == null:
+		_errors.append("Continue from death result should leave a loaded current scene.")
+	elif current_scene.scene_file_path != BASE_3D_SCENE:
+		_errors.append("Continue from death result should load 3D Base, got `%s`." % current_scene.scene_file_path)
 
 	_free_current_scene()
 
