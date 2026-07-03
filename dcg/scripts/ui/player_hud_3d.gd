@@ -77,6 +77,9 @@ func get_display_state() -> Dictionary:
 		"visible": visible,
 		"has_player": player != null,
 		"crosshair_visible": visible,
+		"health_current": _player_float("health", 0.0),
+		"health_max": _player_max_health(),
+		"health_text": _health_display_text(),
 		"reload_visible": _is_reload_visible(),
 		"reload_progress": float(reload_state.get("progress", 0.0)),
 		"reload_status": str(reload_state.get("status", "idle")),
@@ -314,6 +317,29 @@ func _backpack_compatible_ammo_count() -> int:
 	if player == null or not player.has_method("get_compatible_backpack_ammo_count"):
 		return 0
 	return int(player.call("get_compatible_backpack_ammo_count"))
+
+
+func _player_float(property_name: StringName, fallback: float) -> float:
+	if player == null:
+		return fallback
+	var value: Variant = player.get(property_name)
+	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+		return float(value)
+	return fallback
+
+
+func _player_max_health() -> float:
+	if player == null:
+		return 0.0
+	if player.has_method("get_total_max_health"):
+		return float(player.call("get_total_max_health"))
+	return _player_float(&"max_health", 0.0)
+
+
+func _health_display_text() -> String:
+	var current := _player_float(&"health", 0.0)
+	var maximum := _player_max_health()
+	return "%d / %d" % [roundi(current), roundi(maximum)]
 
 
 func _hud_text(key: StringName, fallback: String) -> String:

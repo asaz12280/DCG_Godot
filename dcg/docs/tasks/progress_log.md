@@ -2434,6 +2434,25 @@
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Five
+
+### Completed
+
+- Confirmed the visible Raid Scavenger can attack the real `Player3D` at close range in the normal Raid scene.
+- Added health fields to `PlayerHud3D.get_display_state()` so player damage can be verified as player-visible HUD feedback, not only internal health data.
+- Added `tools/validate_enemy_attack_player.gd` to verify enemy melee attack, player health reduction, HUD health sync, attack cooldown, and visible attack status.
+- Added `tools/validate_player_damage_flow.gd` to guard the player damage signal and HUD health text update path.
+- Marked Dev Slice 0.2 enemy-first task five complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy attack validation reports `[enemy_attack_player] OK raid=normal attack=damages_player hud=updates cooldown=guarded status=visible`.
+- Player damage flow validation reports `[player_damage_flow] OK damage=accepted health_signal=emits hud=updates death=guarded`.
+
+### Next
+
+- Continue with task six: enemy attack warning and hit feedback visibility.
+
 ## 2026-07-03 Dev Slice 0.2 Enemy-First Task One
 
 ### Completed

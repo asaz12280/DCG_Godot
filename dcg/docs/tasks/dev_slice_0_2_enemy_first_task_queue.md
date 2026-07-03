@@ -147,7 +147,7 @@ The player should be able to:
 
 ### 任務五：敵人近距離攻擊玩家
 
-狀態：未開始
+狀態：完成
 
 優先度：最高
 
