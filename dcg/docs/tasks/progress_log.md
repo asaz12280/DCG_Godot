@@ -2978,3 +2978,24 @@
 ### Next
 
 - Continue with task twenty-three: extraction and death result differences.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Three
+
+### Completed
+
+- Strengthened Raid result outcome text so extraction reads as `撤離成功：帶回物資` and death reads as `行動失敗：死亡`.
+- Updated `validate_raid_result_panel.gd` to require the extracted/dead outcome difference, death lost item rows, and kept safe-pocket rows.
+- Localized the in-world extraction zone prompt from English fallback text to `撤離點`, `撤離中 ... 秒`, and `已撤離`.
+- Confirmed the result panel still routes the continue action back to the 3D Base scene.
+- Marked Dev Slice 0.2 enemy-first task twenty-three complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Raid result panel validation reports `[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits`.
+- Raid loss rules validation reports `[raid_loss_rules] OK lost=backpack kept=safe_pocket stash=unchanged boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Gameplay, main menu, and Base 3D scenes all launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-four: Project Health Check F.

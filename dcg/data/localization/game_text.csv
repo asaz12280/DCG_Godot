@@ -271,8 +271,8 @@ ui.raid_result.transfer_dead,行動失敗：%d 種背包物資列為遺失，%d 
 ui.raid_result.empty_extracted,沒有帶回物品。,No extracted items,No extracted items,没有带回物品。
 ui.raid_result.empty_lost,沒有遺失物品。,No lost items,No lost items,没有遗失物品。
 ui.raid_result.empty_safe_pocket,保險格沒有物品。,No safe pocket items,No safe pocket items,保险格没有物品。
-ui.raid_result.extracted,撤離成功,Extracted,Extracted,撤离成功
-ui.raid_result.dead,死亡,Dead,Dead,死亡
+ui.raid_result.extracted,撤離成功：帶回物資,Extracted: supplies secured,Extracted: supplies secured,撤离成功：带回物资
+ui.raid_result.dead,行動失敗：死亡,Failed: dead,Failed: dead,行动失败：死亡
 ui.raid_result.unknown,未知,Unknown,Unknown,未知
 ui.raid_result.extracted_items,帶回物品,Extracted,Extracted,带回物品
 ui.raid_result.lost_items,遺失物品,Lost,Lost,遗失物品

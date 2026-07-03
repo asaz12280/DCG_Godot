@@ -134,8 +134,8 @@ func _update_prompt() -> void:
 	if _prompt_label == null:
 		return
 	if _completed:
-		_prompt_label.text = "Extracted"
+		_prompt_label.text = "已撤離"
 	elif _tracked_player != null:
-		_prompt_label.text = "Extracting %.1fs" % maxf(required_time - _elapsed, 0.0)
+		_prompt_label.text = "撤離中 %.1f 秒" % maxf(required_time - _elapsed, 0.0)
 	else:
-		_prompt_label.text = "Extraction Zone"
+		_prompt_label.text = "撤離點"

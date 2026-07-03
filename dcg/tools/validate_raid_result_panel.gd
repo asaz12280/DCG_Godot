@@ -16,7 +16,7 @@ func _initialize() -> void:
 	await _validate_gameplay_scene_wiring()
 	_validate_script_boundaries()
 	if _errors.is_empty():
-		print("[raid_result_panel] OK node_first=true transfer=visible loot=shown continue=base layout=fits")
+		print("[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits")
 		quit(0)
 	else:
 		for error in _errors:
@@ -36,6 +36,8 @@ func _validate_extracted_result_display() -> void:
 		_errors.append("RaidResultPanel title should be readable Traditional Chinese.")
 	if not str(state.get("outcome", "")).contains("撤離成功"):
 		_errors.append("RaidResultPanel should show extracted outcome in Traditional Chinese.")
+	if not str(state.get("outcome", "")).contains("帶回物資"):
+		_errors.append("RaidResultPanel extracted outcome should tell the player supplies were secured.")
 	if int(state.get("extracted_rows", 0)) < 2:
 		_errors.append("RaidResultPanel should show extracted item rows.")
 	_validate_visible_transfer_summary(state, true)
@@ -64,8 +66,12 @@ func _validate_dead_result_display() -> void:
 	var state: Dictionary = panel.get_display_state()
 	if not str(state.get("outcome", "")).contains("死亡"):
 		_errors.append("RaidResultPanel should show death outcome in Traditional Chinese.")
+	if not str(state.get("outcome", "")).contains("行動失敗"):
+		_errors.append("RaidResultPanel death outcome should clearly say the action failed.")
 	if int(state.get("lost_rows", 0)) < 1:
 		_errors.append("RaidResultPanel should show lost item rows on death.")
+	if int(state.get("safe_pocket_rows", 0)) < 1:
+		_errors.append("RaidResultPanel should show kept safe pocket rows on death.")
 	_validate_visible_transfer_summary(state, false)
 	_free_node(panel)
 
