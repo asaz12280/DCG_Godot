@@ -11,10 +11,13 @@
 @export var reload_bar_offset: Vector2 = Vector2(0.0, 48.0)
 @export var reload_bar_size: Vector2 = Vector2(190.0, 14.0)
 @export var reload_label_offset: Vector2 = Vector2(0.0, 72.0)
+@export var ammo_panel_position: Vector2 = Vector2(-250.0, -70.0)
+@export var ammo_panel_size: Vector2 = Vector2(210.0, 46.0)
 
 var stamina: float = 100.0
 var max_stamina: float = 100.0
 var player: Node3D
+var weapon_controller: Node = null
 var stamina_visible_time: float = 0.0
 var reload_state: Dictionary = {
 	"active": false,
@@ -28,12 +31,15 @@ var lower_left_fill_style := StyleBoxFlat.new()
 var lower_left_icon_style := StyleBoxFlat.new()
 var reload_background_style := StyleBoxFlat.new()
 var reload_fill_style := StyleBoxFlat.new()
+var ammo_panel_style := StyleBoxFlat.new()
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	player = get_tree().get_first_node_in_group("player")
+	if player != null:
+		weapon_controller = player.get_node_or_null("WeaponController3D")
 	if player != null and player.has_signal("stamina_changed"):
 		player.stamina_changed.connect(_on_stamina_changed)
 	if player != null and player.has_signal("health_changed"):
@@ -74,6 +80,10 @@ func get_display_state() -> Dictionary:
 		"reload_visible": _is_reload_visible(),
 		"reload_progress": float(reload_state.get("progress", 0.0)),
 		"reload_status": str(reload_state.get("status", "idle")),
+		"ammo_visible": true,
+		"ammo_loaded": _weapon_int("current_ammo", 0),
+		"ammo_capacity": _weapon_int("magazine_size", 0),
+		"ammo_text": _ammo_display_text(),
 	}
 
 
@@ -81,6 +91,7 @@ func _draw() -> void:
 	_paint_player_health()
 	_paint_lower_left_health()
 	_paint_stamina_ring()
+	_paint_ammo_panel()
 	_paint_reload_progress()
 	_paint_crosshair()
 
@@ -121,6 +132,11 @@ func _setup_health_styles() -> void:
 	reload_fill_style.corner_radius_top_right = 5
 	reload_fill_style.corner_radius_bottom_left = 5
 	reload_fill_style.corner_radius_bottom_right = 5
+	ammo_panel_style.bg_color = Color(0.12, 0.12, 0.11, 0.86)
+	ammo_panel_style.corner_radius_top_left = 18
+	ammo_panel_style.corner_radius_top_right = 18
+	ammo_panel_style.corner_radius_bottom_left = 18
+	ammo_panel_style.corner_radius_bottom_right = 18
 
 
 func _get_player_screen_position(offset: Vector2) -> Vector2:
@@ -224,6 +240,20 @@ func _paint_reload_progress() -> void:
 	draw_string(font, label_position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.96, 0.98, 0.9, 0.98))
 
 
+func _paint_ammo_panel() -> void:
+	var panel_position := Vector2(size.x + ammo_panel_position.x, size.y + ammo_panel_position.y)
+	var panel_rect := Rect2(panel_position, ammo_panel_size)
+	draw_style_box(ammo_panel_style, panel_rect)
+
+	var font := ThemeDB.fallback_font
+	var title_size := 14
+	var value_size := 22
+	var title := _hud_text(&"ui.raid_hud.ammo", "彈藥")
+	var value := _ammo_display_text()
+	draw_string(font, panel_rect.position + Vector2(16.0, 18.0), title, HORIZONTAL_ALIGNMENT_LEFT, panel_rect.size.x - 32.0, title_size, Color(0.76, 0.82, 0.78, 0.95))
+	draw_string(font, panel_rect.position + Vector2(16.0, 38.0), value, HORIZONTAL_ALIGNMENT_LEFT, panel_rect.size.x - 32.0, value_size, Color(1.0, 1.0, 1.0, 0.98))
+
+
 func _paint_crosshair() -> void:
 	var center := _crosshair_center()
 	var shadow := Color(0.12, 0.12, 0.12, 0.7)
@@ -255,6 +285,29 @@ func _crosshair_center() -> Vector2:
 
 func _is_reload_visible() -> bool:
 	return bool(reload_state.get("active", false))
+
+
+func _has_equipped_weapon() -> bool:
+	return weapon_controller != null and weapon_controller.get("weapon_def") != null
+
+
+func _ammo_display_text() -> String:
+	if not _has_equipped_weapon():
+		return _hud_text(&"ui.raid_hud.weapon_missing", "未裝備")
+	return "%s %d / %d" % [
+		_hud_text(&"ui.player_hud.magazine", "彈匣"),
+		_weapon_int("current_ammo", 0),
+		_weapon_int("magazine_size", 0),
+	]
+
+
+func _weapon_int(property_name: StringName, fallback: int) -> int:
+	if weapon_controller == null:
+		return fallback
+	var value: Variant = weapon_controller.get(property_name)
+	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+		return int(value)
+	return fallback
 
 
 func _hud_text(key: StringName, fallback: String) -> String:

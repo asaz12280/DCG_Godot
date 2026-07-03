@@ -2455,3 +2455,24 @@
 ### Notes
 
 - Root cause: the previous pistol primary-slot fix only covered click/context equip. Drag release still only handled backpack merge/swap or dropping to the world, so dragging onto equipment slots had no equipment path.
+
+## 2026-07-03 Red Projectile And Magazine HUD
+
+### Completed
+
+- Changed the visible 3D projectile material from yellow to bright red with stronger red emission so fired bullets are easier to see.
+- Added a compact ammo panel to `PlayerHud3D` showing the equipped weapon magazine count and capacity, for example `彈匣 0 / 8` before reload and `彈匣 8 / 8` after reload.
+- Kept the ammo UI tied to `WeaponController3D.current_ammo` and `magazine_size` so it reflects the same weapon state used by reload and fire logic.
+- Updated projectile and reload UI validators to guard red projectile color and visible loaded-ammo / magazine-capacity text.
+
+### Verified
+
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages miss=cleans_up hitscan=removed boundaries=clean`.
+- Reload UI validation reports `[reload_ui] OK minimal_hud=reload_progress visible=true completion=clears legacy_panel=hidden boundaries=clean`.
+- Reload flow reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Player-visible V2 smoke reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Base 3D runtime HUD, main scene launch, and gameplay scene launch pass headless validation.
+
+### Notes
+
+- Existing generated localization `.translation` changes and `.uid` files were left untouched.

@@ -51,6 +51,11 @@ func _validate_reload_progress_is_player_visible() -> void:
 	weapon.set("reserve_ammo", 0)
 	if weapon.has_method("_sync_ammo_result"):
 		weapon.call("_sync_ammo_result")
+	await process_frame
+
+	var ammo_state: Dictionary = hud.call("get_display_state")
+	if not str(ammo_state.get("ammo_text", "")).contains("0 / 8"):
+		_errors.append("PlayerHud3D should show loaded ammo and magazine capacity before reload, got `%s`." % str(ammo_state.get("ammo_text", "")))
 
 	_press_reload(player)
 	await physics_frame
@@ -68,6 +73,8 @@ func _validate_reload_progress_is_player_visible() -> void:
 	state = hud.call("get_display_state")
 	if int(weapon.get("current_ammo")) != 8:
 		_errors.append("Reload UI flow should complete and load the pistol magazine.")
+	if not str(state.get("ammo_text", "")).contains("8 / 8"):
+		_errors.append("PlayerHud3D should show loaded ammo and magazine capacity after reload, got `%s`." % str(state.get("ammo_text", "")))
 
 	for _frame in range(40):
 		await physics_frame
@@ -81,7 +88,7 @@ func _validate_reload_progress_is_player_visible() -> void:
 
 func _validate_source_boundaries() -> void:
 	var hud_source := FileAccess.get_file_as_string("res://scripts/ui/player_hud_3d.gd")
-	for required in ["reload_progress_changed", "_on_reload_progress_changed", "_paint_reload_progress", "get_display_state"]:
+	for required in ["reload_progress_changed", "_on_reload_progress_changed", "_paint_reload_progress", "_paint_ammo_panel", "get_display_state"]:
 		if not hud_source.contains(required):
 			_errors.append("PlayerHud3D should expose minimal reload UI term: %s." % required)
 	for forbidden in ["consume_stack_quantity", "reload_from_item", "InventoryModel"]:

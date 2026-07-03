@@ -33,6 +33,13 @@ func _validate_projectile_scene() -> void:
 		_errors.append("Projectile scene should use Projectile3D script.")
 	if projectile.get_node_or_null("MeshInstance3D") == null:
 		_errors.append("Projectile scene should include a MeshInstance3D so the bullet is visible.")
+	else:
+		var mesh := projectile.get_node_or_null("MeshInstance3D") as MeshInstance3D
+		var material := mesh.get_surface_override_material(0) as StandardMaterial3D
+		if material == null:
+			_errors.append("Projectile mesh should use an override material so bullet color is explicit.")
+		elif material.albedo_color.r < 0.9 or material.albedo_color.g > 0.25 or material.albedo_color.b > 0.20:
+			_errors.append("Projectile bullet should use a clearly red material, got %s." % material.albedo_color)
 	if projectile.get_node_or_null("CollisionShape3D") == null:
 		_errors.append("Projectile scene should include a CollisionShape3D for hit detection.")
 	_free_node(projectile)
