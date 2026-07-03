@@ -8,16 +8,26 @@
 @export var ring_radius: float = 18.0
 @export var ring_width: float = 6.0
 @export var crosshair_color: Color = Color(0.98, 0.98, 0.94, 1.0)
+@export var reload_bar_offset: Vector2 = Vector2(0.0, 48.0)
+@export var reload_bar_size: Vector2 = Vector2(190.0, 14.0)
+@export var reload_label_offset: Vector2 = Vector2(0.0, 72.0)
 
 var stamina: float = 100.0
 var max_stamina: float = 100.0
 var player: Node3D
 var stamina_visible_time: float = 0.0
+var reload_state: Dictionary = {
+	"active": false,
+	"progress": 0.0,
+	"status": "idle",
+}
 var health_background_style := StyleBoxFlat.new()
 var health_fill_style := StyleBoxFlat.new()
 var lower_left_panel_style := StyleBoxFlat.new()
 var lower_left_fill_style := StyleBoxFlat.new()
 var lower_left_icon_style := StyleBoxFlat.new()
+var reload_background_style := StyleBoxFlat.new()
+var reload_fill_style := StyleBoxFlat.new()
 
 
 func _ready() -> void:
@@ -28,6 +38,10 @@ func _ready() -> void:
 		player.stamina_changed.connect(_on_stamina_changed)
 	if player != null and player.has_signal("health_changed"):
 		player.health_changed.connect(_on_health_changed)
+	if player != null and player.has_signal("reload_progress_changed"):
+		player.reload_progress_changed.connect(_on_reload_progress_changed)
+	if player != null and player.has_method("get_reload_state"):
+		reload_state = player.call("get_reload_state")
 	_setup_health_styles()
 
 
@@ -47,10 +61,27 @@ func _on_health_changed(_current: float, _maximum: float) -> void:
 	queue_redraw()
 
 
+func _on_reload_progress_changed(state: Dictionary) -> void:
+	reload_state = state.duplicate(true)
+	queue_redraw()
+
+
+func get_display_state() -> Dictionary:
+	return {
+		"visible": visible,
+		"has_player": player != null,
+		"crosshair_visible": visible,
+		"reload_visible": _is_reload_visible(),
+		"reload_progress": float(reload_state.get("progress", 0.0)),
+		"reload_status": str(reload_state.get("status", "idle")),
+	}
+
+
 func _draw() -> void:
 	_paint_player_health()
 	_paint_lower_left_health()
 	_paint_stamina_ring()
+	_paint_reload_progress()
 	_paint_crosshair()
 
 
@@ -80,6 +111,16 @@ func _setup_health_styles() -> void:
 	lower_left_icon_style.corner_radius_top_right = 20
 	lower_left_icon_style.corner_radius_bottom_left = 20
 	lower_left_icon_style.corner_radius_bottom_right = 20
+	reload_background_style.bg_color = Color(0.14, 0.14, 0.12, 0.78)
+	reload_background_style.corner_radius_top_left = 7
+	reload_background_style.corner_radius_top_right = 7
+	reload_background_style.corner_radius_bottom_left = 7
+	reload_background_style.corner_radius_bottom_right = 7
+	reload_fill_style.bg_color = Color(0.56, 0.82, 1.0, 0.96)
+	reload_fill_style.corner_radius_top_left = 5
+	reload_fill_style.corner_radius_top_right = 5
+	reload_fill_style.corner_radius_bottom_left = 5
+	reload_fill_style.corner_radius_bottom_right = 5
 
 
 func _get_player_screen_position(offset: Vector2) -> Vector2:
@@ -162,10 +203,29 @@ func _paint_stamina_ring() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
+func _paint_reload_progress() -> void:
+	if not _is_reload_visible():
+		return
+
+	var center := _crosshair_center()
+	var progress := clampf(float(reload_state.get("progress", 0.0)), 0.0, 1.0)
+	var bar_rect := Rect2(center - Vector2(reload_bar_size.x * 0.5, 0.0) + reload_bar_offset, reload_bar_size)
+	var fill_rect := bar_rect.grow(-3.0)
+	fill_rect.size.x *= progress
+
+	draw_style_box(reload_background_style, bar_rect)
+	draw_style_box(reload_fill_style, fill_rect)
+
+	var label := "%s %.0f%%" % [_hud_text(&"ui.raid_hud.reloading", "裝填中"), progress * 100.0]
+	var font := ThemeDB.fallback_font
+	var font_size := 16
+	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var label_position := center + reload_label_offset - Vector2(text_size.x * 0.5, 0.0)
+	draw_string(font, label_position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.96, 0.98, 0.9, 0.98))
+
+
 func _paint_crosshair() -> void:
-	var center := get_viewport().get_mouse_position()
-	if center.x <= 0.0 or center.y <= 0.0 or center.x >= size.x or center.y >= size.y:
-		center = size * 0.5
+	var center := _crosshair_center()
 	var shadow := Color(0.12, 0.12, 0.12, 0.7)
 	var gap := 13.0
 	var length := 12.0
@@ -184,3 +244,19 @@ func _paint_crosshair() -> void:
 
 func _paint_crosshair_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
 	draw_line(from, to, color, width, true)
+
+
+func _crosshair_center() -> Vector2:
+	var center := get_viewport().get_mouse_position()
+	if center.x <= 0.0 or center.y <= 0.0 or center.x >= size.x or center.y >= size.y:
+		center = size * 0.5
+	return center
+
+
+func _is_reload_visible() -> bool:
+	return bool(reload_state.get("active", false))
+
+
+func _hud_text(key: StringName, fallback: String) -> String:
+	var translated := tr(str(key))
+	return translated if translated != str(key) and translated != "" else fallback

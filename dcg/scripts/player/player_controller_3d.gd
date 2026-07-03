@@ -250,10 +250,10 @@ func get_default_equipment_slot_for_stack(stack: Dictionary) -> StringName:
 
 	if item_def.item_type == "weapon":
 		if item_def.tags.has(&"pistol"):
-			if equipment_model.is_empty(&"sidearm"):
-				return &"sidearm"
 			if equipment_model.is_empty(&"primary_weapon"):
 				return &"primary_weapon"
+			if equipment_model.is_empty(&"sidearm"):
+				return &"sidearm"
 		if item_def.tags.has(&"gun") and equipment_model.is_empty(&"primary_weapon"):
 			return &"primary_weapon"
 		if item_def.tags.has(&"melee") and equipment_model.is_empty(&"melee"):

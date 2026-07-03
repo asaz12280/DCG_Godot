@@ -137,14 +137,17 @@ func _validate_full_player_visible_v2_smoke() -> void:
 	var container := _first_loot_container(gameplay)
 	var container_ui := gameplay.find_child("ContainerInventoryUI", true, false) as Control
 	var raid_hud := gameplay.find_child("RaidHudPanel", true, false) as Control
+	var player_hud := gameplay.find_child("PlayerHud3D", true, false) as Control
 	var session := gameplay.get_node_or_null("RaidSession")
 	var result_panel := gameplay.get_node_or_null("HUD/RaidResultPanel")
 	var applier := gameplay.get_node_or_null("RaidResultApplier")
 	var weapon := player.get_node_or_null("WeaponController3D") if player != null else null
-	if player == null or container == null or container_ui == null or raid_hud == null or session == null or result_panel == null or applier == null or weapon == null:
-		_errors.append("Raid scene should include player, loot container, container UI, HUD, session, result panel, applier, and weapon controller.")
+	if player == null or container == null or container_ui == null or raid_hud == null or player_hud == null or session == null or result_panel == null or applier == null or weapon == null:
+		_errors.append("Raid scene should include player, loot container, container UI, minimal player HUD, hidden legacy raid HUD, session, result panel, applier, and weapon controller.")
 		_free_current_scene()
 		return
+	if bool(raid_hud.visible):
+		_errors.append("Large top-left RaidHudPanel should be hidden in normal gameplay; tasks belong in top-menu panels.")
 
 	var inventory: InventoryModel = player.call("get_inventory_model")
 	var equipment: RefCounted = player.call("get_equipment_model")
@@ -158,7 +161,7 @@ func _validate_full_player_visible_v2_smoke() -> void:
 		_errors.append("Raid weapon controller should stay unarmed before equipment is earned.")
 
 	await _open_container_and_transfer_loot(player, container, container_ui, inventory)
-	await _equip_pistol_and_reload(player, inventory, equipment, weapon, raid_hud)
+	await _equip_pistol_and_reload(player, inventory, equipment, weapon, player_hud)
 	await _fire_visible_projectile(gameplay, weapon)
 	await _extract_and_return_to_base(inventory, session, result_panel, applier)
 	_free_current_scene()
@@ -204,7 +207,7 @@ func _open_container_and_transfer_loot(player: Node, container: LootContainer3D,
 		_errors.append("Transferred No.5/No.7 should leave the container grid.")
 
 
-func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment: RefCounted, weapon: Node, raid_hud: Control) -> void:
+func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment: RefCounted, weapon: Node, player_hud: Control) -> void:
 	var pistol_index := _stack_index_with_catalog(inventory, 5)
 	if pistol_index < 0:
 		_errors.append("No.5 pistol should be in backpack before equipment.")
@@ -215,6 +218,9 @@ func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment
 
 	if not _equipment_has_catalog(equipment, 5):
 		_errors.append("No.5 pistol should be visible in EquipmentModel after equip.")
+	var primary_weapon: Dictionary = equipment.call("get_slot", &"primary_weapon")
+	if int(primary_weapon.get("catalog_number", 0)) != 5:
+		_errors.append("No.5 pistol should equip into the visible primary weapon slot.")
 	if _stack_array_has(inventory.get_display_items(), 5):
 		_errors.append("Equipped No.5 pistol should leave the backpack stack list.")
 	if not bool(weapon.call("has_weapon")):
@@ -232,11 +238,11 @@ func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment
 	var reload_state: Dictionary = player.call("get_reload_state")
 	if not bool(reload_state.get("active", false)):
 		_errors.append("Reload state should be active while the visible reload bar is filling.")
-	var hud_state: Dictionary = raid_hud.call("get_display_state")
+	var hud_state: Dictionary = player_hud.call("get_display_state")
 	if not bool(hud_state.get("reload_visible", false)):
-		_errors.append("Raid HUD should show a visible reload progress bar.")
+		_errors.append("Minimal player HUD should show a visible reload progress bar.")
 	if float(hud_state.get("reload_progress", 0.0)) < 0.0:
-		_errors.append("Raid HUD reload progress should report a valid progress value.")
+		_errors.append("Minimal player HUD reload progress should report a valid progress value.")
 
 	for _index in range(70):
 		await physics_frame

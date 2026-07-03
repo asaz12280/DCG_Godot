@@ -2410,3 +2410,26 @@
 ### Notes
 
 - Root cause: the new 3D Base scene did not include the gameplay HUD nodes that `UIManager` needs for TAB, ESC, and crosshair behavior.
+
+## 2026-07-03 Raid Minimal HUD And Primary Pistol Equip
+
+### Completed
+
+- Hid the large top-left `RaidHudPanel` in normal Raid gameplay so the red-box objective/status block no longer covers the play view.
+- Kept reload feedback player-visible by moving the active reload progress display into `PlayerHud3D` near the crosshair instead of relying on the hidden legacy panel.
+- Changed pistol default equipment routing so No.5 pistol equips into `primary_weapon` first, matching the visible `主武器` slot, with `sidearm` left as fallback.
+- Updated player-visible validation scripts so they guard the new intended behavior: large raid panel hidden, minimal HUD reload progress visible, and pistol equipped in the primary weapon slot.
+
+### Verified
+
+- Inventory equipment flow reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- Base-to-Raid loadout reports `[base_to_raid_loadout] OK base=prepares_pending raid=consumes backpack=ammo equipment=pistol weapon=synced`.
+- Reload UI reports `[reload_ui] OK minimal_hud=reload_progress visible=true completion=clears legacy_panel=hidden boundaries=clean`.
+- Player-visible V2 smoke reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+- Reload flow reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Weapon equipment binding reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Top menu panels, pause menu, Base 3D runtime HUD, shooting feedback HUD, main scene launch, and gameplay scene launch all pass headless validation.
+
+### Notes
+
+- Existing generated localization `.translation` changes and `.uid` files were left untouched.

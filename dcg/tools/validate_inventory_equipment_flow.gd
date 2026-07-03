@@ -16,7 +16,7 @@ func _initialize() -> void:
 	_validate_player_visible_ui_path()
 	_validate_responsibility_boundary()
 	if _errors.is_empty():
-		print("[inventory_equipment_flow] OK backpack=visible equip=sidearm ammo=rejected layout=fit boundaries=clean")
+		print("[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -47,11 +47,11 @@ func _validate_backpack_pistol_equips_to_visible_slot() -> void:
 	await process_frame
 
 	var after_state: Dictionary = inventory_ui.call("get_display_state")
-	var sidearm_stack: Dictionary = equipment_model.call("get_slot", &"sidearm")
+	var primary_stack: Dictionary = equipment_model.call("get_slot", &"primary_weapon")
 	if _state_has_catalog(after_state.get("backpack_items", []), 5):
 		_errors.append("Equipped No.5 pistol should leave the backpack list.")
-	if int(sidearm_stack.get("catalog_number", 0)) != 5:
-		_errors.append("Equipped No.5 pistol should appear in the sidearm equipment slot.")
+	if int(primary_stack.get("catalog_number", 0)) != 5:
+		_errors.append("Equipped No.5 pistol should appear in the primary weapon equipment slot.")
 	if not str(after_state.get("equipment_text", "")).contains(_item_name(Pistol)):
 		_errors.append("Equipment panel should visibly show the equipped pistol name.")
 

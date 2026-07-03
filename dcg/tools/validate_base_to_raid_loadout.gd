@@ -83,8 +83,8 @@ func _validate_pending_loadout(loadout: Dictionary) -> void:
 		_errors.append("Prepared loadout backpack should include No.7 ammo.")
 	if _stack_array_has(loadout.get("backpack", []), 5):
 		_errors.append("Prepared loadout backpack should not duplicate equipped No.5 pistol.")
-	if not _equipment_data_has(loadout.get("equipment", {}), &"sidearm", 5):
-		_errors.append("Prepared loadout equipment should include No.5 pistol in sidearm.")
+	if not _equipment_data_has(loadout.get("equipment", {}), &"primary_weapon", 5):
+		_errors.append("Prepared loadout equipment should include No.5 pistol in primary weapon.")
 
 
 func _validate_raid_player_loadout(player: Node) -> void:
@@ -95,9 +95,9 @@ func _validate_raid_player_loadout(player: Node) -> void:
 		_errors.append("Raid player backpack should receive No.7 ammo from the 3D Base loadout.")
 	if _stack_array_has(inventory.get_display_items(), 5):
 		_errors.append("Raid player backpack should not duplicate the equipped No.5 pistol.")
-	var sidearm: Dictionary = equipment.call("get_slot", &"sidearm")
-	if int(sidearm.get("catalog_number", 0)) != 5:
-		_errors.append("Raid player sidearm should receive equipped No.5 pistol from the 3D Base loadout.")
+	var primary_weapon: Dictionary = equipment.call("get_slot", &"primary_weapon")
+	if int(primary_weapon.get("catalog_number", 0)) != 5:
+		_errors.append("Raid player primary weapon should receive equipped No.5 pistol from the 3D Base loadout.")
 	if weapon == null or weapon.get("weapon_def") == null or int(weapon.get("weapon_def").get("catalog_number")) != 5:
 		_errors.append("Raid weapon controller should sync to the carried-in No.5 pistol.")
 

@@ -255,6 +255,7 @@ grow_vertical = 2
 script = ExtResource("2_hud")
 
 [node name="RaidHudPanel" parent="HUD" instance=ExtResource("19_raid_hud_panel")]
+visible = false
 
 [node name="ContainerInventoryUI" parent="HUD" instance=ExtResource("20_container_inventory_ui")]
 
