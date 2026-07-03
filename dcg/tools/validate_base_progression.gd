@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BaseScreenScene := preload("res://scenes/base/base_screen.tscn")
+const Base3DScene := preload("res://scenes/base/base_3d.tscn")
 const PlayerScene := preload("res://scenes/player/player_3d.tscn")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
@@ -17,9 +18,10 @@ func _initialize() -> void:
 	_validate_upgrade_def()
 	await _validate_insufficient_upgrade_state()
 	await _validate_purchase_upgrade_and_save()
+	await _validate_base_3d_workbench_purchase()
 	await _validate_starter_ammo_bonus()
 	if _errors.is_empty():
-		print("[base_progression] OK upgrade=data_valid cost=deducted save=persists effect=starter_ammo")
+		print("[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo")
 		quit(0)
 	else:
 		for error in _errors:
@@ -98,15 +100,76 @@ func _validate_purchase_upgrade_and_save() -> void:
 		_errors.append("Workbench upgrade button should disable after purchase.")
 	if not (
 		str(after_state.get("workbench_status", "")).contains("備用彈藥")
-		or str(after_state.get("workbench_status", "")).contains("starter ammo")
 	):
 		_errors.append("Workbench status should explain the starter ammo effect after purchase.")
 	_free_node(screen)
 
 
+func _validate_base_3d_workbench_purchase() -> void:
+	var save_manager := _make_save_manager()
+	_cleanup_validation_root(save_manager.save_root_path)
+	save_manager.set_current_slot_index(1)
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 25,
+		"stash": [
+			{"item_path": WOOD_PATH, "quantity": 3},
+			{"item_path": WIRE_PATH, "quantity": 2},
+		],
+		"base_upgrades": {},
+		"quests": {},
+	})
+	var scene := Base3DScene.instantiate()
+	root.add_child(scene)
+	await process_frame
+	await process_frame
+	var controller := scene.get_node_or_null("BaseInteractionController3D")
+	if controller == null:
+		_errors.append("Base 3D should expose BaseInteractionController3D for workbench upgrade validation.")
+		_free_node(scene)
+		return
+	if not bool(controller.call("open_interaction_by_id", "workbench")):
+		_errors.append("Base 3D workbench should open an upgrade interaction panel.")
+	else:
+		var state: Dictionary = controller.call("get_panel_state")
+		if not bool(state.get("action_visible", false)) or not bool(state.get("action_enabled", false)):
+			_errors.append("Base 3D workbench upgrade action should be visible and enabled when costs are available.")
+		if not str(state.get("body", "")).contains("備用彈藥") or not str(state.get("body", "")).contains("需求"):
+			_errors.append("Base 3D workbench panel should explain the upgrade effect and cost.")
+		var panel := scene.get_node_or_null("HUD/BaseInteractionPanel")
+		if panel != null and panel.has_signal("action_requested"):
+			panel.emit_signal("action_requested", "workbench")
+			await process_frame
+		var loaded: Dictionary = save_manager.get_slot_data(1)
+		if not BaseProgressionScript.is_upgrade_purchased(loaded, WorkbenchUpgrade.id):
+			_errors.append("Base 3D workbench action should persist Workbench Level 1.")
+		if int(loaded.get("money", 0)) != 10:
+			_errors.append("Base 3D workbench action should deduct money cost.")
+		if _stash_quantity(loaded, WOOD_PATH) != 0 or _stash_quantity(loaded, WIRE_PATH) != 0:
+			_errors.append("Base 3D workbench action should consume required wood and wire.")
+		var after_state: Dictionary = controller.call("get_panel_state")
+		if not str(after_state.get("body", "")).contains("升級完成") or not str(after_state.get("body", "")).contains("已升級"):
+			_errors.append("Base 3D workbench panel should show a visible completed upgrade state.")
+	_free_node(scene)
+	_cleanup_validation_root(save_manager.save_root_path)
+
+
 func _validate_starter_ammo_bonus() -> void:
 	var save_manager := _make_save_manager()
+	_cleanup_validation_root(save_manager.save_root_path)
 	save_manager.set_current_slot_index(1)
+	save_manager.save_slot_data(1, {
+		"difficulty_id": "normal",
+		"money": 10,
+		"stash": [],
+		"base_upgrades": {
+			str(WorkbenchUpgrade.id): {
+				"purchased": true,
+				"starter_ammo_bonus": int(WorkbenchUpgrade.starter_ammo_bonus),
+			},
+		},
+		"quests": {},
+	})
 	var player := PlayerScene.instantiate()
 	root.add_child(player)
 	await process_frame

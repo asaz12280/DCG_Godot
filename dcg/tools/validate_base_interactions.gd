@@ -85,6 +85,13 @@ func _validate_interactions(scene: Node) -> void:
 				_errors.append("Medical station should show a treatment action button.")
 			if not str(state.get("action_text", "")).contains("治療"):
 				_errors.append("Medical station action should use readable Traditional Chinese text.")
+		if id == "workbench":
+			if not bool(state.get("action_visible", false)):
+				_errors.append("Workbench station should expose its upgrade action button.")
+			if not str(state.get("body", "")).contains("備用彈藥") or not str(state.get("body", "")).contains("需求"):
+				_errors.append("Workbench station should explain the next-raid ammo effect and upgrade cost.")
+			if not str(state.get("action_text", "")).contains("升級"):
+				_errors.append("Workbench station action should use readable Traditional Chinese upgrade text.")
 		var panel := scene.get_node_or_null("HUD/BaseInteractionPanel")
 		if panel != null and panel.has_method("close_panel"):
 			panel.call("close_panel")

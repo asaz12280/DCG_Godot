@@ -4,6 +4,7 @@ extends Node
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const RaidLoadoutTransferScript := preload("res://scripts/raid/raid_loadout_transfer.gd")
 const BaseMedicalServiceScript := preload("res://scripts/base/base_medical_service.gd")
+const BaseWorkbenchServiceScript := preload("res://scripts/base/base_workbench_service.gd")
 
 @export_node_path("Node3D") var player_path: NodePath
 @export_node_path("Label3D") var prompt_label_path: NodePath
@@ -65,6 +66,8 @@ func open_interaction_by_id(interaction_id: String) -> bool:
 		return _open_raid_briefing(display_name)
 	if interaction_id == "medical":
 		return _open_medical_station(display_name)
+	if interaction_id == "workbench":
+		return _open_workbench_station(display_name)
 	if _panel == null or not _panel.has_method("open_interaction"):
 		return false
 	_panel.call("open_interaction", interaction_id, display_name)
@@ -135,6 +138,17 @@ func _open_medical_station(display_name: String) -> bool:
 	return true
 
 
+func _open_workbench_station(display_name: String) -> bool:
+	if _panel == null or not _panel.has_method("open_interaction"):
+		return false
+	_panel.call("open_interaction", "workbench", display_name, _workbench_panel_context())
+	return true
+
+
+func _workbench_panel_context() -> Dictionary:
+	return BaseWorkbenchServiceScript.get_panel_context(_get_save_manager())
+
+
 func _medical_panel_context() -> Dictionary:
 	var state := BaseMedicalServiceScript.get_state(_player, _get_save_manager())
 	return {
@@ -188,16 +202,20 @@ func _connect_interaction_panel() -> void:
 
 
 func _on_interaction_panel_action_requested(interaction_id: String) -> void:
-	if interaction_id != "medical":
-		return
-	var result := BaseMedicalServiceScript.apply_heal(_player, _get_save_manager())
-	if _panel != null and _panel.has_method("update_interaction_state"):
-		var context := _medical_panel_context()
-		if bool(result.get("success", false)):
-			context["body"] = "%s\n%s" % [str(result.get("reason", "")), BaseMedicalServiceScript.describe(_player, _get_save_manager())]
-		else:
-			context["body"] = "%s\n%s" % [str(result.get("reason", "")), BaseMedicalServiceScript.describe(_player, _get_save_manager())]
-		_panel.call("update_interaction_state", context)
+	match interaction_id:
+		"medical":
+			var result := BaseMedicalServiceScript.apply_heal(_player, _get_save_manager())
+			if _panel != null and _panel.has_method("update_interaction_state"):
+				var context := _medical_panel_context()
+				context["body"] = "%s\n%s" % [str(result.get("reason", "")), BaseMedicalServiceScript.describe(_player, _get_save_manager())]
+				_panel.call("update_interaction_state", context)
+		"workbench":
+			var result: Dictionary = BaseWorkbenchServiceScript.purchase(_get_save_manager())
+			if _panel != null and _panel.has_method("update_interaction_state"):
+				var context := _workbench_panel_context()
+				var prefix := "升級完成。" if bool(result.get("success", false)) else "升級失敗。"
+				context["body"] = "%s\n%s" % [prefix, str(context.get("body", ""))]
+				_panel.call("update_interaction_state", context)
 
 
 func _on_raid_briefing_start_requested() -> void:

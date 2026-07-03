@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BaseScreenScene := preload("res://scenes/base/base_screen.tscn")
+const PlayerScene := preload("res://scenes/player/player_3d.tscn")
 const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier.gd")
@@ -87,6 +88,7 @@ func _validate_raid_one_extract_and_base_progress() -> void:
 		_errors.append("Workbench purchase should consume tuned material costs and keep excess wood.")
 	if not BaseProgressionScript.is_upgrade_purchased(after_base, WorkbenchUpgrade.id):
 		_errors.append("Workbench Level 1 should persist after raid one.")
+	await _validate_next_raid_visible_upgrade_effect("raid two")
 	var completed_salvage := _quest_state(after_base, "first_salvage")
 	if str(completed_salvage.get("state", "")) != QuestStateScript.STATE_COMPLETED:
 		_errors.append("First Salvage should persist completed after base claim.")
@@ -163,6 +165,19 @@ func _validate_raid_three_kill_extract_and_save_reload() -> void:
 		_errors.append("Save reload should preserve First Salvage completion.")
 	if str(_quest_state(reloaded, "first_scavenger_hunt").get("state", "")) != QuestStateScript.STATE_COMPLETED:
 		_errors.append("Save reload should preserve First Scavenger Hunt completion.")
+
+
+func _validate_next_raid_visible_upgrade_effect(label: String) -> void:
+	var player := PlayerScene.instantiate()
+	root.add_child(player)
+	await process_frame
+	var weapon := player.get_node_or_null("WeaponController3D")
+	if weapon == null:
+		_errors.append("Player scene should include WeaponController3D for %s upgrade visibility." % label)
+	else:
+		if int(weapon.get("reserve_ammo")) < int(WorkbenchUpgrade.starter_ammo_bonus):
+			_errors.append("Workbench Level 1 should make %s visibly start with bonus reserve ammo." % label)
+	_free_node(player)
 
 
 func _setup_save_manager() -> void:

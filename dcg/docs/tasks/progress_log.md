@@ -3027,3 +3027,25 @@
 ### Next
 
 - Continue with task twenty-five: short base upgrade line.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Five
+
+### Completed
+
+- Added `BaseWorkbenchService` so the 3D Base workbench owns a real short upgrade action through the Base domain instead of a placeholder panel.
+- Connected the 3D Base workbench interaction to the existing Workbench Level 1 progression data: cost is money, wood, and wire; the saved upgrade grants next-raid starter reserve ammo.
+- Kept `BaseInteractionPanel` display-only while `BaseInteractionController3D` only opens the station panel and delegates upgrade state/purchase to the service.
+- Strengthened `validate_base_progression.gd` to prove the 3D workbench action is visible, enabled when costs are available, consumes resources, persists the upgrade, and shows a completed state.
+- Strengthened `validate_three_raid_loop.gd` to prove the upgraded save gives the next raid a visible reserve-ammo difference.
+- Marked Dev Slice 0.2 enemy-first task twenty-five complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Base progression validation reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo`.
+- Three raid loop validation reports `[three_raid_loop] OK raid1=extract_upgrade raid2=death_preserves raid3=kill_extract reload=persistent`.
+- Base interaction validation reports `[base_interactions] OK prompt=visible panels=connected raid=startable text=zh`.
+- Base station readability validation reports `[base_station_readability] OK stations=5 labels=readable prompts=clear panels=zh boundaries=clean`.
+
+### Next
+
+- Continue with task twenty-six: Dev Slice 0.2 Traditional Chinese and UI layout check.

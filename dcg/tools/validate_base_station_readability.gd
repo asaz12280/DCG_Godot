@@ -20,7 +20,8 @@ const REQUIRED_STATIONS := {
 		"title": "工作台",
 		"hint_terms": ["升級", "基地"],
 		"prompt_terms": ["按 E", "互動", "工作台"],
-		"panel_terms": ["升級基地功能"],
+		"panel_terms": ["下一場", "備用彈藥", "需求"],
+		"action_terms": ["升級"],
 	},
 	"raid_gate": {
 		"title": "出擊門",
