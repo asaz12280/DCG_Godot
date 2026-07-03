@@ -3049,3 +3049,28 @@
 ### Next
 
 - Continue with task twenty-six: Dev Slice 0.2 Traditional Chinese and UI layout check.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Twenty-Six
+
+### Completed
+
+- Added `tools/validate_ui_layout_quality_0_2.gd` as the Dev Slice 0.2 aggregate UI quality gate.
+- Checked Base screen, 3D Base station panels, raid briefing, Raid HUD, Top Menu panels, inventory/equipment, container grid, and result panel at 1280x720 and 1920x1080.
+- Guarded player-visible UI against off-screen panels, too-small action buttons, English fallback text, and UI ownership drift.
+- Confirmed the runtime HUD path still preserves TAB backpack, ESC pause, crosshair visibility, and raid-gate launch behavior.
+- Marked Dev Slice 0.2 enemy-first task twenty-six complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- UI layout quality validation reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- UI text quality validation reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- Top Menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt_location layout=fit ui_manager=owns_state boundaries=clean`.
+- Container inventory UI validation reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- Inventory equipment flow validation reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- Raid briefing validation reports `[raid_briefing_ui] OK open=briefing cancel=base confirm=raid layout=fit text=zh boundaries=clean`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+- Base 3D and Gameplay scenes both launch in Godot 4.7 headless mode with `--quit-after 1`.
+
+### Next
+
+- Continue with task twenty-seven: Dev Slice 0.2 player-visible smoke test.
