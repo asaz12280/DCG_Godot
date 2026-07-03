@@ -127,7 +127,8 @@ func _gui_input(event: InputEvent) -> void:
 
 		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _drop_controller.is_dragging():
 			var target_stack_index := _get_backpack_stack_index_at(event.position)
-			_drop_controller.finish_drag(backpack_model, event.position, _panel_rect(), target_stack_index, player)
+			var target_equipment_slot := _get_equipment_slot_id_at(event.position)
+			_drop_controller.finish_drag(backpack_model, event.position, _panel_rect(), target_stack_index, player, target_equipment_slot)
 			accept_event()
 
 
@@ -192,6 +193,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"is_open": is_open,
 		"backpack_items": backpack_items.duplicate(true),
 		"equipment_slots": _get_equipment_slots_state(),
+		"equipment_slot_rects": _get_equipment_slot_rects_state(),
 		"equipment_text": _get_equipment_visible_text(),
 		"panel_rect": _panel_rect(),
 		"backpack_used": backpack_model.get_used_slots(),
@@ -279,15 +281,8 @@ func _paint_safe_pocket_panel(rect: Rect2) -> void:
 
 func _paint_equipment_panel(rect: Rect2) -> void:
 	_paint_header(Rect2(rect.position, Vector2(rect.size.x, 36.0 * _ui_scale)), _localized_text(&"ui.inventory.equipment", ""))
-	var slot_size_local := _v(80.0, 80.0)
-	var start := rect.position + _v(20.0, 54.0)
-	var step_x := 90.0 * _ui_scale
-	var step_y := 132.0 * _ui_scale
-
 	for index in range(equipment_slot_label_keys.size()):
-		var row := int(floor(float(index) / 5.0))
-		var column := index % 5
-		var slot_rect := Rect2(start + Vector2(float(column) * step_x, float(row) * step_y), slot_size_local)
+		var slot_rect := _equipment_slot_rect(rect, index)
 		_painter.slot(slot_rect, Color(0.56, 0.58, 0.53, 0.52), Color(1.0, 1.0, 1.0, 0.22))
 		_painter.equipment_icon(slot_rect, index)
 		var equipped_stack := _get_equipment_stack_at(index)
@@ -341,6 +336,33 @@ func _get_backpack_stack_index_at(mouse_position: Vector2) -> int:
 		if _backpack_slot_rect(backpack_rect, slot_index).has_point(mouse_position):
 			return slot_index
 	return -1
+
+
+func _get_equipment_slot_id_at(mouse_position: Vector2) -> StringName:
+	var index := _get_equipment_slot_index_at(mouse_position)
+	if index < 0 or index >= equipment_slot_ids.size():
+		return &""
+	return equipment_slot_ids[index]
+
+
+func _get_equipment_slot_index_at(mouse_position: Vector2) -> int:
+	var viewport_size := get_viewport_rect().size
+	_update_layout_scale(viewport_size)
+	var equipment_rect := _layout.equipment_rect(_panel_rect())
+	for index in range(equipment_slot_ids.size()):
+		if _equipment_slot_rect(equipment_rect, index).has_point(mouse_position):
+			return index
+	return -1
+
+
+func _equipment_slot_rect(equipment_rect: Rect2, index: int) -> Rect2:
+	var slot_size_local := _v(80.0, 80.0)
+	var start := equipment_rect.position + _v(20.0, 54.0)
+	var step_x := 90.0 * _ui_scale
+	var step_y := 132.0 * _ui_scale
+	var row := int(floor(float(index) / 5.0))
+	var column := index % 5
+	return Rect2(start + Vector2(float(column) * step_x, float(row) * step_y), slot_size_local)
 
 
 func _on_context_drop_requested(stack_index: int, stack: Dictionary, screen_position: Vector2, random_near_player: bool) -> void:
@@ -455,6 +477,14 @@ func _get_equipment_slots_state() -> Dictionary:
 	if equipment_model == null:
 		return {}
 	return equipment_model.call("get_slots")
+
+
+func _get_equipment_slot_rects_state() -> Dictionary:
+	var rects: Dictionary = {}
+	var equipment_rect := _layout.equipment_rect(_panel_rect())
+	for index in range(equipment_slot_ids.size()):
+		rects[str(equipment_slot_ids[index])] = _equipment_slot_rect(equipment_rect, index)
+	return rects
 
 
 func _get_equipment_visible_text() -> String:

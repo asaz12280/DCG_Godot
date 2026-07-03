@@ -10,6 +10,7 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
 	await _validate_backpack_pistol_equips_to_visible_slot()
+	await _validate_drag_pistol_to_primary_weapon_slot()
 	await _validate_ammo_stays_in_backpack()
 	await _validate_layout_fit(Vector2i(1280, 720))
 	await _validate_layout_fit(Vector2i(1920, 1080))
@@ -54,6 +55,47 @@ func _validate_backpack_pistol_equips_to_visible_slot() -> void:
 		_errors.append("Equipped No.5 pistol should appear in the primary weapon equipment slot.")
 	if not str(after_state.get("equipment_text", "")).contains(_item_name(Pistol)):
 		_errors.append("Equipment panel should visibly show the equipped pistol name.")
+
+	_free_node(context["scene"])
+
+
+func _validate_drag_pistol_to_primary_weapon_slot() -> void:
+	root.size = Vector2i(1920, 1080)
+	var context := await _spawn_inventory_context()
+	if context.is_empty():
+		return
+	var player: Node = context["player"]
+	var inventory_ui: Control = context["inventory_ui"]
+	var backpack_model: InventoryModel = player.call("get_inventory_model")
+	var equipment_model: RefCounted = player.call("get_equipment_model")
+
+	backpack_model.add_item(Pistol, 1)
+	inventory_ui.call("open_inventory")
+	await process_frame
+
+	var state: Dictionary = inventory_ui.call("get_display_state_for_viewport", Vector2(1920.0, 1080.0))
+	var rects: Dictionary = state.get("equipment_slot_rects", {})
+	var primary_rect: Rect2 = rects.get("primary_weapon", Rect2())
+	if primary_rect.size == Vector2.ZERO:
+		_errors.append("Inventory UI should expose a primary weapon slot rect for drag equipment validation.")
+		_free_node(context["scene"])
+		return
+
+	var panel_rect: Rect2 = state.get("panel_rect", Rect2())
+	var backpack_start := panel_rect.position + Vector2(24.0, 415.0) + Vector2(28.0, 64.0)
+	var backpack_slot_center := backpack_start + Vector2(75.0, 75.0) * 0.5
+	var primary_slot_center := primary_rect.get_center()
+
+	_send_mouse_button(inventory_ui, backpack_slot_center, true)
+	_send_mouse_motion(inventory_ui, primary_slot_center)
+	_send_mouse_button(inventory_ui, primary_slot_center, false)
+	await process_frame
+
+	var primary_stack: Dictionary = equipment_model.call("get_slot", &"primary_weapon")
+	if int(primary_stack.get("catalog_number", 0)) != 5:
+		_errors.append("Dragging No.5 pistol onto the primary weapon slot should equip it there.")
+	if _state_has_catalog(backpack_model.get_display_items(), 5):
+		_errors.append("Dragged No.5 pistol should leave backpack after primary weapon equip.")
 
 	_free_node(context["scene"])
 
@@ -187,6 +229,22 @@ func _item_name(item_def: ItemDef) -> String:
 	var key := str(item_def.name_key)
 	var translated := tr(key)
 	return translated if translated != key else item_def.display_name
+
+
+func _send_mouse_button(target: Control, position: Vector2, pressed: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.global_position = position
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	target.call("_gui_input", event)
+
+
+func _send_mouse_motion(target: Control, position: Vector2) -> void:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.global_position = position
+	target.call("_gui_input", event)
 
 
 func _free_node(node: Node) -> void:

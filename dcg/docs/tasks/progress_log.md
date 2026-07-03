@@ -2433,3 +2433,25 @@
 ### Notes
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
+
+## 2026-07-03 Inventory Drag-To-Equipment Hotfix
+
+### Completed
+
+- Fixed backpack drag-to-equipment routing: dragging a backpack stack onto an equipment slot now passes the target slot id to `PlayerController3D.equip_inventory_stack`.
+- Kept equipment legality in the player/equipment model path instead of duplicating item rules in UI code.
+- Added shared equipment slot rect helpers so painting, hit detection, and validation all refer to the same slot geometry.
+- Added a runtime validation path that simulates dragging No.5 pistol from the backpack onto the `primary_weapon` slot and confirms it equips there.
+
+### Verified
+
+- Inventory equipment flow reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- Inventory drag rules report `[inventory_drag_rules] OK`.
+- Weapon equipment binding reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Reload flow reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Reload UI reports `[reload_ui] OK minimal_hud=reload_progress visible=true completion=clears legacy_panel=hidden boundaries=clean`.
+- Player-visible V2 smoke reports `[player_visible_v2_slice] OK base=3d container=grid transfer=equip reload=visible projectile=3d extract=base_3d`.
+
+### Notes
+
+- Root cause: the previous pistol primary-slot fix only covered click/context equip. Drag release still only handled backpack merge/swap or dropping to the world, so dragging onto equipment slots had no equipment path.
