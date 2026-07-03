@@ -69,6 +69,7 @@ func _try_hit(target: Node, hit_position: Vector3) -> void:
 		return
 	var damage_target := _resolve_damage_target(target)
 	if damage_target == null:
+		_spawn_hit_feedback(hit_position)
 		_finish_miss()
 		return
 	var did_hit: bool = damage_target.apply_damage(damage_event)

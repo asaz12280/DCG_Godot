@@ -185,7 +185,7 @@ The player should be able to:
 
 ### 任務七：玩家可以反擊並殺死敵人
 
-狀態：未開始
+狀態：完成
 
 優先度：高
 
@@ -209,7 +209,7 @@ The player should be able to:
 
 ### 任務八：Project Health Check B
 
-狀態：未開始
+狀態：完成
 
 優先度：高
 

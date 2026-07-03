@@ -149,6 +149,8 @@ func _validate_projectile_wall_miss_cleanup() -> void:
 			break
 	if is_instance_valid(projectile):
 		_errors.append("Projectile should disappear when it collides with non-damageable world geometry.")
+	if _find_hit_feedback(world) == null:
+		_errors.append("Projectile should spawn hit feedback when it collides with non-damageable world geometry.")
 	if bool(weapon.last_fire_result.get("hit", true)):
 		_errors.append("WeaponController3D should record wall collision as a miss, not a hit.")
 	if str(weapon.last_fire_result.get("blocked_reason", "not-empty")) != "":
@@ -209,6 +211,16 @@ func _find_projectile(parent: Node) -> Node3D:
 		if child is Node3D and child.get_script() == ProjectileScript:
 			return child as Node3D
 		var nested := _find_projectile(child)
+		if nested != null:
+			return nested
+	return null
+
+
+func _find_hit_feedback(parent: Node) -> Node3D:
+	for child in parent.get_children():
+		if child is Node3D and child.name == "ProjectileHitFeedback3D":
+			return child as Node3D
+		var nested := _find_hit_feedback(child)
 		if nested != null:
 			return nested
 	return null

@@ -2434,6 +2434,54 @@
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Seven
+
+### Completed
+
+- Added a visible pistol fire feedback scene with muzzle spark, short red tracer beam, and muzzle light.
+- Connected `WeaponController3D.fire_forward` to spawn both the existing 3D projectile and the new muzzle/tracer feedback.
+- Updated `Projectile3D` so both enemy hits and world-object impacts spawn visible hit feedback.
+- Added a player-facing validation path where the player equips the No.5 pistol, reloads No.7 ammo, fires visible 3D projectiles, hits the normal Raid Scavenger, and kills it.
+- Kept the weapon/projectile/enemy path decoupled from inventory UI, quest state, and save systems.
+- Marked Dev Slice 0.2 enemy-first task seven complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Projectile enemy-hit validation reports `[projectile_hit_enemy] OK equip_reload_fire=works projectile=kills_enemy death=visible controller=stops`.
+- Pistol fire VFX validation reports `[pistol_fire_vfx] OK muzzle=spark tracer=visible projectile=red impact=visible boundaries=clean`.
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages miss=cleans_up hitscan=removed boundaries=clean`.
+- Weapon equipment binding reports `[weapon_equipment_binding] OK start=unarmed equip=pistol_sync hud=visible boundaries=clean`.
+- Reload flow reports `[reload_flow] OK r_key=bound empty_fire=auto_reload backpack_ammo=consumed magazine=updated boundaries=clean`.
+- Enemy attack, combat feedback, player-visible V2 slice, Base 3D runtime HUD, and Godot headless scene startup checks passed.
+
+### Notes
+
+- The enemy-hit validation originally failed because the automated shot origin crossed through the player collision body. The validation now fires from a forward muzzle position so it tests the intended pistol-to-enemy projectile path.
+- Next task is Project Health Check B before continuing with later enemy loot, quest, result, or UI tasks.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check B
+
+### Completed
+
+- Ran the required health check after enemy attack, warning feedback, and player counterattack tasks.
+- Confirmed `WeaponController3D` owns projectile and fire VFX spawning without depending on inventory UI, quest, or save systems.
+- Confirmed `Projectile3D` stays combat-only and still uses visible projectile movement rather than reverting to hitscan.
+- Confirmed `EnemyDamageable3D` remains independent from weapon, inventory, and HUD-specific code.
+- Confirmed the previous TAB backpack, ESC pause, crosshair, and Raid gate runtime behavior still passes after combat changes.
+- Marked Dev Slice 0.2 enemy-first Project Health Check B complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player visibility health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Projectile validation reports `[projectile_3d] OK scene=visible spawn=moving hit=damages miss=cleans_up hitscan=removed boundaries=clean`.
+- Pistol fire VFX validation reports `[pistol_fire_vfx] OK muzzle=spark tracer=visible projectile=red impact=visible boundaries=clean`.
+- Enemy architecture health validation reports `[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered`.
+- Base 3D runtime HUD validation reports `[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay`.
+
+### Next
+
+- Continue with task nine: enemy death loot/drop feedback.
+
 ## 2026-07-03 Dev Slice 0.2 Enemy-First Task Five
 
 ### Completed

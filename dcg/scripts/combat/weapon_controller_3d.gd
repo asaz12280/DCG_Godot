@@ -4,6 +4,7 @@ extends Node3D
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.gd")
 const DEFAULT_PROJECTILE_SCENE := preload("res://scenes/combat/projectile_3d.tscn")
+const DEFAULT_SHOT_FEEDBACK_SCENE := preload("res://scenes/combat/shot_feedback_3d.tscn")
 
 signal fired(item_def: ItemDef)
 signal hit(target: Node, event: DamageEvent)
@@ -16,6 +17,7 @@ signal reload_blocked(reason: StringName)
 @export var fallback_damage: float = 10.0
 @export var weapon_range: float = 28.0
 @export var projectile_scene: PackedScene = DEFAULT_PROJECTILE_SCENE
+@export var shot_feedback_scene: PackedScene = DEFAULT_SHOT_FEEDBACK_SCENE
 @export_range(0.0, 5.0, 0.01) var fire_cooldown_seconds := 0.28
 @export_range(0, 999, 1) var magazine_size := 8
 @export_range(0, 999, 1) var current_ammo := 0
@@ -82,6 +84,7 @@ func fire_forward(origin: Vector3, direction: Vector3, _space_state: PhysicsDire
 		missed.emit(weapon_def)
 		_record_fire_result(false, "")
 		return false
+	_spawn_shot_feedback(origin, direction.normalized())
 	fired.emit(weapon_def)
 	_record_fire_result(false, "")
 	return true
@@ -278,6 +281,26 @@ func _spawn_projectile(origin: Vector3, direction: Vector3) -> bool:
 	if projectile.has_signal("projectile_missed"):
 		projectile.projectile_missed.connect(_on_projectile_missed)
 	return true
+
+
+func _spawn_shot_feedback(origin: Vector3, direction: Vector3) -> void:
+	if shot_feedback_scene == null:
+		return
+	var feedback := shot_feedback_scene.instantiate()
+	if not (feedback is Node3D):
+		if feedback != null:
+			feedback.queue_free()
+		return
+	var parent := get_tree().current_scene if is_inside_tree() and get_tree().current_scene != null else null
+	if parent == null and get_parent() != null:
+		parent = get_parent().get_parent() if get_parent().get_parent() != null else get_parent()
+	if parent == null:
+		return
+	parent.add_child(feedback)
+	if feedback.has_method("setup"):
+		feedback.call("setup", origin, direction)
+	else:
+		feedback.global_position = origin
 
 
 func _on_projectile_hit(target: Node, _event: DamageEvent) -> void:
