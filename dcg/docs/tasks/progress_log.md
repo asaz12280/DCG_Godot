@@ -2478,6 +2478,31 @@
 
 - Continue with task three: enemy detection and player chase in the normal Raid scene.
 
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Three And Health Check A
+
+### Completed
+
+- Added `tools/validate_enemy_chase_player.gd` to validate player detection and chase behavior inside the normal Raid scene, not only in an isolated AI test.
+- The validation confirms the visible Raid Scavenger resolves `Player3D` as its target, enters chase state, moves toward the player, and shows `追蹤中` on the 3D status label.
+- The validation also confirms the enemy returns to `待機` when the player leaves detect radius.
+- Added `tools/validate_enemy_architecture_health.gd` for Project Health Check A.
+- Health Check A confirms Enemy, Damageable, Combat, Raid, and UI ownership boundaries remain clean after the first three enemy-first tasks.
+- Marked Dev Slice 0.2 enemy-first task three and Project Health Check A complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Enemy chase validation reports `[enemy_chase_player] OK raid=normal detects=player chases=true status=visible idle_return=true`.
+- Enemy visibility validation reports `[enemy_visible_in_raid] OK raid=scavenger_visible route=reachable label=visible controller=wired`.
+- Enemy AI validation reports `[enemy_ai] OK detect=chase attack=damages dead=stops scene=wired`.
+- Enemy damageable validation reports `[enemy_damageable_3d] OK healthbar=visible injured=readable death=readable display=decoupled`.
+- Enemy architecture health validation reports `[enemy_architecture_health] OK raid=reachable enemy_boundaries=clean ui_coupling=clean validation=covered`.
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Raid scene launch check completed with Godot headless `--quit-after 1`.
+
+### Next
+
+- Continue with task five: enemy close-range attack against the player.
+
 ## 2026-07-03 Loaded Bullet And Backpack Ammo HUD
 
 ### Completed

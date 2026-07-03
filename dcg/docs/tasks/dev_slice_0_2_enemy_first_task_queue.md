@@ -106,7 +106,7 @@ The player should be able to:
 
 ### 任務三：敵人偵測玩家並追蹤
 
-狀態：未開始
+狀態：完成
 
 優先度：最高
 
@@ -126,7 +126,7 @@ The player should be able to:
 
 ### 任務四：Project Health Check A
 
-狀態：未開始
+狀態：完成
 
 優先度：最高
 
