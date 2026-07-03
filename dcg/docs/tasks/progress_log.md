@@ -2676,3 +2676,23 @@
 ### Notes
 
 - Existing generated localization `.translation` changes and `.uid` files were left untouched.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Task Ten
+
+### Completed
+
+- Added `SaveGameManager.slot_saved` so save-backed UI can react to successful save updates without owning persistence logic.
+- Updated `QuestTopMenuPanel` to refresh itself on the next frame when the open quest page receives a save update.
+- Added `tools/validate_quest_kill_enemy_flow.gd` to prove the normal Raid Scavenger kill updates `first_scavenger_hunt` and the already-open Top Menu quest page.
+- Kept kill tracking in `QuestKillTracker3D`, quest display in `QuestTopMenuPanel`, and save persistence in `SaveGameManager`.
+- Marked Dev Slice 0.2 enemy-first task ten complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Quest kill enemy flow validation reports `[quest_kill_enemy_flow] OK enemy=normal_raid kill=saves_progress top_menu=live_update boundaries=clean`.
+- Top menu panel validation reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt layout=fit ui_manager=owns_state boundaries=clean`.
+- Projectile hit enemy, Base 3D runtime HUD, player-visible V2 slice, quest flow, save slots, gameplay scene launch, and main scene launch validations pass.
+
+### Next
+
+- Continue with task eleven: enemy-caused player death and result flow.

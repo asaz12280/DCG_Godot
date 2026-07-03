@@ -24,6 +24,7 @@ const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
 var is_open := false
 var _quest_summaries: Array[Dictionary] = []
+var _save_manager_node: Node = null
 
 
 func _ready() -> void:
@@ -31,6 +32,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_styles()
 	_apply_responsive_layout()
+	_connect_save_manager()
 	if get_viewport() != null and not get_viewport().size_changed.is_connected(_apply_responsive_layout):
 		get_viewport().size_changed.connect(_apply_responsive_layout)
 	refresh()
@@ -160,6 +162,22 @@ func _current_save_data() -> Dictionary:
 	if save_manager.has_method("get_slot_data"):
 		return save_manager.call("get_slot_data", slot_index) as Dictionary
 	return {}
+
+
+func _connect_save_manager() -> void:
+	var save_manager := _save_manager()
+	if save_manager == null or save_manager == _save_manager_node:
+		return
+	_save_manager_node = save_manager
+	if save_manager.has_signal("slot_saved"):
+		var callback := Callable(self, "_on_slot_saved")
+		if not save_manager.is_connected("slot_saved", callback):
+			save_manager.connect("slot_saved", callback)
+
+
+func _on_slot_saved(_slot_index: int, _save_data: Dictionary) -> void:
+	if is_open:
+		call_deferred("refresh")
 
 
 func _save_manager() -> Node:

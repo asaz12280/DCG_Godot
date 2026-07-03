@@ -249,7 +249,7 @@ The player should be able to:
 
 ### 任務十：敵人擊殺任務可見化
 
-狀態：未開始
+狀態：完成
 
 優先度：高
 

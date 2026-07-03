@@ -1,5 +1,7 @@
 extends Node
 
+signal slot_saved(slot_index: int, save_data: Dictionary)
+
 const DEFAULT_SAVE_ROOT := "user://saves"
 const SLOT_COUNT := 3
 const SAVE_SCHEMA_VERSION := 1
@@ -82,6 +84,8 @@ func save_slot_data(slot_index: int, save_data: Dictionary) -> bool:
 	if file == null:
 		return false
 	file.store_string(JSON.stringify(normalized, "\t"))
+	file = null
+	slot_saved.emit(slot_index, normalized.duplicate(true))
 	return true
 
 
