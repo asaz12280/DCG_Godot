@@ -2905,3 +2905,26 @@
 ### Next
 
 - Continue with task twenty: Project Health Check E.
+
+## 2026-07-03 Dev Slice 0.2 Enemy-First Health Check E
+
+### Completed
+
+- Strengthened `tools/validate_player_visibility_v2_health.gd` with Health Check E guards for Base medical service, armor effect ownership, UI display-only state, and save/load safety.
+- Confirmed `BaseMedicalService` handles healing cost and player recovery without directly mutating Raid, scene flow, weapon, enemy, or UI state.
+- Confirmed armor effects stay data-driven through `ItemDef.defense_bonus`, EquipmentModel remains slot-only, and PlayerController3D computes damage mitigation from equipped armor.
+- Confirmed Status Top Menu only reads and displays armor effect state; it does not own health, damage, or equipment mutation.
+- Confirmed save/load validation still passes after the medical station and armor-effect slices.
+- Marked Dev Slice 0.2 enemy-first Project Health Check E complete in `docs/tasks/dev_slice_0_2_enemy_first_task_queue.md`.
+
+### Verified
+
+- Player visibility V2 health validation reports `[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded`.
+- Save slot validation reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- Base medical station validation reports `[base_medical_station] OK station=visible heal=works cost=deducted ui=zh boundaries=clean`.
+- Armor effect validation reports `[equipment_armor_effect] OK equip=armor damage=reduced ui=visible boundaries=clean`.
+- Enemy attack validation reports `[enemy_attack_player] OK raid=normal attack=damages_player hud=updates cooldown=guarded status=visible`.
+
+### Next
+
+- Continue with task twenty-one: one special material source.

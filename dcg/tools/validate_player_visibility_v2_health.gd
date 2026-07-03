@@ -32,6 +32,10 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_raid_return_to_base_3d.gd",
 	"res://tools/validate_player_visible_v2_slice.gd",
 	"res://tools/validate_base_3d_runtime_hud.gd",
+	"res://scripts/base/base_medical_service.gd",
+	"res://tools/validate_base_medical_station.gd",
+	"res://data/items/armor/light_armor.tres",
+	"res://tools/validate_equipment_armor_effect.gd",
 	"res://tools/validate_enemy_loot_drop.gd",
 	"res://tools/validate_quest_kill_enemy_flow.gd",
 	"res://tools/validate_enemy_player_death_result.gd",
@@ -112,6 +116,7 @@ func _initialize() -> void:
 	_validate_equipment_independence()
 	_validate_known_current_risks_are_visible()
 	_validate_health_d_ui_boundaries()
+	_validate_health_e_base_service_and_armor_boundaries()
 	_validate_queue_mentions_health_check()
 	if _errors.is_empty():
 		print("[player_visibility_v2_health] OK audit=present known_debts=documented boundaries=guarded")
@@ -247,6 +252,50 @@ func _validate_health_d_ui_boundaries() -> void:
 	for forbidden in PackedStringArray(["InventoryEquipmentUI", "QuestTopMenuPanel", "MapTopMenuPanel", "LootContainer3D", "change_scene_to_file"]):
 		if raid_hud_text.contains(forbidden):
 			_errors.append("Legacy RaidHudPanel should stay display-only and not couple to panels or scene flow: %s." % forbidden)
+
+
+func _validate_health_e_base_service_and_armor_boundaries() -> void:
+	var medical_service_text := _read_text("res://scripts/base/base_medical_service.gd")
+	for required in PackedStringArray(["class_name BaseMedicalService", "get_state", "apply_heal", "HEAL_COST", "save_slot_data", "restore_health_to_full"]):
+		_expect_contains(medical_service_text, required, "Health Check E requires BaseMedicalService to expose %s." % required)
+	for forbidden in PackedStringArray(["RaidSession", "EnemyController3D", "WeaponController3D", "InventoryEquipmentUI", "change_scene", "get_tree()", "SceneTree"]):
+		if medical_service_text.contains(forbidden):
+			_errors.append("BaseMedicalService should not directly mutate Raid/UI/scene state: %s." % forbidden)
+
+	var medical_panel_text := _read_text("res://scripts/base/base_interaction_panel.gd")
+	for forbidden in PackedStringArray(["SaveGameManager", "save_slot_data", "restore_health_to_full", "RaidSession", "WeaponController3D"]):
+		if medical_panel_text.contains(forbidden):
+			_errors.append("BaseInteractionPanel should stay display-only and not own health/save/raid behavior: %s." % forbidden)
+	_expect_contains(medical_panel_text, "signal action_requested", "BaseInteractionPanel should request station actions through a signal.")
+
+	var item_text := _read_text("res://scripts/items/item_def.gd")
+	_expect_contains(item_text, "defense_bonus", "ItemDef should keep armor defense data-driven.")
+	var armor_text := _read_text("res://data/items/armor/light_armor.tres")
+	for required in PackedStringArray(["item_type = \"armor\"", "defense_bonus = 4.0"]):
+		_expect_contains(armor_text, required, "Light armor should expose a visible early defense effect through %s." % required)
+
+	var equipment_text := _read_text("res://scripts/equipment/equipment_model.gd")
+	for forbidden in PackedStringArray(["apply_damage", "DamageEvent", "StatusTopMenuPanel", "PlayerHud3D", "save_slot_data"]):
+		if equipment_text.contains(forbidden):
+			_errors.append("EquipmentModel should keep owning slots only, not combat/UI/save behavior: %s." % forbidden)
+
+	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
+	for required in PackedStringArray(["get_equipment_defense_bonus", "get_armor_effect_state", "get_total_defense", "mitigated_amount := maxf(event.amount - defense, 1.0)"]):
+		_expect_contains(player_text, required, "PlayerController3D should bridge armor stats through %s." % required)
+	for forbidden in PackedStringArray(["StatusTopMenuPanel", "InventoryEquipmentUI"]):
+		if player_text.contains(forbidden):
+			_errors.append("PlayerController3D armor effect should not depend on UI scripts: %s." % forbidden)
+
+	var status_text := _read_text("res://scripts/ui/status_top_menu_panel.gd")
+	for required in PackedStringArray(["get_armor_effect_state", "防護效果"]):
+		_expect_contains(status_text, required, "StatusTopMenuPanel should display armor effect through %s." % required)
+	for forbidden in PackedStringArray(["apply_damage", "DamageEvent", "health =", "equipment_model.equip", "defense_bonus ="]):
+		if status_text.contains(forbidden):
+			_errors.append("StatusTopMenuPanel should display player state without owning health/equipment authority: %s." % forbidden)
+
+	var armor_validator_text := _read_text("res://tools/validate_equipment_armor_effect.gd")
+	for required in PackedStringArray(["damage=reduced", "ui=visible", "boundaries=clean"]):
+		_expect_contains(armor_validator_text, required, "Armor validator should guard Health Check E result %s." % required)
 
 
 func _validate_queue_mentions_health_check() -> void:
