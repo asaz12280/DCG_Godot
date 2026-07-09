@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://dqsucscnoq278"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://cda3025r20br4" path="res://scripts/items/attachment_profile.gd" id="2_attachment_profile"]
+
+[sub_resource type="Resource" id="Resource_attachment_profile_compact_muzzle"]
+script = ExtResource("2_attachment_profile")
+vertical_recoil_multiplier = 0.9
+horizontal_recoil_multiplier = 0.95
+slot_tags = Array[StringName]([&"muzzle"])
+compatibility_tags = Array[StringName]([&"pistol", &"smg"])
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"compact_muzzle"
+name_key = &"item.compact_muzzle.name"
+description_key = &"item.compact_muzzle.desc"
+item_type = "attachment"
+weight = 0.12
+value = 95
+attachment_vertical_recoil_multiplier = 0.9
+attachment_horizontal_recoil_multiplier = 0.95
+attachment_profile = SubResource("Resource_attachment_profile_compact_muzzle")
+tags = Array[StringName]([&"muzzle", &"pistol", &"smg"])

@@ -13,7 +13,7 @@ func _initialize() -> void:
 	await _validate_base_hud_shortcuts()
 	await _validate_raid_gate_scene_change()
 	if _errors.is_empty():
-		print("[base_3d_runtime_hud] OK tab=backpack esc=pause crosshair=visible raid_gate=gameplay")
+		print("[base_3d_runtime_hud] OK tab=base_stash raid_tab=backpack esc=pause crosshair=visible raid_gate=gameplay")
 		quit(0)
 	else:
 		for error in _errors:
@@ -31,7 +31,9 @@ func _validate_base_hud_shortcuts() -> void:
 		_errors.append("Validation should start from the 3D Base scene.")
 	var ui_manager := root.get_node_or_null("UIManager")
 	var top_menu := scene.get_node_or_null("HUD/TopMenuBar")
+	var quest_panel := scene.get_node_or_null("HUD/QuestTopMenuPanel")
 	var inventory_ui := scene.get_node_or_null("HUD/InventoryEquipmentUI")
+	var stash_panel := scene.get_node_or_null("HUD/BaseStashInventoryUI")
 	var codex_ui := scene.get_node_or_null("HUD/ItemCodexUI")
 	var pause_menu := scene.get_node_or_null("HUD/PauseMenu")
 	var player_hud := scene.get_node_or_null("HUD/PlayerHud3D")
@@ -41,20 +43,23 @@ func _validate_base_hud_shortcuts() -> void:
 		_errors.append("3D Base HUD should include TopMenuBar, InventoryEquipmentUI, ItemCodexUI, PauseMenu, and PlayerHud3D.")
 		_free_current_scene()
 		return
+	_validate_hud_layering(player_hud, top_menu, quest_panel, "3D Base")
 
 	_press_key_on_ui_manager(ui_manager, KEY_TAB)
 	await _wait_frames(3)
-	if str(ui_manager.call("get_active_ui")) != "backpack":
-		_errors.append("TAB should open the backpack through UIManager in 3D Base.")
+	if str(ui_manager.call("get_active_ui")) != "stash":
+		_errors.append("TAB should open the base warehouse through UIManager in 3D Base.")
 	if not bool(top_menu.get("visible")):
 		_errors.append("TAB should make TopMenuBar visible in 3D Base.")
 	if not bool(inventory_ui.get("visible")):
-		_errors.append("TAB should make InventoryEquipmentUI visible in 3D Base.")
+		_errors.append("TAB should keep InventoryEquipmentUI visible beside the base warehouse.")
+	if stash_panel == null or not bool(stash_panel.call("is_open")):
+		_errors.append("TAB should open BaseStashInventoryUI in 3D Base.")
 
 	_press_key_on_ui_manager(ui_manager, KEY_ESCAPE)
 	await _wait_frames(3)
 	if str(ui_manager.call("get_active_ui")) != "":
-		_errors.append("ESC should close the active backpack UI before opening pause.")
+		_errors.append("ESC should close the active base warehouse UI before opening pause.")
 	_press_key_on_ui_manager(ui_manager, KEY_ESCAPE)
 	await _wait_frames(3)
 	if str(ui_manager.call("get_active_ui")) != "pause":
@@ -98,8 +103,21 @@ func _validate_raid_gate_scene_change() -> void:
 	else:
 		var player := current_scene.get_node_or_null("Player3D")
 		var hud := current_scene.get_node_or_null("HUD/PlayerHud3D")
+		var top_menu := current_scene.get_node_or_null("HUD/TopMenuBar")
+		var quest_panel := current_scene.get_node_or_null("HUD/QuestTopMenuPanel")
+		var gameplay_stash_panel := current_scene.get_node_or_null("HUD/BaseStashInventoryUI")
 		if player == null or hud == null:
 			_errors.append("Gameplay scene after raid gate should include Player3D and PlayerHud3D.")
+		else:
+			_validate_hud_layering(hud, top_menu, quest_panel, "Gameplay")
+		var ui_manager := root.get_node_or_null("UIManager")
+		if ui_manager != null:
+			_press_key_on_ui_manager(ui_manager, KEY_TAB)
+			await _wait_frames(3)
+			if str(ui_manager.call("get_active_ui")) != "backpack":
+				_errors.append("TAB outside base should open backpack instead of carrying the base warehouse.")
+			if gameplay_stash_panel != null:
+				_errors.append("Gameplay scene should not carry BaseStashInventoryUI out of the base.")
 
 	_free_current_scene()
 
@@ -112,6 +130,15 @@ func _press_key_on_ui_manager(ui_manager: Node, keycode: Key) -> void:
 	event.physical_keycode = keycode
 	event.pressed = true
 	ui_manager.call("_input", event)
+
+
+func _validate_hud_layering(player_hud: CanvasItem, top_menu: CanvasItem, quest_panel: CanvasItem, label: String) -> void:
+	if player_hud == null or top_menu == null:
+		return
+	if int(player_hud.z_index) >= int(top_menu.z_index):
+		_errors.append("%s PlayerHud3D should render below the top function bar." % label)
+	if quest_panel != null and int(player_hud.z_index) >= int(quest_panel.z_index):
+		_errors.append("%s PlayerHud3D health bars should render below top-menu panels." % label)
 
 
 func _wait_frames(count: int) -> void:

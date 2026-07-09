@@ -6,6 +6,8 @@ const ProjectileScript := preload("res://scripts/combat/projectile_3d.gd")
 const ShotFeedbackScript := preload("res://scripts/combat/shot_feedback_3d.gd")
 const HitFeedbackScript := preload("res://scripts/combat/projectile_hit_feedback_3d.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
+const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
+const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const BASE_3D_SCENE := "res://scenes/base/base_3d.tscn"
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
@@ -409,7 +411,9 @@ func _setup_save_manager() -> void:
 		"money": 0,
 		"stash": [],
 		"base_upgrades": {},
-		"quests": {},
+		"quests": {
+			KILL_QUEST_ID: QuestStateScript.accept(FirstScavengerHuntQuest),
+		},
 	})
 
 

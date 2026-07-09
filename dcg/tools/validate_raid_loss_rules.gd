@@ -52,7 +52,8 @@ func _validate_loss_context_from_player() -> void:
 	var player := FakePlayer.new()
 	player.inventory_model.add_item(WoodItem, 3)
 	player.safe_pocket_model.add_item(AmmoItem, 8)
-	player.equipment_model.equip_item(&"sidearm", PistolItem)
+	player.safe_pocket_model.add_stack(_damaged_pistol_stack(39, 80))
+	player.equipment_model.equip_stack(&"sidearm", _damaged_pistol_stack(31, 76))
 	var context: Dictionary = RaidLossRulesScript.build_death_context_from_player(player)
 	var lost_items: Array = context.get("lost_items", []) as Array
 	var kept_items: Array = context.get("kept_safe_pocket_items", []) as Array
@@ -60,8 +61,12 @@ func _validate_loss_context_from_player() -> void:
 		_errors.append("Death loss rules should list backpack items as lost.")
 	if _stack_quantity(lost_items, PistolItem.resource_path) != 1:
 		_errors.append("Death loss rules should list equipped items as lost.")
+	if not _stack_has_durability(lost_items, PistolItem.resource_path, 31, 76):
+		_errors.append("Death loss rules should preserve lost equipped item durability for dropped loot context.")
 	if _stack_quantity(kept_items, AmmoItem.resource_path) != 8:
 		_errors.append("Death loss rules should return safe pocket items.")
+	if not _stack_has_durability(kept_items, PistolItem.resource_path, 39, 80):
+		_errors.append("Death loss rules should preserve safe pocket item durability.")
 	if str(context.get("loss_rule", "")) != "backpack_equipment_lost_safe_pocket_returned":
 		_errors.append("Death loss context should identify the applied loss rule.")
 	var result := RaidResultScript.create(RaidResultScript.OUTCOME_DEAD, context)
@@ -95,7 +100,8 @@ func _validate_death_applier_clears_raid_inventory_only() -> void:
 	player.name = "Player3D"
 	player.inventory_model.add_item(WoodItem, 2)
 	player.safe_pocket_model.add_item(AmmoItem, 6)
-	player.equipment_model.equip_item(&"sidearm", PistolItem)
+	player.safe_pocket_model.add_stack(_damaged_pistol_stack(39, 80))
+	player.equipment_model.equip_stack(&"sidearm", _damaged_pistol_stack(31, 76))
 	test_root.add_child(player)
 
 	var applier := RaidResultApplierScript.new()
@@ -120,10 +126,12 @@ func _validate_death_applier_clears_raid_inventory_only() -> void:
 	var stash: Array = saved_after.get("stash", []) as Array
 	if _stack_quantity(stash, WoodItem.resource_path) != 0:
 		_errors.append("Death should not move lost backpack items to base stash.")
-	if _stack_quantity(stash, PistolItem.resource_path) != 0:
-		_errors.append("Death should not move equipped lost items to base stash.")
 	if _stack_quantity(stash, AmmoItem.resource_path) != 8:
 		_errors.append("Death should preserve existing base stash and return safe pocket items.")
+	if _stack_quantity(stash, PistolItem.resource_path) != 1:
+		_errors.append("Death should return only safe pocket equipment copies, not lost equipped items.")
+	if not _stack_has_durability(stash, PistolItem.resource_path, 39, 80):
+		_errors.append("Returned safe pocket equipment should preserve durability in base stash.")
 	if int(saved_after.get("money", 0)) != 5:
 		_errors.append("Death applier should not alter saved money.")
 
@@ -158,6 +166,25 @@ func _stack_quantity(stacks: Array, item_path: String) -> int:
 		if str(stack.get("item_path", stack.get("resource_path", ""))) == item_path:
 			total += int(stack.get("quantity", 0))
 	return total
+
+
+func _stack_has_durability(stacks: Array, item_path: String, current: int, maximum: int) -> bool:
+	for entry in stacks:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var stack := entry as Dictionary
+		if str(stack.get("item_path", stack.get("resource_path", ""))) == item_path and int(stack.get("current_durability", -1)) == current and int(stack.get("max_durability", -1)) == maximum:
+			return true
+	return false
+
+
+func _damaged_pistol_stack(current: int, maximum: int) -> Dictionary:
+	var stack := PistolItem.to_stack(1)
+	stack["current_durability"] = current
+	stack["max_durability"] = maximum
+	stack["original_max_durability"] = PistolItem.max_durability
+	stack["repair_max_durability_loss"] = PistolItem.repair_max_durability_loss
+	return stack
 
 
 func _cleanup_validation_root(root_path: String) -> void:

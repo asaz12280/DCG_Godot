@@ -5,12 +5,15 @@ This project is moving from prototype UI toward maintainable production UI.
 ## Goals
 
 - Keep player-facing text in `data/localization/game_text.csv`.
+- Keep all player-facing UI copy translation-key driven so English mode never shows Traditional Chinese fallback text.
 - Keep item data in `data/items`.
 - Keep shared UI style in `data/ui/game_theme.tres`.
 - Keep transitional shared style tokens in `scripts/ui/ui_style.gd` until they can move into the theme or layout helpers cleanly.
 - Keep gameplay screen UI state in `scripts/ui/ui_manager.gd`.
 - Keep screen-size math in `scripts/ui/ui_layout.gd`.
 - Keep reusable UI behavior in component scripts under `scripts/ui/components`.
+- Keep future screens visually and structurally aligned with existing UI references instead of creating unrelated one-off layouts.
+- Prefer Godot nodes, scenes, containers, controls, resources, and theme features over custom script recreation whenever they can produce the same result.
 
 ## Theme Rules
 
@@ -20,6 +23,24 @@ This project is moving from prototype UI toward maintainable production UI.
 - Common states to preserve: normal, hover, pressed, selected, disabled, focus.
 - Generated Control trees should use `UIStyle` for repeated font sizes, spacing, margins, panel shapes, and overlay colors instead of embedding one-off values in each screen script.
 - When a `UIStyle` token maps cleanly to a Godot `Theme` color, constant, font size, or stylebox slot, prefer moving it into `game_theme.tres` and removing the script token.
+
+## Reference UI Rules
+
+- Before building a new screen, inspect similar existing scenes and panels under `scenes/ui`, `scenes/base`, and `scripts/ui`.
+- Reuse established panel shells, button sizing, list spacing, top menu treatment, modal proportions, typography scale, and action placement.
+- If a screen needs a new layout pattern, define it as a reusable scene/component/helper rather than embedding the pattern inside a single panel script.
+- Do not introduce a new color scale, spacing rhythm, or button hierarchy unless it is moved into `game_theme.tres`, `UIStyle`, or `UILayout`.
+- Treat existing UI as the visual reference for follow-up tasks so later screens can be updated consistently.
+- Treat existing localization keys and naming patterns as the text reference; new UI copy should add keys instead of hard-coded labels.
+
+## Node-First Rules
+
+- Use `.tscn` scenes and Godot `Control` node trees for stable panels.
+- Use `Container` nodes for layout before writing manual position math.
+- Use `Theme`, `StyleBox`, font sizes, constants, and control states before setting repeated style values in code.
+- Use built-in focus, disabled, hover, pressed, selected, scroll, tab, and layout behavior before recreating those states in script.
+- Script should bind data, emit user intent, build dynamic repeated children, or provide narrow custom drawing. It should not duplicate engine UI systems.
+- If script-created UI is used, record why node-based UI was not enough and extract reusable pieces when the pattern repeats.
 
 ## Responsive Rules
 
@@ -37,6 +58,14 @@ This project is moving from prototype UI toward maintainable production UI.
 - Gameplay panels may own their internal drawing and interaction, but global concerns such as mutual exclusion, Escape/Tab handling, focus, mouse mode, and gameplay input blocking belong to `UIManager`.
 - Only one major gameplay UI should be active at a time until a screen explicitly needs layered modal behavior.
 
+## UI Localization Rules
+
+- UI scripts should store keys or request keys from models/resources, then call `tr()` or the shared localization helper at display time.
+- Labels, buttons, hints, empty states, status rows, tooltips, and errors must not hard-code final Traditional Chinese or English copy.
+- A visible fallback means the screen is not complete unless it is explicitly a developer-only debug surface.
+- Any new UI screen must provide every required key in `data/localization/game_text.csv` for all supported locales.
+- Dynamic values should use translated format strings rather than concatenating localized and hard-coded fragments.
+
 ## Codex Rules
 
 - Item definitions live in `data/items`.
@@ -51,3 +80,4 @@ This project is moving from prototype UI toward maintainable production UI.
 2. Move shared numbers and colors into theme/layout helpers.
 3. Replace hand-drawn repeated elements with reusable `Control` components.
 4. Convert large screens only when the data model and interaction rules are stable.
+5. Remove duplicate script-side UI behavior when an equivalent Godot node/theme/container feature can own it.

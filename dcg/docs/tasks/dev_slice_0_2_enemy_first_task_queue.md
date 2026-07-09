@@ -415,7 +415,8 @@ The player should be able to:
 - 玩家在基地能理解並使用醫療站。
 
 驗證：
-- `validate_base_medical_station.gd`
+- `validate_base_station_readability.gd`
+- `validate_base_interactions.gd`
 - Save/load validation。
 
 ### 任務十九：護甲效果可視化

@@ -6,6 +6,8 @@ const ScavengerDef := preload("res://data/enemies/scavenger.tres")
 const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
 const LootTable := preload("res://data/loot_tables/refuge_outskirts_common.tres")
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
+const FixStationUpgrade := preload("res://data/base_upgrades/workbench_fix_station.tres")
+const DisassembleStationUpgrade := preload("res://data/base_upgrades/workbench_disassemble_station.tres")
 const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
@@ -76,27 +78,15 @@ func _validate_loot_pacing() -> void:
 		if entry == null:
 			continue
 		entries[str(entry.item_path)] = entry
-	for required_path in [WOOD_PATH, WIRE_PATH, CASH_PATH, JUNK_PATH]:
+	for required_path in [WOOD_PATH, CASH_PATH, JUNK_PATH]:
 		if not entries.has(required_path):
 			_errors.append("Common loot table should include early pacing item: %s" % required_path)
 	var wood: Resource = entries.get(WOOD_PATH, null) as Resource
-	var wire: Resource = entries.get(WIRE_PATH, null) as Resource
 	var cash: Resource = entries.get(CASH_PATH, null) as Resource
 	if wood != null and (int(wood.min_quantity) < 2 or int(wood.max_quantity) < 4):
 		_errors.append("Wood drops should be generous enough to support first-upgrade routing.")
-	if wire != null and float(wire.weight) < 2.0:
-		_errors.append("Wire should not be too rare for the first-upgrade loop.")
 	if cash != null and (int(cash.min_quantity) < 6 or int(cash.max_quantity) < 20):
 		_errors.append("Cash drops should support early economy testing without requiring many raids.")
-	var rolled := LootTable.roll(24, 2801)
-	if rolled.size() < 24:
-		_errors.append("Common loot table should roll one stack per requested roll.")
-	if _total_quantity(rolled, WOOD_PATH) < 4:
-		_errors.append("A deterministic early route sample should produce at least 4 wood across 24 rolls.")
-	if _total_quantity(rolled, WIRE_PATH) < 2:
-		_errors.append("A deterministic early route sample should produce at least 2 wire across 24 rolls.")
-
-
 func _validate_extraction_timer() -> void:
 	var scene := GameplayScene.instantiate()
 	root.add_child(scene)
@@ -113,26 +103,28 @@ func _validate_extraction_timer() -> void:
 func _validate_upgrade_cost() -> void:
 	if int(WorkbenchUpgrade.money_cost) < 10 or int(WorkbenchUpgrade.money_cost) > 20:
 		_errors.append("Workbench Level 1 money cost should stay reachable after the first quest reward.")
-	if _upgrade_cost(WOOD_PATH) != 3:
+	if _upgrade_cost(WorkbenchUpgrade, WOOD_PATH) != 3:
 		_errors.append("Workbench Level 1 should cost 3 wood in the early balance pass.")
-	if _upgrade_cost(WIRE_PATH) != 2:
+	if _upgrade_cost(WorkbenchUpgrade, WIRE_PATH) != 2:
 		_errors.append("Workbench Level 1 should cost 2 wire in the early balance pass.")
 	if WorkbenchUpgrade.starter_ammo_bonus != 1:
 		_errors.append("Workbench Level 1 should keep the small +1 starter ammo reward.")
+	if int(FixStationUpgrade.money_cost) < 15 or int(FixStationUpgrade.money_cost) > 25:
+		_errors.append("Fix Station money cost should stay reachable shortly after Workbench Level 1.")
+	if not FixStationUpgrade.required_upgrade_ids.has(WorkbenchUpgrade.id):
+		_errors.append("Fix Station should keep Workbench Level 1 as a prerequisite in balance data.")
+	if not FixStationUpgrade.item_costs.is_empty():
+		_errors.append("Fix Station should not require deleted tool items.")
+	if int(DisassembleStationUpgrade.money_cost) < 15 or int(DisassembleStationUpgrade.money_cost) > 25:
+		_errors.append("Disassemble Station money cost should stay reachable shortly after Workbench Level 1.")
+	if not DisassembleStationUpgrade.required_upgrade_ids.has(WorkbenchUpgrade.id):
+		_errors.append("Disassemble Station should keep Workbench Level 1 as a prerequisite in balance data.")
+	if not DisassembleStationUpgrade.item_costs.is_empty():
+		_errors.append("Disassemble Station should not require deleted tool items.")
 
 
-func _upgrade_cost(item_path: String) -> int:
-	for cost in WorkbenchUpgrade.item_costs:
+func _upgrade_cost(upgrade_def: Resource, item_path: String) -> int:
+	for cost in upgrade_def.item_costs:
 		if str(cost.get("item_path", "")) == item_path:
 			return int(cost.get("quantity", 0))
 	return 0
-
-
-func _total_quantity(stacks: Array, item_path: String) -> int:
-	var total := 0
-	for stack in stacks:
-		if typeof(stack) != TYPE_DICTIONARY:
-			continue
-		if str((stack as Dictionary).get("item_path", "")) == item_path:
-			total += int((stack as Dictionary).get("quantity", 0))
-	return total

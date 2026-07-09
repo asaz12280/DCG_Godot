@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://j2dc08skvhje"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_basic_helmet"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/armor/basic_helmet.tres"
+tags = Array[StringName]([&"blue_locked_crate", &"equipment", &"helmet"])
+
+[sub_resource type="Resource" id="LootTableEntry_light_armor"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/armor/light_armor.tres"
+tags = Array[StringName]([&"blue_locked_crate", &"equipment", &"armor"])
+
+[sub_resource type="Resource" id="LootTableEntry_life_totem"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/totems/life_totem.tres"
+tags = Array[StringName]([&"blue_locked_crate", &"totem", &"life"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_blue_locked_armor"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_basic_helmet"), SubResource("LootTableEntry_light_armor"), SubResource("LootTableEntry_life_totem")])

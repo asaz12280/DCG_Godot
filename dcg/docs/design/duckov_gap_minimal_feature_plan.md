@@ -192,7 +192,8 @@ Dev Slice 0.2 的目標不是變成完整遊戲，而是讓目前可視化 V2 �
 - 醫療站狀態與消耗清楚顯示。
 
 驗證：
-- `validate_base_medical_station.gd`
+- `validate_base_station_readability.gd`
+- `validate_base_interactions.gd`
 - Save/load safety check。
 
 ### 任務七：敵人行為種類補一種

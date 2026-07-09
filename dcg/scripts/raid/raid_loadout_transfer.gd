@@ -1,6 +1,8 @@
 class_name RaidLoadoutTransfer
 extends RefCounted
 
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
+
 
 static func build_from_player(player: Node) -> Dictionary:
 	if player == null:
@@ -72,14 +74,10 @@ static func _inventory_to_data(inventory: Variant) -> Array[Dictionary]:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var stack := value as Dictionary
-		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
+		var entry: Dictionary = ItemStackSaveCodecScript.to_save_entry(stack)
+		if entry.is_empty():
 			continue
-		data.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
+		data.append(entry)
 	return data
 
 
@@ -98,12 +96,17 @@ static func _load_inventory_data(inventory: Variant, raw_data: Variant) -> bool:
 			loaded_all = false
 			continue
 		var entry := value as Dictionary
-		var item_path := str(entry.get("item_path", entry.get("resource_path", "")))
+		var item_path := ItemStackSaveCodecScript.get_item_path(entry)
 		var quantity := int(entry.get("quantity", 0))
 		if item_path == "" or quantity <= 0 or not ResourceLoader.exists(item_path):
 			loaded_all = false
 			continue
 		var item := load(item_path) as ItemDef
-		if item == null or not bool(inventory.call("add_item", item, quantity)):
+		if item == null:
+			loaded_all = false
+			continue
+		if inventory.has_method("add_stack"):
+			loaded_all = bool(inventory.call("add_stack", entry)) and loaded_all
+		elif not bool(inventory.call("add_item", item, quantity)):
 			loaded_all = false
 	return loaded_all

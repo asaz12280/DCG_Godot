@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://cymdc7b2rb8i6"]
+
+[ext_resource type="Script" uid="uid://5ykwplwtm4rt" path="res://scripts/base/upgrade_def.gd" id="1_upgrade_def"]
+
+[resource]
+script = ExtResource("1_upgrade_def")
+id = &"workbench_disassemble_station"
+display_name = "Disassemble Station"
+description = "Unlocks dismantle mode at the workbench."
+money_cost = 20
+required_upgrade_ids = Array[StringName]([&"workbench_level_1"])

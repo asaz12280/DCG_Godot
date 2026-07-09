@@ -8,6 +8,7 @@ const OUTCOME_DEAD := "dead"
 
 const KEY_OUTCOME := "outcome"
 const KEY_EXTRACTED_ITEMS := "extracted_items"
+const KEY_EXTRACTED_EQUIPMENT := "extracted_equipment"
 const KEY_LOST_ITEMS := "lost_items"
 const KEY_KEPT_SAFE_POCKET_ITEMS := "kept_safe_pocket_items"
 const KEY_MONEY_DELTA := "money_delta"
@@ -18,6 +19,7 @@ static func create(outcome: String, context: Dictionary = {}) -> Dictionary:
 	var result := {
 		KEY_OUTCOME: outcome,
 		KEY_EXTRACTED_ITEMS: _duplicate_array(context.get(KEY_EXTRACTED_ITEMS, [])),
+		KEY_EXTRACTED_EQUIPMENT: _duplicate_dictionary(context.get(KEY_EXTRACTED_EQUIPMENT, {})),
 		KEY_LOST_ITEMS: _duplicate_array(context.get(KEY_LOST_ITEMS, [])),
 		KEY_KEPT_SAFE_POCKET_ITEMS: _duplicate_array(context.get(KEY_KEPT_SAFE_POCKET_ITEMS, [])),
 		KEY_MONEY_DELTA: int(context.get(KEY_MONEY_DELTA, 0)),
@@ -44,6 +46,8 @@ static func validate(result: Dictionary) -> Array[String]:
 		errors.append("Raid result requires outcome.")
 	if typeof(result.get(KEY_EXTRACTED_ITEMS, null)) != TYPE_ARRAY:
 		errors.append("Raid result requires extracted_items array.")
+	if typeof(result.get(KEY_EXTRACTED_EQUIPMENT, null)) != TYPE_DICTIONARY:
+		errors.append("Raid result requires extracted_equipment dictionary.")
 	if typeof(result.get(KEY_LOST_ITEMS, null)) != TYPE_ARRAY:
 		errors.append("Raid result requires lost_items array.")
 	if typeof(result.get(KEY_KEPT_SAFE_POCKET_ITEMS, null)) != TYPE_ARRAY:
@@ -65,6 +69,12 @@ static func _duplicate_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return _sanitize_value(value) as Array
+
+
+static func _duplicate_dictionary(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return _sanitize_value(value) as Dictionary
 
 
 static func _sanitize_value(value: Variant) -> Variant:

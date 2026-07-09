@@ -1,6 +1,12 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://bbipuah04y4gs"]
 
-[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://dxhlkche4dt6g" path="res://scripts/items/ammo_profile.gd" id="2_ammo_profile"]
+
+[sub_resource type="Resource" id="Resource_ammo_profile_ammo_9mm"]
+script = ExtResource("2_ammo_profile")
+ammo_tag = &"S"
+penetration_level = 1.0
 
 [resource]
 script = ExtResource("1_item_def")
@@ -13,5 +19,7 @@ item_type = "ammo"
 weight = 0.012
 value = 3
 max_stack = 60
-ammo_tag = &"9mm"
-tags = Array[StringName]([&"9mm"])
+ammo_tag = &"S"
+ammo_penetration_level = 1.0
+ammo_profile = SubResource("Resource_ammo_profile_ammo_9mm")
+tags = Array[StringName]([&"S"])

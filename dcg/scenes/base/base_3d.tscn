@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/gameplay/top_down_camera_3d.gd" id="2_camera"]
@@ -67,10 +67,6 @@ roughness = 0.75
 albedo_color = Color(0.66, 0.26, 0.22, 1)
 roughness = 0.75
 
-[sub_resource type="StandardMaterial3D" id="Material_medical"]
-albedo_color = Color(0.78, 0.86, 0.86, 1)
-roughness = 0.72
-
 [sub_resource type="BoxMesh" id="BoxMesh_workbench"]
 size = Vector3(1.7, 0.65, 0.8)
 
@@ -82,9 +78,6 @@ size = Vector3(1.35, 1.05, 0.16)
 
 [sub_resource type="BoxMesh" id="BoxMesh_gate"]
 size = Vector3(1.55, 1.75, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_medical_bed"]
-size = Vector3(1.7, 0.35, 0.75)
 
 [sub_resource type="StandardMaterial3D" id="Material_prop_dark"]
 albedo_color = Color(0.16, 0.19, 0.19, 1)
@@ -283,41 +276,6 @@ text = "開始行動"
 font_size = 24
 outline_size = 6
 modulate = Color(1, 0.84, 0.72, 1)
-
-[node name="MedicalPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 0, 2.25)
-metadata/interaction_id = "medical"
-metadata/display_name_zh = "醫療站"
-
-[node name="Marker" type="MeshInstance3D" parent="InteractionPoints/MedicalPoint"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
-mesh = SubResource("BoxMesh_marker")
-surface_material_override/0 = SubResource("Material_medical")
-
-[node name="Bed" type="MeshInstance3D" parent="InteractionPoints/MedicalPoint"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.42, -0.12)
-mesh = SubResource("BoxMesh_medical_bed")
-surface_material_override/0 = SubResource("Material_medical")
-
-[node name="SupplyBox" type="MeshInstance3D" parent="InteractionPoints/MedicalPoint"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.72, 0.38, 0.38)
-mesh = SubResource("BoxMesh_locker")
-surface_material_override/0 = SubResource("Material_prop_dark")
-
-[node name="Label3D" type="Label3D" parent="InteractionPoints/MedicalPoint"]
-transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
-billboard = 1
-text = "醫療站"
-font_size = 42
-outline_size = 8
-
-[node name="HintLabel3D" type="Label3D" parent="InteractionPoints/MedicalPoint"]
-transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.12, 0)
-billboard = 1
-text = "回復生命"
-font_size = 24
-outline_size = 6
-modulate = Color(0.85, 1, 0.95, 1)
 
 [node name="Player3D" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.4)

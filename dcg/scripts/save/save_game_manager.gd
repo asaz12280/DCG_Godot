@@ -201,8 +201,14 @@ func _default_save_data(difficulty_id: String = "normal", scene_path: String = D
 		"saved_at_text": Time.get_datetime_string_from_unix_time(saved_at_unix, true),
 		"money": DEFAULT_MONEY,
 		"stash": [],
+		"equipment": {"slots": {}},
 		"base_upgrades": {},
 		"quests": {},
+		"needed_item_marks": {},
+		"selected_recipe_ids": {},
+		"selected_repair_ids": {},
+		"selected_dismantle_ids": {},
+		"researched_blueprints": {},
 	}
 
 
@@ -220,6 +226,10 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	if typeof(stash_value) == TYPE_ARRAY:
 		normalized["stash"] = (stash_value as Array).duplicate(true)
 
+	var equipment_value: Variant = raw_data.get("equipment", {})
+	if typeof(equipment_value) == TYPE_DICTIONARY:
+		normalized["equipment"] = _normalize_equipment_data(equipment_value as Dictionary)
+
 	var base_upgrades_value: Variant = raw_data.get("base_upgrades", {})
 	if typeof(base_upgrades_value) == TYPE_DICTIONARY:
 		normalized["base_upgrades"] = (base_upgrades_value as Dictionary).duplicate(true)
@@ -228,7 +238,82 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	if typeof(quests_value) == TYPE_DICTIONARY:
 		normalized["quests"] = _normalize_quest_states(quests_value as Dictionary)
 
+	var needed_marks_value: Variant = raw_data.get("needed_item_marks", {})
+	if typeof(needed_marks_value) == TYPE_DICTIONARY:
+		normalized["needed_item_marks"] = _normalize_needed_item_marks(needed_marks_value as Dictionary)
+
+	var selected_recipes_value: Variant = raw_data.get("selected_recipe_ids", {})
+	if typeof(selected_recipes_value) == TYPE_DICTIONARY:
+		normalized["selected_recipe_ids"] = _normalize_selected_recipe_ids(selected_recipes_value as Dictionary)
+
+	var selected_repairs_value: Variant = raw_data.get("selected_repair_ids", {})
+	if typeof(selected_repairs_value) == TYPE_DICTIONARY:
+		normalized["selected_repair_ids"] = _normalize_selected_repair_ids(selected_repairs_value as Dictionary)
+
+	var selected_dismantles_value: Variant = raw_data.get("selected_dismantle_ids", {})
+	if typeof(selected_dismantles_value) == TYPE_DICTIONARY:
+		normalized["selected_dismantle_ids"] = _normalize_selected_dismantle_ids(selected_dismantles_value as Dictionary)
+
+	var researched_blueprints_value: Variant = raw_data.get("researched_blueprints", {})
+	if typeof(researched_blueprints_value) == TYPE_DICTIONARY:
+		normalized["researched_blueprints"] = _normalize_researched_blueprints(researched_blueprints_value as Dictionary)
+
 	return normalized
+
+
+func _normalize_needed_item_marks(raw_marks: Dictionary) -> Dictionary:
+	var marks: Dictionary = {}
+	for item_path in raw_marks.keys():
+		var path := str(item_path).strip_edges()
+		if path != "" and bool(raw_marks.get(item_path, false)):
+			marks[path] = true
+	return marks
+
+
+func _normalize_selected_recipe_ids(raw_selection: Dictionary) -> Dictionary:
+	var selection: Dictionary = {}
+	for station_id in raw_selection.keys():
+		var station := str(station_id).strip_edges()
+		var recipe_id := str(raw_selection.get(station_id, "")).strip_edges()
+		if station != "" and recipe_id != "":
+			selection[station] = recipe_id
+	return selection
+
+
+func _normalize_selected_repair_ids(raw_selection: Dictionary) -> Dictionary:
+	var selection: Dictionary = {}
+	for station_id in raw_selection.keys():
+		var station := str(station_id).strip_edges()
+		var repair_id := str(raw_selection.get(station_id, "")).strip_edges()
+		if station != "" and repair_id != "":
+			selection[station] = repair_id
+	return selection
+
+
+func _normalize_selected_dismantle_ids(raw_selection: Dictionary) -> Dictionary:
+	var selection: Dictionary = {}
+	for station_id in raw_selection.keys():
+		var station := str(station_id).strip_edges()
+		var dismantle_id := str(raw_selection.get(station_id, "")).strip_edges()
+		if station != "" and dismantle_id != "":
+			selection[station] = dismantle_id
+	return selection
+
+
+func _normalize_researched_blueprints(raw_blueprints: Dictionary) -> Dictionary:
+	var blueprints: Dictionary = {}
+	for item_path in raw_blueprints.keys():
+		var path := str(item_path).strip_edges()
+		if path != "" and bool(raw_blueprints.get(item_path, false)):
+			blueprints[path] = true
+	return blueprints
+
+
+func _normalize_equipment_data(raw_equipment: Dictionary) -> Dictionary:
+	var slots_value: Variant = raw_equipment.get("slots", {})
+	if typeof(slots_value) != TYPE_DICTIONARY:
+		return {"slots": {}}
+	return {"slots": (slots_value as Dictionary).duplicate(true)}
 
 
 func _normalize_quest_states(raw_quests: Dictionary) -> Dictionary:

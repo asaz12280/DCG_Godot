@@ -19,7 +19,6 @@ const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tr
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
 const WIRE_PATH := "res://data/items/electronics/wire.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
-const WATCH_PATH := "res://data/items/valuables/old_watch.tres"
 const VALIDATION_SAVE_ROOT := "user://validation_three_raid_loop_0_2"
 
 var _errors: Array[String] = []
@@ -62,6 +61,7 @@ func _initialize() -> void:
 
 
 func _validate_raid_one_extract_then_3d_base_upgrade() -> void:
+	_accept_quest(FirstSalvageQuest)
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
 		"extracted_items": [
 			{"item_path": WOOD_PATH, "quantity": 4},
@@ -159,6 +159,7 @@ func _validate_raid_two_enemy_death_preserves_meta_progress() -> void:
 
 
 func _validate_raid_three_upgrade_effect_kill_extract_reload() -> void:
+	_accept_quest(FirstScavengerHuntQuest)
 	await _validate_next_raid_visible_upgrade_effect("raid three")
 	var enemy := ScavengerScene.instantiate()
 	root.add_child(enemy)
@@ -176,7 +177,7 @@ func _validate_raid_three_upgrade_effect_kill_extract_reload() -> void:
 		_errors.append("Raid three should persist kill:scavenger progress.")
 
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
-		"extracted_items": [{"item_path": WATCH_PATH, "quantity": 1}],
+		"extracted_items": [{"item_path": JUNK_PATH, "quantity": 1}],
 		"money_delta": 3,
 		"duration": 64.0,
 	})
@@ -188,7 +189,7 @@ func _validate_raid_three_upgrade_effect_kill_extract_reload() -> void:
 		_errors.append("3D Base phase should claim First Scavenger Hunt after raid three.")
 
 	var reloaded: Dictionary = _reload_slot_data()
-	if _stash_quantity(reloaded, WATCH_PATH) != 1:
+	if _stash_quantity(reloaded, JUNK_PATH) != 1:
 		_errors.append("Save reload should preserve raid three extracted stash.")
 	if int(reloaded.get("money", 0)) != 68:
 		_errors.append("Save reload should preserve money after three 0.2 raids, expected 68.")
@@ -265,7 +266,9 @@ func _claim_quest(quest_def: Resource) -> Dictionary:
 	var save_data: Dictionary = _save_manager.get_slot_data(1)
 	var quests: Dictionary = _quest_dict(save_data.get("quests", {}))
 	var quest_id := str(quest_def.get("id"))
-	var quest_state: Dictionary = quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary
+	if not quests.has(quest_id):
+		return {"success": false, "reason": "not_accepted"}
+	var quest_state: Dictionary = quests.get(quest_id, {}) as Dictionary
 	var result: Dictionary = QuestStateScript.claim_reward(save_data, quest_state, quest_def)
 	if not bool(result.get("success", false)):
 		return result
@@ -276,6 +279,14 @@ func _claim_quest(quest_def: Resource) -> Dictionary:
 	if not bool(_save_manager.save_slot_data(1, updated)):
 		return {"success": false, "reason": "save_failed"}
 	return result
+
+
+func _accept_quest(quest_def: Resource) -> void:
+	var save_data: Dictionary = _save_manager.get_slot_data(1)
+	var quests: Dictionary = _quest_dict(save_data.get("quests", {}))
+	quests[str(quest_def.get("id"))] = QuestStateScript.accept(quest_def)
+	save_data["quests"] = quests
+	_save_manager.save_slot_data(1, save_data)
 
 
 func _reload_slot_data() -> Dictionary:

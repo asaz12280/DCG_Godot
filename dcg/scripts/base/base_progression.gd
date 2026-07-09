@@ -2,6 +2,10 @@ class_name BaseProgression
 extends RefCounted
 
 const WORKBENCH_LEVEL_1 := &"workbench_level_1"
+const WORKBENCH_FIX_STATION := &"workbench_fix_station"
+const WORKBENCH_DISASSEMBLE_STATION := &"workbench_disassemble_station"
+const STORAGE_EXPANSION_LEVEL_1 := &"storage_expansion_level_1"
+const STORAGE_EXPANSION_LEVEL_2 := &"storage_expansion_level_2"
 
 
 static func can_purchase_upgrade(save_data: Dictionary, upgrade_def: Resource) -> Dictionary:
@@ -10,6 +14,9 @@ static func can_purchase_upgrade(save_data: Dictionary, upgrade_def: Resource) -
 	var upgrade_id := StringName(str(upgrade_def.get("id")))
 	if is_upgrade_purchased(save_data, upgrade_id):
 		return {"can_purchase": false, "reason": "already_owned"}
+	for required_upgrade_id in _required_upgrade_ids(upgrade_def):
+		if not is_upgrade_purchased(save_data, required_upgrade_id):
+			return {"can_purchase": false, "reason": "missing_prerequisite", "upgrade_id": str(required_upgrade_id)}
 	if int(save_data.get("money", 0)) < int(upgrade_def.get("money_cost")):
 		return {"can_purchase": false, "reason": "missing_money"}
 	var stash: Array = _stash_array(save_data.get("stash", []))
@@ -41,7 +48,9 @@ static func purchase_upgrade(save_data: Dictionary, upgrade_def: Resource) -> Di
 	var upgrades: Dictionary = _upgrades_dict(updated.get("base_upgrades", {}))
 	upgrades[str(upgrade_def.get("id"))] = {
 		"purchased": true,
+		"required_upgrade_ids": _string_array(_required_upgrade_ids(upgrade_def)),
 		"starter_ammo_bonus": int(upgrade_def.get("starter_ammo_bonus")),
+		"storage_capacity_bonus": int(upgrade_def.get("storage_capacity_bonus")),
 	}
 	updated["base_upgrades"] = upgrades
 	return {
@@ -66,6 +75,19 @@ static func get_starter_ammo_bonus(save_data: Dictionary) -> int:
 		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("purchased", false)):
 			bonus += int((value as Dictionary).get("starter_ammo_bonus", 0))
 	return maxi(bonus, 0)
+
+
+static func get_storage_capacity_bonus(save_data: Dictionary) -> int:
+	var upgrades: Dictionary = _upgrades_dict(save_data.get("base_upgrades", {}))
+	var bonus := 0
+	for value in upgrades.values():
+		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("purchased", false)):
+			bonus += int((value as Dictionary).get("storage_capacity_bonus", 0))
+	return maxi(bonus, 0)
+
+
+static func get_stash_capacity(save_data: Dictionary, base_capacity: int) -> int:
+	return maxi(base_capacity, 0) + get_storage_capacity_bonus(save_data)
 
 
 static func describe_cost(upgrade_def: Resource) -> String:
@@ -100,6 +122,27 @@ static func _item_costs(upgrade_def: Resource) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+static func _required_upgrade_ids(upgrade_def: Resource) -> Array[StringName]:
+	var result: Array[StringName] = []
+	if upgrade_def == null:
+		return result
+	var value: Variant = upgrade_def.get("required_upgrade_ids")
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for id_value in (value as Array):
+		var upgrade_id := StringName(str(id_value))
+		if upgrade_id != &"":
+			result.append(upgrade_id)
+	return result
+
+
+static func _string_array(values: Array[StringName]) -> Array[String]:
+	var result: Array[String] = []
+	for value in values:
+		result.append(str(value))
+	return result
 
 
 static func _stash_quantity(stash: Array, item_path: String) -> int:

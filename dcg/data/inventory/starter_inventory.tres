@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="InventoryLoadout" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="InventoryLoadout" format=3 uid="uid://3hrkn4sjp385"]
 
-[ext_resource type="Script" path="res://scripts/inventory/inventory_loadout.gd" id="1_inventory_loadout"]
+[ext_resource type="Script" uid="uid://crdn46mtajkba" path="res://scripts/inventory/inventory_loadout.gd" id="1_inventory_loadout"]
 
 [resource]
 script = ExtResource("1_inventory_loadout")
-item_paths = PackedStringArray("res://data/items/crafting/wood.tres")
-quantities = PackedInt32Array(3)
+item_paths = PackedStringArray()
+quantities = PackedInt32Array()

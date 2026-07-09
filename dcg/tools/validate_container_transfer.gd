@@ -155,9 +155,13 @@ func _validate_responsibility_boundary() -> void:
 			_errors.append("LootContainer3D should not directly write to player backpack: %s" % term)
 
 	var ui_manager_source := FileAccess.get_file_as_string("res://scripts/ui/ui_manager.gd")
-	for required in ["slot_pressed", "get_inventory_model", "remove_from_slot", "add_item"]:
+	for required in ["slot_pressed", "ContainerTransferScript.transfer_slot"]:
 		if not ui_manager_source.contains(required):
 			_errors.append("UIManager should own the transfer bridge for container slot intent: %s" % required)
+	var transfer_source := FileAccess.get_file_as_string("res://scripts/ui/ui_manager_container_transfer.gd")
+	for required in ["get_inventory_model", "remove_from_slot", "add_item"]:
+		if not transfer_source.contains(required):
+			_errors.append("UIManagerContainerTransfer should own the container transfer operation: %s" % required)
 
 
 func _open_first_container() -> Dictionary:

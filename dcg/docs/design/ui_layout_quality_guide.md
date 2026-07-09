@@ -8,6 +8,12 @@ This guide defines the UI layout quality bar for early Project DCG development. 
 
 Do not mark UI work complete only because the code runs. A player-facing UI is complete only when it is usable, readable, visually organized, and stable at the supported test resolutions.
 
+New UI must look like it belongs to the same interface system as the existing project screens. It should reuse existing layout references, theme resources, shared helpers, and node/component patterns before introducing a new visual or structural pattern.
+
+If a Godot node, container, control, theme setting, resource, or built-in state can produce the same UI effect, use that instead of recreating the effect with custom script code.
+
+All visible text must come from localization keys and have translations for every supported locale. English mode must not show Traditional Chinese text because of missing keys, hard-coded labels, or fallback strings.
+
 ## Early UI Priorities
 
 Focus on these before art polish:
@@ -86,7 +92,9 @@ Recommended early button rules:
 
 - Body text is large enough for gameplay UI.
 - Important text has enough contrast against the panel/background.
-- Long Traditional Chinese, Simplified Chinese, Japanese, and English text does not clip.
+- Long Traditional Chinese and English text does not clip.
+- English mode does not display Traditional Chinese text in player-facing UI.
+- Text is translated from keys rather than hard-coded into scripts or scenes.
 - Text is not placed directly over noisy gameplay backgrounds unless it has a panel, shadow, or high-contrast backing.
 - Avoid long paragraphs in gameplay UI; prefer compact labels and clear values.
 
@@ -125,6 +133,8 @@ Check:
 - Similar screens reuse similar margins, button sizes, panel styles, and typography.
 - New UI should reuse `UIStyle`, `UILayout`, theme resources, and existing panel patterns where possible.
 - If a new pattern is required, document why.
+- New screens should be compared against the closest existing reference UI before being marked complete.
+- One-off scripted layouts are not acceptable when an existing scene, reusable component, or Godot container can express the same structure.
 
 ### 9. Placeholder Art Compatibility
 
@@ -143,8 +153,11 @@ For every task that creates or changes UI:
 4. Confirm spacing and alignment.
 5. Confirm button sizes and text fit.
 6. Confirm there is no overlap or clipping.
-7. Confirm the layout uses Godot nodes/scenes for stable panels unless there is a documented reason.
-8. Record the result in `docs/tasks/progress_log.md`.
+7. Compare the screen against the closest existing reference UI for panel shape, margins, typography, button hierarchy, and action placement.
+8. Confirm the layout uses Godot nodes/scenes/containers/theme resources for stable panels unless there is a documented reason.
+9. Confirm no custom script duplicates Godot built-in UI behavior without a documented reason.
+10. Switch or simulate each supported locale, especially `en`, and confirm player-facing text uses translated strings instead of fallback Chinese.
+11. Record the result in `docs/tasks/progress_log.md`.
 
 For automated or semi-automated checks:
 
@@ -157,9 +170,13 @@ For automated or semi-automated checks:
 - A panel technically opens but looks cramped.
 - Buttons have inconsistent widths or irregular spacing.
 - Back/confirm actions jump to different positions between similar screens.
-- Text clips in Chinese or Japanese because wrapping only considered English.
+- Text clips in Traditional Chinese because wrapping only considered English.
+- English mode shows Traditional Chinese text because a key, translation, or display path is missing.
+- A player-facing label, prompt, tooltip, or error is hard-coded in script instead of coming from a localization key.
 - The panel is built entirely in script even though a stable `.tscn` layout would be clearer.
 - A new UI copies colors/sizes locally instead of using shared style helpers.
+- A new UI creates a fresh visual style instead of following the nearest existing screen.
+- Script manually recreates layout, focus, button states, scrolling, tabs, or selection that Godot nodes already provide.
 - A scroll area consumes the whole panel and pushes action buttons out of view.
 - A UI element works at 1920x1080 but breaks at 1280x720.
 

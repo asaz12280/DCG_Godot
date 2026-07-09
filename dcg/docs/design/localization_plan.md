@@ -7,8 +7,9 @@ This document defines how DCG stores and consumes localized text. The goal is to
 1. All player-facing text uses a stable localization key.
 2. Resources store keys, not translated copy.
 3. UI scripts call `tr()` at display time.
-4. `zh_TW` is the authoring locale; `en`, `ja`, and `zh_CN` should stay present for every required key.
+4. `zh_TW` is the authoring locale; `en` is the only secondary locale kept for every required key.
 5. Validation should catch missing item keys before the catalog grows.
+6. English mode must not display Traditional Chinese because of missing keys, hard-coded text, or fallback copy.
 
 ## Files
 
@@ -78,6 +79,25 @@ func localized_text(key: StringName, fallback: String = "") -> String:
 
 Avoid storing translated strings in gameplay state. Store keys or resource ids instead.
 
+## Hard-Coded Text Rules
+
+Player-facing text must not be hard-coded in scripts or scene logic.
+
+Covered text includes:
+
+- UI labels, buttons, hints, status messages, empty states, errors, and tooltips.
+- Item names, item descriptions, item type names, station names, upgrade names, and recipe text.
+- Prompts, combat feedback, reload/fire messages, quest titles/objectives, map text, dialogue, tutorial text, and result text.
+
+Rules:
+
+- Store keys in data/resources and translate at the final UI display point.
+- Do not use Traditional Chinese fallback strings for normal player-facing UI, because they leak into English mode when a key is missing.
+- Fallback copy may exist only as a temporary developer safety net. If fallback copy appears during normal play, the task is incomplete.
+- Every required key must exist and be non-empty in all supported locales before a task is marked complete.
+- Format strings must keep matching placeholder counts across locales.
+- New text domains should add or extend validation, not rely on manual memory.
+
 ## Current Coverage
 
 Currently localized areas:
@@ -111,8 +131,9 @@ Next likely areas:
 1. Define keys before wiring visible labels.
 2. Use existing `ui.<screen>.<name>` naming.
 3. Add keys to `game_text.csv`.
-4. Keep runtime values in format strings such as `ui.inventory.backpack_format`.
-5. Prefer a small helper method when a screen needs fallback behavior.
+4. Fill every supported locale column, including `zh_TW` and `en`.
+5. Keep runtime values in format strings such as `ui.inventory.backpack_format`.
+6. Prefer a small helper method when a screen needs fallback behavior, but treat visible fallback text as incomplete work.
 
 ## Validation Backlog
 
@@ -121,5 +142,6 @@ Useful future checks:
 - Verify every key used in `.gd` files exists in `game_text.csv`.
 - Verify every active `ItemDef` key exists in every required locale.
 - Verify translated format strings have the same placeholder count across locales.
+- Verify English mode never displays Traditional Chinese text for required player-facing strings.
+- Verify scripts and scenes do not introduce new hard-coded player-facing display strings.
 - Verify no replacement characters or mojibake text appear in docs, data, or scripts.
-

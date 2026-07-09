@@ -158,4 +158,18 @@ func _validate_codex_node_grid() -> void:
 		_errors.append("Codex node grid should create 100 slot controls but created %d." % slot_buttons.size())
 	elif slot_buttons[0].get_script() != ItemCodexSlotScript:
 		_errors.append("Codex node grid first child should use ItemCodexSlot script.")
+	else:
+		_validate_codex_slot_sizes(slot_buttons)
 	codex.queue_free()
+
+
+func _validate_codex_slot_sizes(slot_buttons: Array) -> void:
+	var expected_size: Vector2 = slot_buttons[0].get_combined_minimum_size()
+	if expected_size == Vector2.ZERO:
+		_errors.append("Codex grid slots should expose a positive fixed size.")
+		return
+	for index in range(mini(slot_buttons.size(), 30)):
+		var slot: Control = slot_buttons[index]
+		if slot.get_combined_minimum_size() != expected_size:
+			_errors.append("Codex grid slot %d should match size %s but is %s." % [index + 1, expected_size, slot.get_combined_minimum_size()])
+			return

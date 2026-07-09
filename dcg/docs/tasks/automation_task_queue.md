@@ -8,6 +8,7 @@ This file is the sequential task queue for Codex-driven development. Earlier tas
 
 ## Automation Rules
 
+0. Before choosing or editing a task, read `docs/architecture/programming_spec.md` and identify the responsible script/domain boundary.
 1. Do not skip ahead unless every earlier task is already complete or its acceptance criteria are already satisfied by the current codebase.
 2. A task is complete only when its acceptance criteria and validation checks pass.
 3. If a task is blocked, stop and record the blocker in this file or `docs/tasks/progress_log.md`; do not silently work around it by starting a later feature.
@@ -16,10 +17,12 @@ This file is the sequential task queue for Codex-driven development. Earlier tas
 6. Add or update a `tools/validate_*.gd` script whenever a task introduces a new gameplay domain or persistence rule.
 7. After each completed task, update `docs/tasks/progress_log.md` with Completed and Verified notes.
 8. After every three numbered tasks, run the Project Health Check before starting the next numbered task. This means after 任務三、六、九、十二、十五、十八、二十一、二十四、二十七、三十.
-9. New UI screens and reusable panels should be Godot node-first. Prefer `.tscn` scenes, `Control` nodes, containers, `Label`, `Button`, `PanelContainer`, `ScrollContainer`, `GridContainer`, and theme resources before building whole panels in code.
+9. New UI screens and reusable panels should be Godot node-first and reference existing project UI patterns. Prefer `.tscn` scenes, `Control` nodes, containers, `Label`, `Button`, `PanelContainer`, `ScrollContainer`, `GridContainer`, and theme resources before building whole panels in code.
 10. Script-created UI is allowed for dynamic repeated children, temporary debug UI, or custom drawing that is genuinely hard to express with nodes, but the task must record why it is acceptable.
-11. If a health check finds small architecture or UI maintainability issues, fix them before continuing. If the issue is too large for the current slice, record it as technical debt in `docs/tasks/progress_log.md` and do not hide it.
-12. UI tasks are not complete just because the code runs. Any task that creates or changes player-facing UI must pass the UI Layout Quality Check in `docs/design/ui_layout_quality_guide.md`.
+11. If Godot nodes, containers, controls, theme resources, or built-in UI states can produce the same effect, do not recreate that effect in script.
+12. If a health check finds small architecture or UI maintainability issues, fix them before continuing. If the issue is too large for the current slice, record it as technical debt in `docs/tasks/progress_log.md` and do not hide it.
+13. UI tasks are not complete just because the code runs. Any task that creates or changes player-facing UI must pass the UI Layout Quality Check in `docs/design/ui_layout_quality_guide.md`.
+14. New or changed player-facing text must be localization-key driven and translated for every supported locale; English mode must not show Traditional Chinese fallback text.
 
 ## Project Health Check
 
@@ -40,15 +43,19 @@ Health check trigger points:
 
 Health checklist:
 
+- Programming spec gate: the implementation should follow `docs/architecture/programming_spec.md`, with clear script ownership and no new mixed-responsibility giant script.
+- Ready/done gate: the task should have a clear outcome, acceptance criteria, validation path, and any architecture decision record required by the programming specification.
 - Responsibility boundaries: gameplay/domain scripts must not absorb unrelated UI, save, economy, quest, or scene-flow logic.
 - UI ownership: UI reads models/services and emits user intent; UI must not become the authoritative owner of persistent gameplay state.
 - Godot node-first UI: new stable screens and panels should be `.tscn` scenes using Godot UI nodes and containers. Avoid building entire reusable interfaces only through code when node composition can do the job.
+- UI reference consistency: new screens should reuse the nearest existing layout, theme, spacing, typography, and interaction pattern unless a documented reason requires a new reusable pattern.
+- Built-in UI behavior: do not duplicate Godot layout, focus, scroll, button state, tab, or selection behavior in script when nodes/resources already provide it.
 - UI layout quality: inspect base panels, buttons, spacing, alignment, visual hierarchy, readability, and responsive fit using `docs/design/ui_layout_quality_guide.md`. A UI that only works technically but looks cramped, uneven, or confusing is not healthy.
 - Script size and focus: if a script grows beyond roughly 300-350 lines or mixes multiple responsibilities, split it into focused helpers before adding more behavior.
 - Data-driven content: items, loot tables, enemies, quests, upgrades, and map settings should be resources/data rather than hard-coded branches.
 - Coupling scan: avoid direct references from domain systems to specific UI node paths. Use methods, signals, models, or autoload services.
 - Save safety: schema changes must preserve old-slot safety or clearly migrate defaults.
-- Localization: new player-facing text should use localization keys or a clearly temporary fallback.
+- Localization: new player-facing text must use localization keys, fill every supported locale, and avoid visible fallback text in normal play.
 - Scene health: gameplay scenes should load headless, and new scenes should not depend on editor-only state.
 - Validation health: new systems should have `tools/validate_*.gd`, and old validation should still pass.
 
@@ -70,7 +77,7 @@ Minimum review items:
 - Base panels have consistent padding and margins.
 - Buttons are readable, consistently sized, and aligned.
 - Row/section spacing looks intentional.
-- Text does not clip or overflow in Traditional Chinese, Simplified Chinese, Japanese, or English keys used by the screen.
+- Text does not clip or overflow in Traditional Chinese or English keys used by the screen.
 - The layout works at `1280x720` and `1920x1080`.
 - No important controls overlap or sit too close to screen edges.
 - Stable UI is built from Godot nodes/scenes when possible, not entirely hard-coded in script.

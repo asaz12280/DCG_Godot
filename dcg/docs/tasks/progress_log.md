@@ -339,7 +339,7 @@
 - Changed difficulty choices from compact stacked buttons into settings-style rows with a left label and right selectable control.
 - Added a selected difficulty highlight style so the current choice is visible without relying on extra instruction text.
 - Enlarged and aligned the difficulty panel in `main_menu.gd` to match the settings panel placement rules.
-- Added `ui.difficulty.*` keys to `game_text.csv` for Traditional Chinese, English, Japanese, and Simplified Chinese.
+- Added `ui.difficulty.*` keys to `game_text.csv` for Traditional Chinese and English.
 - Replaced garbled fallback difficulty text with clean fallback strings.
 
 ### Verified
@@ -370,7 +370,7 @@
 
 ### Completed
 
-- Updated `ItemCodexUI` detail-description wrapping so long text without spaces, such as Chinese and Japanese, is split safely by character when it exceeds the detail panel width.
+- Updated `ItemCodexUI` detail-description wrapping so long text without spaces, such as Traditional Chinese, is split safely by character when it exceeds the detail panel width.
 - Kept the existing word-based wrapping for English and other space-separated languages.
 - Prevented right-side codex descriptions from being clipped by `draw_string` when the translated sentence is wider than the panel.
 
@@ -3157,3 +3157,1634 @@
 ### Next
 
 - Stop the `dcg-dev-slice-0-2-enemy-first-automation` heartbeat after successful final backup.
+
+## 2026-07-03 Duckov Template Automation Pass 1
+
+### Completed
+
+- Added `docs/tasks/duckov_template_task_board.md` as the recurring Duckov-template reference and gap board.
+- Recorded public reference observations for the core PvE extraction loop, warehouse/backpack distinction, warehouse expansion direction, and item locking shortcut.
+- Extended `BaseStashInventoryUI` with hovered-slot `L` lock/unlock support for backpack, equipment, safe pocket, and warehouse items.
+- Added a compact locked-slot marker and blocked transfer attempts for locked items.
+- Updated stash localization text and status keys for lock/unlock/locked-item feedback.
+- Extended `tools/validate_base_stash_storage_ui.gd` and `tools/validate_user_reported_correctness.gd` for the new locking path.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid lock=L store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+
+### Next
+
+- Add an `All Store` warehouse action that respects locked slots and skips safe pocket by default.
+- Convert fixed warehouse capacity into save-backed base upgrade state.
+
+## 2026-07-03 Duckov Template Automation Pass 2
+
+### Completed
+
+- Added an `All Store` action to `BaseStashInventoryUI` so the warehouse can bulk-store backpack contents.
+- The bulk-store path respects `L` locked backpack stacks and leaves safe pocket plus equipped items out of the default action.
+- Persisted moved items through the existing stash save path instead of adding a parallel storage model.
+- Added localized status text for success, partial failure, locked-only, and empty-backpack All Store outcomes.
+- Updated the Duckov template task board to mark item locking and All Store complete, then moved the next focus to upgrade-backed warehouse capacity.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+
+### Next
+
+- Convert fixed warehouse capacity into save-backed base upgrade state.
+- Add `N` needed-material marking for quest/base needs.
+
+## 2026-07-03 Duckov Template Automation Pass 3
+
+### Completed
+
+- Recorded new public reference observations for Warehouse storage expansion being permanent base progression, separate from backpack capacity.
+- Extended `UpgradeDef` with `storage_capacity_bonus` so upgrade resources can affect non-combat base systems.
+- Added `data/base_upgrades/storage_expansion_level_1.tres` as the first warehouse-capacity upgrade data point.
+- Extended `BaseProgression` with save-backed warehouse capacity helpers and persisted `storage_capacity_bonus` during upgrade purchase.
+- Updated `BaseStashInventoryUI` to calculate effective warehouse capacity from current save data when the stash opens.
+- Added localization for the storage expansion upgrade name.
+- Updated stash and base progression validators to prove default `250` capacity and upgraded `285` capacity are both handled.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=save_upgrade lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_early_balance.gd` reports `[early_balance] OK player=forgiving enemy=readable loot=progression extraction=pressure upgrade=reachable`.
+
+### Next
+
+- Add a player-facing Storage Expansion purchase surface in the warehouse flow using the new upgrade data.
+- Add `N` needed-material marking for quest/base needs.
+
+## 2026-07-03 Duckov Template Automation Pass 4
+
+### Completed
+
+- Recorded new public reference observations that warehouse expansion is accessed through a storage UI mode/tab, then applied from the warehouse interface.
+- Added `scripts/base/base_storage_upgrade_service.gd` so warehouse capacity purchases use a focused service instead of adding progression logic directly to the UI script.
+- Added a Storage Expansion state row and purchase button to `BaseStashInventoryUI`.
+- Wired the warehouse purchase action through `BaseStorageUpgradeService`, `BaseProgression`, and `SaveGameManager`.
+- The warehouse UI now refreshes visible capacity immediately after purchasing Storage Expansion Lv.1.
+- Added localized storage-expansion UI text and extended English fallback validation.
+- Updated stash validation to buy Storage Expansion Lv.1 through the UI path and confirm money deduction plus capacity `250 -> 285`.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_early_balance.gd` reports `[early_balance] OK player=forgiving enemy=readable loot=progression extraction=pressure upgrade=reachable`.
+
+### Next
+
+- Add Storage Expansion Lv.2 with material requirements and a visible next-tier blocked state.
+- Add `N` needed-material marking for quest/base needs.
+
+## 2026-07-03 Duckov Template Automation Pass 5
+
+### Completed
+
+- Recorded public reference observations for Storage Expansion Lv.2 using money plus Plastic Barrel as a material requirement.
+- Added `data/base_upgrades/storage_expansion_level_2.tres` with another +35 warehouse capacity bonus.
+- Added `data/items/loot/plastic_barrel.tres` as a storage-upgrade material and inserted it as a rare common-map loot-table entry.
+- Extended `BaseStorageUpgradeService` from a single hardcoded upgrade to an ordered storage-upgrade chain.
+- Warehouse UI now advances from Lv.1 to Lv.2 after purchase, shows Lv.2 blocked when Plastic Barrel is missing, and buys Lv.2 when the material is in stash.
+- Added localization for Plastic Barrel, Storage Expansion Lv.2, and the all-current-expansions-complete state.
+- Extended item catalog, loot, progression, stash, translation, and balance validators for the new material-gated storage tier.
+
+### Verified
+
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=22 max_no=22`.
+- `validate_loot_tables.gd` reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_early_balance.gd` reports `[early_balance] OK player=forgiving enemy=readable loot=progression extraction=pressure upgrade=reachable`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+
+### Next
+
+- Add `N` needed-material marking for quest/base needs.
+- Add item tooltip fields for value, weight, type, and future usage tags.
+
+## 2026-07-04 Duckov Template Automation Pass 6
+
+### Completed
+
+- Recorded public reference observations that needed quest/upgrade materials can be marked with `N` so they are recognizable during looting or stash management.
+- Added `scripts/base/base_needed_item_service.gd` as the focused owner for automatic needed-item paths and manual save-backed marks.
+- Extended `SaveGameManager` with normalized `needed_item_marks` data so item marks round-trip through slot saves.
+- Wired `BaseStashInventoryUI` to show `N` badges on needed items across stash, backpack, equipment, and safe pocket grids.
+- Added manual `N` toggling by item path and automatic missing-material marking for the next Storage Expansion tier.
+- Updated localization keys and validation expectations for needed-item mark status text.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `--headless --quit-after 1` loads the project without errors.
+
+### Next
+
+- Extend needed-item marking beyond storage expansion into quest objectives and workbench recipes.
+- Add item tooltip fields for value, weight, type, and future usage tags.
+
+## 2026-07-04 Duckov Template Automation Pass 7
+
+### Completed
+
+- Recorded public reference observations that quest-required item planning is a major keep/sell concern and that marking applies by item type rather than only a single grid slot.
+- Added `scripts/quests/quest_catalog.gd` so quest definitions are shared by the base view model and needed-item service instead of being hidden in one UI-facing helper.
+- Extended `BaseNeededItemService` so automatic marks now merge active item quest requirements with storage-upgrade requirements.
+- Exposed `quest_needed_item_paths` and `upgrade_needed_item_paths` through `BaseStashInventoryUI.get_display_state()` for UI and validator visibility.
+- Updated stash validation so the first item quest automatically marks Wood and Wire as needed before completion.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_quest_model.gd` reports `[quest_model] OK def=loads progress=extract_any kill=ready reward=claim save=round_trip`.
+- `validate_quest_flow.gd` reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- `validate_top_menu_panels.gd` reports `[top_menu_panels] OK quests_tab=opens status_tab=player_model map_tab=area_extract list=salvage_hunt_location layout=fit ui_manager=owns_state boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- `--headless --quit-after 1` loads the project without errors.
+
+### Next
+
+- Extend needed-item marking to workbench recipe requirements.
+- Add item tooltip fields for value, weight, type, and future usage tags.
+
+## 2026-07-04 Duckov Template Automation Pass 8
+
+### Completed
+
+- Recorded public reference observations that the workbench owns crafting, dismantling, repair, blueprint registration, and material-gated upgrade progression.
+- Kept the slice scoped to existing DCG data: no new standalone recipe system was added before the project has a recipe model.
+- Added `BaseWorkbenchService.get_next_upgrade_for_save_data()` so other systems can read the current workbench upgrade target without duplicating workbench data.
+- Extended `BaseNeededItemService` to merge workbench upgrade requirements with storage-upgrade requirements, quest requirements, and manual marks.
+- Exposed `workbench_needed_item_paths` and `storage_upgrade_needed_item_paths` through `BaseStashInventoryUI.get_display_state()`.
+- Updated stash and progression validators so missing workbench Wood/Wire materials are marked, then cleared after the workbench upgrade is purchased.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_quest_flow.gd` reports `[quest_flow] OK extraction=updates_base kill=updates_base quest=claimable reward=saved layout=fits`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- `--headless --quit-after 1` loads the project without errors.
+
+### Next
+
+- Extend needed-item marking to future recipe/craft unlocks once a recipe model exists.
+- Add item tooltip fields for value, weight, type, and future usage tags.
+
+## 2026-07-04 Duckov Template Automation Pass 9
+
+### Completed
+
+- Recorded public reference observations that item decision-making depends on visible value, weight, category, stack size, value/weight, and quest/base-upgrade usage context.
+- Added `scripts/ui/item_stack_tooltip_presenter.gd` as the shared presenter for item stack tooltip state and tooltip text.
+- Wired the shared presenter into warehouse hover tooltips, container slot tooltips, and codex slot tooltips.
+- Warehouse tooltips now explain needed-item sources: quest, storage upgrade, workbench, and manual marks.
+- Added localized tooltip labels to `data/localization/game_text.csv`.
+- Added `tools/validate_item_tooltips.gd` and extended stash/codex validations for the shared tooltip path.
+
+### Verified
+
+- `validate_item_tooltips.gd` reports `[item_tooltips] OK shared=container/stash/codex stats=value_weight needed=sources`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_codex_item_consistency.gd` reports `[codex_item_consistency] OK no5=手槍-S no7=彈藥-S surfaces=container/backpack/equipment/codex`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_base_progression.gd`, `validate_user_reported_correctness.gd`, `validate_base_interactions.gd`, `validate_save_slots.gd`, and `validate_ui_text_quality.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+
+### Next
+
+- Wire the shared tooltip presenter into the general backpack/equipment panel.
+- Add item sorting by value, weight, and value/weight in warehouse and container surfaces.
+- Extend needed-item marking to recipe/craft requirements once a recipe model exists.
+
+## 2026-07-04 Duckov Template Automation Pass 10
+
+### Completed
+
+- Recorded public reference observations that item weight/value clarity must exist in the active backpack flow, not only warehouse or database screens.
+- Wired `ItemStackTooltipPresenter` into `InventoryEquipmentUI`.
+- Added hover tooltip resolution for backpack slots, equipped gear slots, and safe-pocket slots.
+- Added public tooltip query helpers for validation and future UI tests.
+- Extended `validate_inventory_equipment_flow.gd` so the same pistol tooltip is proven from backpack and equipped slot positions.
+
+### Verified
+
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_item_tooltips.gd` reports `[item_tooltips] OK shared=container/stash/codex stats=value_weight needed=sources`.
+- `validate_ui_layout_quality_0_2.gd` reports `[ui_layout_quality_0_2] OK viewports=1280x720,1920x1080 base=fit raid=fit inventory=fit container=fit top_menu=fit text=zh boundaries=clean`.
+- `validate_codex_item_consistency.gd` reports `[codex_item_consistency] OK no5=手槍-S no7=彈藥-S surfaces=container/backpack/equipment/codex`.
+- `validate_user_reported_correctness.gd` and `validate_base_stash_storage_ui.gd` pass.
+
+### Next
+
+- Add item sorting by value, weight, and value/weight in warehouse and container surfaces.
+- Extend needed-item marking to recipe/craft requirements once a recipe model exists.
+
+## 2026-07-04 Duckov Template Automation Pass 11
+
+### Completed
+
+- Recorded public reference observations that item databases expose value/weight fields and players want sorting by weight, value, and value-to-weight ratio.
+- Added `scripts/inventory/item_stack_sorter.gd` as the shared data-level owner for type, value, weight, and value/weight sorting.
+- Wired sorting into `InventoryModel`, `StashModel`, and `ContainerInventoryModel` instead of letting each UI invent its own rules.
+- Updated warehouse, backpack/equipment, and container UI sort actions to cycle through localized sort modes.
+- Kept fixed-slot container sorting from deleting empty grid slots by moving empty cells to the tail.
+- Added localized sort labels and warehouse/container sort status text.
+- Added and extended validations for sorter rules, fixed container slots, container UI sorting, backpack sorting, and warehouse sorting.
+
+### Verified
+
+- `validate_item_stack_sorter.gd` reports `[item_stack_sorter] OK modes=value/weight/value_weight/type empty_slots=preserved`.
+- `validate_container_inventory_model.gd` reports `[container_inventory_model] OK capacity=slots stack=merge remove=works save=round_trip coupling=clean`.
+- `validate_container_inventory_ui.gd` reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_item_tooltips.gd`, `validate_ui_layout_quality_0_2.gd`, `validate_ui_text_quality.gd`, `validate_save_slots.gd`, `validate_base_progression.gd`, and `validate_user_reported_correctness.gd` pass.
+- `--headless --import` loads and imports the project without errors.
+
+### Next
+
+- Extend needed-item marking to recipe/craft requirements once a recipe model exists.
+- Add Storage Expansion Lv.3 with a second material requirement.
+
+## 2026-07-04 Duckov Template Automation Pass 12
+
+### Completed
+
+- Recorded public reference observations that the Workbench owns crafting, dismantling, repair, and blueprint registration, while blueprints/formulas unlock reusable recipes by station.
+- Added `scripts/crafting/crafting_recipe_def.gd` as a data-only recipe resource model with validation for station, output, ingredient costs, workbench unlocks, and future blueprint requirements.
+- Added `data/crafting_recipes/workbench_ammo_9mm.tres` as an original early Workbench Lv.1 ammo recipe template.
+- Added `scripts/crafting/crafting_recipe_catalog.gd` and `scripts/base/base_recipe_service.gd` so recipe availability and missing material paths are owned outside UI scripts.
+- Extended `BaseNeededItemService` so unlocked recipe ingredients flow into automatic needed-item paths.
+- Exposed `recipe_needed_item_paths` through the warehouse UI state and added recipe as a tooltip needed-source label.
+- Added localized recipe name/description and tooltip source text to `data/localization/game_text.csv`.
+- Added `tools/validate_base_recipe_service.gd` and extended progression, stash, and tooltip validators for the recipe material path.
+
+### Verified
+
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench materials=needed_paths`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action effect=starter_ammo storage_capacity`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_item_tooltips.gd`, `validate_item_stack_sorter.gd`, `validate_container_inventory_model.gd`, `validate_container_inventory_ui.gd`, `validate_inventory_equipment_flow.gd`, `validate_ui_layout_quality_0_2.gd`, `validate_ui_text_quality.gd`, `validate_save_slots.gd`, and `validate_user_reported_correctness.gd` pass.
+- `--headless --import` loads and imports the project without errors.
+
+### Next
+
+- Add a workbench craft execution service that consumes stash materials and creates output stacks.
+- Add blueprint/formula research save data and route recipes by station.
+
+## 2026-07-04 Duckov Template Automation Pass 13
+
+### Completed
+
+- Recorded public reference observations that Workbench crafting converts warehouse materials into raid stability, especially reliable ammo, and that some quests ask players to test upgraded Workbench crafting.
+- Extended `BaseRecipeService` with save-backed craft execution through `craft_from_save_data()` and `craft()`.
+- Crafting now rejects locked recipes, reports missing ingredient paths, consumes recipe ingredients from save stash, and adds crafted output using ItemDef max-stack rules.
+- Reworked `BaseWorkbenchService` so its old `purchase()` upgrade API remains available, while new `execute_action()` chooses upgrade before Workbench Lv.1 and craft after Workbench Lv.1 when a recipe is ready.
+- Wired the 3D workbench interaction action through `execute_action()` so a player-facing base action can craft the first available Workbench recipe.
+- Added localized workbench recipe lines, craft action text, ready/missing status, and craft success/failure messages.
+- Extended recipe and base progression validators to prove service-level crafting and 3D panel-to-save crafting.
+
+### Verified
+
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench materials=needed_paths craft=stash`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action craft=stash effect=starter_ammo storage_capacity`.
+- Full selected regression passes: `validate_base_stash_storage_ui.gd`, `validate_item_tooltips.gd`, `validate_item_stack_sorter.gd`, `validate_container_inventory_model.gd`, `validate_container_inventory_ui.gd`, `validate_inventory_equipment_flow.gd`, `validate_ui_layout_quality_0_2.gd`, `validate_ui_text_quality.gd`, `validate_save_slots.gd`, and `validate_user_reported_correctness.gd`.
+- `--headless --import`, `--headless --quit-after 1`, `validate_content_authoring_guide.gd`, and `validate_item_catalog.gd` pass.
+
+### Next
+
+- Add a recipe list UI or selector instead of crafting only the first available workbench recipe.
+- Add blueprint/formula research save data and route recipes by station.
+
+## 2026-07-04 Duckov Template Automation Pass 14
+
+### Completed
+
+- Recorded public reference observations that Workbench and Blueprint flows are list-driven station systems, not a single hardcoded craft button.
+- Added `data/crafting_recipes/workbench_extended_magazine.tres` as a second original Workbench Lv.1 template recipe.
+- Extended `CraftingRecipeCatalog` so Workbench recipes now validate against multiple real recipe resources.
+- Added save-backed `selected_recipe_ids` by station through `SaveGameManager` normalization and round-trip.
+- Extended `BaseRecipeService` with recipe rows, selected recipe resolution, selected recipe saving, and selected recipe crafting.
+- Reworked `BaseWorkbenchService` so the 3D Workbench action crafts the selected recipe, exposes `recipe_rows`, and displays a readable recipe list in the current panel body.
+- Extended `BaseInteractionPanel` display state so future UI controls and validators can read structured Workbench recipe rows instead of parsing body text.
+- Added localized text for the second recipe and recipe-list rows.
+
+### Verified
+
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action recipe=list craft=stash effect=starter_ammo storage_capacity`.
+- `validate_save_slots.gd` reports `[save_slots] OK slots=3 save=start load=continue schema=v1`.
+- `--headless --import` loads and imports the project without errors.
+
+### Next
+
+- Replace the text-only Workbench recipe list with clickable/keyboard selection controls.
+- Add blueprint/formula research save data and route recipes by station.
+- Add repair and dismantle service skeletons after selected crafting stabilizes.
+
+## 2026-07-04 Duckov Template Automation Pass 15
+
+### Completed
+
+- Recorded public reference observations that station crafting should be list-driven, material-readable, and used to plan immediate next-raid supply needs.
+- Added a scrollable recipe button list to the 3D Base interaction panel.
+- Rebuilt `BaseInteractionPanel` with clean localization fallbacks and structured recipe-button display state.
+- Rebuilt `BaseInteractionController3D` with clean localization fallbacks, `recipe_selected` signal wiring, and Workbench recipe selection through `BaseWorkbenchService`.
+- Recipe buttons now update save-backed `selected_recipe_ids`, refresh the Workbench panel, and cause the craft action to craft the selected recipe instead of only the default recipe.
+- Tightened the generic interaction panel height so the new recipe area still fits 1280x720 validation.
+- Added localized short recipe status labels and select-failure text.
+- Extended the base progression validator to click the extended magazine recipe button, prove selected recipe persistence, and craft that selected output.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action recipe=buttons selection=save craft=stash effect=starter_ammo storage_capacity`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=connected stash=storage_grid raid=startable text=zh`.
+- `validate_base_station_readability.gd` reports `[base_station_readability] OK stations=5 labels=readable prompts=clear stash=grid panels=zh boundaries=clean`.
+- `--headless --import` loads and imports the project without errors.
+
+### Next
+
+- Add keyboard/controller recipe selection support and a more complete Workbench tab surface.
+- Add blueprint/formula research save data and route recipes by station.
+- Add repair and dismantle service skeletons after selected crafting stabilizes.
+
+## 2026-07-04 Duckov Template Automation Pass 16
+
+### Completed
+
+- Recorded refreshed public reference observations that Workbench use is a repeated station loop for crafting, blueprint registration, repair, dismantling, and next-raid preparation.
+- Added keyboard/controller-style recipe row navigation to `BaseInteractionPanel` through `select_next_recipe()` and `select_previous_recipe()`.
+- Kept selection ownership coupled to the existing `recipe_selected` signal, `BaseInteractionController3D`, `BaseWorkbenchService`, and save-backed `selected_recipe_ids` path.
+- Extended the recipe button display state with `selected_recipe_button_index` so validators and future UI work can confirm which row is active without parsing button text.
+- Recipe rows remain focusable and display the selected row after panel refresh, while the craft action continues to use the selected recipe stored in save data.
+- Extended the 3D Workbench progression validator to move from the default ammo recipe to the extended magazine recipe, move back to ammo, reselect the magazine, and craft the selected output.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action recipe=keys selection=save craft=stash effect=starter_ammo storage_capacity`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_base_interactions.gd`, `validate_base_station_readability.gd`, `validate_base_stash_storage_ui.gd`, `validate_container_inventory_ui.gd`, `validate_inventory_equipment_flow.gd`, and `validate_user_reported_correctness.gd` pass.
+- `validate_item_tooltips.gd`, `validate_item_stack_sorter.gd`, `validate_container_inventory_model.gd`, `validate_ui_layout_quality_0_2.gd`, `validate_ui_text_quality.gd`, and `validate_save_slots.gd` pass.
+- `validate_content_authoring_guide.gd`, `validate_item_catalog.gd`, `--headless --import`, and `--headless --quit-after 1` pass.
+- `git diff --check` exits cleanly with only the pre-existing CRLF warning for `dcg/scripts/inventory/inventory_model.gd`.
+
+### Next
+
+- Add a more complete Workbench tab surface for craft, blueprint research, repair, and dismantle modes.
+- Add blueprint/formula research save data and route recipes by station.
+- Add repair and dismantle service skeletons after selected crafting stabilizes.
+
+## 2026-07-04 Duckov Template Automation Pass 17
+
+### Completed
+
+- Recorded refreshed public reference observations that the Workbench is a multi-function station for crafting, blueprint registration, repair, and dismantling/deconstruction.
+- Added Workbench station mode data to `BaseWorkbenchService`, keeping Craft as the only enabled mode until the other services have real data and validation.
+- Added a compact mode-tab row to `BaseInteractionPanel`, driven by `station_modes` from the service instead of hardcoded panel logic.
+- Extended the panel display state with `selected_station_mode`, `station_modes`, `mode_tabs_visible`, `mode_button_count`, and `mode_buttons` for validators and future UI work.
+- Added localized mode labels for Craft, Blueprints, Repair, and Dismantle to `data/localization/game_text.csv`.
+- Extended base progression validation so unupgraded Workbench does not show station modes, while upgraded Workbench shows four modes with Craft selected and future modes unavailable.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action mode=tabs recipe=keys selection=save craft=stash effect=starter_ammo storage_capacity`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_base_interactions.gd`, `validate_base_station_readability.gd`, `validate_ui_layout_quality_0_2.gd`, and `validate_user_reported_correctness.gd` pass after shrinking the mode-tab surface to fit 1280x720.
+- `validate_base_stash_storage_ui.gd`, `validate_container_inventory_ui.gd`, `validate_inventory_equipment_flow.gd`, `validate_item_tooltips.gd`, `validate_item_stack_sorter.gd`, and `validate_container_inventory_model.gd` pass.
+- `validate_ui_text_quality.gd`, `validate_save_slots.gd`, `validate_content_authoring_guide.gd`, `validate_item_catalog.gd`, `--headless --import`, and `--headless --quit-after 1` pass.
+- `git diff --check` exits cleanly with only the pre-existing CRLF warning for `dcg/scripts/inventory/inventory_model.gd`.
+
+### Next
+
+- Add blueprint/formula research save data and route recipes by station.
+- Add repair and dismantle service skeletons after recipe execution stabilizes.
+- Add item durability fields needed by repair.
+
+## 2026-07-04 Duckov Template Automation Pass 18
+
+### Completed
+
+- Recorded refreshed public reference observations that blueprints become permanent craft unlocks after research at the correct station, then appear in that station's craft list.
+- Added `BaseBlueprintService` as the focused owner for blueprint research state, stash consumption, station readiness checks, duplicate handling, and save-backed researched flags.
+- Added save normalization and round-trip support for `researched_blueprints` in `SaveGameManager`.
+- Added `workbench_reclaimed_wire.tres` as an original blueprint-gated Workbench recipe using the existing generic blueprint item.
+- Extended `CraftingRecipeCatalog` and `BaseRecipeService` so the existing `required_blueprint_item_path` field now gates real recipe availability.
+- Added the generic blueprint item as a rare common-map loot-table entry, keeping it as a template unlock rather than a protected named blueprint.
+- Exposed blueprint rows and `can_research_blueprint` through Workbench and interaction-panel state for the future player-facing Blueprints mode.
+- Added localized text for the new reclaimed-wire recipe and updated the blueprint item description to describe station research.
+- Added `validate_base_blueprint_service.gd` and extended recipe/save validators for blueprint research, recipe unlock, craft execution, and save round-trip.
+
+### Verified
+
+- `validate_base_blueprint_service.gd` reports `[base_blueprint_service] OK blueprint=data_valid research=stash unlock=recipe save=round_trip`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench blueprint=gate list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_save_slots.gd`, `validate_base_progression.gd`, `validate_base_stash_storage_ui.gd`, `validate_user_reported_correctness.gd`, `validate_loot_tables.gd`, `validate_item_catalog.gd`, and `validate_early_balance.gd` pass.
+- `validate_base_interactions.gd`, `validate_base_station_readability.gd`, `validate_ui_layout_quality_0_2.gd`, `validate_ui_text_quality.gd`, `validate_container_inventory_ui.gd`, and `validate_inventory_equipment_flow.gd` pass.
+- `validate_item_tooltips.gd`, `validate_item_stack_sorter.gd`, `validate_container_inventory_model.gd`, `validate_content_authoring_guide.gd`, `--headless --import`, and `--headless --quit-after 1` pass.
+- `git diff --check` exits cleanly with only the pre-existing CRLF warning for `dcg/scripts/inventory/inventory_model.gd`.
+
+### Next
+
+- Connect the Blueprints station mode to a player-facing row/action in the 3D Workbench panel.
+- Add repair and dismantle service skeletons after recipe execution stabilizes.
+- Add item durability fields needed by repair.
+
+## 2026-07-04 Duckov Template Automation Pass 19
+
+### Completed
+
+- Recorded refreshed public reference observations that blueprint research is a base-station action: bank a found blueprint, research it at the correct station, then check that station's craft list.
+- Cleaned `BaseWorkbenchService` after the blueprint-mode service pass so duplicate legacy functions no longer conflict with the selected station mode flow.
+- Enabled the Workbench Blueprints tab after Workbench Lv.1 is purchased, while keeping Repair and Dismantle disabled until their data models exist.
+- Added player-facing blueprint rows to `BaseInteractionPanel`, including row metadata, display-state reporting, localized status text, and clickable research rows.
+- Added `station_mode_selected` and `blueprint_selected` signals so the panel does not mutate save data directly.
+- Wired `BaseInteractionController3D` to keep the selected Workbench station mode, execute blueprint research through `BaseWorkbenchService`, refresh the panel, and report success/failure through localization.
+- Added localized Workbench blueprint mode labels, statuses, action text, and success/failure messages to `data/localization/game_text.csv`.
+- Extended `validate_base_progression.gd` to click the Blueprints tab, research a blueprint, prove stash consumption, prove `researched_blueprints` persistence, and prove the unlocked recipe appears when returning to Craft.
+
+### Verified
+
+- `--headless --import` loads and imports the project without errors.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action mode=tabs recipe=keys selection=save craft=stash blueprint=research effect=starter_ammo storage_capacity`.
+- `validate_base_blueprint_service.gd` reports `[base_blueprint_service] OK blueprint=data_valid research=stash unlock=recipe save=round_trip`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench blueprint=gate list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_ui_text_quality.gd` reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+
+### Next
+
+- Add item durability fields needed by repair.
+- Add repair service skeleton with save-backed durability/cost validation.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+
+## 2026-07-04 Duckov Template Automation Pass 20
+
+### Completed
+
+- Recorded refreshed public reference observations that repair belongs to the Workbench/Fix Station path, and that gear needs separate current durability, maximum durability, low-durability threshold, and max-durability loss concepts.
+- Added static durability fields to `ItemDef`: `max_durability`, `repair_max_durability_loss`, and `durability_penalty_ratio`.
+- Added `ItemDurabilityService` as the focused owner for stack durability normalization, low/broken state flags, and future repair checks.
+- Added full durability stack output for repairable item stacks while preserving non-repairable items as non-durability stacks.
+- Added starter durability values to the template pistol, light armor, and basic helmet.
+- Extended shared item tooltips to show current/max durability and max-durability repair wear.
+- Extended codex stat rows to show static max durability for repairable items.
+- Added localized durability and repair-wear text to `data/localization/game_text.csv`.
+- Extended item catalog, tooltip, and codex consistency validators to cover repair-ready durability data.
+
+### Verified
+
+- `--headless --import` loads and imports the project without errors.
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=22 max_no=22`.
+- `validate_item_tooltips.gd` reports `[item_tooltips] OK shared=container/stash/codex stats=value_weight durability=repair_ready needed=sources`.
+- `validate_codex_item_consistency.gd` reports `[codex_item_consistency] OK no5=手槍-S no7=彈藥-S surfaces=container/backpack/equipment/codex`.
+- `validate_ui_text_quality.gd`, `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_container_inventory_ui.gd`, and `validate_user_reported_correctness.gd` pass.
+
+### Next
+
+- Add Fix Station upgrade data and gate the Workbench Repair tab behind it.
+- Add repair service skeleton with save-backed durability/cost validation.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+
+## 2026-07-04 Duckov Template Automation Pass 21
+
+### Completed
+
+- Recorded refreshed public reference observations that Fix Station is a Workbench-tree/base upgrade that unlocks repair, with prerequisite and tool/material costs.
+- Added `required_upgrade_ids` to `UpgradeDef` and enforced prerequisites in `BaseProgression.can_purchase_upgrade()`.
+- Added original tool item data for Hammer and Flathead Screwdriver as Fix Station materials.
+- Added `workbench_fix_station.tres` as a Workbench Lv.1-gated upgrade that costs money plus one Hammer and one Flathead Screwdriver.
+- Added Hammer and Flathead Screwdriver to the common refuge outskirts loot table as uncommon Fix Station tools.
+- Extended Workbench state so the Repair tab becomes selectable after Workbench Lv.1, installs Fix Station through the same save-backed upgrade path, then changes into an installed Repair state.
+- Extended needed-item marking so Workbench-related marks advance from Workbench Lv.1 materials to Fix Station tools after the first upgrade is purchased.
+- Added localized item, upgrade, install-action, repair-empty, and prerequisite-blocked text to `data/localization/game_text.csv`.
+- Extended validators for Fix Station data, prerequisite blocking, stash/money/tool consumption, Base 3D panel flow, loot table entries, item catalog numbering, and early balance.
+
+### Verified
+
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action mode=tabs recipe=keys selection=save craft=stash blueprint=research repair=fix_station effect=starter_ammo storage_capacity`.
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=24 max_no=24`.
+- `validate_loot_tables.gd` reports `[loot_tables] OK common=valid roll=stacks invalid=caught empty=caught`.
+- `validate_early_balance.gd`, `validate_ui_text_quality.gd`, `validate_base_interactions.gd`, and `validate_base_station_readability.gd` pass.
+- `validate_base_recipe_service.gd`, `validate_base_blueprint_service.gd`, `validate_user_reported_correctness.gd`, `validate_save_slots.gd`, `validate_ui_layout_quality_0_2.gd`, and `validate_item_tooltips.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+- `git diff --check` exits successfully with only pre-existing CRLF warnings for inventory/item files.
+
+### Next
+
+- Add repair service skeleton with save-backed durability/cost validation and a Workbench Repair row list.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+- Add combat-time durability wear after repair execution is stable.
+
+## 2026-07-04 Duckov Template Automation Pass 22
+
+### Completed
+
+- Recorded refreshed public reference observations that repair restores current durability, costs money based on condition, and permanently reduces max durability as part of the gear lifecycle.
+- Added `BaseRepairService` as the focused owner for repair rows, selected repair ids, Fix Station gating, money-cost checks, and durability write-back.
+- Implemented save-backed Workbench repair for damaged warehouse gear: current durability restores to the reduced maximum, repair money is deducted, and original maximum durability is preserved for comparison.
+- Extended `BaseWorkbenchService` so installed Fix Station Repair mode reads repair state, exposes rows/action text, and executes repair through `BaseRepairService`.
+- Extended `BaseInteractionPanel` with Repair row display metadata and a `repair_selected` signal, without making the panel mutate saves directly.
+- Extended `BaseInteractionController3D` to select repair rows, execute repair, and show localized repair success/failure feedback.
+- Extended `SaveGameManager` schema normalization with `selected_repair_ids`.
+- Updated `StashModel` so save/load round-trips preserve durability fields instead of recreating durable stacks as fresh items.
+- Added localized Repair row/action/success/failure text to `data/localization/game_text.csv`.
+- Added `validate_base_repair_service.gd` for Fix Station gate, repair rows, cost, durability write-back, stash durability round-trip, and Base 3D Workbench repair flow.
+
+### Verified
+
+- `validate_base_repair_service.gd` reports `[base_repair_service] OK gate=fix_station rows=durability cost=money save=round_trip base3d=repair`.
+- `validate_base_progression.gd`, `validate_save_slots.gd`, `validate_ui_text_quality.gd`, `validate_base_stash_storage_ui.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_layout_quality_0_2.gd` pass.
+- `validate_base_recipe_service.gd`, `validate_base_blueprint_service.gd`, `validate_item_tooltips.gd`, `validate_item_catalog.gd`, `validate_loot_tables.gd`, and `validate_early_balance.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+- `git diff --check` exits successfully with only pre-existing CRLF warnings for inventory/item files.
+
+### Next
+
+- Extend repair support from warehouse stash gear to prepared loadout/equipment save data after loadout durability persistence is tightened.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+- Add combat-time durability wear after repair execution is stable.
+
+## 2026-07-04 Duckov Template Automation Pass 23
+
+### Completed
+
+- Recorded refreshed public reference observations that repairable weapons/armor carry current and maximum durability values through the gear lifecycle, and that repair is a Workbench/Fix Station mode rather than a disconnected vendor action.
+- Added `ItemStackSaveCodec` as the focused owner for item stack save entries, legacy `item_path` fallback, and persistent durability fields.
+- Connected the codec to backpack inventory, equipment slots, fixed-grid containers, warehouse stash, raid loadout transfer, and raid death-loss collection.
+- Fixed equipped-stack handling so a damaged pistol/armor stack keeps its current/max durability when equipped, unequipped, carried into raid, kept in the safe pocket, or returned to base stash on death.
+- Kept non-durable stacks compact in save data so wood/ammo-style items do not gain useless zero-durability fields.
+- Extended validators for equipment save round-trip, base-to-raid loadout durability, stash/container durability round-trips, raid loss rules, safe-pocket return, and the original user-reported unequip regression.
+
+### Verified
+
+- `validate_item_stack_save_codec.gd` reports `[item_stack_save_codec] OK compact=non_durable durability=round_trip path=fallback`.
+- `validate_equipment_model.gd`, `validate_container_inventory_model.gd`, `validate_stash_model.gd`, and `validate_raid_loss_rules.gd` pass.
+- `validate_base_to_raid_loadout.gd`, `validate_inventory_equipment_flow.gd`, `validate_user_reported_correctness.gd`, and `validate_base_repair_service.gd` pass.
+
+### Next
+
+- Expand `BaseRepairService` candidate sources beyond warehouse stash so carried backpack/equipment gear can be repaired through the same Workbench/Fix Station surface.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+- Add combat-time durability wear after repair execution and persistence are stable.
+
+## 2026-07-04 Duckov Template Automation Pass 24
+
+### Completed
+
+- Recorded refreshed public reference observations that Fix Station repair is a Workbench-tree flow for weapons/equipment, with current/max durability and max-durability wear as persistent gear state.
+- Extended `BaseRepairService` from stash-only repair rows to a unified repair source model: warehouse stash, carried backpack, safe pocket, and equipped gear.
+- Kept `BaseRepairService` as the rule owner for row discovery, cost checks, max-durability reduction, money deduction, selected row ids, and runtime/write-back behavior.
+- Added `InventoryModel.replace_stack_at()` so carried inventory repair can update a specific stack without leaking direct array mutation into the repair service.
+- Updated `BaseWorkbenchService` and `BaseInteractionController3D` so the Workbench Repair tab passes the base player context into repair state, selection, and execution.
+- Extended `validate_base_repair_service.gd` to cover carried backpack, safe pocket, and equipment repair rows, money deduction, stash non-mutation for carried repairs, and a Base 3D panel flow where the stash is empty but backpack gear is repairable.
+
+### Verified
+
+- `validate_base_repair_service.gd` reports `[base_repair_service] OK gate=fix_station rows=stash/carried durability cost=money save=round_trip base3d=repair`.
+- `validate_base_progression.gd`, `validate_base_stash_storage_ui.gd`, `validate_inventory_equipment_flow.gd`, and `validate_user_reported_correctness.gd` pass.
+- `validate_base_to_raid_loadout.gd`, `validate_raid_loss_rules.gd`, `validate_save_slots.gd`, `validate_equipment_model.gd`, and `validate_item_stack_save_codec.gd` pass.
+- `validate_ui_text_quality.gd`, `validate_ui_layout_quality_0_2.gd`, and `--headless --quit-after 1` pass.
+
+### Next
+
+- Add source labeling or grouping to Workbench Repair rows so duplicate damaged pistols from stash/backpack/equipment are readable to the player.
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+- Add combat-time durability wear now that repair discovery and persistence cover stash and carried gear.
+
+## 2026-07-04 Duckov Template Automation Pass 25
+
+### Completed
+
+- Recorded refreshed public reference observations that Workbench/Fix Station repair acts on weapons/equipment the player keeps in inventory, so mixed repair lists need clear item context.
+- Added localized repair source labels to `game_text.csv` for stash, backpack, safe pocket, equipment, and unknown sources.
+- Extended `BaseRepairService` rows with `source_label` and `source_label_key` so UI surfaces do not infer presentation text from source ids.
+- Updated Workbench Repair body rows and Repair row buttons to include the source label before item name, making duplicate damaged gear readable.
+- Extended `validate_base_repair_service.gd` to assert source labels at service level and rendered button/body level.
+
+### Verified
+
+- `validate_base_repair_service.gd` reports `[base_repair_service] OK gate=fix_station rows=stash/carried durability cost=money save=round_trip base3d=repair`.
+- `validate_ui_text_quality.gd`, `validate_base_progression.gd`, `validate_user_reported_correctness.gd`, and `validate_base_stash_storage_ui.gd` pass.
+
+### Next
+
+- Add dismantle service skeleton with recipe-like output rows and stash capacity checks.
+- Add combat-time durability wear after repair execution and carried-gear persistence are stable.
+- Add richer source grouping/icons later if the Workbench Repair list becomes dense.
+
+## 2026-07-04 Duckov Template Automation Pass 26
+
+### Completed
+
+- Recorded refreshed public reference observations that Workbench supports craft, blueprint registration, repair, and dismantle/deconstruction as one base-station progression surface.
+- Added Wrench and Scissors as original tool items for Disassemble Station installation and added them to the common refuge outskirts loot table.
+- Added `workbench_disassemble_station.tres` as a Workbench Lv.1-gated upgrade with save-backed purchase rules.
+- Added `DismantleRecipeDef`, `DismantleRecipeCatalog`, and two original Workbench dismantle recipes so dismantle outputs are data-driven instead of hardcoded in UI.
+- Added `BaseDismantleService` as the owner for dismantle row discovery, selected row ids, stash capacity checks, input consumption, output material insertion, and save write-back.
+- Connected Workbench Dismantle mode through `BaseWorkbenchService`, `BaseInteractionPanel`, and `BaseInteractionController3D` so the tab can install Disassemble Station, list rows, select rows, and execute dismantle.
+- Added localized item, upgrade, station action, dismantle row, success/failure, and recipe text to `data/localization/game_text.csv`.
+- Extended save schema normalization with `selected_dismantle_ids`.
+
+### Verified
+
+- `validate_base_dismantle_service.gd` reports `[base_dismantle_service] OK gate=disassemble_station rows=stash outputs=materials capacity=checked base3d=dismantle`.
+- `validate_base_progression.gd` reports `[base_progression] OK upgrade=data_valid cost=deducted save=persists base3d=action mode=tabs recipe=keys selection=save craft=stash blueprint=research repair=fix_station dismantle=station effect=starter_ammo storage_capacity`.
+- `validate_item_catalog.gd`, `validate_loot_tables.gd`, `validate_save_slots.gd`, `validate_ui_text_quality.gd`, `validate_early_balance.gd`, `validate_base_repair_service.gd`, and `validate_user_reported_correctness.gd` pass.
+- `validate_ui_layout_quality_0_2.gd`, `validate_base_stash_storage_ui.gd`, and `validate_inventory_equipment_flow.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+- `git diff --check` exits successfully with only pre-existing CRLF warnings for inventory/item files.
+
+### Next
+
+- Add combat-time durability wear now that repair and dismantle are both save-backed Workbench services.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+- Add source grouping/icons for dense Workbench row lists only if readability starts to drop.
+
+## 2026-07-04 Duckov Template Automation Pass 27
+
+### Completed
+
+- Recorded refreshed public reference observations that current durability falls with use, low-durability penalties begin around half of current maximum durability, and ammo can influence weapon durability loss rate.
+- Added `ItemDurabilityService.apply_use_wear()` as the focused owner for use-time durability reduction, keeping repair max-durability loss in the repair service.
+- Updated `PlayerController3D` so a shot that actually records `last_fire_result.fired` reduces the currently equipped weapon stack's current durability by one.
+- Kept `WeaponController3D` independent from equipment, backpack, UI, and durability persistence; it still only owns weapon firing, ammo, projectile, and result state.
+- Added `get_active_weapon_durability_state()` so future HUD or warning UI can read normalized equipped weapon durability without parsing equipment slots directly.
+- Added `validate_weapon_durability_wear.gd` to prove service wear rules, fired-shot equipment write-back, no-ammo no-wear behavior, raid loadout durability preservation, and source boundaries.
+
+### Verified
+
+- `validate_weapon_durability_wear.gd` reports `[weapon_durability_wear] OK service=wear fire=equipment_stack no_ammo=no_wear loadout=preserves_worn_durability boundaries=clean`.
+- `validate_weapon_equipment_binding.gd`, `validate_reload_flow.gd`, `validate_base_to_raid_loadout.gd`, `validate_base_repair_service.gd`, and `validate_item_stack_save_codec.gd` pass.
+- `validate_raid_loss_rules.gd`, `validate_inventory_equipment_flow.gd`, `validate_gameplay_architecture.gd`, `validate_ui_text_quality.gd`, `validate_item_tooltips.gd`, and `validate_user_reported_correctness.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+- `git diff --check` exits successfully with only pre-existing CRLF warnings for inventory/item files.
+
+### Next
+
+- Add low-durability combat consequences and a readable warning path once current/max weapon durability is visible enough to the player.
+- Add ammo-specific durability wear rates after ammo item stats are expanded beyond caliber tags.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 28
+
+### Completed
+
+- Recorded refreshed public reference observations that firearm durability under roughly half of max durability should be player-visible and can affect spread or damage, while ammo may later affect durability loss rate.
+- Updated `RaidHudPanel` so the existing `WeaponStatusLabel` reads `PlayerController3D.get_active_weapon_durability_state()` and shows low/depleted durability when the equipped firearm is worn.
+- Kept the HUD read-only: it does not mutate equipment, inventory, durability, repair, or ammo state.
+- Added centralized localization keys for low and depleted weapon durability HUD status.
+- Added `validate_weapon_durability_hud.gd` to verify low durability, depleted durability, localization, and source boundaries.
+
+### Verified
+
+- `validate_weapon_durability_hud.gd` reports `[weapon_durability_hud] OK status=low_broken localized=true boundaries=clean`.
+- `validate_weapon_durability_wear.gd`, `validate_shooting_feedback_hud.gd`, and `validate_raid_hud.gd` pass.
+
+### Next
+
+- Add low-durability combat consequences after the warning path is stable.
+- Add ammo-specific durability wear rates after ammo item stats are expanded beyond caliber tags.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 29
+
+### Completed
+
+- Recorded refreshed public reference observations that low weapon durability can present as worse spread/accuracy around the current-max durability threshold, while ammo-specific wear remains a later data lane.
+- Added `ItemDurabilityService.combat_penalty_state()` as the focused owner for low/broken durability combat penalty math.
+- Updated `PlayerController3D` so fired projectiles from low-durability equipped weapons receive a deterministic spread adjustment before reaching `WeaponController3D`.
+- Kept `WeaponController3D` independent from equipment, durability, repair, and save-state rules; it still receives only origin, direction, and space state.
+- Recorded the last weapon spread state through `get_last_weapon_spread_state()` so validators and future HUD/audio feedback can inspect the result without parsing equipment slots.
+- Left the low-durability damage multiplier at `1.0` for this slice, so the first combat consequence is accuracy/spread only.
+- Added `validate_low_durability_spread.gd` to cover service penalty math, shot direction adjustment, durability wear preservation, and source-boundary checks.
+
+### Verified
+
+- `validate_low_durability_spread.gd` reports `[low_durability_spread] OK service=penalty fresh=stable low=spread wear=preserved boundaries=clean`.
+- `validate_weapon_durability_wear.gd`, `validate_weapon_durability_hud.gd`, `validate_projectile_3d.gd`, `validate_projectile_hit.gd`, and `validate_reload_flow.gd` pass.
+- `validate_weapon_equipment_binding.gd`, `validate_shooting_feedback_hud.gd`, `validate_user_reported_correctness.gd`, and `validate_gameplay_architecture.gd` pass.
+- `--headless --quit-after 1` loads the project without errors.
+
+### Next
+
+- Add ammo-specific durability wear rates after ammo item stats are expanded beyond caliber tags.
+- Add low-durability damage, jam, or broken-fire handling after spread is tuned against player feel.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 30
+
+### Completed
+
+- Recorded refreshed public reference observations that ammo can influence weapon durability loss rate, and that better ammo can reduce weapon wear.
+- Added `ItemDef.weapon_wear_rate` so ammo resources can carry durability-wear data instead of relying only on caliber tags.
+- Added `weapon_wear_rate = 1.0` to the current Ammo-S resource as the baseline behavior-preserving ammo rate.
+- Added `ItemDurabilityService.apply_ammo_use_wear()` and `ammo_weapon_wear_rate()` so fractional ammo wear is accumulated in model code before reducing integer durability.
+- Added persistent `durability_wear_progress` to durable stack normalization and `ItemStackSaveCodec`, so partial wear survives save-backed backpack/equipment/loadout movement.
+- Updated `PlayerController3D` so a fired shot applies durability wear using the currently loaded ammo item, while `WeaponController3D` remains unaware of equipment and durability rules.
+- Added a localized ammo tooltip row for weapon wear rate.
+- Added `validate_ammo_wear_rate.gd` to cover data, fractional wear, loaded-ammo shot behavior, save readiness, and source boundaries.
+
+### Verified
+
+- `validate_ammo_wear_rate.gd` reports `[ammo_wear_rate] OK data=ammo service=fractional fire=loaded_ammo progress=save_ready boundaries=clean`.
+- `validate_weapon_durability_wear.gd`, `validate_low_durability_spread.gd`, `validate_reload_flow.gd`, and `validate_item_tooltips.gd` pass.
+- `validate_item_catalog.gd`, `validate_item_stack_save_codec.gd`, `validate_weapon_equipment_binding.gd`, and `validate_gameplay_architecture.gd` pass.
+
+### Next
+
+- Add at least one higher-grade or lower-grade original ammo item to prove different wear rates in real loot/craft data.
+- Add low-durability damage, jam, or broken-fire handling after spread is tuned against player feel.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 31
+
+### Completed
+
+- Recorded refreshed public reference observations that same-caliber ammo can appear through loot/craft/vendor routes and that higher quality bullets can reduce weapon durability drain.
+- Added `ammo_9mm_polished.tres` as an original high-grade 9mm ammo item with higher value, the same 9mm compatibility tag, and `weapon_wear_rate = 0.5`.
+- Added `workbench_ammo_9mm_polished.tres` and registered it in `CraftingRecipeCatalog`, so the new low-wear ammo is craftable after Workbench Lv.1.
+- Added the polished ammo as a rare entry in the refuge outskirts common loot table without disturbing the guaranteed early pistol/basic-ammo proof entries.
+- Added localized item and recipe text for the new ammo and recipe.
+- Updated item catalog, loot table, ammo wear, tooltip, base recipe, and base progression validators so the new ammo tier is tested as real data rather than a loose resource file.
+- Fixed the Workbench progression validator to navigate recipe rows by the new actual order: baseline ammo, polished ammo, then extended magazine.
+
+### Verified
+
+- `validate_item_catalog.gd` reports `[item_catalog] OK items=27 max_no=27`.
+- `validate_loot_tables.gd`, `validate_ammo_wear_rate.gd`, `validate_item_tooltips.gd`, and `validate_base_recipe_service.gd` pass.
+- `validate_base_progression.gd`, `validate_ui_text_quality.gd`, `validate_user_reported_correctness.gd`, and `validate_codex_item_consistency.gd` pass.
+- `validate_early_balance.gd`, `validate_inventory_equipment_flow.gd`, `validate_save_slots.gd`, and `--headless --quit-after 1` pass.
+
+### Next
+
+- Add ammo combat stat differences such as damage, penetration, recoil/spread modifier, or value tradeoffs now that same-caliber ammo tiers exist.
+- Add low-durability damage, jam, or broken-fire handling after spread is tuned against player feel.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 32
+
+### Completed
+
+- Recorded refreshed public reference observations that ammo can affect damage, penetration, recoil, spread, and armor effectiveness, so ammo tiers should become combat stats rather than only economy/durability data.
+- Added `ItemDef.ammo_damage_multiplier`, persisted it into item stacks, and set baseline Ammo-S to `1.0`.
+- Updated Polished Ammo-S to `ammo_damage_multiplier = 1.1`, giving the first high-grade same-caliber ammo a small damage benefit alongside its lower weapon wear.
+- Updated `WeaponController3D` so `_make_damage_event()` applies the currently loaded ammo's damage multiplier through the existing ammo model.
+- Added a localized ammo tooltip row for damage multiplier, keeping the text in `game_text.csv`.
+- Added `validate_ammo_damage_multiplier.gd` to verify baseline stability, polished-ammo damage increase, direct-hit damage, projectile damage, and source boundaries.
+- Extended ammo tooltip validation to show baseline and polished ammo damage multipliers.
+
+### Verified
+
+- `validate_ammo_damage_multiplier.gd` reports `[ammo_damage_multiplier] OK data=ammo damage=direct/projectile baseline=stable boundaries=clean`.
+- `validate_ammo_wear_rate.gd`, `validate_item_tooltips.gd`, `validate_combat_domain.gd`, `validate_projectile_hit.gd`, and `validate_projectile_hit_enemy.gd` pass.
+- `validate_item_catalog.gd`, `validate_ui_text_quality.gd`, and `--headless --quit-after 1` pass.
+- `git diff --check` exits successfully with only pre-existing CRLF warnings for inventory/item files.
+
+### Next
+
+- Add armor penetration and armor-level damage reduction after ammo damage multipliers are stable.
+- Add recoil/spread ammo modifiers or low-durability jam/broken-fire handling after current projectile feel is stable.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 33
+
+### Completed
+
+- Recorded refreshed public reference observations that armor penetration and armor protection should interact as combat effectiveness, not only as flat armor text.
+- Added `ItemDef.ammo_penetration_level` and `ItemDef.armor_protection_level`, persisted both into item stacks, and authored baseline Ammo-S as penetration Lv.1, Polished Ammo-S as penetration Lv.2, and Level 1 Armor as protection Lv.1.
+- Added `DamageEvent.ammo_def` and `DamageEvent.armor_penetration_level`, with `WeaponController3D` filling those fields from the currently loaded ammo.
+- Added `ArmorMitigationService` as the single combat-math owner for flat armor defense plus ballistic penetration/protection reduction.
+- Routed generic `Damageable3D`, `EnemyDamageable3D`, and `PlayerController3D` through the shared mitigation service, while melee/non-ballistic hits keep the existing flat-defense behavior.
+- Added localized tooltip rows for ammo penetration and armor protection levels.
+- Added `validate_armor_penetration.gd` and extended tooltip/health boundary validation for the new fields and ownership split.
+
+### Verified
+
+- `validate_armor_penetration.gd` reports `[armor_penetration] OK data=ammo_armor formula=gap_reduction damage=loaded_ammo boundaries=clean`.
+
+### Next
+
+- Add recoil/spread ammo modifiers now that ammo damage and armor penetration stats are data-backed.
+- Add low-durability jam/broken-fire handling after current projectile feel is stable.
+- Expand armor data beyond the first protection tier after enemy equipment/armor authoring is clearer.
+
+## 2026-07-04 Duckov Template Automation Pass 34
+
+### Completed
+
+- Recorded refreshed public reference observations that spread and recoil are distinct handling stats, and that ammo types can affect shot grouping as well as damage/penetration.
+- Added `AmmoBallisticsService` as a small combat-domain helper for loaded-ammo handling modifiers.
+- Added `ItemDef.ammo_spread_multiplier`, persisted it into item stacks, and authored baseline Ammo-S as `1.0` and Polished Ammo-S as `0.75`.
+- Updated `PlayerController3D` so the currently loaded ammo scales the existing low-durability projectile spread path, preserving fresh-weapon accuracy while making ammo choice matter when a weapon is unstable.
+- Added a localized ammo tooltip row for spread multiplier and extended item catalog/tooltip validation.
+- Added `validate_ammo_spread_multiplier.gd` to verify data, service defaults, loaded-ammo fire path behavior, tooltip coupling, and source boundaries.
+
+### Verified
+
+- `validate_ammo_spread_multiplier.gd` reports `[ammo_spread_multiplier] OK data=ammo service=spread fire=loaded_ammo tooltip=shared boundaries=clean`.
+- `validate_low_durability_spread.gd`, `validate_item_tooltips.gd`, and `validate_item_catalog.gd` pass.
+
+### Next
+
+- Add recoil cursor movement or sustained-fire handling after spread multiplier is stable.
+- Add low-durability jam/broken-fire handling after current projectile feel is stable.
+- Expand armor data beyond the first protection tier after enemy equipment/armor authoring is clearer.
+
+## 2026-07-04 Duckov Template Automation Pass 35
+
+### Completed
+
+- Recorded refreshed public reference observations that worn gear stays in the repair lifecycle, low durability affects weapon handling, and ammo quality can affect durability wear.
+- Updated `PlayerController3D` so an equipped firearm at depleted durability blocks player firing before the weapon controller spends loaded ammo or creates a projectile.
+- Kept the depleted weapon stack intact for later repair: blocked shots do not consume ammo and do not mutate current durability.
+- Recorded the blocked shot in `WeaponController3D.last_fire_result` as `blocked_reason = "broken_weapon"` without moving durability/equipment rules into `WeaponController3D`.
+- Kept the existing Raid HUD depleted-durability status active after the blocked shot, so the player-visible warning remains coupled to the gameplay rule.
+- Added `validate_broken_weapon_fire_block.gd` to cover broken-fire behavior, ammo preservation, durability preservation, HUD state, and source-boundary ownership.
+
+### Verified
+
+- `validate_broken_weapon_fire_block.gd` reports `[broken_weapon_fire_block] OK broken=blocks_fire ammo=preserved durability=preserved hud=depleted boundaries=clean`.
+- `validate_weapon_durability_wear.gd`, `validate_weapon_durability_hud.gd`, `validate_low_durability_spread.gd`, and `validate_ammo_spread_multiplier.gd` pass.
+- `validate_ammo_wear_rate.gd`, `validate_projectile_hit.gd`, `validate_projectile_hit_enemy.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_text_quality.gd` pass.
+- `--headless --quit-after 1` passes.
+
+### Next
+
+- Add random low-durability jam chance or damage penalty now that deterministic spread and depleted-fire blocking are stable.
+- Add recoil cursor movement or sustained-fire handling after the ammo spread multiplier remains stable in play.
+- Expand armor data beyond the first protection tier after enemy equipment/armor authoring is clearer.
+
+## 2026-07-04 Duckov Template Automation Pass 36
+
+### Completed
+
+- Recorded refreshed public reference observations that broken gear stays repairable, weapon durability has a hard failure point, and public armor durability notes support treating zero durability as the first reliable armor cutoff.
+- Added `PlayerController3D.get_active_armor_durability_state()` so armor durability can be read through the same durable-stack normalization used by repair, raid loss, and equipment persistence.
+- Updated player armor defense and ballistic protection reads so equipped body armor with `current_durability = 0` contributes no flat defense and no armor-protection level.
+- Kept low but nonzero armor durability unchanged for this slice, because public references conflict on gradual armor-efficiency loss and the zero-durability cutoff is the safer correctness fix.
+- Extended `get_armor_effect_state()` with durability fields so UI can read armor condition without touching equipment slots or mutating gameplay state.
+- Added `validate_broken_armor_effect.gd` to prove full armor still protects, broken armor behaves like no armor, and source boundaries stay clean.
+
+### Verified
+
+- `validate_broken_armor_effect.gd` reports `[broken_armor_effect] OK broken=no_protection full=protects state=durability boundaries=clean`.
+- `validate_equipment_armor_effect.gd`, `validate_armor_penetration.gd`, `validate_player_visibility_v2_health.gd`, and `validate_broken_weapon_fire_block.gd` pass.
+- `validate_weapon_durability_wear.gd`, `validate_base_repair_service.gd`, `validate_raid_loss_rules.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_text_quality.gd` pass.
+- `--headless --quit-after 1` passes.
+
+### Next
+
+- Add armor durability wear-on-hit now that zero-durability armor no longer protects.
+- Add recoil cursor movement or sustained-fire handling after the ammo spread multiplier remains stable in play.
+- Add low-durability jam chance or damage penalty after depleted-fire blocking is stable.
+
+## 2026-07-04 Duckov Template Automation Pass 37
+
+### Completed
+
+- Recorded refreshed public reference observations that equipment repair belongs to the workbench repair-station loop and that armor at zero durability fully stops functioning.
+- Updated `PlayerController3D.apply_damage()` so accepted player damage wears the equipped body armor stack after mitigation is calculated and before death-loss context is built.
+- Added `_apply_equipped_armor_durability_wear()` as the narrow bridge from player-hit events into `ItemDurabilityService.apply_use_wear()`, keeping durability math in the existing item service and equipment persistence in `EquipmentModel`.
+- Preserved the intended hit order: the hit that breaks armor still benefits from the armor's pre-hit protection, then later hits see zero defense/protection through the pass 36 broken-armor cutoff.
+- Added `validate_armor_durability_wear.gd` to cover armor hit wear, final protected hit, next-hit no-protection behavior, and source-boundary ownership.
+
+### Verified
+
+- `validate_armor_durability_wear.gd` reports `[armor_durability_wear] OK hit=wears final_hit=breaks next_hit=no_protection boundaries=clean`.
+- `validate_broken_armor_effect.gd`, `validate_equipment_armor_effect.gd`, `validate_armor_penetration.gd`, and `validate_player_visibility_v2_health.gd` pass.
+- `validate_base_repair_service.gd`, `validate_raid_loss_rules.gd`, `validate_broken_weapon_fire_block.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_text_quality.gd` pass.
+- `--headless --quit-after 1` passes.
+
+### Next
+
+- Add armor durability persistence checks for death/drop context after multiple hits in a full raid loop.
+- Add recoil cursor movement or sustained-fire handling after the ammo spread multiplier remains stable in play.
+- Add low-durability jam chance or damage penalty after depleted-fire blocking is stable.
+
+## 2026-07-04 Duckov Template Automation Pass 38
+
+### Completed
+
+- Refreshed public reference notes around equipment durability, workbench repair, armor zero-durability failure, and gear being temporary/replaceable through wear or death.
+- Rechecked the armor-hit wear path against the existing death flow and found that `RaidResultApplier` clears player equipment after `RaidSession` records the death result.
+- Extended `validate_armor_durability_wear.gd` so the lethal-hit case reads `RaidSession.build_result()` instead of inspecting the already-cleared player equipment.
+- Proved that a lethal hit wears equipped armor before death result creation, and that `lost_items` preserves the post-hit armor durability value for dropped-equipment context.
+- Kept the implementation unchanged this round because the runtime behavior was correct; the missing piece was cross-flow verification.
+
+### Verified
+
+- `validate_armor_durability_wear.gd` reports `[armor_durability_wear] OK hit=wears final_hit=breaks next_hit=no_protection death=preserves_worn_armor boundaries=clean`.
+- Regression set passed: `validate_broken_armor_effect.gd`, `validate_raid_loss_rules.gd`, `validate_extraction_flow.gd`, `validate_player_damage.gd`, `validate_base_repair_service.gd`, `validate_broken_weapon_fire_block.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_text_quality.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+
+### Next
+
+- Add recoil cursor movement or sustained-fire handling after the ammo spread multiplier remains stable in play.
+- Add low-durability jam chance or damage penalty after depleted-fire blocking is stable.
+- Expand dismantle candidates beyond the first two original recipes after item categories are more complete.
+
+## 2026-07-04 Duckov Template Automation Pass 39
+
+### Completed
+
+- Refreshed public durability references and kept the design conservative: accuracy/spread and 0-durability failure are reliable enough, while damage penalties and jam rules remain less consistent across public/community sources.
+- Found a HUD coupling issue in the durability loop: an equipped firearm at 0 durability and 0 loaded ammo could present as empty ammo instead of depleted durability.
+- Updated `RaidHudPanel._weapon_status_text()` so depleted durability is resolved before empty-ammo/cooldown status after the weapon is confirmed equipped, while low durability remains a normal warning before the ready state.
+- Extended `validate_weapon_durability_hud.gd` to prove a broken empty weapon still displays the depleted-durability status and does not hide behind the empty-ammo label.
+- Kept durability math and equipment persistence unchanged; this slice is a player-facing state-priority correction.
+
+### Verified
+
+- `validate_weapon_durability_hud.gd` reports `[weapon_durability_hud] OK status=low_broken empty=depleted_priority localized=true boundaries=clean`.
+- Weapon and UI regression passed: `validate_broken_weapon_fire_block.gd`, `validate_low_durability_spread.gd`, `validate_weapon_durability_wear.gd`, and `validate_ui_text_quality.gd`.
+- Raid/base regression passed: `validate_armor_durability_wear.gd`, `validate_broken_armor_effect.gd`, `validate_raid_loss_rules.gd`, `validate_extraction_flow.gd`, `validate_player_damage.gd`, `validate_base_repair_service.gd`, and `validate_user_reported_correctness.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+
+### Next
+
+- Add recoil cursor movement or sustained-fire handling after spread multiplier remains stable.
+- Revisit low-durability jam chance only when the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 40
+
+### Completed
+
+- Refreshed public weapon-stat references and kept recoil separate from spread: spread affects projectile grouping, while recoil is sustained-fire aim displacement that the player eventually counteracts.
+- Added weapon recoil data to `ItemDef` as vertical and horizontal recoil fields, plus an ammo recoil multiplier for ammo-specific handling differences.
+- Added recoil multiplier math to `AmmoBallisticsService`, keeping ammo stat math out of `WeaponController3D` and inventory/UI scripts.
+- Authored conservative recoil values for Pistol-S, baseline Ammo-S, and Polished Ammo-S; Polished Ammo-S now reduces recoil as well as spread and wear.
+- Updated `PlayerController3D` so successful shots accumulate recoverable recoil offset for the next shot, while low-durability spread remains a separate projectile-direction modifier.
+- Added recoil rows to shared item tooltips through centralized localization keys.
+- Added `validate_weapon_recoil_handling.gd` to prove recoil data, ammo multiplier service behavior, sustained-fire offset, lower Polished Ammo-S recoil, and source boundaries.
+
+### Verified
+
+- `validate_weapon_recoil_handling.gd` reports `[weapon_recoil_handling] OK data=weapon/ammo service=recoil fire=accumulates sustained=offset boundaries=clean`.
+- Data/UI checks passed: `validate_item_tooltips.gd` and `validate_item_catalog.gd`.
+- Combat regression passed: `validate_ammo_spread_multiplier.gd`, `validate_low_durability_spread.gd`, `validate_weapon_durability_wear.gd`, `validate_broken_weapon_fire_block.gd`, and `validate_weapon_durability_hud.gd`.
+- Broader regression passed: `validate_ammo_damage_multiplier.gd`, `validate_armor_penetration.gd`, `validate_combat_domain.gd`, `validate_ui_text_quality.gd`, `validate_user_reported_correctness.gd`, `validate_raid_loss_rules.gd`, `validate_extraction_flow.gd`, `validate_base_repair_service.gd`, and `validate_armor_durability_wear.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+
+### Next
+
+- Expose recoil state in a visible reticle/cursor UI once that surface exists.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 41
+
+### Completed
+
+- Refreshed public recoil/crosshair references and kept the model split explicit: spread is projectile deviation, while recoil is visible aim/cursor displacement during sustained fire.
+- Added `RecoilReticle` as a draw-only full-screen HUD Control that renders a base crosshair, recoil offset dot, and recoil path from a supplied state dictionary.
+- Updated `RaidHudPanel` to create the reticle as a sibling under the `HUD` CanvasLayer so it is not clipped by the compact top-left raid panel.
+- Wired `RaidHudPanel` to read `PlayerController3D.get_last_weapon_recoil_state()` and push that state into the reticle every HUD update.
+- Kept reticle drawing out of player/combat code, and kept localization untouched because this slice adds no new player-facing text.
+- Added `validate_recoil_reticle_hud.gd` to prove HUD wiring, visible offset after firing, HUD visibility coupling, and clean source boundaries.
+
+### Verified
+
+- `validate_recoil_reticle_hud.gd` reports `[recoil_reticle_hud] OK sibling=canvas offset=recoil_state hidden=matches_hud boundaries=clean`.
+- Recoil/HUD checks passed: `validate_weapon_recoil_handling.gd`, `validate_raid_hud.gd`, `validate_weapon_durability_hud.gd`, and `validate_ui_text_quality.gd`.
+- Combat/data regressions passed: `validate_ammo_spread_multiplier.gd`, `validate_broken_weapon_fire_block.gd`, `validate_item_tooltips.gd`, `validate_low_durability_spread.gd`, `validate_weapon_durability_wear.gd`, `validate_item_catalog.gd`, and `validate_combat_domain.gd`.
+- User-reported correctness still passes: `validate_user_reported_correctness.gd` reports raid-gate briefing removal, English locale text coverage, corpse loot grid, pistol unequip, and safe-pocket return behavior are intact.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+- `git diff --check` reports no whitespace errors; it still prints existing CRLF/LF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add attachment data that can tune recoil, spread, and recovery after the reticle surface makes those differences readable.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 42
+
+### Completed
+
+- Refreshed public attachment references and focused this pass on magazines because DCG already had an Extended Magazine-S item and Workbench recipe that still did not affect runtime combat.
+- Added `attachment_magazine_capacity_bonus` to `ItemDef` and stack data so attachment effects are authored as item data.
+- Updated Extended Magazine-S to grant +4 magazine capacity and changed its localization description from future placeholder text to an active pistol-capacity description.
+- Added `WeaponAttachmentService` as the focused owner for equipped attachment compatibility and modifier aggregation.
+- Extended `WeaponAmmoModel` and `WeaponController3D` with base magazine capacity, active capacity bonus, and final magazine capacity state while keeping old no-attachment behavior at 8 rounds.
+- Updated `PlayerController3D` so active weapon sync passes compatible equipped attachment bonuses into the weapon controller through the service, not through hardcoded item paths.
+- Added shared tooltip support for attachment magazine capacity bonuses.
+- Added `validate_weapon_attachment_capacity.gd` to prove the data, service, ammo model, player equipment bridge, tooltip row, and clean ownership boundaries.
+
+### Verified
+
+- `validate_weapon_attachment_capacity.gd` reports `[weapon_attachment_capacity] OK data=extended_mag service=compatible ammo_model=bonus player=magazine tooltip=visible boundaries=clean`.
+- Related data/model/UI checks passed: `validate_ammo_reload_model.gd`, `validate_equipment_model.gd`, `validate_item_tooltips.gd`, and `validate_item_catalog.gd`.
+- Base and inventory regressions passed: `validate_base_recipe_service.gd`, `validate_base_progression.gd`, and `validate_inventory_equipment_flow.gd`.
+- User-reported correctness still passes: `validate_user_reported_correctness.gd`.
+- Recoil/HUD/text regressions passed: `validate_weapon_recoil_handling.gd`, `validate_recoil_reticle_hud.gd`, `validate_raid_hud.gd`, and `validate_ui_text_quality.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+- `git diff --check` reports no whitespace errors; it still prints existing CRLF/LF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add grip or muzzle attachment data that modifies recoil, spread, or recovery through the same attachment service.
+- Add dedicated weapon-mod slots or weapon-specific attachment UI so magazine/grip/muzzle attachments are no longer routed through generic charm slots.
+
+## 2026-07-04 Duckov Template Automation Pass 43
+
+### Completed
+
+- Refreshed public attachment references around grip effects and kept the design generic: attachments are item-data modifiers aggregated by `WeaponAttachmentService`, not hardcoded pistol exceptions.
+- Added attachment recoil fields to `ItemDef` and stack data: vertical recoil multiplier, horizontal recoil multiplier, and recoil recovery multiplier.
+- Added Balanced Grip-S as a pistol grip attachment with 0.8x vertical/horizontal recoil and 1.2x recovery, plus a rare loot-table entry so it is reachable through normal item flow.
+- Extended `WeaponAttachmentService` so compatible attachments can combine magazine capacity and recoil/recovery modifiers through the same equipped-slot scan.
+- Updated `PlayerController3D` so the active weapon recoil profile reads attachment modifiers through the service, applies them to shot impulses, exposes attachment ids in recoil state, and scales recoil recovery.
+- Added shared tooltip rows for attachment recoil and recovery stats through centralized localization keys.
+- Added `validate_weapon_attachment_recoil.gd` to prove item data, tooltip text, service aggregation, player shot impulse reduction, and clean source boundaries.
+
+### Verified
+
+- `validate_weapon_attachment_recoil.gd` reports `[weapon_attachment_recoil] OK data=balanced_grip service=recoil player=impulse tooltip=visible boundaries=clean`.
+- Attachment/recoil/UI regressions passed: `validate_weapon_attachment_capacity.gd`, `validate_weapon_recoil_handling.gd`, `validate_recoil_reticle_hud.gd`, `validate_item_tooltips.gd`, `validate_item_catalog.gd`, and `validate_loot_tables.gd`.
+- Player correctness regressions passed: `validate_inventory_equipment_flow.gd`, `validate_user_reported_correctness.gd`, and `validate_ui_text_quality.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+- `git diff --check` reports no whitespace errors; it still prints existing CRLF/LF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add dedicated weapon-mod slots or weapon-specific attachment UI so magazine/grip/muzzle attachments stop routing through generic charm slots.
+- Add muzzle or sight attachment data only after the attachment-slot UX is clearer.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 44
+
+### Completed
+
+- Refreshed public weapon/attachment references and focused on the structural mismatch: weapon mods should live in weapon-mod slots, not generic accessory/charm slots.
+- Added `weapon_mag` and `weapon_grip` slots to `EquipmentModel`, including item-type/tag validation and legacy migration from old `charm_1/charm_2` saved weapon attachments.
+- Updated PlayerController default equip routing so Extended Magazine-S goes to `weapon_mag` and Balanced Grip-S goes to `weapon_grip`.
+- Updated the in-raid inventory equipment UI and base stash equipment UI so the new mod slots are visible and named through localization.
+- Updated the top status panel and localization table for weapon-mag and weapon-grip labels, then added these keys to the English no-Chinese-fallback validator.
+- Added `validate_weapon_attachment_slots.gd` to prove model rules, player default routing, visible UI slot rects, legacy migration, and source boundaries.
+- Updated attachment capacity/recoil validators to use the dedicated weapon mod slots while keeping the same `WeaponAttachmentService` combat bridge.
+
+### Verified
+
+- `validate_weapon_attachment_slots.gd` reports `[weapon_attachment_slots] OK model=dedicated player=defaults ui=visible migration=legacy boundaries=clean`.
+- Slot and attachment regressions passed: `validate_equipment_model.gd`, `validate_weapon_attachment_capacity.gd`, and `validate_weapon_attachment_recoil.gd`.
+- UI/loadout/death regressions passed: `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, and `validate_raid_loss_rules.gd`.
+- User-reported correctness and text checks passed: `validate_user_reported_correctness.gd` and `validate_ui_text_quality.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+- `git diff --check` reports no whitespace errors; it still prints existing CRLF/LF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add weapon-authored compatibility slot lists so different weapon classes can declare Mag/Grip/Muzzle/Scope support explicitly.
+- Add muzzle or sight attachment data only after compatibility lists exist.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 45
+
+### Completed
+
+- Refreshed public weapon-mod references and focused on the next structural mismatch: compatible mod categories belong on weapon data, not only on attachment tags.
+- Added `weapon_attachment_slots` to `ItemDef` and stack data so weapons can declare supported categories such as magazine and grip without requiring UI or save code to infer them.
+- Updated Pistol-S to declare Mag/Grip support while leaving Combat Knife with no firearm attachment slots.
+- Updated `WeaponAttachmentService` so equipped attachments must pass active-weapon slot support and class/caliber tag support before applying capacity or recoil modifiers.
+- Added `validate_weapon_attachment_compatibility.gd` to prove Pistol-S accepts Mag/Grip, melee rejects firearm attachments, temporary single-slot weapons only receive their declared slot, and source boundaries stay clean.
+
+### Verified
+
+- `validate_weapon_attachment_compatibility.gd` reports `[weapon_attachment_compatibility] OK weapon_data=slots service=filters player=bridge boundaries=clean`.
+- Attachment and equipment regressions passed: `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_capacity.gd`, `validate_weapon_attachment_recoil.gd`, and `validate_equipment_model.gd`.
+- Inventory, base, loadout, death, and text regressions passed: `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, `validate_raid_loss_rules.gd`, `validate_user_reported_correctness.gd`, `validate_ui_text_quality.gd`, and `validate_item_catalog.gd`.
+
+### Next
+
+- Add the first muzzle or sight attachment only after adding the matching weapon slot declaration, so new modifiers do not become universal.
+- Surface supported weapon mod categories in tooltip/equipment UI after multiple firearms have distinct slot lists.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 46
+
+### Completed
+
+- Refreshed public muzzle references and kept the slice intentionally narrow: the first original muzzle uses existing recoil multipliers instead of adding premature sound or damage systems.
+- Added `weapon_muzzle` to `EquipmentModel`, player default equip routing, in-raid inventory equipment UI, base stash equipment UI, and top status labels.
+- Added Compact Muzzle-S as an original pistol muzzle attachment with 0.9x vertical recoil and 0.95x horizontal recoil multipliers.
+- Extended Pistol-S `weapon_attachment_slots` to include `muzzle`, so muzzle effects still pass through weapon-authored compatibility filtering.
+- Added Compact Muzzle-S to the Refuge Outskirts rare attachment loot pool and catalog No.29.
+- Added centralized localization keys for the muzzle slot and Compact Muzzle-S item name/description.
+- Added `validate_weapon_muzzle_attachment.gd` and extended existing attachment slot/equipment/catalog/loot/text validators for the new slot.
+
+### Verified
+
+- `validate_weapon_muzzle_attachment.gd` reports `[weapon_muzzle_attachment] OK data=compact_muzzle slot=weapon_muzzle service=recoil player=default boundaries=clean`.
+- Attachment regressions passed: `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_compatibility.gd`, `validate_weapon_attachment_capacity.gd`, and `validate_weapon_attachment_recoil.gd`.
+- Equipment, inventory, base, loadout, death, localization, catalog, and loot regressions passed: `validate_equipment_model.gd`, `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, `validate_raid_loss_rules.gd`, `validate_user_reported_correctness.gd`, `validate_ui_text_quality.gd`, `validate_item_catalog.gd`, and `validate_loot_tables.gd`.
+
+### Next
+
+- Add sight/scope attachment data only after choosing its template effect surface.
+- Add muzzle sound/damage tradeoff fields later, after combat/audio ownership is clearer.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 47
+
+### Completed
+
+- Refreshed public sight/scope and ADS-spread references, then chose a template effect that matches the existing architecture: scopes tune projectile spread rather than pretending to be another recoil attachment.
+- Added `attachment_spread_multiplier` to `ItemDef` and item stacks, plus shared tooltip presentation through centralized localization.
+- Extended `WeaponAttachmentService` to aggregate attachment spread multipliers through the same weapon-slot compatibility filtering used by Mag/Grip/Muzzle.
+- Updated `PlayerController3D` so low-durability projectile spread is scaled by both loaded ammo and active compatible attachment spread multipliers, preserving the existing spread/recoil separation.
+- Added `weapon_scope` to `EquipmentModel`, player default equip routing, in-raid inventory equipment UI, base stash equipment UI, and top status labels.
+- Added Reflex Sight-S as an original pistol scope attachment with a 0.85x spread multiplier, catalog No.30, and rare Refuge Outskirts loot entry.
+- Extended Pistol-S `weapon_attachment_slots` to include `scope`.
+- Added `validate_weapon_scope_attachment.gd` and extended existing slot/equipment/catalog/loot/text validators for the new slot and item.
+
+### Verified
+
+- `validate_weapon_scope_attachment.gd` reports `[weapon_scope_attachment] OK data=reflex_sight slot=weapon_scope service=spread player=spread_multiplier boundaries=clean`.
+- Attachment regressions passed: `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_compatibility.gd`, `validate_weapon_muzzle_attachment.gd`, `validate_weapon_attachment_capacity.gd`, and `validate_weapon_attachment_recoil.gd`.
+- Spread regressions passed: `validate_ammo_spread_multiplier.gd` and `validate_low_durability_spread.gd`.
+- Equipment, inventory, base, loadout, death, localization, catalog, and loot regressions passed: `validate_equipment_model.gd`, `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, `validate_raid_loss_rules.gd`, `validate_user_reported_correctness.gd`, `validate_ui_text_quality.gd`, `validate_item_catalog.gd`, and `validate_loot_tables.gd`.
+
+### Next
+
+- Surface supported weapon mod categories in weapon tooltip/equipment UI now that Pistol-S has Mag/Grip/Muzzle/Scope.
+- Add stock or tactic attachment lanes only after choosing their effect ownership.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 48
+
+### Completed
+
+- Refreshed public weapon-mod references and focused on the readability gap created by pass 47: weapon compatibility now exists, so weapon tooltips need to show the supported categories.
+- Updated `ItemStackTooltipPresenter` to read `weapon_attachment_slots` from weapon stack data and render localized slot labels through the existing equipment-slot localization keys.
+- Added `ui.item.weapon_attachment_slots_format` to the central localization table so the row can translate without hardcoded UI text.
+- Extended `validate_item_tooltips.gd` and added `validate_weapon_attachment_slot_tooltip.gd` to prove Pistol-S shows Mag/Grip/Muzzle/Scope, melee weapons hide the row, Chinese/English labels localize, and the presenter stays UI-text focused instead of depending on combat/equipment services.
+- Added the new localization key to the user-reported correctness English fallback check.
+
+### Verified
+
+- `validate_weapon_attachment_slot_tooltip.gd` reports `[weapon_attachment_slot_tooltip] OK weapon=slots localized=labels melee=hidden boundaries=clean`.
+- Tooltip and attachment regressions passed: `validate_item_tooltips.gd`, `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_compatibility.gd`, `validate_weapon_muzzle_attachment.gd`, and `validate_weapon_scope_attachment.gd`.
+- Text and inventory regressions passed: `validate_ui_text_quality.gd`, `validate_user_reported_correctness.gd`, `validate_inventory_equipment_flow.gd`, and `validate_codex_item_consistency.gd`.
+- Godot headless smoke passed with `--headless --quit-after 1`.
+- `git diff --check` reports no whitespace errors; it still prints existing CRLF/LF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add stock or tactic attachment lanes only after choosing their effect ownership.
+- Add a weapon-mod comparison/readability row for equipped attachments after multiple weapons have distinct slot lists.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 49
+
+### Completed
+
+- Refreshed public stock/attachment references and chose the conservative template effect: stocks improve recoil control and recovery through existing attachment fields instead of introducing premature ADS, carry handling, or speed systems.
+- Added Stabilizing Stock-S as an original pistol stock attachment with 0.9x vertical recoil, 0.9x horizontal recoil, and 1.1x recoil recovery.
+- Added a dedicated `weapon_stock` equipment slot to `EquipmentModel`, including validation, save/load support, legacy charm-slot migration, and player default equip routing.
+- Extended in-raid inventory equipment UI, base stash equipment UI, top status labels, shared weapon-slot tooltip labels, and centralized localization for the new stock slot and item text.
+- Extended Pistol-S `weapon_attachment_slots` to include `stock`, so the stock only applies through weapon-authored compatibility filtering.
+- Added Stabilizing Stock-S to the Refuge Outskirts rare attachment loot pool and catalog No.31.
+- Added `validate_weapon_stock_attachment.gd` and extended slot/equipment/catalog/loot/text validators for the new slot and item.
+
+### Verified
+
+- `validate_weapon_stock_attachment.gd` reports `[weapon_stock_attachment] OK data=stabilizing_stock slot=weapon_stock service=recoil player=default boundaries=clean`.
+- Attachment regressions passed: `validate_equipment_model.gd`, `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_compatibility.gd`, `validate_weapon_attachment_recoil.gd`, `validate_weapon_muzzle_attachment.gd`, `validate_weapon_scope_attachment.gd`, and `validate_weapon_attachment_slot_tooltip.gd`.
+- Tooltip, catalog, loot, text, inventory, base, loadout, and death regressions passed: `validate_item_tooltips.gd`, `validate_item_catalog.gd`, `validate_loot_tables.gd`, `validate_ui_text_quality.gd`, `validate_user_reported_correctness.gd`, `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, and `validate_raid_loss_rules.gd`.
+
+### Next
+
+- Add tactic/laser attachment lane only after choosing whether it affects spread, handling, or a future ADS timing stat.
+- Add a weapon-mod comparison/readability row for equipped attachments after multiple weapons have distinct slot lists.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+
+## 2026-07-04 Duckov Template Automation Pass 50
+
+### Completed
+
+- Refreshed public tactic/laser attachment references and chose the conservative template effect: lasers tighten spread through existing attachment spread fields instead of introducing premature ADS timing or visibility systems.
+- Added Targeting Laser-S as an original pistol tactic attachment with a 0.9x spread multiplier.
+- Added a dedicated `weapon_tactic` equipment slot to `EquipmentModel`, including validation, save/load support, legacy charm-slot migration, and player default equip routing.
+- Updated in-raid inventory equipment UI, base stash equipment UI, top status labels, shared weapon-slot tooltip labels, and centralized localization for the new tactic slot and item text.
+- Extended Pistol-S `weapon_attachment_slots` to include `tactic`, so the laser only applies through weapon-authored compatibility filtering.
+- Added Targeting Laser-S to the Refuge Outskirts rare attachment loot pool and catalog No.32.
+- Added `validate_weapon_tactic_attachment.gd` and extended slot/equipment/catalog/loot/text validators for the new slot and item.
+
+### Verified
+
+- `validate_weapon_tactic_attachment.gd` reports `[weapon_tactic_attachment] OK data=targeting_laser slot=weapon_tactic service=spread player=spread_multiplier boundaries=clean`.
+- Attachment regressions passed: `validate_equipment_model.gd`, `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_compatibility.gd`, `validate_weapon_attachment_recoil.gd`, `validate_weapon_muzzle_attachment.gd`, `validate_weapon_scope_attachment.gd`, `validate_weapon_stock_attachment.gd`, and `validate_weapon_attachment_slot_tooltip.gd`.
+- Tooltip, catalog, loot, text, inventory, base, loadout, and death regressions passed: `validate_item_tooltips.gd`, `validate_item_catalog.gd`, `validate_loot_tables.gd`, `validate_ui_text_quality.gd`, `validate_user_reported_correctness.gd`, `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_base_to_raid_loadout.gd`, and `validate_raid_loss_rules.gd`.
+
+### Next
+
+- Add a weapon-mod comparison/readability row for equipped attachments after Mag/Grip/Muzzle/Scope/Stock/Tactic lanes now exist.
+- Revisit low-durability jam chance only after the intended malfunction rule is clear enough to validate.
+- Consider scope cursor/crosshair variants after recoil reticle and spread state ownership remain stable.
+
+## 2026-07-04 Duckov Template Automation Pass 51
+
+### Completed
+
+- Paused the old attachment-lane direction after user correction: Mag, Grip, Muzzle, Scope, Stock, and Tactic are weapon hardpoints opened from the weapon item, not visible character equipment slots.
+- Moved installed weapon mods into the weapon stack's persistent `weapon_mods` state and updated the stack save codec so durability and weapon mods can be preserved together.
+- Updated `EquipmentModel`, `PlayerController3D`, and `WeaponAttachmentService` so Pistol-S can own installed mods, legacy direct `weapon_*` slots migrate into the active weapon, and active combat modifiers read the weapon stack.
+- Updated the in-raid inventory equipment UI so left-clicking a weapon with hardpoints opens a basic weapon-mod panel; clicking backpack attachment stacks installs them into the weapon, and clicking installed mods removes them back to the backpack.
+- Hid old visible `weapon_*` slots from inventory and base-stash equipment surfaces, keeping those panels focused on character gear and backpack contents.
+- Hid the raid container sort/value-style affordance that was wrong for box/corpse looting; sorting remains a warehouse/backpack concern.
+- Updated the task board so later automation treats direct visible `weapon_*` equipment-slot validators as stale tests to rewrite, not as behavior to restore.
+
+### Verified
+
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`.
+- Direction-safe regressions passed: `validate_inventory_equipment_flow.gd`, `validate_base_stash_storage_ui.gd`, `validate_container_inventory_ui.gd`, `validate_user_reported_correctness.gd`, `validate_ui_text_quality.gd`, and `validate_item_tooltips.gd`.
+- Legacy attachment validators from passes 44-50 still contain old assertions that require visible `weapon_mag`, `weapon_muzzle`, `weapon_scope`, `weapon_stock`, and `weapon_tactic` equipment slots. They must be rewritten for weapon-mounted `weapon_mods` before they can be used as acceptance gates again.
+
+### Next
+
+- Rewrite stale attachment validators around weapon-mounted `weapon_mods` and retire direct character-equipment slot assertions.
+- Correct the warehouse screen layout: right-side warehouse panel, left side reusing the normal Tab backpack/equipment UI, All Store on the backpack side, and no forced post-extraction jump into the wrong stash screen.
+- Polish the weapon mod panel after the corrected data path remains stable under updated validators.
+
+## 2026-07-04 Duckov Template Automation Pass 52
+
+### Completed
+
+- Rewrote the stale attachment validators from passes 44-50 so they now validate weapon-mounted `weapon_mods` instead of visible character equipment slots.
+- Updated the total attachment-slot validator to assert that `weapon_*` hardpoints are hidden from character equipment UI, that Pistol-S stores Mag/Grip/Muzzle/Scope/Stock/Tactic in its weapon stack, and that the inventory UI exposes a weapon-mod panel only after opening the weapon.
+- Updated magazine capacity, grip recoil, muzzle recoil, scope spread, stock recoil/recovery, tactic spread, and compatibility validators to use `WeaponAttachmentService.modifiers_for_weapon_stack()`.
+- Updated player bridge checks to use backpack-to-weapon attach behavior (`attach_inventory_stack_to_weapon`) instead of default equipping attachments into `weapon_*`.
+- Left the product implementation stable; this pass primarily fixes the verification rails so future automation cannot regress back to the wrong visible-slot design.
+
+### Verified
+
+- Weapon-mod validator set passed: `validate_weapon_attachment_slots.gd`, `validate_weapon_attachment_capacity.gd`, `validate_weapon_attachment_recoil.gd`, `validate_weapon_muzzle_attachment.gd`, `validate_weapon_scope_attachment.gd`, `validate_weapon_stock_attachment.gd`, `validate_weapon_tactic_attachment.gd`, and `validate_weapon_attachment_compatibility.gd`.
+- User-direction and UI regressions passed: `validate_user_corrected_inventory_direction.gd`, `validate_inventory_equipment_flow.gd`, and `validate_base_stash_storage_ui.gd`.
+- `validate_user_corrected_inventory_direction.gd` still exits successfully but leaves the known Godot resource-leak warnings on shutdown; it remains a cleanup task, not an acceptance failure.
+
+### Next
+
+- Correct the warehouse screen layout: right-side warehouse panel, left side reusing the normal Tab backpack/equipment UI, All Store on the backpack side, and no forced post-extraction jump into the wrong stash screen.
+- Keep weapon mod panel improvements small and only after the corrected validator set stays green.
+
+## 2026-07-04 Duckov Template Automation Pass 53
+
+### Completed
+
+- Corrected the warehouse screen direction after the user reference: the right panel remains the warehouse, while the left panel is now a backpack-transfer surface instead of a duplicated character equipment UI.
+- Moved the All Store button to the backpack-transfer side so it reads as "move backpack contents into warehouse" rather than a warehouse-side category/sort action.
+- Stopped drawing the separate equipment grid inside `BaseStashInventoryUI`; normal equipment management remains owned by the regular Tab inventory/equipment UI.
+- Added display-state roles (`left_panel_role`, `right_panel_role`, `equipment_surface_visible`) so validators and future UI work can assert the corrected layout directly.
+- Added a source-level validation guard that fails if the warehouse screen starts drawing `_draw_equipment_grid(rect)` again.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- Regressions passed: `validate_user_reported_correctness.gd` and `validate_inventory_equipment_flow.gd`.
+
+### Next
+
+- Check extraction/post-raid transitions so extraction does not force the player into an inappropriate warehouse page.
+- Continue reducing duplicated backpack UI code by extracting shared backpack-grid drawing only after behavior is stable.
+
+## 2026-07-04 Duckov Template Automation Pass 54
+
+### Completed
+
+- Corrected the raid result transfer copy so successful extraction says the player returns to base to prepare the next raid instead of directly inspecting the warehouse.
+- Added a validation guard that rejects `RaidResultPanel` if it references `open_stash`, `BaseStashInventoryUI`, or old "inspect stash" wording.
+- Extended `validate_raid_result_panel.gd` to press Continue, load `base_3d.tscn`, and assert `HUD/BaseStashInventoryUI` exists but remains closed and hidden.
+- Kept the actual extracted-item transfer behavior unchanged: extraction still saves carried loot into the base stash, but UI navigation stays base-first.
+
+### Verified
+
+- `validate_raid_result_panel.gd` reports `[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits boundaries=clean`.
+- `validate_extraction_flow.gd` reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- Godot headless smoke passed with `--quit-after 1`.
+- `git diff --check` reported only the existing CRLF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Deepen shared UI ownership between Tab inventory backpack drawing and the warehouse backpack-transfer surface.
+- Polish the weapon mod panel after the weapon-owned `weapon_mods` path remains green.
+- Audit remaining container/corpse screens for leftover warehouse-only controls.
+
+## 2026-07-04 Duckov Template Automation Pass 55
+
+### Completed
+
+- Refreshed public storage/backpack references and kept the implementation aligned with the corrected direction: warehouse and backpack are adjacent storage surfaces with separate responsibilities, not duplicated equipment pages.
+- Added `InventoryGridMetrics` as a focused UI helper for shared grid size, slot rect, hit testing, and scroll-row math.
+- Rewired the normal Tab `InventoryEquipmentUI` backpack grid and the `BaseStashInventoryUI` backpack/warehouse grids to use the shared helper while leaving transfer/equip/stash rules in their owning scripts.
+- Updated inventory and stash validators to assert the shared grid metrics helper is part of both UI paths.
+
+### Verified
+
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- Godot headless smoke passed with `--quit-after 1`.
+- `git diff --check` reported only the existing CRLF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Continue shared UI ownership with stack-cell decoration only if it stays behavior-neutral.
+- Polish the weapon mod panel labels and installed-mod readability.
+- Audit remaining container/corpse screens for controls that belong only to warehouse/backpack contexts.
+
+## 2026-07-04 Duckov Template Automation Pass 56
+
+### Completed
+
+- Refreshed public inventory-management references around L lock and N needed-item marking, confirming these are shared item-cell affordances in warehouse/backpack organization flows.
+- Moved lock and needed badge drawing into `InventoryEquipmentPainter` as shared `lock_badge`, `needed_badge`, and generic `badge` helpers.
+- Rewired `BaseStashInventoryUI` to delegate L/N badge drawing to the painter, keeping item-state visuals out of stash transfer logic.
+- Extended stash validation so the warehouse UI must reuse the shared painter for L/N badges.
+
+### Verified
+
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- Godot headless smoke passed with `--quit-after 1`.
+- `git diff --check` reported only the existing CRLF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Polish the weapon mod panel labels and installed-mod readability now that the weapon-owned path is stable.
+- Continue simplifying container/corpse UI if any warehouse-only controls remain.
+- Audit post-raid/base entry text for any stale warehouse-first wording.
+
+## 2026-07-04 Duckov Template Automation Pass 57
+
+### Completed
+
+- Refreshed public weapon-mod references and kept the corrected ownership direction: players interact with weapon-owned attachment boxes, not visible character equipment slots.
+- Improved the Pistol-S weapon mod panel readability by drawing each hardpoint with a localized slot label, explicit empty-slot text, and installed-mod text.
+- Added localized `ui.weapon_mod.slot_format`, `ui.weapon_mod.empty_slot`, and `ui.weapon_mod.installed_format` keys to `game_text.csv`.
+- Exposed `weapon_mod_panel_text` from `InventoryEquipmentUI.get_display_state()` so validators can assert the panel is player-readable.
+- Extended weapon attachment and English-localization validators for the new panel text.
+
+### Verified
+
+- `validate_weapon_attachment_slots.gd` reports `[weapon_attachment_slots] OK model=weapon_mods player=panel ui=hidden_slots migration=legacy boundaries=clean`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- Godot headless smoke passed with `--quit-after 1`.
+- `git diff --check` reported only the existing CRLF warnings for `dcg/scripts/inventory/inventory_model.gd` and `dcg/scripts/items/item_def.gd`.
+
+### Next
+
+- Add simple comparison rows for installed weapon mods only if they reuse existing modifier data.
+- Continue simplifying container/corpse UI if any warehouse-only controls remain.
+- Audit post-raid/base entry text for stale warehouse-first wording.
+
+## 2026-07-04 Duckov Template Automation Pass 58
+
+### Completed
+
+- Refreshed public attachment-stat references and kept the implementation to generic modding concepts: attachments alter magazine capacity, recoil, recovery, and spread through data-backed modifiers.
+- Added installed-mod effect summaries to the opened Pistol-S weapon mod panel, reusing the existing stack fields and localization keys from shared item tooltip stats.
+- Kept the corrected ownership boundary: attachment hardpoints remain hidden from character equipment and are only readable inside the opened weapon panel.
+- Extended weapon attachment validation so the UI must expose the installed attachment effect, not just the slot and item name.
+
+### Verified
+
+- `validate_weapon_attachment_slots.gd` reports `[weapon_attachment_slots] OK model=weapon_mods player=panel ui=hidden_slots migration=legacy boundaries=clean`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+- `git diff --check` passed for the files touched in this pass.
+
+### Next
+
+- Continue simplifying container/corpse UI if any warehouse-only controls remain.
+- Audit post-raid/base entry text for stale warehouse-first wording.
+- Add richer weapon stat comparison only after the underlying weapon stat model has a stable read API.
+
+## 2026-07-04 Duckov Template Automation Pass 59
+
+### Completed
+
+- Refreshed public loot/corpse references and kept the correction focused: raid containers and corpses are quick item-transfer surfaces, while sorting/value-management belongs to backpack/warehouse contexts.
+- Removed the remaining `ContainerInventoryUI` sorting dependency and behavior path by deleting the UI-side sorter preload, sorting state, `organize_container()`, and sort helper functions.
+- Marked the legacy SortButton node as hidden in the scene so the loot panel remains a simple close-and-transfer grid while avoiding unrelated layout churn.
+- Updated container and user-correction validators so future changes cannot reintroduce warehouse-style sorting code into the container loot UI.
+
+### Verified
+
+- `validate_container_inventory_ui.gd` reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- `validate_weapon_attachment_slots.gd` reports `[weapon_attachment_slots] OK model=weapon_mods player=panel ui=hidden_slots migration=legacy boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+- Touched-file `git diff --check` passed.
+
+### Next
+
+- Audit remaining post-raid/base entry text for stale warehouse-first wording.
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Review container loot text fallbacks and replace any remaining mojibake with localization-only keys when safe.
+
+## 2026-07-04 Duckov Template Automation Pass 60
+
+### Completed
+
+- Refreshed public extraction references and kept the target clear: extraction returns the player to base with secured loot, while warehouse management is a later player-selected base action.
+- Cleaned `RaidResultPanel` fallback text for title, outcome, transfer summary, list labels, status, and continue button so missing translations no longer fall back to mojibake.
+- Kept the corrected flow intact: Continue still changes to `base_3d.tscn` and does not open or reference `BaseStashInventoryUI` directly.
+- Added a validator guard that scans `RaidResultPanel` source with `UIText.looks_corrupt()` so corrupted fallback text cannot silently return.
+
+### Verified
+
+- `validate_raid_result_panel.gd` reports `[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits boundaries=clean`.
+- `validate_extraction_flow.gd` reports `[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+- Touched-file `git diff --check` passed with only the existing CRLF normalization warning for `dcg/scripts/ui/raid_result_panel.gd`.
+
+### Next
+
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Review container loot text fallbacks and replace any remaining mojibake with localization-only keys when safe.
+- Audit base station prompts for stale wording that implies automatic warehouse or briefing overlays.
+
+## 2026-07-04 Duckov Template Automation Pass 61
+
+### Completed
+
+- Refreshed public looting references around backpack capacity, corpse recovery, and tool/container looting; the template should keep raid loot panels focused on grid transfer and capacity.
+- Removed the hidden `SortButton` node from `container_inventory_ui.tscn` so raid containers/corpses no longer carry a dormant warehouse-sort control in their scene structure.
+- Strengthened `validate_container_inventory_ui.gd` to reject any `SortButton` node and scan both scene and source text through `UIText.looks_corrupt()`.
+- Confirmed `ContainerInventoryUI` source fallbacks and scene defaults are clean UTF-8 text, with no sorter dependency or organize path outside validator forbidden-term checks.
+
+### Verified
+
+- `validate_container_inventory_ui.gd` reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- Godot headless smoke passed with `--quit-after 1`.
+- Touched-file `git diff --check` passed.
+
+### Next
+
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Audit base station prompts for stale wording that implies automatic warehouse or briefing overlays.
+- Remove obsolete container sorted localization keys only after confirming no save, validator, or debug path still references them.
+
+## 2026-07-04 Duckov Template Automation Pass 62
+
+### Completed
+
+- Refreshed public base-management references and kept the correction focused: base facilities should read as player-selected actions, while storage, quests, workbench, and medical station each own their own panel/action flow.
+- Replaced stale `已連接 / 後續會 / connected` base station copy in `game_text.csv` with player-facing facility descriptions.
+- Updated `BaseInteractionPanel` fallback strings so missing translations no longer return prototype wiring text.
+- Strengthened `validate_base_station_readability.gd` to scan the panel source and localization table for stale connection wording.
+- Updated `validate_base_interactions.gd` success output so the validator language matches the corrected station-panel concept.
+
+### Verified
+
+- `validate_base_station_readability.gd` reports `[base_station_readability] OK stations=5 labels=readable prompts=clear stash=grid panels=zh boundaries=clean`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=station_ui stash=storage_grid raid=startable text=zh`.
+- `validate_base_medical_station.gd` reports `[base_medical_station] OK station=visible heal=works cost=deducted ui=zh boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+
+### Next
+
+- Remove obsolete container sorted localization keys only after confirming no save, validator, or debug path still references them.
+- Audit remaining base/workbench station copy for over-promising unavailable tabs before adding new station modes.
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+
+## 2026-07-04 Duckov Template Automation Pass 63
+
+### Completed
+
+- Refreshed public loot and stash references: raid looting should stay focused on taking useful items into backpack, while stash/backpack screens can own sorting and bulk storage controls.
+- Confirmed `ui.container.sorted_*` was no longer referenced by runtime UI, scenes, or validators after the container sort button removal.
+- Removed obsolete container sorting localization keys from `game_text.csv` so the container/corpse UI no longer carries warehouse-only copy.
+- Strengthened `validate_container_inventory_ui.gd` to fail if obsolete container sorting localization keys are reintroduced.
+- Verified backpack/warehouse sorting still uses `ui.sort.mode.*` and `ui.stash.sorted_*`, so this cleanup did not remove valid stash functionality.
+
+### Verified
+
+- `validate_container_inventory_ui.gd` reports `[container_inventory_ui] OK panel=node_first capacity=visible slots=visible layout=fits text=zh`.
+- `validate_user_corrected_inventory_direction.gd` reports `[user_corrected_inventory_direction] OK weapon_mods=on_weapon equipment_ui=clean stash_left=clean container_sort=hidden`; it still emits the known shutdown leak warnings.
+- `validate_base_stash_storage_ui.gd` reports `[base_stash_storage_ui] OK open=warehouse_grid capacity=purchase lock=L all_store=locked_safe store=backpack/equipment/safe_pocket withdraw=backpack save=persist`.
+- `validate_inventory_equipment_flow.gd` reports `[inventory_equipment_flow] OK backpack=visible equip=primary_weapon ammo=rejected layout=fit boundaries=clean`.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+
+### Next
+
+- Audit remaining base/workbench station copy for over-promising unavailable tabs before adding new station modes.
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Add richer weapon stat comparison only after the underlying weapon stat model has a stable read API.
+
+## 2026-07-04 Duckov Template Automation Pass 64
+
+### Completed
+
+- Refreshed public Workbench references: the Workbench supports crafting, blueprint registration, repair, and dismantling, but repair/dismantle are best presented as gated by the matching station upgrades.
+- Corrected the Workbench station hint from a generic base-upgrade message to a focused `製作/研究` hint.
+- Rewrote the Workbench interaction body to say crafting and blueprint research are Workbench actions, while repair and dismantle require installing the matching stations.
+- Updated `BaseInteractionPanel` fallback text to match the localization copy.
+- Strengthened `validate_base_station_readability.gd` so the older over-promising Workbench sentence cannot return.
+
+### Verified
+
+- `validate_base_station_readability.gd` reports `[base_station_readability] OK stations=5 labels=readable prompts=clear stash=grid panels=zh boundaries=clean`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=station_ui stash=storage_grid raid=startable text=zh`.
+- `validate_base_recipe_service.gd` reports `[base_recipe_service] OK recipe=data_valid unlock=workbench blueprint=gate list=rows selection=save materials=needed_paths craft=stash`.
+- `validate_base_repair_service.gd` reports `[base_repair_service] OK gate=fix_station rows=stash/carried durability cost=money save=round_trip base3d=repair`.
+- `validate_base_blueprint_service.gd` reports `[base_blueprint_service] OK blueprint=data_valid research=stash unlock=recipe save=round_trip`.
+- `validate_base_dismantle_service.gd` exited successfully; this run did not emit stdout despite the validator containing an OK print line.
+- `validate_user_reported_correctness.gd` reports `[user_reported_correctness] OK raid_gate=no_briefing locale=en corpse_loot=F_grid unequip=pistol safe_pocket=returns_to_base`.
+- Godot headless smoke passed with `--quit-after 1`.
+
+### Next
+
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Add richer weapon stat comparison only after the underlying weapon stat model has a stable read API.
+- Review old item descriptions that still mention future systems and replace them when the referenced systems now exist.
+
+## 2026-07-04 Duckov Template Automation Pass 65
+
+### Completed
+
+- Refreshed public item/mechanics references around armor durability, repair, weapon attachments, keys, and locked containers.
+- Updated `item.light_armor.desc` so Level 1 Armor now describes existing defense, armor rating, repairable durability, and no longer says durability comes later.
+- Updated `item.warehouse_key.desc` so the key now describes its actual locked warehouse container use instead of a future door placeholder.
+- Left still-unproven future descriptions alone for food, medical, melee, grenades, and backpack capacity instead of claiming unimplemented systems are done.
+- Added `validate_ui_text_quality.gd` guards so completed-system item descriptions cannot regress to stale future wording.
+- Updated the raid-result text-quality expected string to match the corrected Continue-to-base flow instead of the old warehouse-inspection wording.
+
+### Verified
+
+- `validate_ui_text_quality.gd` reports `[ui_text_quality] OK keys=present text=clean layout=fits`.
+- `validate_codex_item_consistency.gd` reports `[codex_item_consistency] OK no5=手槍-S no7=彈藥-S surfaces=container/backpack/equipment/codex`.
+- `validate_item_tooltips.gd` reports `[item_tooltips] OK shared=container/stash/codex stats=value_weight durability=repair_ready needed=sources`.
+- `validate_raid_result_panel.gd` reports `[raid_result_panel] OK node_first=true extracted_vs_dead=clear transfer=visible loot=shown continue=base layout=fits boundaries=clean`.
+- `validate_armor_penetration.gd` reports `[armor_penetration] OK data=ammo_armor formula=gap_reduction damage=loaded_ammo boundaries=clean`.
+- `validate_armor_durability_wear.gd` reports `[armor_durability_wear] OK hit=wears final_hit=breaks next_hit=no_protection death=preserves_worn_armor boundaries=clean`.
+- `validate_locked_container_flow.gd` reports `[locked_container_flow] OK locked=visible key=required open=container_grid boundaries=clean`.
+- Godot headless smoke passed with `--quit-after 1`.
+
+### Next
+
+- Continue shared UI ownership only when the next extraction is behavior-neutral and backed by validators.
+- Add richer weapon stat comparison only after the underlying weapon stat model has a stable read API.
+- Keep auditing item descriptions, but only update items whose referenced systems are already implemented and validated.
+
+## 2026-07-05 Duckov Template Automation Pass 66
+
+### Completed
+
+- Audited the current base-station validation chain after confirming `base_medical_service.gd` and `validate_base_medical_station.gd` are both removed from the project.
+- Replaced stale planning/report references that still told follow-up work to run the deleted medical-station validator.
+- Kept the verification source of truth aligned with the current base flow: station readability and base interaction coverage now point at `validate_base_station_readability.gd` and `validate_base_interactions.gd`.
+
+### Verified
+
+- `validate_ui_text_quality.gd` reports `[ui_text_quality] OK locales=zh_tw_en keys=present text=clean layout=fits`.
+- `validate_base_station_readability.gd` reports `[base_station_readability] OK stations=4 labels=readable prompts=clear stash=grid panels=zh boundaries=clean`.
+- `validate_base_interactions.gd` reports `[base_interactions] OK prompt=visible panels=station_ui stash=storage_grid raid=startable text=zh`.
+- Search verification confirms `validate_base_medical_station.gd` and `base_medical_service.gd` no longer exist in `tools/` or `scripts/base/`.
+
+### Next
+
+- Continue clearing stale medical-station references from older historical docs only when they are still used as live instructions.
+- Prefer validator/doc sync fixes when a removed system still appears in active task plans or completion checklists.

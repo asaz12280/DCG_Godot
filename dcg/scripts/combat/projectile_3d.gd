@@ -4,6 +4,7 @@ extends Area3D
 signal projectile_hit(target: Node, event: DamageEvent)
 signal projectile_missed
 
+const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
 const DEFAULT_HIT_FEEDBACK_SCENE := preload("res://scenes/combat/projectile_hit_feedback_3d.tscn")
 
 @export var speed := 34.0
@@ -19,6 +20,8 @@ var _direction := Vector3.FORWARD
 var _start_position := Vector3.ZERO
 var _elapsed := 0.0
 var _has_finished := false
+var _pierced_damage_targets: Array[Node] = []
+var _pierced_colliders: Array[Node] = []
 
 
 func _ready() -> void:
@@ -39,6 +42,8 @@ func setup(origin: Vector3, direction: Vector3, event: DamageEvent, source_weapo
 	damage_event = event
 	weapon_def = source_weapon
 	shooter = source_shooter
+	_pierced_damage_targets.clear()
+	_pierced_colliders.clear()
 	if is_inside_tree():
 		look_at_from_position(origin, origin + _direction, Vector3.UP)
 
@@ -72,13 +77,17 @@ func _try_hit(target: Node, hit_position: Vector3) -> void:
 		_spawn_hit_feedback(hit_position)
 		_finish_miss()
 		return
+	if _pierced_damage_targets.has(damage_target):
+		return
 	var did_hit: bool = damage_target.apply_damage(damage_event)
-	_has_finished = true
 	if did_hit:
 		_spawn_hit_feedback(hit_position)
 		projectile_hit.emit(damage_target, damage_event)
+		if _should_pierce_after_hit(damage_target, target):
+			return
 	else:
 		projectile_missed.emit()
+	_has_finished = true
 	queue_free()
 
 
@@ -86,7 +95,7 @@ func _try_segment_hit(from_position: Vector3, to_position: Vector3) -> bool:
 	if not is_inside_tree():
 		return false
 	var query := PhysicsRayQueryParameters3D.create(from_position, to_position)
-	query.exclude = [self]
+	query.exclude = [self] + _pierced_colliders
 	if shooter != null:
 		query.exclude.append(shooter)
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
@@ -96,6 +105,17 @@ func _try_segment_hit(from_position: Vector3, to_position: Vector3) -> bool:
 	var hit_position := result.get("position", to_position) as Vector3
 	_try_hit(collider, hit_position)
 	return _has_finished
+
+
+func _should_pierce_after_hit(damage_target: Node, collider: Node) -> bool:
+	if damage_event == null or not WeaponTuningServiceScript.chance_succeeds(float(damage_event.projectile_pierce_chance)):
+		return false
+	_pierced_damage_targets.append(damage_target)
+	if collider != null and not _pierced_colliders.has(collider):
+		_pierced_colliders.append(collider)
+	if damage_target != collider and damage_target != null and not _pierced_colliders.has(damage_target):
+		_pierced_colliders.append(damage_target)
+	return true
 
 
 func _finish_miss() -> void:

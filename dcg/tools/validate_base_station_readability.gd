@@ -20,11 +20,6 @@ const REQUIRED_STATIONS := {
 		"title_key": "ui.base.station.raid_gate",
 		"hint_key": "ui.base.station.raid_gate_hint",
 	},
-	"medical": {
-		"title_key": "ui.base.station.medical",
-		"hint_key": "ui.base.station.medical_hint",
-		"action_required": true,
-	},
 }
 
 var _errors: Array[String] = []
@@ -37,17 +32,33 @@ func _initialize() -> void:
 	current_scene = scene
 	await process_frame
 	await process_frame
+	_validate_panel_defaults(scene)
 	_validate_station_nodes(scene)
 	await _validate_station_prompts_and_panels(scene)
 	_validate_responsibility_boundaries()
 	scene.queue_free()
 	if _errors.is_empty():
-		print("[base_station_readability] OK stations=5 labels=readable prompts=clear stash=grid panels=zh boundaries=clean")
+		print("[base_station_readability] OK stations=4 labels=readable prompts=clear stash=grid panels=zh medical=removed boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
 			push_error(error)
 		quit(1)
+
+
+func _validate_panel_defaults(scene: Node) -> void:
+	var panel := scene.get_node_or_null("HUD/BaseInteractionPanel")
+	if panel == null:
+		_errors.append("Base station readability requires BaseInteractionPanel.")
+		return
+	for node_name in ["TitleLabel", "BodyLabel", "ActionButton", "CloseButton"]:
+		var control := panel.get_node_or_null("Panel/Margin/Content/%s" % node_name)
+		if control == null:
+			_errors.append("BaseInteractionPanel should include %s." % node_name)
+			continue
+		var default_text := str(control.get("text"))
+		if default_text.strip_edges() != "":
+			_errors.append("BaseInteractionPanel %s default text should stay empty and be filled at runtime." % node_name)
 
 
 func _validate_station_nodes(scene: Node) -> void:
@@ -63,6 +74,8 @@ func _validate_station_nodes(scene: Node) -> void:
 		var hint_label := point.get_node_or_null("HintLabel3D") as Label3D
 		_validate_label(title_label, _localized(str(station.get("title_key", ""))), station_id, "title")
 		_validate_label(hint_label, _localized(str(station.get("hint_key", ""))), station_id, "hint")
+	if _find_point(scene, "medical") != null:
+		_errors.append("Base station readability should not find the removed medical station.")
 
 
 func _validate_label(label: Label3D, expected_text: String, station_id: String, role: String) -> void:
@@ -111,6 +124,8 @@ func _validate_station_prompts_and_panels(scene: Node) -> void:
 		var panel_state: Dictionary = controller.call("get_panel_state")
 		if station_id == "stash":
 			_validate_stash_state(panel_state)
+		elif station_id == "quests":
+			_validate_quest_state(panel_state)
 		else:
 			_validate_panel_state(panel_state, station_id, station, title)
 		_close_station_ui(scene, station_id)
@@ -143,11 +158,31 @@ func _validate_panel_state(panel_state: Dictionary, station_id: String, station:
 	_assert_clean_text(title + body + button + str(panel_state.get("action_text", "")), "Base station %s panel text" % station_id)
 
 
+func _validate_quest_state(panel_state: Dictionary) -> void:
+	if not bool(panel_state.get("visible", false)) or not bool(panel_state.get("is_open", false)):
+		_errors.append("Quest station should open the full quest board panel.")
+	var title := str(panel_state.get("title", ""))
+	var hint := str(panel_state.get("hint", ""))
+	var action_text := str(panel_state.get("action_text", ""))
+	if title != _localized("ui.top.quest_board_title"):
+		_errors.append("Quest station panel title should use the localized quest board title.")
+	if hint.strip_edges() == "":
+		_errors.append("Quest station panel hint should explain how to use the board.")
+	if int(panel_state.get("quest_count", 0)) <= 0:
+		_errors.append("Quest station should expose at least one quest entry.")
+	_assert_clean_text(title + hint + action_text, "Base station quests panel text")
+
+
 func _close_station_ui(scene: Node, station_id: String) -> void:
 	if station_id == "stash":
 		var stash_panel := scene.get_node_or_null("HUD/BaseStashInventoryUI")
 		if stash_panel != null and stash_panel.has_method("close_stash"):
 			stash_panel.call("close_stash")
+		return
+	if station_id == "quests":
+		var ui_manager := root.get_node_or_null("UIManager")
+		if ui_manager != null and ui_manager.has_method("close_active_ui"):
+			ui_manager.call("close_active_ui")
 		return
 	var panel := scene.get_node_or_null("HUD/BaseInteractionPanel")
 	if panel != null and panel.has_method("close_panel"):
@@ -163,6 +198,23 @@ func _validate_responsibility_boundaries() -> void:
 	for forbidden in ["change_scene", "SaveGameManager", "RaidSession", "WeaponController", "QuestState"]:
 		if panel_source.contains(forbidden):
 			_errors.append("BaseInteractionPanel should stay display-only and not own %s." % forbidden)
+	var localization_source := FileAccess.get_file_as_string("res://data/localization/game_text.csv")
+	_assert_no_stale_base_station_copy(panel_source, "BaseInteractionPanel source")
+	_assert_no_stale_base_station_copy(localization_source, "Base station localization")
+	_assert_no_overpromised_workbench_copy(panel_source, "BaseInteractionPanel source")
+	_assert_no_overpromised_workbench_copy(localization_source, "Base station localization")
+
+
+func _assert_no_stale_base_station_copy(source: String, label: String) -> void:
+	for forbidden in ["已連接", "已连接", "後續會", "后续会", "is connected", "connected."]:
+		if source.contains(forbidden):
+			_errors.append("%s should not use prototype connection wording: %s." % [label, forbidden])
+
+
+func _assert_no_overpromised_workbench_copy(source: String, label: String) -> void:
+	for forbidden in ["使用工作台製作、研究、修理或拆解物品", "使用工作台制作、研究、修理或拆解物品", "Use the workbench to craft, research, repair, or dismantle items"]:
+		if source.contains(forbidden):
+			_errors.append("%s should not describe locked Workbench modes as immediately available: %s." % [label, forbidden])
 
 
 func _find_point(scene: Node, interaction_id: String) -> Node3D:

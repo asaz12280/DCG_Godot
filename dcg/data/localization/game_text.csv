@@ -1,4 +1,57 @@
 keys,zh_TW,en,ja,zh_CN
+ui.common.or_separator," 或 "," or "," or "," 或 "
+ui.item.needed_source.quest,任務,Quest,Quest,任务
+ui.item.needed_source.workbench,工作台,Workbench,Workbench,工作台
+ui.item.needed_source.recipe,配方,Recipe,Recipe,配方
+ui.stash.sorted_value,已依價值整理倉庫,Warehouse sorted by value,Warehouse sorted by value,已按价值整理仓库
+ui.stash.locked,已鎖定,Locked,Locked,已锁定
+ui.stash.unlocked,已解鎖,Unlocked,Unlocked,已解锁
+ui.stash.locked_item,鎖定物品,Locked item,Locked item,锁定物品
+ui.stash.needed_marked,已標記需求,Marked as needed,Marked as needed,已标记需求
+ui.stash.needed_unmarked,已取消需求標記,Needed mark removed,Needed mark removed,已取消需求标记
+ui.stash.store_all,全部存入,Store All,Store All,全部存入
+ui.stash.store_all_done,已將可存物品放入倉庫,Stored available items in warehouse,Stored available items in warehouse,已将可存物品放入仓库
+ui.stash.store_all_partial,部分物品已存入倉庫,Some items were stored in warehouse,Some items were stored in warehouse,部分物品已存入仓库
+ui.stash.store_all_locked_only,只有鎖定物品無法存入,Only locked items could not be stored,Only locked items could not be stored,只有锁定物品无法存入
+ui.stash.store_all_empty,沒有可存入的物品,No items to store,No items to store,没有可存入的物品
+ui.stash.storage_upgrade,倉庫擴容,Storage Upgrade,Storage Upgrade,仓库扩容
+ui.stash.storage_upgrade_owned,已擁有擴容,Upgrade Owned,Upgrade Owned,已拥有扩容
+ui.stash.storage_upgrade_owned_format,已擁有：%s,Owned: %s,Owned: %s,已拥有：%s
+ui.stash.storage_upgrade_no_save,無法讀取存檔,Save data unavailable,Save data unavailable,无法读取存档
+ui.stash.storage_upgrade_missing_money,資金不足,Not enough money,Not enough money,资金不足
+ui.stash.storage_upgrade_missing_items,材料不足：%s,Missing materials: %s,Missing materials: %s,材料不足：%s
+ui.stash.storage_upgrade_done,倉庫容量已提升,Storage capacity upgraded,Storage capacity upgraded,仓库容量已提升
+ui.stash.storage_upgrade_failed,倉庫擴容失敗,Storage upgrade failed,Storage upgrade failed,仓库扩容失败
+ui.equipment.weapon_mag,彈匣,Magazine,Magazine,弹匣
+ui.equipment.weapon_grip,握把,Grip,Grip,握把
+ui.equipment.weapon_muzzle,槍口,Muzzle,Muzzle,枪口
+ui.equipment.weapon_scope,瞄具,Scope,Scope,瞄具
+ui.equipment.weapon_stock,槍托,Stock,Stock,枪托
+ui.equipment.weapon_tactic,戰術配件,Tactic,Tactic,战术配件
+ui.item.weapon_attachment_slots_format,配件槽：%s,Attachment slots: %s,Attachment slots: %s,配件槽：%s
+ui.top.quest_board_title,任務清單,Quest List,Quest List,任务清单
+ui.top.quest_board_hint,選擇可接任務或檢查目前進度,Choose available quests or review current progress,Choose available quests or review current progress,选择可接任务或检查当前进度
+ui.top.quest_sort_default,預設排序,Default Order,Default Order,默认排序
+ui.top.quest_conditions,條件,Conditions,Conditions,条件
+ui.top.quest_rewards,獎勵,Rewards,Rewards,奖励
+ui.top.quest_empty_category,此分類沒有任務,No quests in this category,No quests in this category,此分类没有任务
+ui.top.quest_empty_category_hint,切換分類或返回基地查看新的任務。,Switch categories or return to base to find new quests.,Switch categories or return to base to find new quests.,切换分类或返回基地查看新的任务。
+ui.top.quest_select_hint,選擇任務查看詳情,Select a quest to view details,Select a quest to view details,选择任务查看详情
+ui.top.quest_action_unavailable,目前無法執行此任務動作,Quest action unavailable,Quest action unavailable,当前无法执行此任务动作
+quest.first_salvage.name,第一次回收,First Salvage,First Salvage,第一次回收
+quest.first_salvage.desc,帶回基礎材料以證明你能安全撤離,Bring back basic materials to prove you can extract safely,Bring back basic materials to prove you can extract safely,带回基础材料以证明你能安全撤离
+quest.first_scavenger_hunt.name,清理拾荒者,First Scavenger Hunt,First Scavenger Hunt,清理拾荒者
+quest.first_scavenger_hunt.desc,擊倒巡邏的拾荒者並活著回到基地,Defeat a patrolling scavenger and return to base alive,Defeat a patrolling scavenger and return to base alive,击倒巡逻的拾荒者并活着回到基地
+quest.radio_tower_scout.name,偵察訊號塔,Radio Tower Scout,Radio Tower Scout,侦察信号塔
+quest.radio_tower_scout.desc,抵達訊號塔並記錄位置以拓展行動情報,Reach the signal tower and record its location for future raids,Reach the signal tower and record its location for future raids,抵达信号塔并记录位置以拓展行动情报
+base_upgrade.storage_expansion_level_1.name,倉庫擴容 I,Storage Expansion I,Storage Expansion I,仓库扩容 I
+base_upgrade.storage_expansion_level_2.name,倉庫擴容 II,Storage Expansion II,Storage Expansion II,仓库扩容 II
+base_upgrade.workbench_fix_station.name,修理站,Fix Station,Fix Station,修理站
+base_upgrade.workbench_disassemble_station.name,拆解站,Disassemble Station,Disassemble Station,拆解站
+item.stabilizing_stock.name,穩定槍托,Stabilizing Stock,Stabilizing Stock,稳定枪托
+item.stabilizing_stock.desc,降低後座並讓連續射擊更容易控制,Reduces recoil and makes follow-up shots easier to control,Reduces recoil and makes follow-up shots easier to control,降低后座并让连续射击更容易控制
+item.targeting_laser.name,瞄準雷射,Targeting Laser,Targeting Laser,瞄准激光
+item.targeting_laser.desc,提升近距離瞄準穩定度的戰術配件,A tactic attachment that improves close-range aiming stability,A tactic attachment that improves close-range aiming stability,提升近距离瞄准稳定度的战术配件
 ui.top.backpack,背包,Backpack,Backpack,背包
 ui.top.quests,任務,Quests,Quests,任务
 ui.top.status,狀態,Status,Status,状态
@@ -24,8 +77,8 @@ ui.top.status_slot_armor,護甲,Armor,Armor,护甲
 ui.top.status_slot_glasses,眼鏡,Glasses,Glasses,眼镜
 ui.top.status_slot_headset,耳機,Headset,Headset,耳机
 ui.top.status_slot_backpack,背包,Backpack,Backpack,背包
-ui.top.status_slot_charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
-ui.top.status_slot_charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
+ui.top.status_slot_charm_1,圖騰 1,Totem 1,Totem 1,图腾 1
+ui.top.status_slot_charm_2,圖騰 2,Totem 2,Totem 2,图腾 2
 ui.top.status_armor_no_bonus,防護效果：尚未提供減傷,Armor effect: no damage reduction yet,Armor effect: no damage reduction yet,防护效果：尚未提供减伤
 ui.top.status_armor_bonus_format,防護效果：每次受擊 -%.0f 傷害,Armor effect: -%.0f damage per hit,Armor effect: -%.0f damage per hit,防护效果：每次受击 -%.0f 伤害
 ui.top.status_armor_missing,未裝備護甲,No armor equipped,No armor equipped,未装备护甲
@@ -66,7 +119,7 @@ ui.inventory.split,拆分,Split,Split,拆分
 ui.inventory.drop,丟棄,Drop,Drop,丢弃
 ui.inventory.split_amount,拆分數量,Split Amount,Split Amount,拆分数量
 ui.inventory.split_confirm,確認拆分,Confirm Split,Confirm Split,确认拆分
-ui.inventory.load,裝備,Load,Load,装备
+ui.inventory.load,負重,Load,Load,负重
 ui.stash.loadout,裝備與背包,Loadout,Loadout,装备与背包
 ui.stash.title_format,倉庫 (%d/%d),Warehouse (%d/%d),Warehouse (%d/%d),仓库 (%d/%d)
 ui.stash.store_hint,點擊左側物品存入倉庫；點擊右側物品取回背包。,Click left-side items to store them; click warehouse items to withdraw.,Click left-side items to store them; click warehouse items to withdraw.,点击左侧物品存入仓库；点击右侧物品取回背包。
@@ -85,15 +138,16 @@ ui.equipment.armor,護甲,Armor,Armor,护甲
 ui.equipment.glasses,眼鏡,Glasses,Glasses,眼镜
 ui.equipment.headset,耳機,Headset,Headset,耳机
 ui.equipment.backpack,背包,Backpack,Backpack,背包
-ui.equipment.charm_1,掛飾 1,Charm 1,Charm 1,挂饰 1
-ui.equipment.charm_2,掛飾 2,Charm 2,Charm 2,挂饰 2
-prompt.pickup,按 E 拾取,Press E,Press E,按 E 拾取
+ui.equipment.charm_1,圖騰 1,Totem 1,Totem 1,图腾 1
+ui.equipment.charm_2,圖騰 2,Totem 2,Totem 2,图腾 2
+prompt.pickup,按 E 拾取物品,Press E to pick up,Press E to pick up,按 E 拾取物品
 prompt.base_interact_format,按 E 互動：%s,Press E: %s,Press E: %s,按 E 互动：%s
 prompt.start_raid_format,按 E 開始出擊：%s,Press E to raid: %s,Press E to raid: %s,按 E 开始出击：%s
 prompt.open_container,按 E 開啟箱子,Press E to open container,Press E to open container,按 E 开启箱子
 prompt.view_container,按 E 查看箱子,Press E to inspect container,Press E to inspect container,按 E 查看箱子
 prompt.locked_container,需要鑰匙,Key required,Key required,需要钥匙
 prompt.open_locked_container,按 E 開啟上鎖箱,Press E to open locked container,Press E to open locked container,按 E 开启上锁箱
+prompt.opening_locked_container_format,開啟中 %d%%,Opening %d%%,Opening %d%%,开启中 %d%%
 prompt.missing_warehouse_key,需要倉庫鑰匙,Warehouse key required,Warehouse key required,需要仓库钥匙
 prompt.missing_key_format,需要%s,%s required,%s required,需要%s
 prompt.loot_corpse,按 F 搜刮屍體,Press F to loot body,Press F to loot body,按 F 搜刮尸体
@@ -105,6 +159,7 @@ prompt.extracting_format,撤離中 %.1f 秒,Extracting %.1f sec,Extracting %.1f 
 prompt.extracted,已撤離,Extracted,Extracted,已撤离
 ui.container.default_name,物資箱,Supply Crate,Supply Crate,物资箱
 ui.container.locked_name,上鎖箱,Locked Cache,Locked Cache,上锁箱
+ui.container.blue_locked_name,藍色上鎖箱,Blue Locked Cache,Blue Locked Cache,蓝色上锁箱
 ui.container.enemy_corpse,拾荒者屍體,Scavenger Body,Scavenger Body,拾荒者尸体
 ui.container.help,點擊物品移入背包。,Click an item to move it to backpack,Click an item to move it to backpack,点击物品移入背包。
 ui.container.status_take,點擊物品移入背包。,Click an item to move it to backpack,Click an item to move it to backpack,点击物品移入背包。
@@ -129,16 +184,18 @@ item.pistol_9mm.name,手槍-S,Pistol-S,Pistol-S,手枪-S
 item.pistol_9mm.desc,早期副武器。用來驗證基礎射擊流程。,Early sidearm for basic shooting,Early sidearm,早期副武器。用来验证基础射击流程。
 item.combat_knife.name,戰鬥刀,Combat Knife,Combat Knife,战斗刀
 item.combat_knife.desc,不需要彈藥的近戰武器。近戰攻擊尚未啟用。,Melee weapon. Attacks are not enabled yet,Melee weapon,不需要弹药的近战武器。近战攻击尚未启用。
+item.smg_9mm.name,衝鋒槍-S,SMG-S,SMG-S,冲锋枪-S
+item.smg_9mm.desc,高射速的 9mm 主武器，適合近距離壓制。,Fast-firing 9mm primary weapon for close-range control,Fast-firing 9mm primary weapon,高射速的 9mm 主武器，适合近距离压制。
 item.ammo_9mm.name,彈藥-S,Ammo-S,Ammo-S,弹药-S
 item.ammo_9mm.desc,9mm 武器使用的基礎彈藥。,Basic ammo for 9mm weapons,Basic ammo,9mm 武器使用的基础弹药。
 item.light_armor.name,一級護甲,Level 1 Armor,Level 1 Armor,一级护甲
-item.light_armor.desc,基礎防護裝備。減傷與耐久會在後續接上。,Basic armor. Durability comes later,Basic armor,基础防护装备。减伤与耐久会在后续接上。
+item.light_armor.desc,基礎防護裝備，可降低受到的傷害。,Basic armor that reduces incoming damage,Basic armor,基础防护装备，可降低受到的伤害。
 item.basic_helmet.name,基礎頭盔,Basic Helmet,Basic Helmet,基础头盔
 item.basic_helmet.desc,頭部防護裝備。命中部位尚未啟用。,Basic head protection,Basic head protection,头部防护装备。命中部位尚未启用。
 item.small_backpack.name,小型背包,Small Backpack,Small Backpack,小型背包
 item.small_backpack.desc,增加攜帶空間的背包。欄位擴充會在後續接上。,Backpack that expands carrying space,Backpack,增加携带空间的背包。栏位扩充会在后续接上。
 item.warehouse_key.name,倉庫鑰匙,Warehouse Key,Warehouse Key,仓库钥匙
-item.warehouse_key.desc,未來可用於倉庫門或任務門檻。,Key for future warehouse doors,Key,未来可用于仓库门或任务门槛。
+item.warehouse_key.desc,開啟上鎖箱時會消耗一把。,Consumed when opening a locked cache,Consumed when opening a locked cache,开启上锁箱时会消耗一把。
 item.grenade.name,手榴彈,Grenade,Grenade,手榴弹
 item.grenade.desc,投擲爆裂物。範圍傷害尚未啟用。,Throwable explosive. Area damage comes later,Grenade,投掷爆裂物。范围伤害尚未启用。
 item.old_watch.name,舊懷錶,Old Watch,Old Watch,旧怀表
@@ -147,12 +204,24 @@ item.military_document.name,軍用文件,Military Document,Military Document,军
 item.military_document.desc,記載撤離與敵人配置的情報文件。,Intel document about extraction and enemies,Intel document,记载撤离与敌人配置的情报文件。
 item.extended_magazine.name,加長彈匣-S,Extended Magazine-S,Extended Magazine-S,加长弹匣-S
 item.extended_magazine.desc,提高彈匣容量的配件。容量規則尚未啟用。,Attachment for future magazine capacity,Attachment,提高弹匣容量的配件。容量规则尚未启用。
+item.balanced_grip.name,平衡握把-S,Balanced Grip-S,Balanced Grip-S,平衡握把-S
+item.balanced_grip.desc,降低水平後座並提高回復速度的握把配件。,Grip attachment that lowers horizontal recoil and improves recovery,Grip attachment,降低水平后座并提高恢复速度的握把配件。
+item.compact_muzzle.name,緊湊槍口-S,Compact Muzzle-S,Compact Muzzle-S,紧凑枪口-S
+item.compact_muzzle.desc,小型槍口配件，稍微降低垂直與水平後座。,Small muzzle attachment that slightly reduces vertical and horizontal recoil,Small muzzle attachment,小型枪口配件，稍微降低垂直与水平后座。
+item.reflex_sight.name,反射瞄具-S,Reflex Sight-S,Reflex Sight-S,反射瞄具-S
+item.reflex_sight.desc,縮小射擊擴散的近距離瞄具。,Close-range sight that tightens shot spread,Close-range sight,缩小射击扩散的近距离瞄具。
 item.wire.name,電線,Wire,Wire,电线
 item.wire.desc,電子製作和修理會用到的基礎材料。,Basic material for electronics and repair,Basic material,电子制作和修理会用到的基础材料。
 item.stamina_potion.name,體力藥水,Stamina Potion,Stamina Potion,体力药水
 item.stamina_potion.desc,暫時恢復或提升體力的消耗品。,Consumable that restores stamina for now,Consumable,暂时恢复或提升体力的消耗品。
 item.life_totem.name,圖騰：生命,Totem: Life,Totem: Life,图腾：生命
 item.life_totem.desc,象徵生命力的特殊收藏品。,Special collectible symbolizing vitality,Special collectible,象征生命力的特殊收藏品。
+item.tactical_headset.name,戰術耳機,Tactical Headset,Tactical Headset,战术耳机
+item.tactical_headset.desc,可裝備在耳機欄位的戰術聽覺裝備。,Tactical hearing gear that fits the headset slot,Tactical hearing gear that fits the headset slot,可装备在耳机栏位的战术听觉装备。
+item.tactical_glasses.name,戰術眼鏡,Tactical Glasses,Tactical Glasses,战术眼镜
+item.tactical_glasses.desc,可裝備在眼鏡欄位的輕量視覺裝備。,Light visual gear that fits the glasses slot,Light visual gear that fits the glasses slot,可装备在眼镜栏位的轻量视觉装备。
+item.defense_totem.name,圖騰：防禦,Totem: Defense,Totem: Defense,图腾：防御
+item.defense_totem.desc,佩戴後提升防禦力。,Increases defense while equipped,Increases defense while equipped,佩戴后提升防御力。
 item.blueprint.name,藍圖,Blueprint,Blueprint,蓝图
 item.blueprint.desc,未來可解鎖製作項目。工坊配方尚未啟用。,Blueprint for future crafting unlocks,Blueprint,未来可解锁制作项目。工坊配方尚未启用。
 item.cash.name,現金,Cash,Cash,现金
@@ -178,12 +247,51 @@ item_type.valuable,貴重品,Valuable,Valuable,贵重品
 item_type.intel,情報文件,Intel,Intel,情报文件
 item_type.totem,圖騰特殊物,Totem and Special,Totem and Special,图腾特殊物
 item_type.recipe,配方藍圖,Recipe and Blueprint,Recipe and Blueprint,配方蓝图
+codex_category.weapon,武器,Weapon,Weapon,武器
+codex_category.ammo,彈藥,Ammo,Ammo,弹药
+codex_category.equipment,裝備,Equipment,Equipment,装备
+codex_category.attachment,配件,Attachment,Attachment,配件
+codex_category.totem,圖騰,Totem,Totem,图腾
+codex_category.medical,醫療,Medical,Medical,医疗
+codex_category.food,食物飲水,Food and Drink,Food and Drink,食物饮水
+codex_category.crafting,製作材料,Crafting Material,Crafting Material,制作材料
+codex_category.electronics,電子零件,Electronics,Electronics,电子零件
+codex_category.key,鑰匙,Key,Key,钥匙
+codex_category.loot,戰利品,Loot,Loot,战利品
+codex_category.currency,貨幣,Currency,Currency,货币
+codex_category.valuable,貴重品,Valuable,Valuable,贵重品
+codex_category.intel,情報,Intel,Intel,情报
+codex_category.quest,任務物品,Quest Item,Quest Item,任务物品
+codex_category.recipe,配方藍圖,Recipe and Blueprint,Recipe and Blueprint,配方蓝图
+codex_category.explosive,爆裂物,Explosive,Explosive,爆裂物
+codex_category.other,其他,Other,Other,其他
+ui.item.type_format,類型：%s,Type: %s,Type: %s,类型：%s
+ui.item.damage_format,傷害 %d,Damage %d,Damage %d,伤害 %d
+ui.item.defense_format,防禦 %.0f,Defense %.0f,Defense %.0f,防御 %.0f
+ui.item.magazine_format,彈匣 %d,Magazine %d,Magazine %d,弹匣 %d
+ui.item.attachment_magazine_bonus_format,彈匣 +%d,Magazine +%d,Magazine +%d,弹匣 +%d
+ui.item.attachment_recoil_multiplier_format,後座 V%.2fx / H%.2fx,Recoil V%.2fx / H%.2fx,Recoil V%.2fx / H%.2fx,后坐 V%.2fx / H%.2fx
+ui.item.stack_weight_format,總重量 %.2f kg,Total weight %.2f kg,Total weight %.2f kg,总重量 %.2f kg
+ui.item.needed_format,需求來源：%s,Needed: %s,Needed: %s,需求来源：%s
+ui.weapon_mod.details_title,武器數值,Weapon Stats,Weapon Stats,武器数值
+ui.weapon_stat.damage,傷害,Damage,Damage,伤害
+ui.weapon_stat.fire_rate,射速,Fire Rate,Fire Rate,射速
+ui.weapon_stat.armor_penetration,穿甲,Armor Penetration,Armor Penetration,穿甲
+ui.weapon_stat.critical_chance,暴擊率,Critical Chance,Critical Chance,暴击率
+ui.weapon_stat.projectile_pierce_chance,穿透率,Pierce Chance,Pierce Chance,穿透率
+ui.weapon_stat.magazine_capacity,彈匣容量,Magazine Capacity,Magazine Capacity,弹匣容量
+ui.weapon_stat.reload_duration,裝填時間,Reload Time,Reload Time,装填时间
+ui.weapon_stat.recoil_angle,後座角度,Recoil Angle,Recoil Angle,后坐角度
+ui.weapon_stat.projectile_range,射程,Range,Range,射程
+ui.weapon_stat.durability_wear,耐久消耗,Durability Wear,Durability Wear,耐久消耗
+ui.weapon_stat.durability,耐久,Durability,Durability,耐久
 ui.codex.title,物品圖鑑,Item Codex,Item Codex,物品图鉴
 ui.codex.empty_slot,尚未登錄物品,No item cataloged,No item cataloged,尚未登录物品
 ui.codex.weight,重量,Weight,Weight,重量
 ui.codex.value,價值,Value,Value,价值
 ui.codex.max_stack,最大堆疊,Max Stack,Max Stack,最大堆叠
 ui.codex.damage,傷害,Damage,Damage,伤害
+ui.codex.durability,耐久,Durability,Durability,耐久
 ui.main.title,逃離鴨科夫,Escape From Duckov,Escape From Duckov,逃离鸭科夫
 ui.main.subtitle,物資、撤離、活下去。,Loot extract survive,Loot extract survive,搜刮、撤离、活下去。
 ui.main.start,開始遊戲,Start Game,Start Game,开始游戏
@@ -274,17 +382,17 @@ ui.base.station.raid_gate,出擊門,Raid Gate,Raid Gate,出击门
 ui.base.station.raid_gate_hint,開始行動,Start raid,Start raid,开始行动
 ui.base.station.medical,醫療站,Medical Station,Medical Station,医疗站
 ui.base.station.medical_hint,回復生命,Restore health,Restore health,回复生命
-ui.base.interaction.stash_body,倉庫面板已連接。後續會在這裡整理戰利品與裝備。,Stash panel is connected. Loot and equipment are managed here,Stash panel is connected. Loot and equipment are managed here,仓库面板已连接。后续会在这里整理战利品与装备。
-ui.base.interaction.quests_body,任務板已連接。後續會在這裡查看與回報任務。,Quest board is connected. Quests are reviewed and turned in here,Quest board is connected. Quests are reviewed and turned in here,任务板已连接。后续会在这里查看与回报任务。
-ui.base.interaction.workbench_body,工作台已連接。後續會在這裡升級基地功能。,Workbench is connected. Base upgrades are handled here,Workbench is connected. Base upgrades are handled here,工作台已连接。后续会在这里升级基地功能。
-ui.base.interaction.medical_body,醫療站已連接。支付少量金錢即可回復生命。,Medical station is connected. Pay a small fee to restore health,Medical station is connected. Pay a small fee to restore health,医疗站已连接。支付少量金钱即可回复生命。
-ui.base.interaction.default_body,基地互動點已連接。,Base interaction point is connected,Base interaction point is connected,基地互动点已连接。
+ui.base.interaction.stash_body,整理帶回的戰利品、裝備與倉庫空間。,Manage extracted loot, gear, and warehouse space,Manage extracted loot, gear, and warehouse space,整理带回的战利品、装备与仓库空间。
+ui.base.interaction.quests_body,查看任務進度並回報可完成目標。,Review quest progress and turn in completed objectives,Review quest progress and turn in completed objectives,查看任务进度并回报可完成目标。
+ui.base.interaction.workbench_body,升級基地功能；已解鎖的工作台模式會在此顯示。,Upgrade base functions. Unlocked workbench modes appear here,Upgrade base functions. Unlocked workbench modes appear here,升级基地功能；已解锁的工作台模式会在此显示。
+ui.base.interaction.medical_body,支付少量金錢回復生命。,Pay a small fee to restore health,Pay a small fee to restore health,支付少量金钱回复生命。
+ui.base.interaction.default_body,選擇基地設施查看可用操作。,Choose a base station to view available actions,Choose a base station to view available actions,选择基地设施查看可用操作。
 ui.base.medical.full_health,生命已滿，不需要治療。,Health is full. No treatment needed,Health is full. No treatment needed,生命已满，不需要治疗。
 ui.base.medical.no_save,找不到目前存檔，無法扣款治療。,No active save found. Treatment cannot be charged,No active save found. Treatment cannot be charged,找不到目前存档，无法扣款治疗。
 ui.base.medical.need_money,金錢不足，治療需要 $%d。,Not enough money. Treatment costs $%d,Not enough money. Treatment costs $%d,金钱不足，治疗需要 $%d。
 ui.base.medical.can_heal,可支付 $%d 將生命回復至滿。,Pay $%d to restore health,Pay $%d to restore health,可支付 $%d 将生命回复至满。
 ui.base.medical.action,治療 $%d,Treat $%d,Treat $%d,治疗 $%d
-ui.base.medical.body_format,醫療站已連接。生命 %d / %d，金錢 $%d。%s,Medical station connected. Health %d / %d money $%d. %s,Medical station connected. Health %d / %d money $%d. %s,医疗站已连接。生命 %d / %d，金钱 $%d。%s
+ui.base.medical.body_format,生命 %d / %d，金錢 $%d。%s,Health %d / %d money $%d. %s,Health %d / %d money $%d. %s,生命 %d / %d，金钱 $%d。%s
 ui.base.medical.cannot_heal,無法治療。,Cannot treat,Cannot treat,无法治疗。
 ui.base.medical.save_failed,治療完成，但存檔扣款失敗。,Treatment completed but save payment failed,Treatment completed but save payment failed,治疗完成，但存档扣款失败。
 ui.base.medical.healed,治療完成，生命已回滿。,Treatment complete. Health restored,Treatment complete. Health restored,治疗完成，生命已回满。
@@ -339,6 +447,15 @@ ui.raid_hud.weapon_status_empty,空彈,Empty,Empty,空弹
 ui.raid_hud.weapon_status_reloading,裝填中,Reloading,Reloading,装填中
 ui.raid_hud.weapon_status_ready,可射擊,Ready to fire,Ready to fire,可射击
 ui.raid_hud.weapon_status_cooldown,射擊間隔,Cooldown,Cooldown,射击间隔
+ui.raid_hud.weapon_status_using_item,使用物品中,Using item,Using item,使用物品中
+ui.raid_hud.reload_ready,裝填待命,Reload ready,Reload ready,装填待命
+ui.raid_hud.reloading,裝填中,Reloading,Reloading,装填中
+ui.raid_hud.reload_complete,裝填完成,Reload complete,Reload complete,装填完成
+ui.raid_hud.reload_cancelled,裝填取消,Reload cancelled,Reload cancelled,装填取消
+ui.player_hud.loaded_bullets,發子彈,rounds,rounds,发子弹
+ui.item_use.using_format,使用 %s,Using %s,Using %s,使用 %s
+ui.item_use.complete,使用完成,Use complete,Use complete,使用完成
+ui.item_use.cancelled,使用取消,Use cancelled,Use cancelled,使用取消
 ui.raid_hud.extracting,撤離中...,Extracting...,Extracting...,撤离中...
 ui.raid_hud.extraction_remaining,撤離,Extraction,Extraction,撤离
 ui.raid_hud.extracted,已撤離,Extracted,Extracted,已撤离
@@ -348,10 +465,10 @@ ui.raid_result.outcome,結果,Outcome,Outcome,结果
 ui.raid_result.duration,時間,Duration,Duration,时间
 ui.raid_result.money_delta,金錢,Money,Money,金钱
 ui.raid_result.continue_to_base,回到基地,Continue to Base,Continue to Base,回到基地
-ui.raid_result.status,帶回物資會依結算結果轉入基地倉庫。,Extracted supplies move to base stash,Extracted supplies move to base stash,带回物资会依结算结果转入基地仓库。
+ui.raid_result.status,帶回物資已轉入基地倉庫；回基地後可直接整理下一場行動。,Extracted supplies have moved to the base stash. Return to base to prepare the next raid,Extracted supplies have moved to the base stash. Return to base to prepare the next raid,带回物资已转入基地仓库；回基地后可直接整理下一场行动。
 ui.raid_result.status_dead,遺失物品不會進入基地倉庫；安全口袋物品會送回基地。,Lost items do not enter base stash. Safe pocket items return to base,Lost items do not enter base stash. Safe pocket items return to base,遗失物品不会进入基地仓库；安全口袋物品会送回基地。
 ui.raid_result.transfer_title,物資轉移,Transfer Summary,Transfer Summary,物资转移
-ui.raid_result.transfer_extracted,帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。,Extracted %d item groups to base stash. Return to base to inspect stash,Extracted %d item groups to base stash. Return to base to inspect stash,带回成功：%d 种物资已转入基地仓库。按「回到基地」查看仓库。
+ui.raid_result.transfer_extracted,帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」整理下一場行動。,Extracted %d item groups to the base stash. Return to base to prepare the next raid,Extracted %d item groups to the base stash. Return to base to prepare the next raid,带回成功：%d 种物资已转入基地仓库。按「回到基地」整理下一场行动。
 ui.raid_result.transfer_empty,本次沒有帶回物品。按「回到基地」整理下一場行動。,No items were extracted. Return to base to prepare the next raid,No items were extracted. Return to base to prepare the next raid,本次没有带回物品。按「回到基地」整理下一场行动。
 ui.raid_result.transfer_dead,行動失敗：%d 種背包/裝備物資列為遺失，%d 種安全口袋物品已送回基地。按「回到基地」查看狀態。,Raid failed. %d backpack or equipment item groups are lost and %d safe pocket item groups returned to base. Return to base to review,Raid failed. %d backpack or equipment item groups are lost and %d safe pocket item groups returned to base. Return to base to review,行动失败：%d 种背包/装备物资列为遗失，%d 种安全口袋物品已送回基地。按「回到基地」查看状态。
 ui.raid_result.empty_extracted,沒有帶回物品。,No extracted items,No extracted items,没有带回物品。
@@ -373,3 +490,114 @@ enemy.status.attack,攻擊,Attacking,Attacking,攻击
 enemy.status.alert,準備攻擊,Preparing attack,Preparing attack,准备攻击
 location.radio_tower.name,訊號塔,Signal tower,Signal tower,讯号塔
 location.unknown.name,未知地點,Unknown location,Unknown location,未知地点
+ui.inventory.use,使用,Use,Use,使用
+ui.inventory.mod,改裝,Mod,Mod,改装
+ui.weapon_mod.title,改裝,Mods,Mods,改装
+ui.weapon_mod.hint,將背包配件拖到相符插槽以安裝。,Drag a backpack attachment into a matching slot to install it.,Drag a backpack attachment into a matching slot to install it.,将背包配件拖到相符插槽以安装。
+ui.weapon_mod.empty_slot,空,Empty,Empty,空
+ui.weapon_mod.slot_format,%s 插槽,%s slot,%s slot,%s 插槽
+ui.weapon_mod.installed_format,已安裝：%s,Installed: %s,Installed: %s,已安装：%s
+ui.item.attachment_recoil_recovery_format,後座恢復 %.2fx,Recoil recovery %.2fx,Recoil recovery %.2fx,后坐恢复 %.2fx
+ui.item.attachment_spread_multiplier_format,散布 %.2fx,Spread %.2fx,Spread %.2fx,散布 %.2fx
+ui.item.weapon_recoil_format,後座 V%.1f / H%.1f,Recoil V%.1f / H%.1f,Recoil V%.1f / H%.1f,后坐 V%.1f / H%.1f
+ui.item.ammo_spread_multiplier_format,散布 %.2fx,Spread %.2fx,Spread %.2fx,散布 %.2fx
+ui.item.ammo_recoil_multiplier_format,後座 %.2fx,Recoil %.2fx,Recoil %.2fx,后坐 %.2fx
+ui.top.status_slot_weapon_mag,彈匣,Magazine,Magazine,弹匣
+ui.base.quest_action_failed,任務操作失敗。,Quest action failed.,Quest action failed.,任务操作失败。
+ui.base.quest_accepted,已接受任務。,Quest accepted.,Quest accepted.,已接受任务。
+ui.base.quest_board_available,可接任務,Available quest,Available quest,可接任务
+ui.base.accept_quest,接受任務,Accept Quest,Accept Quest,接受任务
+ui.base.quest_board_empty,目前沒有可接任務。,No quests available.,No quests available.,目前没有可接任务。
+ui.base.quest_board_hint,出擊前可先從任務板接受任務。,Accept quests from the quest board before raiding.,Accept quests from the quest board before raiding.,出击前可先从任务板接受任务。
+ui.base.workbench_craft_done,製作完成。,Craft complete.,Craft complete.,制作完成。
+ui.base.workbench_craft_failed_short,製作失敗。,Craft failed.,Craft failed.,制作失败。
+ui.base.workbench_blueprint_research_done,藍圖研究完成。,Blueprint research complete.,Blueprint research complete.,蓝图研究完成。
+ui.base.workbench_blueprint_research_failed_short,藍圖研究失敗。,Blueprint research failed.,Blueprint research failed.,蓝图研究失败。
+ui.base.workbench_repair_done,修理完成。,Repair complete.,Repair complete.,修理完成。
+ui.base.workbench_repair_failed_short,修理失敗。,Repair failed.,Repair failed.,修理失败。
+ui.base.workbench_dismantle_done,拆解完成。,Dismantle complete.,Dismantle complete.,拆解完成。
+ui.base.workbench_dismantle_failed_short,拆解失敗。,Dismantle failed.,Dismantle failed.,拆解失败。
+ui.base.workbench_recipe_select_failed,配方無法使用。,Recipe unavailable.,Recipe unavailable.,配方无法使用。
+ui.base.workbench_repair_select_failed,修理物品無法使用。,Repair item unavailable.,Repair item unavailable.,修理物品无法使用。
+ui.base.workbench_dismantle_select_failed,拆解物品無法使用。,Dismantle item unavailable.,Dismantle item unavailable.,拆解物品无法使用。
+ui.base.workbench.recipe_ready_short,可製作,Ready,Ready,可制作
+ui.base.workbench.recipe_missing_short,缺材料,Missing,Missing,缺材料
+ui.base.workbench.repair_ready_short,可修理,Ready,Ready,可修理
+ui.base.workbench.repair_missing_money_short,金錢不足,Need money,Need money,金钱不足
+ui.base.workbench.dismantle_ready_short,可拆解,Ready,Ready,可拆解
+ui.base.workbench.dismantle_stash_full_short,倉庫已滿,No room,No room,仓库已满
+ui.base.workbench.blueprint_status_researched,已研究,Researched,Researched,已研究
+ui.base.workbench.blueprint_status_station_locked,工作站未解鎖,Station locked,Station locked,工作站未解锁
+ui.base.workbench.blueprint_status_ready,可研究,Ready,Ready,可研究
+ui.base.workbench.blueprint_status_missing,缺少藍圖,Missing blueprint,Missing blueprint,缺少蓝图
+ui.base.workbench.fix_station_effect,效果：解鎖工作台修理模式。,Effect: unlocks workbench repair mode.,Effect: unlocks workbench repair mode.,效果：解锁工作台修理模式。
+ui.base.workbench.fix_station_ready,狀態：材料已備齊，可進行安裝。,Status: materials ready for installation.,Status: materials ready for installation.,状态：材料已备齐，可进行安装。
+ui.base.workbench.fix_station_installed,修理站已安裝。,Fix Station installed.,Fix Station installed.,修理站已安装。
+ui.base.workbench.repair_none,沒有可修理裝備。,No repairable gear available.,No repairable gear available.,没有可修理装备。
+ui.base.workbench.repair_list_title,修理,Repair,Repair,修理
+ui.base.workbench.repair_source_stash,倉庫,Stash,Stash,仓库
+ui.base.workbench.repair_source_backpack,背包,Backpack,Backpack,背包
+ui.base.workbench.repair_source_safe_pocket,安全口袋,Safe Pocket,Safe Pocket,安全口袋
+ui.base.workbench.repair_source_equipment,裝備,Equipment,Equipment,装备
+ui.base.workbench.disassemble_station_effect,效果：解鎖工作台拆解模式。,Effect: unlocks workbench dismantle mode.,Effect: unlocks workbench dismantle mode.,效果：解锁工作台拆解模式。
+ui.base.workbench.disassemble_station_ready,狀態：材料已備齊，可進行安裝。,Status: materials ready for installation.,Status: materials ready for installation.,状态：材料已备齐，可进行安装。
+ui.base.workbench.disassemble_station_installed,拆解站已安裝。,Disassemble Station installed.,Disassemble Station installed.,拆解站已安装。
+ui.base.workbench.dismantle_none,沒有可拆解物品。,No dismantle candidates available.,No dismantle candidates available.,没有可拆解物品。
+ui.base.workbench.dismantle_list_title,拆解,Dismantle,Dismantle,拆解
+ui.base.workbench.craft_missing,缺少材料,Missing materials,Missing materials,缺少材料
+ui.base.workbench.craft_action_format,製作 %s,Craft %s,Craft %s,制作 %s
+ui.base.workbench.recipe_none,沒有可用配方。,No recipes available.,No recipes available.,没有可用配方。
+ui.base.workbench.blocked_prerequisite,需要先完成前置升級。,Requires prerequisite upgrade.,Requires prerequisite upgrade.,需要先完成前置升级。
+ui.base.workbench.dismantle_locked,拆解站尚未安裝。,Disassemble Station is not installed.,Disassemble Station is not installed.,拆解站尚未安装。
+ui.base.workbench.dismantle_stash_full,倉庫沒有空間存放拆解產物。,Warehouse has no room for dismantle outputs.,Warehouse has no room for dismantle outputs.,仓库没有空间存放拆解产物。
+ui.base.workbench.recipe_missing,缺少配方材料。,Missing recipe materials.,Missing recipe materials.,缺少配方材料。
+ui.base.workbench.recipe_ready,材料已備齊，可以製作。,Materials ready. Crafting available.,Materials ready. Crafting available.,材料已备齐，可以制作。
+ui.base.workbench.blueprint_research_action,研究藍圖,Research Blueprint,Research Blueprint,研究蓝图
+ui.base.workbench.blueprint_research_missing,沒有可研究藍圖,No blueprint ready,No blueprint ready,没有可研究蓝图
+ui.base.workbench.fix_station_action,安裝修理站,Install Fix Station,Install Fix Station,安装修理站
+ui.base.workbench.repair_unavailable,沒有可修理裝備,No repairable gear,No repairable gear,没有可修理装备
+ui.base.workbench.repair_action_format,修理 %s,Repair %s,Repair %s,修理 %s
+ui.base.workbench.disassemble_station_action,安裝拆解站,Install Disassemble Station,Install Disassemble Station,安装拆解站
+ui.base.workbench.dismantle_unavailable,沒有可拆解物品,No dismantle item,No dismantle item,没有可拆解物品
+ui.base.workbench.dismantle_action_format,拆解 %s,Dismantle %s,Dismantle %s,拆解 %s
+ui.base.workbench.recipe_list_title,配方,Recipes,Recipes,配方
+ui.base.workbench.recipe_cost_format,配方成本：%s。,Recipe cost: %s.,Recipe cost: %s.,配方成本：%s。
+ui.base.workbench.blueprint_none,沒有可用藍圖。,No blueprints available.,No blueprints available.,没有可用蓝图。
+ui.base.workbench.blueprint_list_title,藍圖研究,Blueprint Research,Blueprint Research,蓝图研究
+ui.base.workbench.blueprint_row_format,%s -> %s - %s,%s -> %s - %s,%s -> %s - %s,%s -> %s - %s
+ui.base.workbench.mode_craft,製作,Craft,Craft,制作
+ui.base.workbench.mode_blueprints,藍圖,Blueprints,Blueprints,蓝图
+ui.base.workbench.mode_repair,修理,Repair,Repair,修理
+ui.base.workbench.mode_dismantle,拆解,Dismantle,Dismantle,拆解
+ui.item.projectile_pierce_chance_format,穿透機率 %.0f%%,Pierce chance %.0f%%,Pierce chance %.0f%%,穿透几率 %.0f%%
+ui.item.ammo_penetration_level_format,穿甲等級 %.0f,Penetration Lv. %.0f,Penetration Lv. %.0f,穿甲等级 %.0f
+ui.item.ammo_damage_multiplier_format,彈藥傷害 %.2fx,Ammo damage %.2fx,Ammo damage %.2fx,弹药伤害 %.2fx
+ui.item.weapon_wear_rate_format,武器磨耗 %.2fx,Weapon wear %.2fx,Weapon wear %.2fx,武器磨耗 %.2fx
+ui.item.durability_format,耐久 %d/%d,Durability %d/%d,Durability %d/%d,耐久 %d/%d
+ui.item.repair_wear_format,修理磨損 -%d 最大耐久,Repair wear -%d max durability,Repair wear -%d max durability,修理磨损 -%d 最大耐久
+ui.top.quest_tab_available,可接,Available,Available,可接
+ui.top.quest_tab_active,進行中,Active,Active,进行中
+ui.top.quest_tab_completed,已完成,Completed,Completed,已完成
+ui.top.quest_accept_action,接受任務,Accept Quest,Accept Quest,接受任务
+ui.top.quest_submit_action,回報任務,Submit,Submit,回报任务
+ui.top.quest_cancel_action,取消任務,Cancel Quest,Cancel Quest,取消任务
+ui.top.quest_completed_action,已完成,Completed,Completed,已完成
+ui.top.quest_active_action,進行中,Active,Active,进行中
+ui.top.quest_cancelled,任務已取消。,Quest cancelled.,Quest cancelled.,任务已取消。
+ui.top.quest_no_reward,無,None,None,无
+ui.top.quest_available,可接,Available,Available,可接
+ui.top.quest_not_accepted,尚未接受,Not accepted,Not accepted,尚未接受
+ui.top.quest_default_description,查看任務需求，完成後回來領取獎勵。,Review the quest requirements and return to claim rewards.,Review the quest requirements and return to claim rewards.,查看任务需求，完成后回来领取奖励。
+ui.top.quest_reward_money,現金,Cash,Cash,现金
+ui.top.status_slot_weapon_grip,握把,Grip,Grip,握把
+ui.top.status_slot_weapon_muzzle,槍口,Muzzle,Muzzle,枪口
+ui.top.status_slot_weapon_scope,瞄具,Scope,Scope,瞄具
+ui.top.status_slot_weapon_stock,槍托,Stock,Stock,枪托
+ui.top.status_slot_weapon_tactic,戰術配件,Tactic,Tactic,战术配件
+ui.stash.storage_upgrade_ready_format,%s：%d -> %d，需求 %s。, %s: %d -> %d, requires %s.,%s: %d -> %d, requires %s.,%s：%d -> %d，需要 %s。
+ui.stash.storage_upgrade_all_owned_format,已完成目前所有倉庫擴容：容量 %d。,All current storage upgrades complete: capacity %d.,All current storage upgrades complete: capacity %d.,已完成目前所有仓库扩容：容量 %d。
+ui.top.map_route_raid,出生點 → %s 箱子區 → %s 撤離點。,Spawn -> %s crate area -> %s extraction.,Spawn -> %s crate area -> %s extraction.,出生点 → %s 箱子区 → %s 撤离点。
+ui.top.map_danger_raid,%s 巡邏區有拾荒者，靠近會追蹤並攻擊。,Scavengers patrol %s and will chase and attack if you get close.,Scavengers patrol %s and will chase and attack if you get close.,%s 巡逻区有拾荒者，靠近会追踪并攻击。
+ui.top.map_loot_raid,%s 可見 %d 個物資箱，優先搜尋後再撤離。,%s has %d visible supply crates. Search them before extracting.,%s has %d visible supply crates. Search them before extracting.,%s 可见 %d 个物资箱，优先搜索后再撤离。
+ui.raid_hud.weapon_status_durability_broken_format,耐久耗盡 %d/%d,Durability depleted %d/%d,Durability depleted %d/%d,耐久耗尽 %d/%d
+ui.raid_hud.weapon_status_durability_low_format,耐久低 %d/%d,Low durability %d/%d,Low durability %d/%d,耐久低 %d/%d

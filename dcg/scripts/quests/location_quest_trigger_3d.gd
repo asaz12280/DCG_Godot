@@ -54,7 +54,9 @@ func try_record_location(player: Node) -> bool:
 
 	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
 	var quest_id := str(quest_def.get("id"))
-	var current_state: Dictionary = quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary
+	if not quests.has(quest_id):
+		return false
+	var current_state: Dictionary = quests.get(quest_id, {}) as Dictionary
 	var updated_state: Dictionary = QuestStateScript.update_from_location_reached(current_state, quest_def, location_id, 1)
 	quests[quest_id] = updated_state
 	save_data["quests"] = quests

@@ -32,7 +32,7 @@ height = 1.0
 radius = 0.32
 height = 1.4
 
-[node name="TreeProp" type="Node3D"]
+[node name="TreeProp" type="Node3D" groups=["navigation_blocker"]]
 
 [node name="Trunk" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.7, 0)

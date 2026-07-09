@@ -1,8 +1,12 @@
 ﻿extends Control
 
+const PlayerHUDPainterScript := preload("res://scripts/ui/player_hud_painter.gd")
+
 @export var health_offset: Vector2 = Vector2(0.0, -76.0)
+@export var enemy_health_offset: Vector2 = Vector2(0.0, -76.0)
 @export var stamina_offset: Vector2 = Vector2(-54.0, 70.0)
 @export var health_size: Vector2 = Vector2(98.0, 16.0)
+@export var enemy_health_size: Vector2 = Vector2(98.0, 16.0)
 @export var lower_left_health_position: Vector2 = Vector2(42.0, -58.0)
 @export var lower_left_health_size: Vector2 = Vector2(250.0, 44.0)
 @export var ring_radius: float = 18.0
@@ -14,6 +18,9 @@
 @export var ammo_panel_position: Vector2 = Vector2(-250.0, -70.0)
 @export var ammo_panel_size: Vector2 = Vector2(210.0, 46.0)
 @export var damage_feedback_duration: float = 0.45
+@export var melee_slash_duration: float = 0.24
+
+const WORLD_HUD_Z_INDEX := -10
 
 var stamina: float = 100.0
 var max_stamina: float = 100.0
@@ -27,6 +34,18 @@ var reload_state: Dictionary = {
 	"progress": 0.0,
 	"status": "idle",
 }
+var melee_attack_state: Dictionary = {
+	"active": false,
+	"mode_active": false,
+	"hit_count": 0,
+}
+var melee_slash_time: float = 0.0
+var melee_slash_direction := 1.0
+var item_use_state: Dictionary = {
+	"active": false,
+	"progress": 0.0,
+	"status": "idle",
+}
 var health_background_style := StyleBoxFlat.new()
 var health_fill_style := StyleBoxFlat.new()
 var lower_left_panel_style := StyleBoxFlat.new()
@@ -35,10 +54,14 @@ var lower_left_icon_style := StyleBoxFlat.new()
 var reload_background_style := StyleBoxFlat.new()
 var reload_fill_style := StyleBoxFlat.new()
 var ammo_panel_style := StyleBoxFlat.new()
+var _cached_backpack_ammo_count := 0
+var _backpack_ammo_cache_dirty := true
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	z_as_relative = false
+	z_index = WORLD_HUD_Z_INDEX
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	player = get_tree().get_first_node_in_group("player")
 	if player != null:
@@ -49,16 +72,30 @@ func _ready() -> void:
 		player.health_changed.connect(_on_health_changed)
 	if player != null and player.has_signal("reload_progress_changed"):
 		player.reload_progress_changed.connect(_on_reload_progress_changed)
+	if player != null and player.has_signal("item_use_progress_changed"):
+		player.item_use_progress_changed.connect(_on_item_use_progress_changed)
+	if player != null and player.has_signal("melee_attack_changed"):
+		player.melee_attack_changed.connect(_on_melee_attack_changed)
+	if player != null and player.has_signal("inventory_changed"):
+		player.inventory_changed.connect(_mark_backpack_ammo_cache_dirty)
+	if player != null and player.has_signal("equipment_changed"):
+		player.equipment_changed.connect(_mark_backpack_ammo_cache_dirty)
 	if player != null and player.has_method("get_reload_state"):
 		reload_state = player.call("get_reload_state")
+	if player != null and player.has_method("get_item_use_state"):
+		item_use_state = player.call("get_item_use_state")
+	if player != null and player.has_method("get_melee_attack_state"):
+		melee_attack_state = player.call("get_melee_attack_state")
 	if player != null:
 		last_health = _player_float(&"health", -1.0)
-	_setup_health_styles()
+	_refresh_backpack_ammo_cache()
+	PlayerHUDPainterScript.setup_styles(self)
 
 
 func _process(delta: float) -> void:
 	stamina_visible_time = maxf(stamina_visible_time - delta, 0.0)
 	damage_feedback_time = maxf(damage_feedback_time - delta, 0.0)
+	melee_slash_time = maxf(melee_slash_time - delta, 0.0)
 	queue_redraw()
 
 
@@ -77,11 +114,40 @@ func _on_health_changed(current: float, _maximum: float) -> void:
 
 
 func _on_reload_progress_changed(state: Dictionary) -> void:
+	var was_active := bool(reload_state.get("active", false))
 	reload_state = state.duplicate(true)
+	if _should_refresh_backpack_ammo_after_reload(was_active, reload_state):
+		_refresh_backpack_ammo_cache()
 	queue_redraw()
 
 
+func _on_item_use_progress_changed(state: Dictionary) -> void:
+	item_use_state = state.duplicate(true)
+	queue_redraw()
+
+
+func _on_melee_attack_changed(state: Dictionary) -> void:
+	melee_attack_state = state.duplicate(true)
+	if bool(melee_attack_state.get("active", false)):
+		melee_slash_time = melee_slash_duration
+	melee_slash_direction *= -1.0
+	queue_redraw()
+
+
+func _mark_backpack_ammo_cache_dirty() -> void:
+	_backpack_ammo_cache_dirty = true
+	queue_redraw()
+
+
+func _should_refresh_backpack_ammo_after_reload(was_active: bool, state: Dictionary) -> bool:
+	if bool(state.get("active", false)):
+		return false
+	var status := str(state.get("status", "idle"))
+	return was_active or status == "complete"
+
+
 func get_display_state() -> Dictionary:
+	var enemy_health_bars := _enemy_health_bar_states()
 	return {
 		"visible": visible,
 		"has_player": player != null,
@@ -89,11 +155,24 @@ func get_display_state() -> Dictionary:
 		"health_current": _player_float("health", 0.0),
 		"health_max": _player_max_health(),
 		"health_text": _health_display_text(),
+		"enemy_health_bar_count": enemy_health_bars.size(),
+		"enemy_health_bars": enemy_health_bars,
 		"damage_feedback_visible": damage_feedback_time > 0.0,
 		"damage_feedback_alpha": _damage_feedback_alpha(),
 		"reload_visible": _is_reload_visible(),
 		"reload_progress": float(reload_state.get("progress", 0.0)),
 		"reload_status": str(reload_state.get("status", "idle")),
+		"item_use_visible": _is_item_use_visible(),
+		"item_use_progress": float(item_use_state.get("progress", 0.0)),
+		"item_use_status": str(item_use_state.get("status", "idle")),
+		"melee_mode_active": bool(melee_attack_state.get("mode_active", false)),
+		"melee_slash_visible": _is_melee_slash_visible(),
+		"melee_slash_alpha": _melee_slash_alpha(),
+		"melee_hit_count": int(melee_attack_state.get("hit_count", 0)),
+		"held_weapon": _held_weapon_state(),
+		"held_weapon_mode": str(_held_weapon_state().get("mode", "firearm")),
+		"held_weapon_text": _held_weapon_display_text(),
+		"quick_bar_slots": _quick_bar_slots(),
 		"ammo_visible": true,
 		"ammo_loaded": _weapon_int("current_ammo", 0),
 		"ammo_backpack": _backpack_compatible_ammo_count(),
@@ -102,204 +181,14 @@ func get_display_state() -> Dictionary:
 
 
 func _draw() -> void:
-	_paint_player_health()
-	_paint_lower_left_health()
-	_paint_damage_feedback()
-	_paint_stamina_ring()
-	_paint_ammo_panel()
-	_paint_reload_progress()
-	_paint_crosshair()
-
-
-func _setup_health_styles() -> void:
-	health_background_style.bg_color = Color(0.18, 0.18, 0.16, 0.82)
-	health_background_style.corner_radius_top_left = 8
-	health_background_style.corner_radius_top_right = 8
-	health_background_style.corner_radius_bottom_left = 8
-	health_background_style.corner_radius_bottom_right = 8
-	health_fill_style.bg_color = Color(1.0, 0.24, 0.2, 1.0)
-	health_fill_style.corner_radius_top_left = 6
-	health_fill_style.corner_radius_top_right = 6
-	health_fill_style.corner_radius_bottom_left = 6
-	health_fill_style.corner_radius_bottom_right = 6
-	lower_left_panel_style.bg_color = Color(0.16, 0.16, 0.16, 0.88)
-	lower_left_panel_style.corner_radius_top_left = 22
-	lower_left_panel_style.corner_radius_top_right = 22
-	lower_left_panel_style.corner_radius_bottom_left = 22
-	lower_left_panel_style.corner_radius_bottom_right = 22
-	lower_left_fill_style.bg_color = Color(1.0, 0.36, 0.4, 0.96)
-	lower_left_fill_style.corner_radius_top_left = 16
-	lower_left_fill_style.corner_radius_top_right = 16
-	lower_left_fill_style.corner_radius_bottom_left = 16
-	lower_left_fill_style.corner_radius_bottom_right = 16
-	lower_left_icon_style.bg_color = Color(0.26, 0.26, 0.26, 0.98)
-	lower_left_icon_style.corner_radius_top_left = 20
-	lower_left_icon_style.corner_radius_top_right = 20
-	lower_left_icon_style.corner_radius_bottom_left = 20
-	lower_left_icon_style.corner_radius_bottom_right = 20
-	reload_background_style.bg_color = Color(0.14, 0.14, 0.12, 0.78)
-	reload_background_style.corner_radius_top_left = 7
-	reload_background_style.corner_radius_top_right = 7
-	reload_background_style.corner_radius_bottom_left = 7
-	reload_background_style.corner_radius_bottom_right = 7
-	reload_fill_style.bg_color = Color(0.56, 0.82, 1.0, 0.96)
-	reload_fill_style.corner_radius_top_left = 5
-	reload_fill_style.corner_radius_top_right = 5
-	reload_fill_style.corner_radius_bottom_left = 5
-	reload_fill_style.corner_radius_bottom_right = 5
-	ammo_panel_style.bg_color = Color(0.12, 0.12, 0.11, 0.86)
-	ammo_panel_style.corner_radius_top_left = 18
-	ammo_panel_style.corner_radius_top_right = 18
-	ammo_panel_style.corner_radius_bottom_left = 18
-	ammo_panel_style.corner_radius_bottom_right = 18
+	PlayerHUDPainterScript.paint(self)
 
 
 func _get_player_screen_position(offset: Vector2) -> Vector2:
 	var camera := get_viewport().get_camera_3d()
 	if player == null or camera == null:
 		return Vector2(-1000.0, -1000.0)
-	return camera.unproject_position(player.global_position + Vector3(0.0, 0.75, 0.0)) + offset
-
-
-func _paint_player_health() -> void:
-	if player == null:
-		return
-
-	var current_health: float = player.get("health")
-	var maximum_health: float = player.get_total_max_health() if player.has_method("get_total_max_health") else player.get("max_health")
-	var ratio := clampf(current_health / maximum_health, 0.0, 1.0)
-	var center := _get_player_screen_position(health_offset)
-	var background_rect := Rect2(center - health_size * 0.5, health_size)
-	var fill_rect := background_rect.grow(-4.0)
-	fill_rect.size.x *= ratio
-
-	draw_style_box(health_background_style, background_rect)
-	draw_style_box(health_fill_style, fill_rect)
-
-
-func _paint_lower_left_health() -> void:
-	if player == null:
-		return
-
-	var current_health: float = player.get("health")
-	var maximum_health: float = player.get_total_max_health() if player.has_method("get_total_max_health") else player.get("max_health")
-	var ratio := clampf(current_health / maximum_health, 0.0, 1.0)
-	var panel_position := Vector2(lower_left_health_position.x, size.y + lower_left_health_position.y)
-	var panel_rect := Rect2(panel_position, lower_left_health_size)
-	var icon_rect := Rect2(panel_rect.position + Vector2(7.0, 6.0), Vector2(36.0, 32.0))
-	var bar_rect := Rect2(panel_rect.position + Vector2(48.0, 7.0), Vector2(panel_rect.size.x - 56.0, panel_rect.size.y - 14.0))
-	var fill_rect := bar_rect.grow(-4.0)
-	fill_rect.size.x *= ratio
-
-	draw_style_box(lower_left_panel_style, panel_rect)
-	draw_style_box(lower_left_icon_style, icon_rect)
-	draw_style_box(lower_left_fill_style, fill_rect)
-	_paint_heart_icon(icon_rect.get_center(), 12.0, Color(1.0, 0.36, 0.4, 1.0))
-
-	var health_text := "%d / %d" % [roundi(current_health), roundi(maximum_health)]
-	var font := ThemeDB.fallback_font
-	var font_size := 22
-	var text_size := font.get_string_size(health_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var text_position := bar_rect.position + (bar_rect.size - text_size) * 0.5 + Vector2(0.0, text_size.y * 0.72)
-	draw_string(font, text_position, health_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(1.0, 1.0, 1.0, 0.98))
-
-
-func _paint_damage_feedback() -> void:
-	var alpha := _damage_feedback_alpha()
-	if alpha <= 0.0:
-		return
-	var flash_color := Color(1.0, 0.12, 0.08, 0.16 * alpha)
-	draw_rect(Rect2(Vector2.ZERO, size), flash_color, true)
-	var border_color := Color(1.0, 0.2, 0.16, 0.55 * alpha)
-	var width := 8.0
-	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, width)
-
-
-func _paint_heart_icon(center: Vector2, icon_scale: float, color: Color) -> void:
-	var points := PackedVector2Array([
-		center + Vector2(0.0, 0.78) * icon_scale,
-		center + Vector2(-0.92, -0.1) * icon_scale,
-		center + Vector2(-0.72, -0.78) * icon_scale,
-		center + Vector2(-0.24, -0.86) * icon_scale,
-		center + Vector2(0.0, -0.55) * icon_scale,
-		center + Vector2(0.24, -0.86) * icon_scale,
-		center + Vector2(0.72, -0.78) * icon_scale,
-		center + Vector2(0.92, -0.1) * icon_scale,
-	])
-	draw_colored_polygon(points, color)
-
-
-func _paint_stamina_ring() -> void:
-	if stamina >= max_stamina - 0.05 and stamina_visible_time <= 0.0:
-		return
-
-	var center := _get_player_screen_position(stamina_offset)
-	var ratio := clampf(stamina / max_stamina, 0.0, 1.0)
-	var draw_scale := 2.0
-
-	draw_set_transform(center, 0.0, Vector2(1.0 / draw_scale, 1.0 / draw_scale))
-	draw_circle(Vector2.ZERO, (ring_radius + 8.0) * draw_scale, Color(0.16, 0.16, 0.16, 0.72))
-	draw_arc(Vector2.ZERO, ring_radius * draw_scale, 0.0, TAU, 160, Color(0.78, 0.78, 0.72, 1.0), (ring_width + 4.0) * draw_scale, true)
-	draw_arc(Vector2.ZERO, ring_radius * draw_scale, -PI * 0.5, -PI * 0.5 + TAU * ratio, 160, Color(0.56, 1.0, 0.48, 1.0), ring_width * draw_scale, true)
-	draw_circle(Vector2.ZERO, 7.0 * draw_scale, Color(0.86, 0.88, 0.82, 1.0))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-
-func _paint_reload_progress() -> void:
-	if not _is_reload_visible():
-		return
-
-	var center := _crosshair_center()
-	var progress := clampf(float(reload_state.get("progress", 0.0)), 0.0, 1.0)
-	var bar_rect := Rect2(center - Vector2(reload_bar_size.x * 0.5, 0.0) + reload_bar_offset, reload_bar_size)
-	var fill_rect := bar_rect.grow(-3.0)
-	fill_rect.size.x *= progress
-
-	draw_style_box(reload_background_style, bar_rect)
-	draw_style_box(reload_fill_style, fill_rect)
-
-	var label := "%s %.0f%%" % [_hud_text(&"ui.raid_hud.reloading", "裝填中"), progress * 100.0]
-	var font := ThemeDB.fallback_font
-	var font_size := 16
-	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var label_position := center + reload_label_offset - Vector2(text_size.x * 0.5, 0.0)
-	draw_string(font, label_position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.96, 0.98, 0.9, 0.98))
-
-
-func _paint_ammo_panel() -> void:
-	var panel_position := Vector2(size.x + ammo_panel_position.x, size.y + ammo_panel_position.y)
-	var panel_rect := Rect2(panel_position, ammo_panel_size)
-	draw_style_box(ammo_panel_style, panel_rect)
-
-	var font := ThemeDB.fallback_font
-	var title_size := 14
-	var value_size := 22
-	var title := _hud_text(&"ui.raid_hud.ammo", "彈藥")
-	var value := _ammo_display_text()
-	draw_string(font, panel_rect.position + Vector2(16.0, 18.0), title, HORIZONTAL_ALIGNMENT_LEFT, panel_rect.size.x - 32.0, title_size, Color(0.76, 0.82, 0.78, 0.95))
-	draw_string(font, panel_rect.position + Vector2(16.0, 38.0), value, HORIZONTAL_ALIGNMENT_LEFT, panel_rect.size.x - 32.0, value_size, Color(1.0, 1.0, 1.0, 0.98))
-
-
-func _paint_crosshair() -> void:
-	var center := _crosshair_center()
-	var shadow := Color(0.12, 0.12, 0.12, 0.7)
-	var gap := 13.0
-	var length := 12.0
-	var width := 4.0
-
-	_paint_crosshair_line(center + Vector2(-gap - length, 0.0), center + Vector2(-gap, 0.0), shadow, width + 2.0)
-	_paint_crosshair_line(center + Vector2(gap, 0.0), center + Vector2(gap + length, 0.0), shadow, width + 2.0)
-	_paint_crosshair_line(center + Vector2(0.0, -gap - length), center + Vector2(0.0, -gap), shadow, width + 2.0)
-	_paint_crosshair_line(center + Vector2(0.0, gap), center + Vector2(0.0, gap + length), shadow, width + 2.0)
-
-	_paint_crosshair_line(center + Vector2(-gap - length, 0.0), center + Vector2(-gap, 0.0), crosshair_color, width)
-	_paint_crosshair_line(center + Vector2(gap, 0.0), center + Vector2(gap + length, 0.0), crosshair_color, width)
-	_paint_crosshair_line(center + Vector2(0.0, -gap - length), center + Vector2(0.0, -gap), crosshair_color, width)
-	_paint_crosshair_line(center + Vector2(0.0, gap), center + Vector2(0.0, gap + length), crosshair_color, width)
-
-
-func _paint_crosshair_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
-	draw_line(from, to, color, width, true)
+	return _get_actor_screen_position(player, Vector3(0.0, 0.75, 0.0), offset)
 
 
 func _crosshair_center() -> Vector2:
@@ -309,8 +198,102 @@ func _crosshair_center() -> Vector2:
 	return center
 
 
+func _enemy_health_bar_states() -> Array[Dictionary]:
+	var states: Array[Dictionary] = []
+	var tree := get_tree()
+	if tree == null:
+		return states
+	var scene_root := _hud_scene_root()
+	for node in tree.get_nodes_in_group("enemy"):
+		var enemy := node as Node3D
+		if enemy == null or not enemy.is_inside_tree():
+			continue
+		if scene_root != null and scene_root != self and not _is_descendant_of(enemy, scene_root):
+			continue
+		if enemy.has_method("is_alive") and not bool(enemy.call("is_alive")):
+			continue
+		var maximum := _node_float(enemy, &"max_health", 0.0)
+		var current := _node_float(enemy, &"current_health", _node_float(enemy, &"health", maximum))
+		if maximum <= 0.0 or current <= 0.0:
+			continue
+		var ratio := clampf(current / maximum, 0.0, 1.0)
+		var center := _get_actor_screen_position(enemy, Vector3(0.0, 0.85, 0.0), enemy_health_offset)
+		var rect := Rect2(center - enemy_health_size * 0.5, enemy_health_size)
+		states.append({
+			"node_path": str(enemy.get_path()),
+			"health_current": current,
+			"health_max": maximum,
+			"ratio": ratio,
+			"center": center,
+			"rect": rect,
+			"size": enemy_health_size,
+			"visible": visible and _rect_intersects_viewport(rect),
+			"style": "player_health",
+		})
+	return states
+
+
+func _get_actor_screen_position(actor: Node3D, world_offset: Vector3, pixel_offset: Vector2) -> Vector2:
+	var camera := get_viewport().get_camera_3d()
+	if actor == null or camera == null:
+		return Vector2(-1000.0, -1000.0)
+	var world_position := actor.global_position + world_offset
+	if camera.is_position_behind(world_position):
+		return Vector2(-1000.0, -1000.0)
+	return camera.unproject_position(world_position) + pixel_offset
+
+
+func _rect_intersects_viewport(rect: Rect2) -> bool:
+	var viewport_size := size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = get_viewport_rect().size
+	return rect.end.x >= 0.0 and rect.position.x <= viewport_size.x and rect.end.y >= 0.0 and rect.position.y <= viewport_size.y
+
+
+func _hud_scene_root() -> Node:
+	if not is_inside_tree():
+		return null
+	var root_node := get_tree().root
+	var current: Node = self
+	while current.get_parent() != null and current.get_parent() != root_node:
+		current = current.get_parent()
+	return current
+
+
+func _is_descendant_of(node: Node, ancestor: Node) -> bool:
+	var current := node
+	while current != null:
+		if current == ancestor:
+			return true
+		current = current.get_parent()
+	return false
+
+
+func _node_float(node: Object, property_name: StringName, fallback: float) -> float:
+	if node == null:
+		return fallback
+	var value: Variant = node.get(property_name)
+	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+		return float(value)
+	return fallback
+
+
 func _is_reload_visible() -> bool:
 	return bool(reload_state.get("active", false))
+
+
+func _is_item_use_visible() -> bool:
+	return bool(item_use_state.get("active", false))
+
+
+func _is_melee_slash_visible() -> bool:
+	return melee_slash_time > 0.0
+
+
+func _melee_slash_alpha() -> float:
+	if melee_slash_duration <= 0.0:
+		return 0.0
+	return clampf(melee_slash_time / melee_slash_duration, 0.0, 1.0)
 
 
 func _has_equipped_weapon() -> bool:
@@ -318,6 +301,9 @@ func _has_equipped_weapon() -> bool:
 
 
 func _ammo_display_text() -> String:
+	var held_mode := str(_held_weapon_state().get("mode", "firearm"))
+	if held_mode == "melee" or held_mode == "item":
+		return _held_weapon_display_text()
 	if not _has_equipped_weapon():
 		return _hud_text(&"ui.raid_hud.weapon_missing", "未裝備")
 	return "%d %s / %d" % [
@@ -337,9 +323,66 @@ func _weapon_int(property_name: StringName, fallback: int) -> int:
 
 
 func _backpack_compatible_ammo_count() -> int:
+	if _is_reload_visible():
+		return _cached_backpack_ammo_count
+	if not _backpack_ammo_cache_dirty:
+		return _cached_backpack_ammo_count
+	return _refresh_backpack_ammo_cache()
+
+
+func _refresh_backpack_ammo_cache() -> int:
 	if player == null or not player.has_method("get_compatible_backpack_ammo_count"):
-		return 0
-	return int(player.call("get_compatible_backpack_ammo_count"))
+		_cached_backpack_ammo_count = 0
+	else:
+		_cached_backpack_ammo_count = int(player.call("get_compatible_backpack_ammo_count"))
+	_backpack_ammo_cache_dirty = false
+	return _cached_backpack_ammo_count
+
+
+func _held_weapon_state() -> Dictionary:
+	if player == null or not player.has_method("get_held_weapon_state"):
+		return {"mode": "firearm", "has_item": false}
+	return player.call("get_held_weapon_state")
+
+
+func _is_holding_melee_weapon() -> bool:
+	return str(_held_weapon_state().get("mode", "firearm")) == "melee"
+
+
+func _held_weapon_display_text() -> String:
+	var state := _held_weapon_state()
+	if not bool(state.get("has_item", false)):
+		return _hud_text(&"ui.raid_hud.weapon_missing", "未裝備")
+	var name_key := StringName(str(state.get("name_key", "")))
+	var translated := _hud_text(name_key, "")
+	if translated != "":
+		return translated
+	return str(state.get("display_name", state.get("item_id", "")))
+
+
+func _held_weapon_panel_label() -> String:
+	var held_mode := str(_held_weapon_state().get("mode", "firearm"))
+	if held_mode == "item":
+		return _hud_text(&"ui.inventory.use", "使用")
+	if held_mode == "melee":
+		return _hud_text(&"ui.equipment.melee", "近戰")
+	var state := _held_weapon_state()
+	if bool(state.get("has_item", false)):
+		return _held_weapon_display_text()
+	return _hud_text(&"ui.raid_hud.ammo", "彈藥")
+
+
+func _quick_bar_slots() -> Array[Dictionary]:
+	if player == null or not player.has_method("get_quick_bar_state"):
+		return []
+	var slots_variant: Variant = player.call("get_quick_bar_state")
+	if typeof(slots_variant) != TYPE_ARRAY:
+		return []
+	var slots: Array[Dictionary] = []
+	for raw_slot in slots_variant as Array:
+		if typeof(raw_slot) == TYPE_DICTIONARY:
+			slots.append(raw_slot as Dictionary)
+	return slots
 
 
 func _player_float(property_name: StringName, fallback: float) -> float:
@@ -363,6 +406,12 @@ func _health_display_text() -> String:
 	var current := _player_float(&"health", 0.0)
 	var maximum := _player_max_health()
 	return "%d / %d" % [roundi(current), roundi(maximum)]
+
+
+func _item_use_display_text() -> String:
+	var item_name := _hud_text(StringName(str(item_use_state.get("name_key", ""))), "")
+	var format_text := _hud_text(&"ui.item_use.using_format", "")
+	return item_name if format_text == "" else format_text % item_name
 
 
 func _damage_feedback_alpha() -> float:

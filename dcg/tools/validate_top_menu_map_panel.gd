@@ -18,7 +18,7 @@ func _initialize() -> void:
 	_validate_node_first_structure()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[top_menu_map_panel] OK area=visible route=visible extraction=visible danger=visible loot=visible layout=fit boundaries=clean")
+		print("[top_menu_map_panel] OK title=visible body=removed layout=fit boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -72,22 +72,15 @@ func _validate_base_map_panel() -> void:
 	var state: Dictionary = panel.call("get_display_state")
 	if not bool(state.get("visible", false)):
 		_errors.append("Base map tab should open MapTopMenuPanel.")
-	_require_terms(str(state.get("area", "")), ["基地安全區"], "Base map should identify the base area.")
-	_require_terms(str(state.get("danger", "")), ["基地內無敵人", "出擊後"], "Base map should explain danger only appears after sortie.")
-	_require_terms(str(state.get("loot", "")), ["基地倉庫", "箱子"], "Base map should distinguish stash from raid containers.")
+	_validate_body_removed(state)
 
 	_free_current_scene()
 
 
 func _validate_gameplay_text(state: Dictionary) -> void:
-	_require_terms(str(state.get("title", "")), ["區域", "地圖"], "Map title should be Traditional Chinese.")
-	_require_terms(str(state.get("hint", "")), ["撤離", "危險區", "箱子區"], "Map hint should explain the page purpose.")
-	_require_terms(str(state.get("area", "")), ["目前區域", "郊外回收區"], "Map should show the current raid area.")
-	_require_terms(str(state.get("route", "")), ["建議路線", "出生點", "箱子區", "撤離點"], "Map should show a simple route.")
-	_require_terms(str(state.get("extraction", "")), ["撤離方向", "撤離點"], "Map should show extraction direction.")
-	_require_terms(str(state.get("danger", "")), ["危險區", "拾荒者", "追蹤", "攻擊"], "Map should show enemy danger information.")
-	_require_terms(str(state.get("loot", "")), ["箱子區", "物資箱", "搜尋", "撤離"], "Map should show loot container information.")
-	_require_terms(str(state.get("flow_state", "")), ["出擊"], "Map should show sortie flow state.")
+	if str(state.get("title", "")).strip_edges() == "":
+		_errors.append("Map panel should keep its title while body copy is removed.")
+	_validate_body_removed(state)
 	for token in ["Area Map", "Current area", "Extraction direction", "Danger zone", "Loot zone", "In raid"]:
 		if _state_text(state).contains(token):
 			_errors.append("Map panel should not show English fallback text: %s." % token)
@@ -149,6 +142,14 @@ func _state_text(state: Dictionary) -> String:
 		state.get("loot", ""),
 		state.get("flow_state", ""),
 	]
+
+
+func _validate_body_removed(state: Dictionary) -> void:
+	for key in ["area", "route", "extraction", "danger", "loot", "flow_state", "note"]:
+		if str(state.get(key, "")).strip_edges() != "":
+			_errors.append("Map panel body field `%s` should be empty." % key)
+	if bool(state.get("body_visible", true)):
+		_errors.append("Map panel body container should be hidden.")
 
 
 func _require_terms(text: String, terms: Array[String], message: String) -> void:

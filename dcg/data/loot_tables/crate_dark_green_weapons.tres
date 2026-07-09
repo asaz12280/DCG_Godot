@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://dj54tnruqnpro"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_pistol_9mm"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/weapons/pistol_9mm.tres"
+weight = 2.0
+tags = Array[StringName]([&"dark_green_crate", &"weapon", &"pistol", &"9mm"])
+
+[sub_resource type="Resource" id="LootTableEntry_ammo_9mm"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/ammo/ammo_9mm.tres"
+min_quantity = 24
+max_quantity = 24
+weight = 4.0
+tags = Array[StringName]([&"dark_green_crate", &"ammo", &"9mm"])
+
+[sub_resource type="Resource" id="LootTableEntry_smg_9mm"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/weapons/smg_9mm.tres"
+tags = Array[StringName]([&"dark_green_crate", &"weapon", &"smg", &"9mm", &"S"])
+
+[sub_resource type="Resource" id="LootTableEntry_combat_knife"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/weapons/combat_knife.tres"
+weight = 2.0
+tags = Array[StringName]([&"dark_green_crate", &"weapon", &"melee"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_dark_green_weapons"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_pistol_9mm"), SubResource("LootTableEntry_ammo_9mm"), SubResource("LootTableEntry_smg_9mm"), SubResource("LootTableEntry_combat_knife")])

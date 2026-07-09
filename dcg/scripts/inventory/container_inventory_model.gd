@@ -3,6 +3,9 @@ extends RefCounted
 
 signal changed
 
+const ItemStackSorterScript := preload("res://scripts/inventory/item_stack_sorter.gd")
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
+
 var capacity: int = 4
 var slots: Array[Dictionary] = []
 
@@ -81,6 +84,14 @@ func add_stack(stack: Dictionary) -> bool:
 	var item_def := _load_item_from_stack(stack)
 	if item_def == null:
 		return false
+	if ItemStackSaveCodecScript.has_durability_data(stack):
+		for index in range(slots.size()):
+			if not slots[index].is_empty():
+				continue
+			slots[index] = ItemStackSaveCodecScript.stack_from_entry(stack, item_def, 1)
+			changed.emit()
+			return true
+		return false
 	return add_item(item_def, int(stack.get("quantity", 1)))
 
 
@@ -114,21 +125,22 @@ func clear_slot(index: int) -> bool:
 	return true
 
 
+func organize(sort_mode: StringName = &"type") -> void:
+	slots = ItemStackSorterScript.sort_stacks(slots, sort_mode, true)
+	changed.emit()
+
+
 func to_save_data() -> Dictionary:
 	var saved_slots: Array[Dictionary] = []
 	for stack in slots:
 		if stack.is_empty():
 			saved_slots.append({})
 			continue
-		var item_path := str(stack.get("resource_path", ""))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
+		var entry: Dictionary = ItemStackSaveCodecScript.to_save_entry(stack)
+		if entry.is_empty():
 			saved_slots.append({})
 			continue
-		saved_slots.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
+		saved_slots.append(entry)
 	return {
 		"capacity": capacity,
 		"slots": saved_slots,
@@ -150,7 +162,7 @@ func load_save_data(data: Dictionary) -> bool:
 		if typeof(entry) != TYPE_DICTIONARY or (entry as Dictionary).is_empty():
 			continue
 		var entry_dictionary := entry as Dictionary
-		var item_path := str(entry_dictionary.get("item_path", ""))
+		var item_path := ItemStackSaveCodecScript.get_item_path(entry_dictionary)
 		var quantity := int(entry_dictionary.get("quantity", 0))
 		if item_path == "" or not ResourceLoader.exists(item_path) or quantity <= 0:
 			loaded_all = false
@@ -159,8 +171,8 @@ func load_save_data(data: Dictionary) -> bool:
 		if item_def == null:
 			loaded_all = false
 			continue
-		var stack_quantity := mini(quantity, maxi(item_def.max_stack, 1))
-		slots[index] = item_def.to_stack(stack_quantity)
+		var stack_quantity := 1 if ItemStackSaveCodecScript.has_durability_data(entry_dictionary) else mini(quantity, item_def.get_max_stack())
+		slots[index] = ItemStackSaveCodecScript.stack_from_entry(entry_dictionary, item_def, stack_quantity)
 		if stack_quantity != quantity:
 			loaded_all = false
 
@@ -191,7 +203,7 @@ func _fill_empty_slots(draft: Array[Dictionary], item_def: ItemDef, quantity: in
 			break
 		if not draft[index].is_empty():
 			continue
-		var moved_to_new_stack := mini(maxi(item_def.max_stack, 1), remaining)
+		var moved_to_new_stack := mini(item_def.get_max_stack(), remaining)
 		draft[index] = item_def.to_stack(moved_to_new_stack)
 		remaining -= moved_to_new_stack
 	return remaining
@@ -202,6 +214,8 @@ func _can_merge_item(stack: Dictionary, item_def: ItemDef) -> bool:
 		return false
 	if str(stack.get("resource_path", "")) != item_def.resource_path:
 		return false
+	if item_def.get_max_stack() <= 1:
+		return false
 	var max_stack := int(stack.get("max_stack", 1))
 	if max_stack <= 1:
 		return false
@@ -209,7 +223,7 @@ func _can_merge_item(stack: Dictionary, item_def: ItemDef) -> bool:
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:
-	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	var item_path := ItemStackSaveCodecScript.get_item_path(stack)
 	if item_path == "" or not ResourceLoader.exists(item_path):
 		return null
 	return load(item_path) as ItemDef

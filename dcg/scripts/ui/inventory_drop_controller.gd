@@ -33,13 +33,13 @@ func update_drag(mouse_position: Vector2) -> void:
 	_request_redraw()
 
 
-func finish_drag(backpack_model: InventoryModel, mouse_position: Vector2, panel_rect: Rect2, target_stack_index: int, player: Node, target_equipment_slot: StringName = &"", target_safe_pocket_slot: int = -1) -> bool:
+func finish_drag(backpack_model: InventoryModel, mouse_position: Vector2, panel_rect: Rect2, target_stack_index: int, player: Node, target_equipment_slot: StringName = &"", target_safe_pocket_slot: int = -1, allow_world_drop: bool = true) -> bool:
 	var handled := false
 	if target_safe_pocket_slot >= 0:
 		handled = _move_dragged_stack_to_safe_pocket(player)
 	elif target_equipment_slot != &"":
 		handled = _equip_dragged_stack(player, target_equipment_slot)
-	elif not panel_rect.has_point(mouse_position):
+	elif allow_world_drop and not panel_rect.has_point(mouse_position):
 		handled = drop_stack_at(backpack_model, dragging_stack_index, dragging_stack, mouse_position, player)
 	elif target_stack_index >= 0 and target_stack_index < backpack_model.stacks.size():
 		handled = backpack_model.merge_or_swap_stack(dragging_stack_index, target_stack_index)
@@ -104,6 +104,29 @@ func drop_stack_at(backpack_model: InventoryModel, stack_index: int, stack: Dict
 
 	var removed := backpack_model.remove_stack_at(stack_index)
 	if removed.is_empty():
+		pickup.queue_free()
+		return false
+	return true
+
+
+func drop_equipment_stack_at(slot_id: StringName, stack: Dictionary, screen_position: Vector2, player: Node) -> bool:
+	if slot_id == &"" or stack.is_empty() or player == null or not player.has_method("drop_equipment_slot"):
+		return false
+	if resolver == null:
+		return false
+	var item_def := resolver.item_def_from_stack(stack)
+	if item_def == null:
+		return false
+	var quantity := maxi(int(stack.get("quantity", 1)), 1)
+	var pickup := LootPickupScene.instantiate() as Node3D
+	if pickup == null:
+		return false
+	pickup.set("item_def", item_def)
+	pickup.set("quantity", quantity)
+	var parent := _get_drop_parent()
+	parent.add_child(pickup)
+	pickup.global_position = _drop_position_from_screen(screen_position, player)
+	if not bool(player.call("drop_equipment_slot", slot_id)):
 		pickup.queue_free()
 		return false
 	return true

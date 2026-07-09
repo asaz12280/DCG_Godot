@@ -3,6 +3,8 @@
 const DifficultySelectPanelScript := preload("res://scripts/ui/difficulty_select_panel.gd")
 const SaveSlotPanelScript := preload("res://scripts/ui/save_slot_panel.gd")
 
+const OVERLAY_PANEL_FALLBACK_SIZE := Vector2(1180.0, 680.0)
+
 var load_panel: PanelContainer
 var settings_panel: SettingsPanel
 var difficulty_panel: Control
@@ -47,17 +49,14 @@ func layout_menu() -> void:
 	layout_base_menu()
 	if load_panel == null:
 		return
-	var viewport_size := get_viewport_rect().size
+	var viewport_size := _get_layout_viewport_size()
 	var top := viewport_size.y * 0.18
 	var outer_margin := _get_responsive_margin(viewport_size)
-	var load_size := Vector2(minf(520.0, viewport_size.x - outer_margin * 2.0), 260.0)
+	var load_size := _get_menu_overlay_panel_size(viewport_size, outer_margin, load_panel)
 	var load_position := _get_overlay_position(viewport_size, load_size, top + 170.0, outer_margin)
 	set_control_rect(load_panel, load_position, load_size)
 
-	var settings_size := Vector2(
-		minf(1180.0, viewport_size.x - outer_margin * 2.0),
-		minf(680.0, viewport_size.y - outer_margin * 2.0)
-	)
+	var settings_size := _get_menu_overlay_panel_size(viewport_size, outer_margin, settings_panel)
 	var settings_position := _get_overlay_position(viewport_size, settings_size, top, outer_margin)
 	set_control_rect(settings_panel, settings_position, settings_size)
 
@@ -73,6 +72,26 @@ func _get_responsive_margin(viewport_size: Vector2) -> float:
 	if viewport_size.x < 1600.0:
 		return 48.0
 	return viewport_size.x * 0.08
+
+
+func _get_layout_viewport_size() -> Vector2:
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	return get_viewport_rect().size
+
+
+func _get_menu_overlay_panel_size(viewport_size: Vector2, outer_margin: float, panel: Control) -> Vector2:
+	var preferred_size := OVERLAY_PANEL_FALLBACK_SIZE
+	if panel != null and panel.has_method("get_preferred_panel_size"):
+		var preferred_value: Variant = panel.call("get_preferred_panel_size")
+		if preferred_value is Vector2:
+			preferred_size = preferred_value
+	var available_width := maxf(320.0, viewport_size.x - outer_margin * 2.0)
+	var available_height := maxf(280.0, viewport_size.y - outer_margin * 2.0)
+	return Vector2(
+		minf(preferred_size.x, available_width),
+		minf(preferred_size.y, available_height)
+	)
 
 
 func _get_overlay_position(viewport_size: Vector2, panel_size: Vector2, preferred_top: float, margin: float) -> Vector2:

@@ -108,9 +108,12 @@ func _validate_legacy_goal_panel_is_compact() -> void:
 
 func _validate_source_boundaries() -> void:
 	var player_hud_source := FileAccess.get_file_as_string("res://scripts/ui/player_hud_3d.gd")
+	if not player_hud_source.contains("PlayerHUDPainterScript"):
+		_errors.append("PlayerHud3D should delegate combat HUD painting to PlayerHUDPainterScript.")
+	var player_hud_painter_source := FileAccess.get_file_as_string("res://scripts/ui/player_hud_painter.gd")
 	for required in ["_paint_lower_left_health", "_paint_ammo_panel", "_paint_reload_progress", "_paint_crosshair"]:
-		if not player_hud_source.contains(required):
-			_errors.append("PlayerHud3D should own minimal combat HUD term: %s." % required)
+		if not player_hud_painter_source.contains(required):
+			_errors.append("PlayerHUDPainter should own minimal combat HUD term: %s." % required)
 	for forbidden in ["QuestTopMenuPanel", "MapTopMenuPanel", "QuestState", "change_scene_to_file"]:
 		if player_hud_source.contains(forbidden):
 			_errors.append("PlayerHud3D should not own detailed objective, map, quest, or scene flow logic: %s." % forbidden)

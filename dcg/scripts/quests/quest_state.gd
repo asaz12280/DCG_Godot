@@ -8,6 +8,19 @@ const STATE_COMPLETED := "completed"
 
 
 static func create(quest_def: Resource) -> Dictionary:
+	return accept(quest_def)
+
+
+static func create_inactive(quest_def: Resource) -> Dictionary:
+	return {
+		"id": str(quest_def.get("id")) if quest_def != null else "",
+		"state": STATE_INACTIVE,
+		"progress": {},
+		"claimed": false,
+	}
+
+
+static func accept(quest_def: Resource) -> Dictionary:
 	return {
 		"id": str(quest_def.get("id")) if quest_def != null else "",
 		"state": STATE_ACTIVE,
@@ -35,7 +48,7 @@ static func update_from_extracted_items(raw_state: Dictionary, quest_def: Resour
 	var state := normalize(raw_state, quest_def)
 	if quest_def == null or not bool(quest_def.call("is_valid")):
 		return state
-	if str(state.get("state", "")) == STATE_COMPLETED:
+	if not _can_progress(state):
 		return state
 
 	var progress: Dictionary = state.get("progress", {}) as Dictionary
@@ -60,7 +73,7 @@ static func update_from_enemy_killed(raw_state: Dictionary, quest_def: Resource,
 		return state
 	if str(quest_def.get("objective_type")) != "kill":
 		return state
-	if str(state.get("state", "")) == STATE_COMPLETED:
+	if not _can_progress(state):
 		return state
 	if enemy_id == "" or count <= 0:
 		return state
@@ -88,7 +101,7 @@ static func update_from_location_reached(raw_state: Dictionary, quest_def: Resou
 		return state
 	if str(quest_def.get("objective_type")) != "location":
 		return state
-	if str(state.get("state", "")) == STATE_COMPLETED:
+	if not _can_progress(state):
 		return state
 	if location_id == "" or count <= 0:
 		return state
@@ -175,6 +188,11 @@ static func _is_ready(progress: Dictionary, quest_def: Resource) -> bool:
 		if int(progress.get(progress_key, 0)) < required:
 			return false
 	return true
+
+
+static func _can_progress(state: Dictionary) -> bool:
+	var state_name := str(state.get("state", STATE_INACTIVE))
+	return state_name == STATE_ACTIVE or state_name == STATE_READY
 
 
 static func _count_item(items: Array, item_path: String) -> int:

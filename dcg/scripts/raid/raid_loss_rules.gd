@@ -1,6 +1,8 @@
 class_name RaidLossRules
 extends RefCounted
 
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
+
 
 static func build_death_context_from_player(player: Node) -> Dictionary:
 	var lost_items := collect_backpack_items(player)
@@ -18,20 +20,7 @@ static func collect_backpack_items(player: Node) -> Array[Dictionary]:
 	var inventory: Variant = player.get_inventory_model()
 	if inventory == null or not inventory.has_method("get_display_items"):
 		return []
-
-	var lost_items: Array[Dictionary] = []
-	for stack in inventory.get_display_items():
-		if typeof(stack) != TYPE_DICTIONARY:
-			continue
-		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
-			continue
-		lost_items.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
-	return lost_items
+	return _normalize_stacks(inventory.get_display_items())
 
 
 static func collect_safe_pocket_items(player: Node) -> Array[Dictionary]:
@@ -63,12 +52,8 @@ static func _normalize_stacks(stacks: Variant) -> Array[Dictionary]:
 	for stack in stacks as Array:
 		if typeof(stack) != TYPE_DICTIONARY:
 			continue
-		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
+		var entry: Dictionary = ItemStackSaveCodecScript.to_save_entry(stack)
+		if entry.is_empty():
 			continue
-		normalized_items.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
+		normalized_items.append(entry)
 	return normalized_items

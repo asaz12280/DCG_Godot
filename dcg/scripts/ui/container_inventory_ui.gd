@@ -8,6 +8,7 @@ const UIStyle := preload("res://scripts/ui/ui_style.gd")
 const UILayout := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const InventoryItemResolverScript := preload("res://scripts/ui/inventory_item_resolver.gd")
+const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
 
 @onready var main_panel: PanelContainer = %MainPanel
 @onready var title_label: Label = %TitleLabel
@@ -126,6 +127,7 @@ func get_display_state() -> Dictionary:
 		"help": help_label.text if help_label != null else "",
 		"empty": empty_label.text if empty_label != null else "",
 		"status": status_label.text if status_label != null else "",
+		"sort_visible": false,
 		"close": close_button.text if close_button != null else "",
 		"panel_rect": main_panel.get_global_rect() if main_panel != null else Rect2(),
 		"grid_rect": slot_grid.get_global_rect() if slot_grid != null else Rect2(),
@@ -167,11 +169,9 @@ func _slot_tooltip(stack: Dictionary) -> String:
 	var item_def := _item_resolver.item_def_from_stack(stack)
 	if item_def == null:
 		return _text(&"item.unknown.name", "未知物品")
-	return "%s\n%s\n%s" % [
-		tr(str(item_def.description_key)),
-		_text(&"ui.item.weight_format", "重量 %.2f kg") % item_def.weight,
-		_text(&"ui.item.value_format", "價值 %d") % item_def.value,
-	]
+	return ItemStackTooltipPresenterScript.tooltip_text(
+		ItemStackTooltipPresenterScript.build(self, item_def.to_stack(int(stack.get("quantity", 1))))
+	)
 
 
 func _clear_grid() -> void:

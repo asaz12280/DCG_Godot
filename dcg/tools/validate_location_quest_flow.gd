@@ -120,7 +120,7 @@ func _validate_source_boundaries() -> void:
 			_errors.append("LocationQuestTrigger3D should not hard-reference display, scene flow, or inventory combat state: %s." % forbidden)
 
 	var panel_source := FileAccess.get_file_as_string("res://scripts/ui/quest_top_menu_panel.gd")
-	for required in ["slot_saved", "refresh", "BaseScreenViewModelScript.quest_defs"]:
+	for required in ["slot_saved", "refresh", "BaseScreenViewModelScript.tracked_quest_defs"]:
 		if not panel_source.contains(required):
 			_errors.append("QuestTopMenuPanel should refresh location quest from save/model state through %s." % required)
 	for forbidden in ["save_slot_data", "LocationQuestTrigger3D", "RadioTowerQuestPoint", "WeaponController3D"]:
@@ -150,7 +150,9 @@ func _prepare_save_manager(save_manager: Node) -> void:
 		"money": 0,
 		"stash": [],
 		"base_upgrades": {},
-		"quests": {},
+		"quests": {
+			LOCATION_QUEST_ID: QuestStateScript.accept(load("res://data/quests/radio_tower_scout.tres")),
+		},
 	})
 
 

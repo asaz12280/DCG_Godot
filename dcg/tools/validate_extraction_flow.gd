@@ -6,8 +6,11 @@ const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier
 const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const InventoryModelScript := preload("res://scripts/inventory/inventory_model.gd")
+const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const WoodItem := preload("res://data/items/crafting/wood.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 
 var _errors: Array[String] = []
 var _last_raid_result: Dictionary = {}
@@ -17,9 +20,17 @@ class FakePlayer:
 	extends CharacterBody3D
 
 	var inventory_model := InventoryModel.new()
+	var safe_pocket_model := InventoryModel.new()
+	var equipment_model := EquipmentModelScript.new()
 
 	func get_inventory_model() -> InventoryModel:
 		return inventory_model
+
+	func get_safe_pocket_model() -> InventoryModel:
+		return safe_pocket_model
+
+	func get_equipment_model() -> RefCounted:
+		return equipment_model
 
 
 func _initialize() -> void:
@@ -27,7 +38,7 @@ func _initialize() -> void:
 	_validate_death_loss_rules()
 	_validate_gameplay_scene_wiring()
 	if _errors.is_empty():
-		print("[extraction_flow] OK countdown=works cancel=works transfer=stash_saved death=lost_items inventory=cleared scene=wired")
+		print("[extraction_flow] OK countdown=works cancel=works transfer=stash_saved equipment_saved death=lost_items inventory=cleared scene=wired")
 		quit(0)
 	else:
 		for error in _errors:
@@ -73,7 +84,10 @@ func _validate_zone_countdown_and_transfer() -> void:
 	var player := FakePlayer.new()
 	player.name = "Player3D"
 	player.inventory_model.setup(12)
+	player.safe_pocket_model.setup(2)
 	player.inventory_model.add_item(WoodItem, 3)
+	if not player.equipment_model.equip_stack(&"sidearm", _damaged_modded_pistol_stack()):
+		_errors.append("Validation should equip a damaged modded pistol before extraction.")
 	test_root.add_child(player)
 
 	_last_raid_result.clear()
@@ -102,14 +116,33 @@ func _validate_zone_countdown_and_transfer() -> void:
 	var extracted_items := result.get("extracted_items", []) as Array
 	if extracted_items.is_empty() or int(extracted_items[0].get("quantity", 0)) != 3:
 		_errors.append("Extraction result should include the player's backpack item stacks.")
+	var extracted_pistol := _entry_for_path(extracted_items, PistolItem.resource_path)
+	if not extracted_pistol.is_empty():
+		_errors.append("Extraction result should keep equipped weapon stacks out of extracted_items.")
+	var extracted_equipment := result.get("extracted_equipment", {}) as Dictionary
+	var extracted_equipped_pistol := _equipment_entry_for_slot(extracted_equipment, &"sidearm")
+	if extracted_equipped_pistol.is_empty():
+		_errors.append("Extraction result should include equipped weapon stacks in extracted_equipment.")
+	else:
+		_expect_pistol_state(extracted_equipped_pistol, "Extraction result equipment")
 	if not bool(applier.last_apply_result.get("applied", false)):
 		_errors.append("RaidResultApplier should apply extracted items to the current save slot. Reason: %s" % str(applier.last_apply_result.get("reason", "")))
 	var saved_after: Dictionary = save_manager.get_slot_data(1)
 	var saved_stash := saved_after.get("stash", []) as Array
 	if saved_stash.is_empty() or int(saved_stash[0].get("quantity", 0)) != 3:
 		_errors.append("Extracted items should be saved into persistent stash.")
+	var saved_pistol := _entry_for_path(saved_stash, PistolItem.resource_path)
+	if not saved_pistol.is_empty():
+		_errors.append("Extracted equipped Pistol-S should stay equipped instead of moving into persistent stash.")
+	var saved_equipped_pistol := _equipment_entry_for_slot(saved_after.get("equipment", {}) as Dictionary, &"sidearm")
+	if saved_equipped_pistol.is_empty():
+		_errors.append("Extracted equipped Pistol-S should be saved into persistent equipment.")
+	else:
+		_expect_pistol_state(saved_equipped_pistol, "Persistent equipment")
 	if player.inventory_model.get_used_slots() != 0:
 		_errors.append("Raid inventory should be cleared after successful transfer.")
+	if not player.equipment_model.is_empty(&"sidearm"):
+		_errors.append("Raid equipment should be cleared after successful transfer.")
 
 	test_root.free()
 	_cleanup_validation_root(save_manager.save_root_path)
@@ -214,6 +247,48 @@ func _make_save_manager() -> Node:
 	root.add_child(save_manager)
 	_cleanup_validation_root(save_manager.save_root_path)
 	return save_manager
+
+
+func _damaged_modded_pistol_stack() -> Dictionary:
+	var stack := PistolItem.to_stack(1)
+	stack["current_durability"] = 37
+	stack["max_durability"] = 81
+	stack["original_max_durability"] = PistolItem.max_durability
+	stack["repair_max_durability_loss"] = PistolItem.repair_max_durability_loss
+	stack["durability_penalty_ratio"] = PistolItem.durability_penalty_ratio
+	stack["weapon_mods"] = {
+		"magazine": ExtendedMagazine.to_stack(1),
+	}
+	return stack
+
+
+func _entry_for_path(stacks: Array, item_path: String) -> Dictionary:
+	for value in stacks:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var stack := value as Dictionary
+		if str(stack.get("item_path", stack.get("resource_path", ""))) == item_path:
+			return stack
+	return {}
+
+
+func _equipment_entry_for_slot(equipment_data: Dictionary, slot_id: StringName) -> Dictionary:
+	var slots: Dictionary = equipment_data.get("slots", {}) as Dictionary
+	var value: Variant = slots.get(str(slot_id), {})
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+func _expect_pistol_state(stack: Dictionary, label: String) -> void:
+	if int(stack.get("current_durability", -1)) != 37 or int(stack.get("max_durability", -1)) != 81:
+		_errors.append("%s should preserve damaged Pistol-S durability 37/81, got %s/%s." % [label, str(stack.get("current_durability", "")), str(stack.get("max_durability", ""))])
+	var mods: Dictionary = stack.get("weapon_mods", {}) as Dictionary
+	var magazine: Dictionary = mods.get("magazine", {}) as Dictionary
+	if magazine.is_empty():
+		_errors.append("%s should preserve Pistol-S magazine attachment." % label)
+	elif str(magazine.get("item_path", magazine.get("resource_path", ""))) != ExtendedMagazine.resource_path:
+		_errors.append("%s should preserve Extended Magazine-S, got %s." % [label, str(magazine.get("item_path", magazine.get("resource_path", "")))])
 
 
 func _cleanup_validation_root(root_path: String) -> void:

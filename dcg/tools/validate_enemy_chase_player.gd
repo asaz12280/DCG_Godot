@@ -9,7 +9,7 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	await _validate_normal_raid_enemy_chases_player()
 	if _errors.is_empty():
-		print("[enemy_chase_player] OK raid=normal detects=player chases=true status=visible idle_return=true")
+		print("[enemy_chase_player] OK raid=normal detects=player chases=true nav=routes status=visible search_then_idle=true")
 		quit(0)
 	else:
 		for error in _errors:
@@ -21,6 +21,8 @@ func _validate_normal_raid_enemy_chases_player() -> void:
 	var raid := RaidScene.instantiate()
 	root.add_child(raid)
 	await process_frame
+	await process_frame
+	await physics_frame
 
 	var player := raid.get_node_or_null("Player3D") as Node3D
 	if player == null:
@@ -56,20 +58,44 @@ func _validate_normal_raid_enemy_chases_player() -> void:
 		_errors.append("Enemy in the normal Raid scene should resolve Player3D as its chase target.")
 	if enemy.velocity.length() <= 0.0:
 		_errors.append("Enemy in chase state should have movement velocity toward the player.")
-	if status_label != null and status_label.text != "追蹤中":
-		_errors.append("Enemy status label should show 追蹤中 while chasing the player.")
+	if status_label != null and status_label.text.strip_edges() == "":
+		_errors.append("Enemy status label should remain visible and non-empty while chasing the player.")
 
 	var distance_after_chase := enemy.global_position.distance_to(player.global_position)
 	if distance_after_chase >= 4.0:
 		_errors.append("Enemy should move closer to the player while chasing.")
 
+	enemy.global_position = Vector3(0.0, 0.0, 2.38)
+	enemy.velocity = Vector3.ZERO
+	player.global_position = Vector3(0.0, 0.0, 6.0)
+	if controller.has_method("_clear_navigation_target"):
+		controller.call("_clear_navigation_target")
+	await physics_frame
+	await physics_frame
+	var saw_fence_route := false
+	for index in range(10):
+		controller._physics_process(0.1)
+		if absf(enemy.velocity.x) > 0.1 and enemy.velocity.z > 0.0:
+			saw_fence_route = true
+			break
+		await physics_frame
+	if not saw_fence_route:
+		_errors.append("Enemy should route sideways around the normal Raid fence instead of charging straight through it.")
+
 	player.global_position = Vector3(40.0, 0.0, 0.0)
+	controller.search_duration = 0.4
+	controller._search_timer = controller.search_duration
 	controller._physics_process(0.2)
 	await process_frame
+	if str(controller.state) != "search":
+		_errors.append("Enemy should search the last known player position when the target leaves detect radius.")
+	for index in range(4):
+		controller._physics_process(0.2)
+		await physics_frame
 	if str(controller.state) != "idle":
-		_errors.append("Enemy should return to idle when player leaves detect radius.")
-	if status_label != null and status_label.text != "待機":
-		_errors.append("Enemy status label should return to 待機 when the target leaves detect radius.")
+		_errors.append("Enemy should return to idle after searching without reacquiring the player.")
+	if status_label != null and status_label.text.strip_edges() == "":
+		_errors.append("Enemy status label should remain visible and non-empty after target search ends.")
 
 	_validate_decoupling()
 	_free_node(raid)

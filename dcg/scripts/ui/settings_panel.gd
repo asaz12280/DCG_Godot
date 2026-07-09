@@ -5,11 +5,11 @@ signal closed
 
 const SettingsUIStyle := preload("res://scripts/ui/ui_style.gd")
 
-const LANGUAGE_LOCALES := ["zh_TW", "en", "ja", "zh_CN"]
-const LANGUAGE_LABEL_KEYS := ["ui.language.zh_tw", "ui.language.en", "ui.language.ja", "ui.language.zh_cn"]
+const LANGUAGE_LOCALES := ["zh_TW", "en"]
+const LANGUAGE_LABEL_KEYS := ["ui.language.zh_tw", "ui.language.en"]
 const RESOLUTION_OPTIONS := [
-	Vector2i(1920, 1080),
 	Vector2i(2560, 1440),
+	Vector2i(1920, 1080),
 	Vector2i(1600, 900),
 	Vector2i(1366, 768),
 	Vector2i(1280, 720),
@@ -52,6 +52,10 @@ func refresh_texts() -> void:
 		if label != null and label.has_meta("label_key"):
 			label.text = tr(str(label.get_meta("label_key")))
 	_populate_options()
+
+
+func get_preferred_panel_size() -> Vector2:
+	return SettingsUIStyle.SIZE_MENU_OVERLAY_PANEL
 
 
 func _build_panel() -> void:

@@ -39,11 +39,13 @@ text = "區域地圖"
 
 [node name="HintLabel" type="Label" parent="MainPanel/PanelMargin/Content"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 text = "早期導覽：確認撤離、危險區與箱子區，不新增第二張地圖。"
 autowrap_mode = 3
 
 [node name="InfoPanel" type="PanelContainer" parent="MainPanel/PanelMargin/Content"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 

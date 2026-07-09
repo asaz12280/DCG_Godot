@@ -11,11 +11,12 @@ const InventoryModelScript := preload("res://scripts/inventory/inventory_model.g
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
+const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
+const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
 const WIRE_PATH := "res://data/items/electronics/wire.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
-const WATCH_PATH := "res://data/items/valuables/old_watch.tres"
 
 var _errors: Array[String] = []
 var _save_manager: Node = null
@@ -53,6 +54,7 @@ func _initialize() -> void:
 
 
 func _validate_raid_one_extract_and_base_progress() -> void:
+	_accept_quest(FirstSalvageQuest)
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
 		"extracted_items": [
 			{"item_path": WOOD_PATH, "quantity": 4},
@@ -125,6 +127,7 @@ func _validate_raid_two_death_preserves_meta_progress() -> void:
 
 
 func _validate_raid_three_kill_extract_and_save_reload() -> void:
+	_accept_quest(FirstScavengerHuntQuest)
 	var enemy := ScavengerScene.instantiate()
 	root.add_child(enemy)
 	await process_frame
@@ -140,7 +143,7 @@ func _validate_raid_three_kill_extract_and_save_reload() -> void:
 		_errors.append("Raid three should persist kill:scavenger progress.")
 
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
-		"extracted_items": [{"item_path": WATCH_PATH, "quantity": 1}],
+		"extracted_items": [{"item_path": JUNK_PATH, "quantity": 1}],
 		"money_delta": 3,
 		"duration": 64.0,
 	})
@@ -155,7 +158,7 @@ func _validate_raid_three_kill_extract_and_save_reload() -> void:
 	_free_node(base_screen)
 
 	var reloaded: Dictionary = _reload_slot_data()
-	if _stash_quantity(reloaded, WATCH_PATH) != 1:
+	if _stash_quantity(reloaded, JUNK_PATH) != 1:
 		_errors.append("Save reload should preserve raid three extracted stash.")
 	if int(reloaded.get("money", 0)) != 68:
 		_errors.append("Save reload should preserve money after three raids, expected 68.")
@@ -237,6 +240,14 @@ func _reload_slot_data() -> Dictionary:
 func _quest_state(save_data: Dictionary, quest_id: String) -> Dictionary:
 	var quests: Dictionary = save_data.get("quests", {}) as Dictionary
 	return quests.get(quest_id, {}) as Dictionary
+
+
+func _accept_quest(quest_def: Resource) -> void:
+	var save_data: Dictionary = _save_manager.get_slot_data(1)
+	var quests: Dictionary = save_data.get("quests", {}) as Dictionary
+	quests[str(quest_def.get("id"))] = QuestStateScript.accept(quest_def)
+	save_data["quests"] = quests
+	_save_manager.save_slot_data(1, save_data)
 
 
 func _stash_quantity(save_data: Dictionary, item_path: String) -> int:

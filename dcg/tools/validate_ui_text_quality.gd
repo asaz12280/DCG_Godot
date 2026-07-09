@@ -59,7 +59,7 @@ const REQUIRED_ZH_TW_TEXT := {
 	"ui.raid_hud.ammo": "彈藥",
 	"ui.raid_result.title": "行動結算",
 	"ui.raid_result.transfer_title": "物資轉移",
-	"ui.raid_result.transfer_extracted": "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。",
+	"ui.raid_result.transfer_extracted": "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」整理下一場行動。",
 	"ui.raid_result.transfer_empty": "本次沒有帶回物品。按「回到基地」整理下一場行動。",
 	"ui.raid_result.transfer_dead": "行動失敗：%d 種背包/裝備物資列為遺失，%d 種安全口袋物品已送回基地。按「回到基地」查看狀態。",
 	"ui.raid_result.status_dead": "遺失物品不會進入基地倉庫；安全口袋物品會送回基地。",
@@ -107,20 +107,54 @@ var _errors: Array[String] = []
 
 
 func _initialize() -> void:
-	TranslationServer.set_locale("zh_TW")
+	_force_zh_tw_locale()
+	_validate_supported_locales()
 	_validate_required_keys()
 	_validate_required_zh_tw_text()
 	_validate_visible_resource_text()
+	_validate_current_item_descriptions()
 	await _validate_base_text_and_layout()
 	await _validate_raid_hud_text_and_layout()
 	await _validate_result_text_and_layout()
 	if _errors.is_empty():
-		print("[ui_text_quality] OK keys=present text=clean layout=fits")
+		print("[ui_text_quality] OK locales=multi_ready zh_tw_en=required keys=present text=clean layout=fits")
 		quit(0)
 	else:
 		for error in _errors:
 			push_error(error)
 		quit(1)
+
+
+func _force_zh_tw_locale() -> void:
+	var settings := root.get_node_or_null("GameSettings")
+	if settings != null:
+		settings.set("language_locale", "zh_TW")
+	TranslationServer.set_locale("zh_TW")
+
+
+func _validate_supported_locales() -> void:
+	var file := FileAccess.open("res://data/localization/game_text.csv", FileAccess.READ)
+	if file == null:
+		_errors.append("Cannot open localization CSV.")
+		return
+	var header := file.get_csv_line()
+	if header.size() < 3 or str(header[0]) != "keys":
+		_errors.append("Localization CSV should start with keys and include zh_TW/en columns.")
+	var locales: PackedStringArray = []
+	for column in range(1, header.size()):
+		var locale := str(header[column]).strip_edges()
+		if locale == "":
+			_errors.append("Localization CSV should not include empty locale columns.")
+			continue
+		if locales.has(locale):
+			_errors.append("Localization CSV should not include duplicate locale column: %s" % locale)
+		locales.append(locale)
+	if not locales.has("zh_TW") or not locales.has("en"):
+		_errors.append("Localization CSV must include zh_TW and en as required locales.")
+
+	var settings_source := FileAccess.get_file_as_string("res://scripts/ui/settings_panel.gd")
+	if not settings_source.contains("LANGUAGE_LOCALES := [\"zh_TW\", \"en\"]"):
+		_errors.append("Settings language selector should only expose zh_TW and en.")
 
 
 func _validate_required_keys() -> void:
@@ -182,6 +216,24 @@ func _validate_visible_resource_text() -> void:
 				_errors.append("Visible resource %s description should not be English fallback: %s" % [path, actual_description])
 
 
+func _validate_current_item_descriptions() -> void:
+	var rows := _csv_rows()
+	var guarded_descriptions := {
+		"item.light_armor.desc": ["後續接上", "后续接上", "Durability comes later"],
+		"item.warehouse_key.desc": ["未來可用", "未来可用", "future warehouse doors"],
+	}
+	for key in guarded_descriptions.keys():
+		if not rows.has(key):
+			_errors.append("Localization CSV should include current item description key: %s" % key)
+			continue
+		var row: Array = rows[key]
+		for column in range(1, row.size()):
+			var text := str(row[column])
+			for forbidden in guarded_descriptions[key]:
+				if text.contains(str(forbidden)):
+					_errors.append("Implemented item description %s should not use stale future wording: %s." % [key, forbidden])
+
+
 func _validate_base_text_and_layout() -> void:
 	var save_manager := _make_save_manager()
 	save_manager.set_current_slot_index(1)
@@ -199,6 +251,7 @@ func _validate_base_text_and_layout() -> void:
 		screen.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		screen.size = viewport_size
 		await process_frame
+		_force_zh_tw_locale()
 		screen.refresh()
 		await process_frame
 		_assert_clean_tree_text(screen, "BaseScreen")
@@ -223,6 +276,7 @@ func _validate_raid_hud_text_and_layout() -> void:
 		var hud := RaidHudScene.instantiate()
 		root.add_child(hud)
 		await process_frame
+		_force_zh_tw_locale()
 		var rect: Rect2 = hud.call("preview_layout", viewport_size)
 		hud.call("_update_objective")
 		hud.call("_update_raid_status")
@@ -256,11 +310,12 @@ func _validate_result_text_and_layout() -> void:
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		panel.size = viewport_size
 		await process_frame
+		_force_zh_tw_locale()
 		panel.show_result({
 			"outcome": "extracted",
 			"duration": 75.0,
 			"money_delta": 12,
-			"extracted_items": [{"item_path": "res://data/items/valuables/old_watch.tres", "quantity": 1}],
+			"extracted_items": [{"item_path": "res://data/items/loot/junk.tres", "quantity": 1}],
 			"lost_items": [],
 			"kept_safe_pocket_items": [],
 		})

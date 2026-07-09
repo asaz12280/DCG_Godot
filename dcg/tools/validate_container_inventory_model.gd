@@ -11,6 +11,7 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	_validate_capacity_and_stacking()
 	_validate_remove_and_clear()
+	_validate_sort_modes()
 	_validate_save_round_trip()
 	_validate_invalid_entries()
 	_validate_responsibility_boundary()
@@ -73,10 +74,31 @@ func _validate_remove_and_clear() -> void:
 		_errors.append("clear_slot should reject already-empty slots.")
 
 
+func _validate_sort_modes() -> void:
+	var container := ContainerInventoryModelScript.new(4)
+	container.add_item(Wood, 1)
+	container.add_item(Wire, 1)
+	container.add_item(Pistol, 1)
+
+	container.organize(&"value")
+	if int(container.get_slot(0).get("catalog_number", 0)) != Pistol.catalog_number:
+		_errors.append("Container value sort should put the most valuable stack first.")
+	if not container.get_slot(3).is_empty():
+		_errors.append("Container sort should preserve empty fixed slots at the tail.")
+
+	container.organize(&"weight")
+	if int(container.get_slot(1).get("catalog_number", 0)) != Wood.catalog_number:
+		_errors.append("Container weight sort should keep the heavier wood stack before wire.")
+
+	container.organize(&"value_weight")
+	if int(container.get_slot(1).get("catalog_number", 0)) != Wire.catalog_number:
+		_errors.append("Container value/kg sort should put wire after the pistol and before wood.")
+
+
 func _validate_save_round_trip() -> void:
 	var source := ContainerInventoryModelScript.new(4)
 	source.add_item(Wood, 23)
-	source.add_item(Pistol, 1)
+	source.add_stack(_damaged_pistol_stack(42, 87))
 
 	var save_data := source.to_save_data()
 	if int(save_data.get("capacity", 0)) != 4:
@@ -92,6 +114,8 @@ func _validate_save_round_trip() -> void:
 		_errors.append("Round trip should preserve split stack quantity.")
 	if int(loaded.get_slot(2).get("catalog_number", 0)) != Pistol.catalog_number:
 		_errors.append("Round trip should preserve unstackable item identity.")
+	if int(loaded.get_slot(2).get("current_durability", 0)) != 42 or int(loaded.get_slot(2).get("max_durability", 0)) != 87:
+		_errors.append("Round trip should preserve unstackable item durability.")
 
 
 func _validate_invalid_entries() -> void:
@@ -130,3 +154,12 @@ func _validate_responsibility_boundary() -> void:
 	for term in forbidden_terms:
 		if source.contains(term):
 			_errors.append("ContainerInventoryModel should not depend on %s." % term)
+
+
+func _damaged_pistol_stack(current: int, maximum: int) -> Dictionary:
+	var stack := Pistol.to_stack(1)
+	stack["current_durability"] = current
+	stack["max_durability"] = maximum
+	stack["original_max_durability"] = Pistol.max_durability
+	stack["repair_max_durability_loss"] = Pistol.repair_max_durability_loss
+	return stack

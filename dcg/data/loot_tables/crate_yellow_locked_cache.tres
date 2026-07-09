@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://b7wcqqfnarg1j"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_tactical_headset"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/attachments/tactical_headset.tres"
+tags = Array[StringName]([&"yellow_locked_crate", &"equipment", &"headset"])
+
+[sub_resource type="Resource" id="LootTableEntry_tactical_glasses"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/attachments/tactical_glasses.tres"
+tags = Array[StringName]([&"yellow_locked_crate", &"equipment", &"glasses"])
+
+[sub_resource type="Resource" id="LootTableEntry_defense_totem"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/totems/defense_totem.tres"
+tags = Array[StringName]([&"yellow_locked_crate", &"totem", &"defense"])
+
+[sub_resource type="Resource" id="LootTableEntry_small_backpack"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/backpacks/small_backpack.tres"
+tags = Array[StringName]([&"yellow_locked_crate", &"equipment", &"backpack"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_yellow_locked_cache"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_tactical_headset"), SubResource("LootTableEntry_tactical_glasses"), SubResource("LootTableEntry_defense_totem"), SubResource("LootTableEntry_small_backpack")])

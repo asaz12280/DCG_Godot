@@ -6,8 +6,11 @@ const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn"
 const ItemCodexCatalogScript := preload("res://scripts/ui/item_codex_catalog.gd")
 const ItemCodexPresenterScript := preload("res://scripts/ui/item_codex_presenter.gd")
 const ItemCodexSlotScript := preload("res://scripts/ui/components/item_codex_slot.gd")
+const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
 const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
 const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const PolishedAmmo := preload("res://data/items/ammo/ammo_9mm_polished.tres")
+const BalancedGrip := preload("res://data/items/attachments/balanced_grip.tres")
 
 var _errors: Array[String] = []
 
@@ -56,6 +59,11 @@ func _validate_stack_identity(item: ItemDef, quantity: int) -> void:
 		_errors.append("Stack name_key mismatch for %s." % item.resource_path)
 	if str(stack.get("resource_path", "")) != item.resource_path:
 		_errors.append("Stack resource path mismatch for %s." % item.resource_path)
+	if item.max_durability > 0:
+		if not bool(stack.get("has_durability", false)):
+			_errors.append("Stack should mark repairable durability for %s." % item.resource_path)
+		if int(stack.get("current_durability", 0)) != item.max_durability or int(stack.get("max_durability", 0)) != item.max_durability:
+			_errors.append("Stack durability should start full for %s." % item.resource_path)
 
 
 func _validate_container_surface() -> void:
@@ -123,44 +131,76 @@ func _validate_inventory_and_equipment_surface() -> void:
 func _validate_codex_surface() -> void:
 	var catalog := ItemCodexCatalogScript.new()
 	catalog.reload()
-	_validate_catalog_item(catalog, 5, Pistol, "手槍-S")
-	_validate_catalog_item(catalog, 7, Ammo, "彈藥-S")
+	_validate_uncataloged_item_hidden(catalog, PolishedAmmo)
+	_validate_uncataloged_item_hidden(catalog, BalancedGrip)
+	_validate_catalog_item(catalog, Pistol, "手槍-S")
+	_validate_catalog_item(catalog, Ammo, "彈藥-S")
 
 	var owner := Control.new()
 	root.add_child(owner)
 	var pistol_slot := ItemCodexSlotScript.new()
 	var ammo_slot := ItemCodexSlotScript.new()
+	var empty_slot := ItemCodexSlotScript.new()
 	owner.add_child(pistol_slot)
 	owner.add_child(ammo_slot)
+	owner.add_child(empty_slot)
 	pistol_slot.setup(5, Pistol)
 	ammo_slot.setup(7, Ammo)
+	empty_slot.clear_slot(51)
 
-	_expect_contains(pistol_slot.text, "No.5", "Codex slot should show pistol catalog number.")
+	_expect_not_contains(pistol_slot.text, "No.5", "Codex grid slot should not show pistol catalog number.")
+	_expect_not_contains(pistol_slot.text, "#5", "Codex grid slot should not show pistol hash number.")
 	_expect_contains(pistol_slot.text, "手槍-S", "Codex slot should show pistol name.")
-	_expect_contains(ammo_slot.text, "No.7", "Codex slot should show ammo catalog number.")
+	_expect_not_contains(ammo_slot.text, "No.7", "Codex grid slot should not show ammo catalog number.")
+	_expect_not_contains(ammo_slot.text, "#7", "Codex grid slot should not show ammo hash number.")
 	_expect_contains(ammo_slot.text, "彈藥-S", "Codex slot should show ammo name.")
 	_expect_equals(ItemCodexPresenterScript.item_name(owner, Pistol), "手槍-S", "Codex presenter should use the pistol localized name.")
 	_expect_equals(ItemCodexPresenterScript.item_name(owner, Ammo), "彈藥-S", "Codex presenter should use the ammo localized name.")
+	_expect_equals(empty_slot.text, "-", "Empty codex grid slot should only show the empty marker.")
+	_expect_equals(ItemCodexPresenterScript.catalog_label(1), "#1", "Codex detail number should use hash format.")
+	_expect_equals(ItemCodexPresenterScript.catalog_label(11), "#11", "Codex detail number should keep the selected catalog number.")
+	_expect_contains(
+		ItemStackTooltipPresenterScript.tooltip_text(ItemStackTooltipPresenterScript.build(owner, Pistol.to_stack(1))),
+		_text(&"ui.item.damage_format", "傷害 %d") % Pistol.damage,
+		"Shared item tooltip presenter should expose weapon stats."
+	)
+	var codex_rows := ItemCodexPresenterScript.stat_rows(owner, Pistol)
+	if not _stat_row_has(codex_rows, _text(&"ui.codex.durability", "Durability"), str(Pistol.max_durability)):
+		_errors.append("Codex presenter should expose static durability for repairable items.")
 	owner.queue_free()
 
 
-func _validate_catalog_item(catalog: RefCounted, number: int, expected_item: ItemDef, expected_name: String) -> void:
+func _validate_uncataloged_item_hidden(catalog: RefCounted, item: ItemDef) -> void:
+	if item == null:
+		return
+	if item.catalog_number > 0:
+		_errors.append("%s should stay uncataloged for this validation." % item.resource_path)
+	if int(catalog.call("display_slot_for_item_id", item.id)) != 0:
+		_errors.append("Codex catalog should hide uncataloged item %s." % item.id)
+
+
+func _validate_catalog_item(catalog: RefCounted, expected_item: ItemDef, expected_name: String) -> void:
+	var number := int(catalog.call("display_slot_for_item_id", expected_item.id))
+	if number <= 0:
+		_errors.append("Codex catalog is missing %s." % expected_item.id)
+		return
 	var item := catalog.call("get_item", number) as ItemDef
 	if item == null:
-		_errors.append("Codex catalog is missing No.%d." % number)
+		_errors.append("Codex catalog display slot %d is empty for %s." % [number, expected_item.id])
 		return
 	if item.resource_path != expected_item.resource_path:
-		_errors.append("Codex No.%d should point to %s, got %s." % [number, expected_item.resource_path, item.resource_path])
+		_errors.append("Codex display slot %d should point to %s, got %s." % [number, expected_item.resource_path, item.resource_path])
 	if _text(item.name_key, item.display_name) != expected_name:
-		_errors.append("Codex No.%d visible name should be %s." % [number, expected_name])
+		_errors.append("Codex display slot %d visible name should be %s." % [number, expected_name])
 
 
 func _validate_display_ownership() -> void:
 	for path in PackedStringArray([
 		"res://scripts/ui/container_inventory_ui.gd",
-		"res://scripts/ui/inventory_equipment_ui.gd",
 		"res://scripts/ui/item_codex_presenter.gd",
+		"res://scripts/ui/item_stack_tooltip_presenter.gd",
 		"res://scripts/ui/components/item_codex_slot.gd",
+		"res://scripts/ui/inventory_equipment_display_support.gd",
 	]):
 		var text := _read_text(path)
 		_expect_contains(text, "name_key", "%s should derive item visible names from ItemDef name_key." % path)
@@ -201,6 +241,13 @@ func _validate_stack_dictionary_has(stacks: Dictionary, number: int, expected_na
 
 func _stack_name(stack: Dictionary) -> String:
 	return _text(StringName(str(stack.get("name_key", ""))), str(stack.get("name", "")))
+
+
+func _stat_row_has(rows: Array[Dictionary], label: String, value: String) -> bool:
+	for row in rows:
+		if str(row.get("label", "")) == label and str(row.get("value", "")) == value:
+			return true
+	return false
 
 
 func _text(key: StringName, fallback: String) -> String:

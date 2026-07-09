@@ -32,10 +32,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -120.0
-offset_right = 260.0
-offset_bottom = 120.0
+offset_left = -280.0
+offset_top = -175.0
+offset_right = 280.0
+offset_bottom = 175.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -48,19 +48,40 @@ theme_override_constants/margin_bottom = 24
 
 [node name="Content" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="TitleLabel" type="Label" parent="Panel/Margin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "基地互動"
+text = ""
 
 [node name="BodyLabel" type="Label" parent="Panel/Margin/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 3
-text = "基地互動點已連接。"
+size_flags_vertical = 0
+text = ""
 autowrap_mode = 3
+
+[node name="ModeTabs" type="HBoxContainer" parent="Panel/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RecipeScroll" type="ScrollContainer" parent="Panel/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="RecipeList" type="VBoxContainer" parent="Panel/Margin/Content/RecipeScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
 [node name="ActionButton" type="Button" parent="Panel/Margin/Content"]
 unique_name_in_owner = true
@@ -68,11 +89,11 @@ visible = false
 custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 size_flags_horizontal = 8
-text = "執行"
+text = ""
 
 [node name="CloseButton" type="Button" parent="Panel/Margin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 size_flags_horizontal = 8
-text = "關閉"
+text = ""

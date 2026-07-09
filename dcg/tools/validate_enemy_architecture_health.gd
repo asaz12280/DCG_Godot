@@ -6,6 +6,7 @@ const EnemyDamageableScript := preload("res://scripts/ai/enemy_damageable_3d.gd"
 const EnemyStatusDisplayScript := preload("res://scripts/ai/enemy_status_display_3d.gd")
 const EnemyLootDropScript := preload("res://scripts/ai/enemy_loot_drop_3d.gd")
 const QuestKillTrackerScript := preload("res://scripts/quests/quest_kill_tracker_3d.gd")
+const NavigationManagerScript := preload("res://scripts/gameplay/navigation_manager_3d.gd")
 const RaidSessionScript := preload("res://scripts/raid/raid_session.gd")
 const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier.gd")
 const QuestTopMenuPanelScript := preload("res://scripts/ui/quest_top_menu_panel.gd")
@@ -49,6 +50,9 @@ func _validate_raid_enemy_boundaries() -> void:
 	if controller == null or controller.get_script() != EnemyControllerScript:
 		_errors.append("Enemy chase/attack should be owned by EnemyController3D.")
 
+	if enemy.get_node_or_null("NavigationAgent3D") == null:
+		_errors.append("Enemy pathfinding should use a NavigationAgent3D child.")
+
 	var loot_drop := enemy.get_node_or_null("EnemyLootDrop3D")
 	if loot_drop == null or loot_drop.get_script() != EnemyLootDropScript:
 		_errors.append("Enemy death loot should be owned by EnemyLootDrop3D.")
@@ -59,12 +63,27 @@ func _validate_raid_enemy_boundaries() -> void:
 
 	var status_display := enemy.get_node_or_null("EnemyStatusDisplay3D")
 	if status_display == null or status_display.get_script() != EnemyStatusDisplayScript:
-		_errors.append("Enemy visible health/state should be owned by EnemyStatusDisplay3D.")
+		_errors.append("Enemy in-world state label should be owned by EnemyStatusDisplay3D.")
 
 	if enemy.get_node_or_null("NameLabel") == null:
 		_errors.append("Enemy should keep a 3D name label for player readability.")
-	if enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarFill") == null:
-		_errors.append("Enemy should keep a 3D health bar fill for player readability.")
+	if enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarBack") != null:
+		_errors.append("Enemy should remove legacy 3D health bar back because PlayerHud3D owns the visible player-style bar.")
+	if enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarFill") != null:
+		_errors.append("Enemy should remove legacy 3D health bar fill because PlayerHud3D owns the visible player-style bar.")
+	var player_hud := raid.get_node_or_null("HUD/PlayerHud3D")
+	if player_hud == null:
+		_errors.append("Normal Raid should include PlayerHud3D for projected enemy health bars.")
+	else:
+		var hud_state: Dictionary = player_hud.call("get_display_state")
+		if int(hud_state.get("enemy_health_bar_count", 0)) <= 0:
+			_errors.append("PlayerHud3D should expose visible enemy health bar state in normal Raid.")
+
+	if raid.get_node_or_null("RaidNavigationRegion3D") == null:
+		_errors.append("Normal Raid should include a NavigationRegion3D for obstacle-aware enemy chase.")
+	var navigation_manager := raid.get_node_or_null("NavigationManager3D")
+	if navigation_manager == null or navigation_manager.get_script() != NavigationManagerScript:
+		_errors.append("Normal Raid should rebuild navigation through NavigationManager3D.")
 
 	var distance := (enemy as Node3D).global_position.distance_to((player as Node3D).global_position) if player is Node3D else INF
 	if distance > 12.0:
@@ -160,6 +179,16 @@ func _validate_source_boundaries() -> void:
 		["show_result", "lost_items", "kept_safe_pocket_items", "continue_to_base_requested"],
 		"Raid result UI should display result data and continue to Base."
 	)
+	_assert_source_includes(
+		"res://scripts/ui/player_hud_3d.gd",
+		["PlayerHUDPainterScript", "enemy_health_bar_count", "player_health"],
+		"PlayerHud3D should own the player-style enemy health state and delegate painting."
+	)
+	_assert_source_includes(
+		"res://scripts/ui/player_hud_painter.gd",
+		["_paint_enemy_health_bars"],
+		"PlayerHUDPainter should own the player-style enemy health overlay drawing."
+	)
 	_assert_source_excludes(
 		"res://scripts/raid/raid_result_applier.gd",
 		["update_from_enemy_killed"]
@@ -169,6 +198,7 @@ func _validate_source_boundaries() -> void:
 		"res://tools/validate_enemy_visible_in_raid.gd",
 		"res://tools/validate_enemy_damageable_3d.gd",
 		"res://tools/validate_enemy_chase_player.gd",
+		"res://tools/validate_navigation_manager_3d.gd",
 		"res://tools/validate_enemy_loot_drop.gd",
 		"res://tools/validate_quest_kill_enemy_flow.gd",
 		"res://tools/validate_enemy_player_death_result.gd",

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://bu8exwop765cf"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://cda3025r20br4" path="res://scripts/items/attachment_profile.gd" id="2_attachment_profile"]
+
+[sub_resource type="Resource" id="Resource_attachment_profile_targeting_laser"]
+script = ExtResource("2_attachment_profile")
+spread_multiplier = 0.9
+slot_tags = Array[StringName]([&"tactic"])
+compatibility_tags = Array[StringName]([&"pistol", &"smg"])
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"targeting_laser"
+name_key = &"item.targeting_laser.name"
+description_key = &"item.targeting_laser.desc"
+item_type = "attachment"
+weight = 0.08
+value = 130
+attachment_spread_multiplier = 0.9
+attachment_profile = SubResource("Resource_attachment_profile_targeting_laser")
+tags = Array[StringName]([&"tactic", &"pistol", &"smg"])

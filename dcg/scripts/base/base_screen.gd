@@ -271,7 +271,9 @@ func _submit_quest(quest_def: Resource) -> Dictionary:
 		return {}
 	var quests: Dictionary = BaseScreenViewModelScript.quests_dict(save_data.get("quests", {}))
 	var quest_id := str(quest_def.get("id"))
-	var quest_state: Dictionary = quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary
+	if not quests.has(quest_id):
+		return {"success": false, "reason": "not_accepted"}
+	var quest_state: Dictionary = quests.get(quest_id, {}) as Dictionary
 	var result: Dictionary = QuestStateScript.claim_reward(save_data, quest_state, quest_def)
 	if not bool(result.get("success", false)):
 		status_label.text = _text(&"ui.base.quest_not_ready", "任務尚未達成，無法回報。")
@@ -339,8 +341,17 @@ func _update_workbench_state(save_data: Dictionary, has_save: bool) -> void:
 
 func _update_quest_state(save_data: Dictionary, has_save: bool) -> void:
 	var quest_def := BaseScreenViewModelScript.selected_quest_def(save_data)
+	if quest_def == null:
+		var available := BaseScreenViewModelScript.next_available_quest_def(save_data)
+		quest_name_label.text = _text(&"ui.top.quest_empty", "No quests")
+		quest_objective_label.text = _text(&"ui.base.quest_board_hint", "Accept quests from the quest board before raiding.")
+		quest_progress_label.text = BaseScreenViewModelScript.quest_display_name(self, available) if available != null else ""
+		quest_status_label.text = _text(&"ui.top.quest_inactive", "Inactive")
+		submit_quest_button.text = _text(&"ui.base.submit_quest", "Submit")
+		submit_quest_button.disabled = true
+		return
 	var quest_state := BaseScreenViewModelScript.quest_state(save_data, quest_def)
-	quest_name_label.text = str(quest_def.get("display_name"))
+	quest_name_label.text = BaseScreenViewModelScript.quest_display_name(self, quest_def)
 	quest_objective_label.text = BaseScreenViewModelScript.quest_objective_text(self, quest_def)
 	quest_progress_label.text = BaseScreenViewModelScript.quest_progress_text(self, quest_state, quest_def)
 	var state := str(quest_state.get("state", QuestStateScript.STATE_ACTIVE))

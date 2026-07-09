@@ -3,9 +3,7 @@ extends RefCounted
 
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
-const FIRST_SALVAGE_QUEST := preload("res://data/quests/first_salvage.tres")
-const FIRST_SCAVENGER_HUNT_QUEST := preload("res://data/quests/first_scavenger_hunt.tres")
-const RADIO_TOWER_SCOUT_QUEST := preload("res://data/quests/radio_tower_scout.tres")
+const QuestCatalogScript := preload("res://scripts/quests/quest_catalog.gd")
 
 
 static func text(owner: Object, key: StringName, fallback: String) -> String:
@@ -13,15 +11,15 @@ static func text(owner: Object, key: StringName, fallback: String) -> String:
 
 
 static func first_salvage_quest() -> Resource:
-	return FIRST_SALVAGE_QUEST
+	return QuestCatalogScript.first_salvage_quest()
 
 
 static func first_scavenger_hunt_quest() -> Resource:
-	return FIRST_SCAVENGER_HUNT_QUEST
+	return QuestCatalogScript.first_scavenger_hunt_quest()
 
 
 static func radio_tower_scout_quest() -> Resource:
-	return RADIO_TOWER_SCOUT_QUEST
+	return QuestCatalogScript.radio_tower_scout_quest()
 
 
 static func selected_quest_def(save_data: Dictionary) -> Resource:
@@ -31,16 +29,46 @@ static func selected_quest_def(save_data: Dictionary) -> Resource:
 	for quest_def in quest_defs():
 		if str(quest_state(save_data, quest_def).get("state", "")) == QuestStateScript.STATE_ACTIVE:
 			return quest_def
+	return null
+
+
+static func next_available_quest_def(save_data: Dictionary) -> Resource:
 	for quest_def in quest_defs():
-		if str(quest_state(save_data, quest_def).get("state", "")) != QuestStateScript.STATE_COMPLETED:
+		var state_name := str(quest_state(save_data, quest_def).get("state", ""))
+		if state_name == QuestStateScript.STATE_INACTIVE:
 			return quest_def
-	return quest_defs().back()
+	return null
+
+
+static func tracked_quest_defs(save_data: Dictionary) -> Array[Resource]:
+	var result: Array[Resource] = []
+	for quest_def in quest_defs():
+		var state_name := str(quest_state(save_data, quest_def).get("state", ""))
+		if state_name == QuestStateScript.STATE_ACTIVE or state_name == QuestStateScript.STATE_READY or state_name == QuestStateScript.STATE_COMPLETED:
+			result.append(quest_def)
+	return result
 
 
 static func quest_state(save_data: Dictionary, quest_def: Resource) -> Dictionary:
 	var quests: Dictionary = quests_dict(save_data.get("quests", {}))
 	var quest_id := str(quest_def.get("id"))
-	return QuestStateScript.normalize(quests.get(quest_id, QuestStateScript.create(quest_def)) as Dictionary, quest_def)
+	return QuestStateScript.normalize(quests.get(quest_id, QuestStateScript.create_inactive(quest_def)) as Dictionary, quest_def)
+
+
+static func quest_display_name(owner: Object, quest_def: Resource) -> String:
+	if quest_def == null:
+		return text(owner, &"ui.top.quest_empty", "No quests")
+	var quest_id := str(quest_def.get("id"))
+	var fallback := str(quest_def.get("display_name"))
+	return text(owner, StringName("quest.%s.name" % quest_id), fallback)
+
+
+static func quest_description(owner: Object, quest_def: Resource) -> String:
+	if quest_def == null:
+		return ""
+	var quest_id := str(quest_def.get("id"))
+	var fallback := str(quest_def.get("description"))
+	return text(owner, StringName("quest.%s.desc" % quest_id), fallback)
 
 
 static func quest_objective_text(owner: Object, quest_def: Resource) -> String:
@@ -61,7 +89,7 @@ static func quest_objective_text(owner: Object, quest_def: Resource) -> String:
 			verb = text(owner, &"ui.base.quest_kill_objective", "擊倒")
 		"location":
 			verb = text(owner, &"ui.base.quest_location_objective", "前往")
-	return "%s: %s" % [verb, " 或 ".join(parts)]
+	return "%s: %s" % [verb, _or_separator(owner).join(parts)]
 
 
 static func quest_progress_text(owner: Object, quest_state_data: Dictionary, quest_def: Resource) -> String:
@@ -88,7 +116,11 @@ static func quest_progress_text(owner: Object, quest_state_data: Dictionary, que
 		elif is_location:
 			label = location_name(owner, location_id)
 		parts.append("%s %d/%d" % [label, mini(current, required), required])
-	return "%s: %s" % [text(owner, &"ui.base.quest_progress", "進度"), " 或 ".join(parts)]
+	return "%s: %s" % [text(owner, &"ui.base.quest_progress", "進度"), _or_separator(owner).join(parts)]
+
+
+static func _or_separator(owner: Object) -> String:
+	return text(owner, &"ui.common.or_separator", " or ")
 
 
 static func upgrade_ready_text(owner: Object, reason: String) -> String:
@@ -148,7 +180,7 @@ static func difficulty_name(owner: Object, difficulty_id: String) -> String:
 
 
 static func quest_defs() -> Array[Resource]:
-	return [FIRST_SALVAGE_QUEST, FIRST_SCAVENGER_HUNT_QUEST, RADIO_TOWER_SCOUT_QUEST]
+	return QuestCatalogScript.quest_defs()
 
 
 static func quests_dict(value: Variant) -> Dictionary:

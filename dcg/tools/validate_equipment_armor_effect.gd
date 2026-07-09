@@ -2,6 +2,7 @@ extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const Armor := preload("res://data/items/armor/light_armor.tres")
+const Helmet := preload("res://data/items/armor/basic_helmet.tres")
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 
 var _errors: Array[String] = []
@@ -41,21 +42,32 @@ func _validate_armor_equipment_effect() -> void:
 	var no_armor_loss := health_before_no_armor - float(player.get("health"))
 	player.call("restore_health_to_full")
 
+	if not player.call("add_item_resource", Helmet, 1):
+		_errors.append("Player backpack should accept basic helmet for equipment.")
 	if not player.call("add_item_resource", Armor, 1):
 		_errors.append("Player backpack should accept light armor for equipment.")
-	var armor_index := _find_stack_index(player, 8)
+	var helmet_index := _find_stack_index(player, 8)
+	if helmet_index < 0:
+		_errors.append("Basic helmet should be visible in backpack before equipment.")
+	elif not bool(player.call("equip_inventory_stack", helmet_index, &"helmet")):
+		_errors.append("Basic helmet should equip into the helmet slot.")
+	var armor_index := _find_stack_index(player, 9)
 	if armor_index < 0:
 		_errors.append("Light armor should be visible in backpack before equipment.")
 	elif not bool(player.call("equip_inventory_stack", armor_index, &"armor")):
 		_errors.append("Light armor should equip into the armor slot.")
 
 	var equipment: RefCounted = player.call("get_equipment_model")
+	var helmet_stack: Dictionary = equipment.call("get_slot", &"helmet") if equipment != null else {}
 	var armor_stack: Dictionary = equipment.call("get_slot", &"armor") if equipment != null else {}
-	if int(armor_stack.get("catalog_number", 0)) != 8:
-		_errors.append("Armor equipment slot should contain No.8 light armor.")
+	if int(helmet_stack.get("catalog_number", 0)) != 8:
+		_errors.append("Helmet equipment slot should contain No.8 basic helmet.")
+	if int(armor_stack.get("catalog_number", 0)) != 9:
+		_errors.append("Armor equipment slot should contain No.9 light armor.")
 	var armor_defense := float(player.call("get_total_defense"))
-	if armor_defense <= base_defense:
-		_errors.append("Equipped armor should increase player total defense.")
+	var expected_defense := base_defense + Helmet.defense_bonus + Armor.defense_bonus
+	if not is_equal_approx(armor_defense, expected_defense):
+		_errors.append("Equipped helmet and armor should increase player total defense to %.2f, got %.2f." % [expected_defense, armor_defense])
 	var effect_state: Dictionary = player.call("get_armor_effect_state")
 	if not bool(effect_state.get("equipped", false)) or float(effect_state.get("defense_bonus", 0.0)) <= 0.0:
 		_errors.append("Player armor effect state should expose equipped armor and defense bonus.")
@@ -65,13 +77,13 @@ func _validate_armor_equipment_effect() -> void:
 	var armored_loss := health_before_armor - float(player.get("health"))
 	if armored_loss >= no_armor_loss:
 		_errors.append("Armor should reduce incoming damage compared with no armor.")
-	if roundi(armored_loss) != 4:
-		_errors.append("Light armor should reduce an 8 damage hit to 4 damage, got %.2f." % armored_loss)
+	if roundi(armored_loss) != 3:
+		_errors.append("Helmet plus light armor should reduce an 8 damage hit to 3 damage, got %.2f." % armored_loss)
 
 	status_panel.call("open_status")
 	var display_state: Dictionary = status_panel.call("get_display_state")
 	var equipment_text := str(display_state.get("equipment", ""))
-	if not equipment_text.contains("護甲") or not equipment_text.contains("防護效果") or not equipment_text.contains("-4"):
+	if not equipment_text.contains("-5"):
 		_errors.append("Status panel should visibly explain the equipped armor damage reduction.")
 
 	_free_node(scene)

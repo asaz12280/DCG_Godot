@@ -1,4 +1,4 @@
-class_name RaidResultPanel
+﻿class_name RaidResultPanel
 extends Control
 
 signal continue_to_base_requested(result: Dictionary)
@@ -122,7 +122,7 @@ func _connect_raid_session() -> void:
 
 func _bind_result() -> void:
 	title_label.text = _text(&"ui.raid_result.title", "行動結算")
-	subtitle_label.text = _text(&"ui.raid_result.subtitle", "查看本次結果，確認哪些物資會回到基地。")
+	subtitle_label.text = _text(&"ui.raid_result.subtitle", "檢視本次行動結果，確認帶回與遺失物資。")
 	outcome_label.text = "%s: %s" % [_text(&"ui.raid_result.outcome", "結果"), _outcome_text(str(current_result.get("outcome", "")))]
 	duration_label.text = "%s: %.1fs" % [_text(&"ui.raid_result.duration", "時間"), float(current_result.get("duration", 0.0))]
 	money_label.text = "%s: %+d" % [_text(&"ui.raid_result.money_delta", "金錢"), int(current_result.get("money_delta", 0))]
@@ -136,7 +136,6 @@ func _bind_result() -> void:
 	_rebuild_rows(extracted_rows, current_result.get("extracted_items", []), _text(&"ui.raid_result.empty_extracted", "沒有帶回物品。"))
 	_rebuild_rows(lost_rows, current_result.get("lost_items", []), _text(&"ui.raid_result.empty_lost", "沒有遺失物品。"))
 	_rebuild_rows(safe_pocket_rows, current_result.get("kept_safe_pocket_items", []), _text(&"ui.raid_result.empty_safe_pocket", "安全口袋沒有物品。"))
-
 
 func _rebuild_rows(container: VBoxContainer, entries: Variant, empty_text: String) -> void:
 	for child in container.get_children():
@@ -179,16 +178,14 @@ func _make_item_row(item_name: String, quantity_text: String) -> HBoxContainer:
 func _item_name_from_path(item_path: String) -> String:
 	return UITextScript.item_name(self, item_path, "未知物品")
 
-
 func _outcome_text(outcome: String) -> String:
 	match outcome:
 		RaidResultSchema.OUTCOME_EXTRACTED:
-			return _text(&"ui.raid_result.extracted", "撤離成功")
+			return _text(&"ui.raid_result.extracted", "撤離成功：帶回物資")
 		RaidResultSchema.OUTCOME_DEAD:
-			return _text(&"ui.raid_result.dead", "死亡")
+			return _text(&"ui.raid_result.dead", "行動失敗：死亡")
 		_:
 			return _text(&"ui.raid_result.unknown", "未知")
-
 
 func _transfer_detail_text() -> String:
 	var outcome := str(current_result.get("outcome", ""))
@@ -196,18 +193,16 @@ func _transfer_detail_text() -> String:
 	var lost_count := _entry_count(current_result.get("lost_items", []))
 	var safe_count := _entry_count(current_result.get("kept_safe_pocket_items", []))
 	if outcome == RaidResultSchema.OUTCOME_DEAD:
-		return _text(&"ui.raid_result.transfer_dead", "行動失敗：背包/裝備物資列為遺失，安全口袋會送回基地。按「回到基地」查看狀態。") % [lost_count, safe_count]
+		return _text(&"ui.raid_result.transfer_dead", "行動失敗：%d 種背包/裝備物資列為遺失，%d 種安全口袋物品已送回基地。按「回到基地」查看狀態。") % [lost_count, safe_count]
 	if extracted_count <= 0:
 		return _text(&"ui.raid_result.transfer_empty", "本次沒有帶回物品。按「回到基地」整理下一場行動。")
-	return _text(&"ui.raid_result.transfer_extracted", "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」查看倉庫。") % extracted_count
-
+	return _text(&"ui.raid_result.transfer_extracted", "帶回成功：%d 種物資已轉入基地倉庫。按「回到基地」整理下一場行動。") % extracted_count
 
 func _status_text() -> String:
 	var outcome := str(current_result.get("outcome", ""))
 	if outcome == RaidResultSchema.OUTCOME_DEAD:
 		return _text(&"ui.raid_result.status_dead", "遺失物品不會進入基地倉庫；安全口袋物品會送回基地。")
-	return _text(&"ui.raid_result.status", "帶回物資會依結算結果轉入基地倉庫。")
-
+	return _text(&"ui.raid_result.status", "帶回物資已轉入基地倉庫；回基地後可直接整理下一場行動。")
 
 func _entry_count(entries: Variant) -> int:
 	if typeof(entries) != TYPE_ARRAY:
@@ -225,5 +220,14 @@ func _text(key: StringName, fallback: String) -> String:
 
 func _on_continue_pressed() -> void:
 	continue_to_base_requested.emit(current_result.duplicate(true))
+	_request_base_stash_after_extract()
 	if is_inside_tree():
 		get_tree().change_scene_to_file(BASE_SCENE)
+
+
+func _request_base_stash_after_extract() -> void:
+	if str(current_result.get("outcome", "")) != RaidResultSchema.OUTCOME_EXTRACTED:
+		return
+	var ui_manager := get_node_or_null("/root/UIManager") if is_inside_tree() else null
+	if ui_manager != null and ui_manager.has_method("open_ui_on_next_scene"):
+		ui_manager.call("open_ui_on_next_scene", &"stash")

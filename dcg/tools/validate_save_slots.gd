@@ -69,6 +69,16 @@ func _validate_schema_round_trip() -> void:
 		_errors.append("New save data should include base_upgrades dictionary.")
 	if typeof(save_data.get("quests", null)) != TYPE_DICTIONARY:
 		_errors.append("New save data should include quests dictionary.")
+	if typeof(save_data.get("needed_item_marks", null)) != TYPE_DICTIONARY:
+		_errors.append("New save data should include needed_item_marks dictionary.")
+	if typeof(save_data.get("selected_recipe_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("New save data should include selected_recipe_ids dictionary.")
+	if typeof(save_data.get("selected_repair_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("New save data should include selected_repair_ids dictionary.")
+	if typeof(save_data.get("selected_dismantle_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("New save data should include selected_dismantle_ids dictionary.")
+	if typeof(save_data.get("researched_blueprints", null)) != TYPE_DICTIONARY:
+		_errors.append("New save data should include researched_blueprints dictionary.")
 	if str(save_data.get("scene_path", "")) != SaveGameManagerScript.DEFAULT_BASE_SCENE:
 		_errors.append("New schema v1 save data should target the base scene.")
 
@@ -76,6 +86,11 @@ func _validate_schema_round_trip() -> void:
 	save_data["stash"] = [{"item_path": "res://data/items/crafting/wood.tres", "quantity": 3}]
 	save_data["base_upgrades"] = {"workbench_level": 1}
 	save_data["quests"] = {"first_wood": {"state": "complete"}}
+	save_data["needed_item_marks"] = {"res://data/items/crafting/wood.tres": true}
+	save_data["selected_recipe_ids"] = {"workbench": "workbench_extended_magazine"}
+	save_data["selected_repair_ids"] = {"workbench": "stash:0:pistol_9mm"}
+	save_data["selected_dismantle_ids"] = {"workbench": "stash:0:workbench_pistol_9mm_parts"}
+	save_data["researched_blueprints"] = {"res://data/items/recipes/blueprint.tres": true}
 	if not manager.save_slot_data(1, save_data):
 		_errors.append("Saving updated schema v1 slot data should succeed.")
 	var loaded: Dictionary = manager.get_slot_data(1)
@@ -87,6 +102,16 @@ func _validate_schema_round_trip() -> void:
 		_errors.append("Round trip should preserve base upgrades.")
 	if not (loaded.get("quests", {}) as Dictionary).has("first_wood"):
 		_errors.append("Round trip should preserve quest data.")
+	if not bool((loaded.get("needed_item_marks", {}) as Dictionary).get("res://data/items/crafting/wood.tres", false)):
+		_errors.append("Round trip should preserve needed item marks.")
+	if str((loaded.get("selected_recipe_ids", {}) as Dictionary).get("workbench", "")) != "workbench_extended_magazine":
+		_errors.append("Round trip should preserve selected crafting recipe ids.")
+	if str((loaded.get("selected_repair_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:pistol_9mm":
+		_errors.append("Round trip should preserve selected repair item ids.")
+	if str((loaded.get("selected_dismantle_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:workbench_pistol_9mm_parts":
+		_errors.append("Round trip should preserve selected dismantle item ids.")
+	if not bool((loaded.get("researched_blueprints", {}) as Dictionary).get("res://data/items/recipes/blueprint.tres", false)):
+		_errors.append("Round trip should preserve researched blueprint ids.")
 	_cleanup_validation_root(manager.save_root_path)
 	manager.queue_free()
 
@@ -116,6 +141,16 @@ func _validate_legacy_slot_defaults() -> void:
 		_errors.append("Legacy slot should default money to 0.")
 	if typeof(loaded.get("stash", null)) != TYPE_ARRAY:
 		_errors.append("Legacy slot should default stash to an array.")
+	if typeof(loaded.get("needed_item_marks", null)) != TYPE_DICTIONARY:
+		_errors.append("Legacy slot should default needed item marks to a dictionary.")
+	if typeof(loaded.get("selected_recipe_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("Legacy slot should default selected recipe ids to a dictionary.")
+	if typeof(loaded.get("selected_repair_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("Legacy slot should default selected repair ids to a dictionary.")
+	if typeof(loaded.get("selected_dismantle_ids", null)) != TYPE_DICTIONARY:
+		_errors.append("Legacy slot should default selected dismantle ids to a dictionary.")
+	if typeof(loaded.get("researched_blueprints", null)) != TYPE_DICTIONARY:
+		_errors.append("Legacy slot should default researched blueprints to a dictionary.")
 	if str(loaded.get("difficulty_id", "")) != "hard":
 		_errors.append("Legacy slot should preserve difficulty id.")
 	_cleanup_validation_root(manager.save_root_path)

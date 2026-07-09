@@ -8,6 +8,7 @@ var _errors: Array[String] = []
 func _initialize() -> void:
 	var settings := GameSettingsScript.new()
 	root.add_child(settings)
+	_validate_settings_normalization(settings)
 	settings.set_master_volume(70)
 	settings.set_bgm_volume(0)
 	settings.set_sfx_volume(35)
@@ -17,7 +18,7 @@ func _initialize() -> void:
 	settings.queue_free()
 
 	if _errors.is_empty():
-		print("[audio_settings] OK buses=Master/BGM/SFX")
+		print("[audio_settings] OK buses=Master/BGM/SFX settings=locale/display_normalized")
 		quit(0)
 	else:
 		for error in _errors:
@@ -36,3 +37,14 @@ func _validate_bus(bus_name: String, expected_volume: int, expected_muted: bool)
 		var expected_db := linear_to_db(float(expected_volume) / 100.0)
 		if absf(AudioServer.get_bus_volume_db(bus_index) - expected_db) > 0.01:
 			_errors.append("Unexpected volume db for %s" % bus_name)
+
+
+func _validate_settings_normalization(settings: Node) -> void:
+	if str(settings.call("_normalize_language_locale", "ja")) != GameSettingsScript.DEFAULT_LOCALE:
+		_errors.append("Unsupported language locales should normalize to the default locale.")
+	if str(settings.call("_normalize_language_locale", "en")) != "en":
+		_errors.append("Supported English locale should be preserved.")
+	if str(settings.call("_normalize_display_mode", "borderless")) != GameSettingsScript.DEFAULT_DISPLAY_MODE:
+		_errors.append("Unsupported display modes should normalize to the default display mode.")
+	if str(settings.call("_normalize_display_mode", GameSettingsScript.DISPLAY_MODE_WINDOWED)) != GameSettingsScript.DISPLAY_MODE_WINDOWED:
+		_errors.append("Supported windowed display mode should be preserved.")

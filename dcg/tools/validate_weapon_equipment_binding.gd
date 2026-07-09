@@ -74,9 +74,13 @@ func _validate_source_boundaries() -> void:
 		_errors.append("Player scene should not hardwire No.5 pistol into WeaponController3D.")
 
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")
-	for required in ["_sync_weapon_from_equipment", "get_equipped_item", "equip_weapon", "clear_weapon"]:
+	for required in ["_sync_weapon_from_equipment", "_equipment.sync_weapon_from_equipment"]:
 		if not player_source.contains(required):
 			_errors.append("PlayerController3D should bridge EquipmentModel to WeaponController3D through %s." % required)
+	var equipment_source := FileAccess.get_file_as_string("res://scripts/player/player_equipment_controller_3d.gd")
+	for required in ["sync_weapon_from_equipment", "get_equipped_item", "equip_weapon", "clear_weapon"]:
+		if not equipment_source.contains(required):
+			_errors.append("PlayerEquipmentController3D should own equipment-to-weapon sync through %s." % required)
 
 	var weapon_source := FileAccess.get_file_as_string("res://scripts/combat/weapon_controller_3d.gd")
 	for required in ["no_weapon", "equip_weapon", "clear_weapon", "has_weapon"]:

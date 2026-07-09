@@ -8,7 +8,7 @@ var _errors: Array[String] = []
 
 
 func _initialize() -> void:
-	TranslationServer.set_locale("zh_TW")
+	_force_zh_tw_locale()
 	await _validate_weapon_status_states()
 	_validate_source_boundaries()
 	_validate_localization_keys()
@@ -26,6 +26,7 @@ func _validate_weapon_status_states() -> void:
 	root.add_child(scene)
 	await process_frame
 	await process_frame
+	_force_zh_tw_locale()
 
 	var player := scene.get_node_or_null("Player3D")
 	var weapon := player.get_node_or_null("WeaponController3D") if player != null else null
@@ -38,7 +39,7 @@ func _validate_weapon_status_states() -> void:
 	if weapon.has_method("clear_weapon"):
 		weapon.call("clear_weapon")
 	await process_frame
-	_require_status(hud, "未裝備", "HUD should show `未裝備` when no weapon is equipped.")
+	_require_status(hud, TranslationServer.translate("ui.raid_hud.weapon_status_unarmed"), "HUD should show no-weapon state when no weapon is equipped.")
 
 	var backpack_model: InventoryModel = player.call("get_inventory_model")
 	backpack_model.clear()
@@ -54,7 +55,7 @@ func _validate_weapon_status_states() -> void:
 	if weapon.has_method("_sync_ammo_model_from_public_counts"):
 		weapon.call("_sync_ammo_model_from_public_counts")
 	await process_frame
-	_require_status(hud, "空彈", "HUD should show `空彈` when equipped weapon has no loaded ammo.")
+	_require_status(hud, TranslationServer.translate("ui.raid_hud.weapon_status_empty"), "HUD should show empty-ammo state when equipped weapon has no loaded ammo.")
 
 	weapon.set("current_ammo", 8)
 	weapon.set("reserve_ammo", 16)
@@ -63,7 +64,7 @@ func _validate_weapon_status_states() -> void:
 	if weapon.has_method("_last_fire_time"):
 		weapon.set("_last_fire_time", -9999.0)
 	await process_frame
-	_require_status(hud, "可射擊", "HUD should show `可射擊` when weapon has loaded ammo and is ready.")
+	_require_status(hud, TranslationServer.translate("ui.raid_hud.weapon_status_ready"), "HUD should show ready state when weapon has loaded ammo.")
 
 	player.set("reload_duration_seconds", 0.20)
 	weapon.set("current_ammo", 0)
@@ -74,7 +75,7 @@ func _validate_weapon_status_states() -> void:
 		_errors.append("Shooting feedback validation should start timed reload.")
 	await physics_frame
 	await process_frame
-	_require_status(hud, "裝填中", "HUD should show `裝填中` while timed reload is active.")
+	_require_status(hud, TranslationServer.translate("ui.raid_hud.weapon_status_reloading"), "HUD should show reloading state while timed reload is active.")
 
 	_free_node(scene)
 
@@ -101,6 +102,8 @@ func _validate_localization_keys() -> void:
 		"ui.raid_hud.weapon_status_empty",
 		"ui.raid_hud.weapon_status_reloading",
 		"ui.raid_hud.weapon_status_ready",
+		"ui.raid_hud.weapon_status_using_item",
+		"ui.raid_hud.reloading",
 	]:
 		if not csv.contains(key):
 			_errors.append("Localization should include shooting feedback HUD key: %s." % key)
@@ -109,11 +112,18 @@ func _validate_localization_keys() -> void:
 func _require_status(hud: Node, term: String, message: String) -> void:
 	var state: Dictionary = hud.call("get_display_state")
 	var status := str(state.get("weapon_status", ""))
-	if not status.contains("戰鬥狀態") or not status.contains(term):
+	if not status.contains(TranslationServer.translate("ui.raid_hud.weapon_status")) or not status.contains(term):
 		_errors.append("%s Got `%s`." % [message, status])
 	for token in ["No weapon", "Ready to fire", "Reloading", "Empty", "Combat status"]:
 		if status.contains(token):
 			_errors.append("Weapon status HUD should not show English fallback text: %s" % status)
+
+
+func _force_zh_tw_locale() -> void:
+	var settings := root.get_node_or_null("GameSettings")
+	if settings != null:
+		settings.set("language_locale", "zh_TW")
+	TranslationServer.set_locale("zh_TW")
 
 
 func _free_node(node: Node) -> void:

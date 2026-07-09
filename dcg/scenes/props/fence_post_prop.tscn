@@ -22,7 +22,7 @@ height = 0.12
 radius = 0.24
 height = 1.1
 
-[node name="FencePostProp" type="Node3D"]
+[node name="FencePostProp" type="Node3D" groups=["navigation_blocker"]]
 
 [node name="Post" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.55, 0)

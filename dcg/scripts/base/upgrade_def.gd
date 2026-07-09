@@ -6,7 +6,9 @@ extends Resource
 @export var description := ""
 @export_range(0, 999999, 1) var money_cost := 0
 @export var item_costs: Array[Dictionary] = []
+@export var required_upgrade_ids: Array[StringName] = []
 @export_range(0, 999, 1) var starter_ammo_bonus := 0
+@export_range(0, 9999, 1) var storage_capacity_bonus := 0
 
 
 func get_validation_errors() -> Array[String]:
@@ -21,6 +23,8 @@ func get_validation_errors() -> Array[String]:
 		errors.append("UpgradeDef money_cost cannot be negative.")
 	if starter_ammo_bonus < 0:
 		errors.append("UpgradeDef starter_ammo_bonus cannot be negative.")
+	if storage_capacity_bonus < 0:
+		errors.append("UpgradeDef storage_capacity_bonus cannot be negative.")
 	for index in range(item_costs.size()):
 		var cost := item_costs[index]
 		var item_path := str(cost.get("item_path", ""))
@@ -29,6 +33,9 @@ func get_validation_errors() -> Array[String]:
 			errors.append("UpgradeDef item cost %d has invalid item_path." % index)
 		if quantity <= 0:
 			errors.append("UpgradeDef item cost %d requires positive quantity." % index)
+	for index in range(required_upgrade_ids.size()):
+		if required_upgrade_ids[index] == &"":
+			errors.append("UpgradeDef prerequisite %d requires upgrade id." % index)
 	if money_cost <= 0 and item_costs.is_empty():
 		errors.append("UpgradeDef should require at least one cost.")
 	return errors

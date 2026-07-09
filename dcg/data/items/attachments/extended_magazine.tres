@@ -1,6 +1,13 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://esjoqtarmauu"]
 
-[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://cda3025r20br4" path="res://scripts/items/attachment_profile.gd" id="2_attachment_profile"]
+
+[sub_resource type="Resource" id="Resource_attachment_profile_extended_magazine"]
+script = ExtResource("2_attachment_profile")
+magazine_capacity_bonus = 4
+slot_tags = Array[StringName]([&"magazine"])
+compatibility_tags = Array[StringName]([&"pistol", &"smg"])
 
 [resource]
 script = ExtResource("1_item_def")
@@ -11,5 +18,6 @@ description_key = &"item.extended_magazine.desc"
 item_type = "attachment"
 weight = 0.38
 value = 55
-max_stack = 1
-tags = Array[StringName]([&"magazine", &"pistol"])
+attachment_magazine_capacity_bonus = 4
+attachment_profile = SubResource("Resource_attachment_profile_extended_magazine")
+tags = Array[StringName]([&"magazine", &"pistol", &"smg"])

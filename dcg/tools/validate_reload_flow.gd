@@ -151,7 +151,7 @@ func _validate_empty_left_click_auto_reloads_without_firing() -> void:
 
 func _validate_source_boundaries() -> void:
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")
-	for required in ["KEY_R", "reload_equipped_weapon", "_should_auto_reload_before_fire", "_find_compatible_ammo_stack", "consume_stack_quantity", "empty_fire"]:
+	for required in ["KEY_R", "reload_equipped_weapon", "_should_auto_reload_before_fire", "_find_compatible_ammo_stack", "_is_stack_compatible_ammo", "_ammo_model_accepts_tag", "consume_stack_quantity", "empty_fire"]:
 		if not player_source.contains(required):
 			_errors.append("PlayerController3D should expose R reload flow term: %s." % required)
 

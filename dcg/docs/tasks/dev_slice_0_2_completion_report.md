@@ -88,7 +88,6 @@ Raid/Base/Result validation:
 - `validate_base_interactions.gd`
 - `validate_base_station_readability.gd`
 - `validate_base_progression.gd`
-- `validate_base_medical_station.gd`
 
 Inventory/Equipment/Container validation:
 

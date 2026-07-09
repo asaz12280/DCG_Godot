@@ -1,13 +1,18 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyDef" format=3 uid="uid://byv514ayjgj72"]
 
-[ext_resource type="Script" path="res://scripts/ai/enemy_def.gd" id="1_enemy_def"]
+[ext_resource type="Script" uid="uid://dcvyxr0sk447b" path="res://scripts/ai/enemy_def.gd" id="1_enemy_def"]
+[ext_resource type="Script" uid="uid://brq773wnfqtp8" path="res://scripts/ai/enemy_behavior_profile.gd" id="2_behavior_profile"]
+
+[sub_resource type="Resource" id="Resource_behavior_profile_scavenger"]
+script = ExtResource("2_behavior_profile")
+detect_radius = 9.0
 
 [resource]
 script = ExtResource("1_enemy_def")
 id = &"scavenger"
 display_name = "拾荒者"
-max_health = 40.0
 move_speed = 3.0
 damage = 10.0
 detect_radius = 9.0
+behavior_profile = SubResource("Resource_behavior_profile_scavenger")
 loot_table_path = "res://data/loot_tables/refuge_outskirts_common.tres"

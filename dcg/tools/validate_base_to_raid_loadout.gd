@@ -43,7 +43,7 @@ func _validate_base_prepares_pending_loadout() -> void:
 	var base_inventory: InventoryModel = base_player.call("get_inventory_model")
 	base_inventory.clear()
 	base_inventory.setup(int(base_player.call("get_total_backpack_slots")))
-	base_inventory.add_item(Pistol, 1)
+	base_inventory.add_stack(_damaged_pistol_stack(43, 86))
 	base_inventory.add_item(Ammo, 24)
 	if not bool(base_player.call("equip_inventory_stack", 0)):
 		_errors.append("Base player should equip No.5 pistol before raid loadout capture.")
@@ -85,6 +85,8 @@ func _validate_pending_loadout(loadout: Dictionary) -> void:
 		_errors.append("Prepared loadout backpack should not duplicate equipped No.5 pistol.")
 	if not _equipment_data_has(loadout.get("equipment", {}), &"primary_weapon", 5):
 		_errors.append("Prepared loadout equipment should include No.5 pistol in primary weapon.")
+	if not _equipment_data_has_durability(loadout.get("equipment", {}), &"primary_weapon", 43, 86):
+		_errors.append("Prepared loadout equipment should preserve No.5 pistol durability.")
 
 
 func _validate_raid_player_loadout(player: Node) -> void:
@@ -98,6 +100,8 @@ func _validate_raid_player_loadout(player: Node) -> void:
 	var primary_weapon: Dictionary = equipment.call("get_slot", &"primary_weapon")
 	if int(primary_weapon.get("catalog_number", 0)) != 5:
 		_errors.append("Raid player primary weapon should receive equipped No.5 pistol from the 3D Base loadout.")
+	if int(primary_weapon.get("current_durability", 0)) != 43 or int(primary_weapon.get("max_durability", 0)) != 86:
+		_errors.append("Raid player primary weapon should preserve carried-in durability.")
 	if weapon == null or weapon.get("weapon_def") == null or int(weapon.get("weapon_def").get("catalog_number")) != 5:
 		_errors.append("Raid weapon controller should sync to the carried-in No.5 pistol.")
 
@@ -151,6 +155,26 @@ func _equipment_data_has(value: Variant, slot_id: StringName, catalog_number: in
 	var item_path := str((slot_value as Dictionary).get("item_path", ""))
 	var item := load(item_path) as ItemDef if item_path != "" and ResourceLoader.exists(item_path) else null
 	return item != null and item.catalog_number == catalog_number
+
+
+func _equipment_data_has_durability(value: Variant, slot_id: StringName, current: int, maximum: int) -> bool:
+	if typeof(value) != TYPE_DICTIONARY:
+		return false
+	var slots: Dictionary = (value as Dictionary).get("slots", {})
+	var slot_value: Variant = slots.get(str(slot_id), {})
+	if typeof(slot_value) != TYPE_DICTIONARY:
+		return false
+	var stack := slot_value as Dictionary
+	return int(stack.get("current_durability", -1)) == current and int(stack.get("max_durability", -1)) == maximum
+
+
+func _damaged_pistol_stack(current: int, maximum: int) -> Dictionary:
+	var stack := Pistol.to_stack(1)
+	stack["current_durability"] = current
+	stack["max_durability"] = maximum
+	stack["original_max_durability"] = Pistol.max_durability
+	stack["repair_max_durability_loss"] = Pistol.repair_max_durability_loss
+	return stack
 
 
 func _ensure_save_manager() -> Node:

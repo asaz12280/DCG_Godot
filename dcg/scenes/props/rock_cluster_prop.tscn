@@ -16,7 +16,7 @@ size = Vector3(0.62, 0.42, 0.52)
 [sub_resource type="BoxShape3D" id="BoxShape3D_cluster"]
 size = Vector3(1.9, 0.8, 1.45)
 
-[node name="RockClusterProp" type="Node3D"]
+[node name="RockClusterProp" type="Node3D" groups=["navigation_blocker"]]
 
 [node name="RockLarge" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.325, 0)

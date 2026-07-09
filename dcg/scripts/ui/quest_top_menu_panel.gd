@@ -1,39 +1,63 @@
-class_name QuestTopMenuPanel
+﻿class_name QuestTopMenuPanel
 extends Control
+
+signal quest_action_requested(quest_id: String, action_mode: String)
 
 const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
 const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
+const QuestTopMenuLayoutBuilderScript := preload("res://scripts/ui/quest_top_menu_layout_builder.gd")
+const QuestTopMenuPresenterScript := preload("res://scripts/ui/quest_top_menu_presenter.gd")
 const BaseScreenViewModelScript := preload("res://scripts/base/base_screen_view_model.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
-@export var design_panel_size := Vector2(760.0, 500.0)
-@export var design_top_margin := 126.0
+const CATEGORY_AVAILABLE := "available"
+const CATEGORY_ACTIVE := "active"
+const CATEGORY_COMPLETED := "completed"
+const ACTION_ACCEPT := "quest_accept"
+const ACTION_SUBMIT := "quest_submit"
+const ACTION_ACTIVE := "quest_active"
+const ACTION_COMPLETED := "quest_completed"
+const ACTION_CANCEL := "quest_cancel"
 
-@onready var main_panel: PanelContainer = %MainPanel
-@onready var title_label: Label = %TitleLabel
-@onready var hint_label: Label = %HintLabel
-@onready var first_name_label: Label = %FirstQuestNameLabel
-@onready var first_objective_label: Label = %FirstQuestObjectiveLabel
-@onready var first_progress_label: Label = %FirstQuestProgressLabel
-@onready var first_status_label: Label = %FirstQuestStatusLabel
-@onready var second_name_label: Label = %SecondQuestNameLabel
-@onready var second_objective_label: Label = %SecondQuestObjectiveLabel
-@onready var second_progress_label: Label = %SecondQuestProgressLabel
-@onready var second_status_label: Label = %SecondQuestStatusLabel
-@onready var third_name_label: Label = %ThirdQuestNameLabel
-@onready var third_objective_label: Label = %ThirdQuestObjectiveLabel
-@onready var third_progress_label: Label = %ThirdQuestProgressLabel
-@onready var third_status_label: Label = %ThirdQuestStatusLabel
+@export var design_panel_size := Vector2(1060.0, 650.0)
+@export var design_top_margin := 110.0
+
+@onready var main_panel: PanelContainer = get_node_or_null("MainPanel") as PanelContainer
+
+var title_label: Label = null
+var hint_label: Label = null
+var available_tab_button: Button = null
+var active_tab_button: Button = null
+var completed_tab_button: Button = null
+var sort_label: Label = null
+var quest_list: VBoxContainer = null
+var empty_list_label: Label = null
+var detail_title_label: Label = null
+var detail_status_label: Label = null
+var detail_description_label: Label = null
+var condition_title_label: Label = null
+var condition_rows: VBoxContainer = null
+var reward_title_label: Label = null
+var reward_rows: VBoxContainer = null
+var status_message_label: Label = null
+var action_button: Button = null
 
 var is_open := false
-var _quest_summaries: Array[Dictionary] = []
+var _active_category := CATEGORY_AVAILABLE
+var _selected_quest_id := ""
+var _quest_entries: Array[Dictionary] = []
+var _filtered_entries: Array[Dictionary] = []
 var _save_manager_node: Node = null
+var _has_save_data := false
+var _prefer_default_category_on_next_refresh := false
 
 
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ensure_layout_nodes()
+	_connect_controls()
 	_apply_styles()
 	_apply_responsive_layout()
 	_connect_save_manager()
@@ -46,6 +70,7 @@ func open_quests() -> void:
 	is_open = true
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_prefer_default_category_on_next_refresh = true
 	refresh()
 	_apply_responsive_layout()
 
@@ -57,13 +82,55 @@ func close_quests() -> void:
 
 
 func refresh() -> void:
-	title_label.text = _text(&"ui.top.quest_panel_title", "任務清單")
-	hint_label.text = _text(&"ui.top.quest_panel_hint", "追蹤目前可完成的回收與擊殺目標。")
+	title_label.text = _locale_text(&"ui.top.quest_board_title", "任務板", "Quest List")
+	hint_label.text = _locale_text(&"ui.top.quest_board_hint", "選擇任務後查看條件、進度與獎勵。", "Select a quest to view conditions, progress, and rewards.")
+	condition_title_label.text = _locale_text(&"ui.top.quest_conditions", "任務條件", "Conditions")
+	reward_title_label.text = _locale_text(&"ui.top.quest_rewards", "獎勵", "Rewards")
+
 	var save_data := _current_save_data()
-	_quest_summaries = _build_quest_summaries(save_data)
-	_apply_quest_summary(0, first_name_label, first_objective_label, first_progress_label, first_status_label)
-	_apply_quest_summary(1, second_name_label, second_objective_label, second_progress_label, second_status_label)
-	_apply_quest_summary(2, third_name_label, third_objective_label, third_progress_label, third_status_label)
+	_has_save_data = not save_data.is_empty()
+	_quest_entries = _build_quest_entries(save_data)
+	if _prefer_default_category_on_next_refresh:
+		_active_category = _default_open_category()
+		_selected_quest_id = ""
+		_prefer_default_category_on_next_refresh = false
+	_update_selection()
+	_render_tabs()
+	_render_quest_list()
+	_render_detail()
+
+
+func select_category(category: String) -> void:
+	if not [CATEGORY_AVAILABLE, CATEGORY_ACTIVE, CATEGORY_COMPLETED].has(category):
+		return
+	_active_category = category
+	_selected_quest_id = ""
+	refresh()
+
+
+func select_quest(quest_id: String) -> void:
+	if quest_id == "":
+		return
+	_selected_quest_id = quest_id
+	refresh()
+
+
+func request_selected_action() -> void:
+	_on_action_pressed()
+
+
+func notify_quest_action_result(result: Dictionary) -> void:
+	var message := str(result.get("message", ""))
+	if message != "":
+		status_message_label.text = message
+	if bool(result.get("success", false)):
+		refresh()
+		if message != "":
+			status_message_label.text = message
+	else:
+		refresh()
+		if message != "":
+			status_message_label.text = message
 
 
 func get_display_state() -> Dictionary:
@@ -73,13 +140,31 @@ func get_display_state() -> Dictionary:
 
 func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 	var rect := _layout_for_viewport(viewport_size)
+	var selected := _selected_entry()
 	return {
 		"visible": visible,
 		"is_open": is_open,
 		"title": title_label.text,
 		"hint": hint_label.text,
-		"quest_count": _quest_summaries.size(),
-		"quests": _quest_summaries.duplicate(true),
+		"active_category": _active_category,
+		"available_count": _count_for_category(CATEGORY_AVAILABLE),
+		"active_count": _count_for_category(CATEGORY_ACTIVE),
+		"completed_count": _count_for_category(CATEGORY_COMPLETED),
+		"quest_count": _quest_entries.size(),
+		"list_count": _filtered_entries.size(),
+		"quests": _filtered_entries.duplicate(true),
+		"all_quests": _quest_entries.duplicate(true),
+		"selected_quest": selected.duplicate(true),
+		"selected_quest_id": _selected_quest_id,
+		"detail_title": detail_title_label.text,
+		"description": detail_description_label.text,
+		"conditions": _row_texts(condition_rows),
+		"rewards": _row_texts(reward_rows),
+		"status": detail_status_label.text,
+		"status_message": status_message_label.text,
+		"action_text": action_button.text,
+		"action_mode": str(selected.get("action_mode", "")),
+		"action_enabled": action_button.visible and not action_button.disabled,
 		"panel_rect": rect,
 		"mouse_filter": mouse_filter,
 	}
@@ -89,17 +174,52 @@ func preview_layout(viewport_size: Vector2) -> Rect2:
 	return _layout_for_viewport(viewport_size)
 
 
+func _ensure_layout_nodes() -> void:
+	var nodes := QuestTopMenuLayoutBuilderScript.build(self, main_panel)
+	main_panel = nodes.get("main_panel") as PanelContainer
+	title_label = nodes.get("title_label") as Label
+	hint_label = nodes.get("hint_label") as Label
+	available_tab_button = nodes.get("available_tab_button") as Button
+	active_tab_button = nodes.get("active_tab_button") as Button
+	completed_tab_button = nodes.get("completed_tab_button") as Button
+	sort_label = nodes.get("sort_label") as Label
+	quest_list = nodes.get("quest_list") as VBoxContainer
+	empty_list_label = nodes.get("empty_list_label") as Label
+	detail_title_label = nodes.get("detail_title_label") as Label
+	detail_status_label = nodes.get("detail_status_label") as Label
+	detail_description_label = nodes.get("detail_description_label") as Label
+	condition_title_label = nodes.get("condition_title_label") as Label
+	condition_rows = nodes.get("condition_rows") as VBoxContainer
+	reward_title_label = nodes.get("reward_title_label") as Label
+	reward_rows = nodes.get("reward_rows") as VBoxContainer
+	status_message_label = nodes.get("status_message_label") as Label
+	action_button = nodes.get("action_button") as Button
+
+func _connect_controls() -> void:
+	available_tab_button.pressed.connect(_on_category_pressed.bind(CATEGORY_AVAILABLE))
+	active_tab_button.pressed.connect(_on_category_pressed.bind(CATEGORY_ACTIVE))
+	completed_tab_button.pressed.connect(_on_category_pressed.bind(CATEGORY_COMPLETED))
+	action_button.pressed.connect(_on_action_pressed)
+
+
 func _apply_styles() -> void:
 	UIStyleScript.apply_overlay_panel_style(main_panel)
-	for label in [title_label, first_name_label, second_name_label, third_name_label]:
-		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_BODY)
+	for label in [title_label, detail_title_label]:
+		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PANEL_TITLE)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_PRIMARY)
-	for label in [hint_label, first_objective_label, second_objective_label, third_objective_label]:
+	for label in [hint_label, detail_description_label, status_message_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_HELP)
-	for label in [first_progress_label, second_progress_label, third_progress_label, first_status_label, second_status_label, third_status_label]:
-		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
-		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_STATUS)
+	if sort_label != null:
+		UIStyleScript.apply_font_size(sort_label, UIStyleScript.FONT_PLACEHOLDER)
+		UIStyleScript.apply_font_color(sort_label, UIStyleScript.COLOR_TEXT_HELP)
+	for label in [detail_status_label, condition_title_label, reward_title_label]:
+		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_BODY)
+		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_SUBTITLE)
+	UIStyleScript.apply_font_size(empty_list_label, UIStyleScript.FONT_BODY)
+	UIStyleScript.apply_font_color(empty_list_label, UIStyleScript.COLOR_TEXT_MUTED)
+	for button in [available_tab_button, active_tab_button, completed_tab_button, action_button]:
+		UIStyleScript.apply_font_size(button, UIStyleScript.FONT_BODY)
 
 
 func _apply_responsive_layout() -> void:
@@ -113,48 +233,239 @@ func _apply_responsive_layout() -> void:
 
 
 func _layout_for_viewport(viewport_size: Vector2) -> Rect2:
-	return UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, 0.68, 1.0)
+	return UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, 0.58, 1.0)
 
 
-func _build_quest_summaries(save_data: Dictionary) -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
+func _build_quest_entries(save_data: Dictionary) -> Array[Dictionary]:
+	var tracked_defs := BaseScreenViewModelScript.tracked_quest_defs(save_data)
+	var tracked_ids := {}
+	for quest_def in tracked_defs:
+		tracked_ids[str(quest_def.get("id"))] = true
+
+	var available_defs: Array[Resource] = []
 	for quest_def in BaseScreenViewModelScript.quest_defs():
-		var quest_state := BaseScreenViewModelScript.quest_state(save_data, quest_def)
-		result.append({
-			"id": str(quest_def.get("id")),
-			"name": str(quest_def.get("display_name")),
-			"objective": BaseScreenViewModelScript.quest_objective_text(self, quest_def),
-			"progress": BaseScreenViewModelScript.quest_progress_text(self, quest_state, quest_def),
-			"status": _status_text(quest_state),
-			"state": str(quest_state.get("state", QuestStateScript.STATE_ACTIVE)),
-		})
+		if tracked_ids.has(str(quest_def.get("id"))):
+			continue
+		available_defs.append(quest_def)
+
+	var entries := QuestTopMenuPresenterScript.build_entries(self, save_data, tracked_defs)
+	entries.append_array(QuestTopMenuPresenterScript.build_entries(self, save_data, available_defs))
+	return entries
+
+
+func _default_open_category() -> String:
+	if _count_for_category(CATEGORY_ACTIVE) > 0:
+		return CATEGORY_ACTIVE
+	if _count_for_category(CATEGORY_AVAILABLE) > 0:
+		return CATEGORY_AVAILABLE
+	if _count_for_category(CATEGORY_COMPLETED) > 0:
+		return CATEGORY_COMPLETED
+	return CATEGORY_AVAILABLE
+
+
+func _update_selection() -> void:
+	_filtered_entries = []
+	for entry in _quest_entries:
+		if str(entry.get("category", "")) == _active_category:
+			_filtered_entries.append(entry)
+	if _filtered_entries.is_empty():
+		_selected_quest_id = ""
+		return
+	if _entry_for_id(_selected_quest_id).is_empty() or str(_entry_for_id(_selected_quest_id).get("category", "")) != _active_category:
+		_selected_quest_id = str(_filtered_entries[0].get("id", ""))
+
+
+func _render_tabs() -> void:
+	available_tab_button.text = _locale_text(&"ui.top.quest_tab_available", "可承接", "Available")
+	active_tab_button.text = _locale_text(&"ui.top.quest_tab_active", "進行中", "Active")
+	completed_tab_button.text = _locale_text(&"ui.top.quest_tab_completed", "已完成", "Completed")
+	_style_tab_button(available_tab_button, _active_category == CATEGORY_AVAILABLE)
+	_style_tab_button(active_tab_button, _active_category == CATEGORY_ACTIVE)
+	_style_tab_button(completed_tab_button, _active_category == CATEGORY_COMPLETED)
+
+
+func _render_quest_list() -> void:
+	_clear_children(quest_list)
+	empty_list_label.visible = _filtered_entries.is_empty()
+	if empty_list_label.visible:
+		empty_list_label.text = _locale_text(&"ui.top.quest_empty_category", "此分類目前沒有任務。", "No quests in this category")
+		return
+	for entry in _filtered_entries:
+		var button := Button.new()
+		button.text = "%s\n%s" % [str(entry.get("name", "")), str(entry.get("status", ""))]
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size = Vector2(0.0, 72.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.focus_mode = Control.FOCUS_ALL
+		button.pressed.connect(_on_quest_pressed.bind(str(entry.get("id", ""))))
+		_style_list_button(button, str(entry.get("id", "")) == _selected_quest_id)
+		quest_list.add_child(button)
+
+
+func _render_detail() -> void:
+	_clear_children(condition_rows)
+	_clear_children(reward_rows)
+	var selected := _selected_entry()
+	if selected.is_empty():
+		detail_title_label.text = _locale_text(&"ui.top.quest_empty_category", "此分類目前沒有任務。", "No quests in this category")
+		detail_status_label.text = ""
+		detail_description_label.text = _locale_text(&"ui.top.quest_empty_category_hint", "切換分類或返回基地查看新的任務。", "Switch categories or return to base to find new quests.")
+		status_message_label.text = ""
+		action_button.visible = false
+		return
+
+	detail_title_label.text = str(selected.get("name", ""))
+	detail_status_label.text = str(selected.get("status", ""))
+	detail_description_label.text = str(selected.get("description", ""))
+	_add_detail_row(condition_rows, str(selected.get("objective", "")))
+	var progress := str(selected.get("progress", ""))
+	if progress != "":
+		_add_detail_row(condition_rows, progress)
+	_add_detail_row(reward_rows, str(selected.get("reward", "")))
+	_configure_action_button(selected)
+
+
+func _configure_action_button(entry: Dictionary) -> void:
+	var action_mode := str(entry.get("action_mode", ""))
+	action_button.visible = true
+	action_button.disabled = true
+	action_button.text = _locale_text(&"ui.top.quest_action_unavailable", "不可執行", "Unavailable")
+	match action_mode:
+		ACTION_ACCEPT:
+			action_button.disabled = not _has_save_data
+		ACTION_SUBMIT:
+			action_button.disabled = not _has_save_data
+		ACTION_CANCEL:
+			action_button.disabled = not _has_save_data
+	_override_action_button_text(action_mode)
+	_style_action_button(action_button.disabled)
+
+
+func _override_action_button_text(action_mode: String) -> void:
+	match action_mode:
+		ACTION_ACCEPT:
+			action_button.text = _locale_text(&"ui.top.quest_accept_action", "接受任務", "Accept Quest")
+		ACTION_SUBMIT:
+			action_button.text = _locale_text(&"ui.top.quest_submit_action", "回報任務", "Submit")
+		ACTION_CANCEL:
+			action_button.text = _locale_text(&"ui.top.quest_cancel_action", "取消任務", "Cancel Quest")
+		ACTION_COMPLETED:
+			action_button.text = _locale_text(&"ui.top.quest_completed_action", "已完成", "Completed")
+		ACTION_ACTIVE:
+			action_button.text = _locale_text(&"ui.top.quest_active_action", "進行中", "Active")
+		_:
+			action_button.text = _locale_text(&"ui.top.quest_action_unavailable", "不可執行", "Unavailable")
+
+
+func _add_detail_row(parent: VBoxContainer, text: String) -> void:
+	var row := Label.new()
+	row.text = text
+	row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UIStyleScript.apply_font_size(row, UIStyleScript.FONT_PLACEHOLDER)
+	UIStyleScript.apply_font_color(row, UIStyleScript.COLOR_TEXT_STATUS)
+	parent.add_child(row)
+
+
+func _on_category_pressed(category: String) -> void:
+	select_category(category)
+
+
+func _on_quest_pressed(quest_id: String) -> void:
+	select_quest(quest_id)
+
+
+func _on_action_pressed() -> void:
+	var selected := _selected_entry()
+	if selected.is_empty() or action_button.disabled:
+		return
+	quest_action_requested.emit(str(selected.get("id", "")), str(selected.get("action_mode", "")))
+
+
+func _selected_entry() -> Dictionary:
+	return _entry_for_id(_selected_quest_id)
+
+
+func _entry_for_id(quest_id: String) -> Dictionary:
+	if quest_id == "":
+		return {}
+	for entry in _quest_entries:
+		if str(entry.get("id", "")) == quest_id:
+			return entry
+	return {}
+
+
+func _count_for_category(category: String) -> int:
+	var count := 0
+	for entry in _quest_entries:
+		if str(entry.get("category", "")) == category:
+			count += 1
+	return count
+
+
+func _row_texts(parent: VBoxContainer) -> Array[String]:
+	var result: Array[String] = []
+	for child in parent.get_children():
+		var label := child as Label
+		if label != null:
+			result.append(label.text)
 	return result
 
 
-func _apply_quest_summary(index: int, name_label: Label, objective_label: Label, progress_label: Label, status_label: Label) -> void:
-	if index >= _quest_summaries.size():
-		name_label.text = _text(&"ui.top.quest_empty", "沒有任務")
-		objective_label.text = ""
-		progress_label.text = ""
-		status_label.text = ""
-		return
-	var summary := _quest_summaries[index]
-	name_label.text = str(summary.get("name", ""))
-	objective_label.text = str(summary.get("objective", ""))
-	progress_label.text = str(summary.get("progress", ""))
-	status_label.text = str(summary.get("status", ""))
+func _clear_children(parent: Node) -> void:
+	for child in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()
 
 
-func _status_text(quest_state: Dictionary) -> String:
-	match str(quest_state.get("state", QuestStateScript.STATE_ACTIVE)):
-		QuestStateScript.STATE_COMPLETED:
-			return _text(&"ui.base.quest_completed", "已完成")
-		QuestStateScript.STATE_READY:
-			return _text(&"ui.base.quest_ready", "可回報")
-		QuestStateScript.STATE_INACTIVE:
-			return _text(&"ui.top.quest_inactive", "未啟用")
-		_:
-			return _text(&"ui.base.quest_active", "進行中")
+func _style_tab_button(button: Button, is_selected: bool) -> void:
+	var normal := _button_style(Color(0.30, 0.28, 0.24, 0.96), Color(0.74, 0.72, 0.64, 0.26))
+	var selected := _button_style(Color(0.96, 0.58, 0.20, 1.0), Color(1.0, 0.82, 0.46, 0.45))
+	var style := selected if is_selected else normal
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", selected if is_selected else _button_style(Color(0.40, 0.37, 0.31, 0.98), Color(0.86, 0.82, 0.68, 0.36)))
+	button.add_theme_stylebox_override("pressed", selected)
+	button.add_theme_color_override("font_color", Color.WHITE)
+
+
+func _style_list_button(button: Button, is_selected: bool) -> void:
+	var style := _button_style(Color(0.16, 0.20, 0.22, 0.96), Color(0.52, 0.72, 0.82, 0.25))
+	var selected := _button_style(Color(0.20, 0.32, 0.36, 1.0), Color(0.66, 0.90, 1.0, 0.48))
+	button.add_theme_stylebox_override("normal", selected if is_selected else style)
+	button.add_theme_stylebox_override("hover", selected)
+	button.add_theme_stylebox_override("pressed", selected)
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+
+
+func _style_action_button(is_disabled: bool) -> void:
+	var style := _button_style(Color(0.96, 0.58, 0.20, 1.0), Color(1.0, 0.82, 0.46, 0.45))
+	var disabled := _button_style(Color(0.26, 0.26, 0.25, 0.92), Color(0.58, 0.58, 0.52, 0.18))
+	action_button.add_theme_stylebox_override("normal", disabled if is_disabled else style)
+	action_button.add_theme_stylebox_override("hover", style)
+	action_button.add_theme_stylebox_override("pressed", style)
+	action_button.add_theme_stylebox_override("disabled", disabled)
+	action_button.add_theme_color_override("font_color", Color.WHITE)
+	action_button.add_theme_color_override("font_disabled_color", Color(0.82, 0.82, 0.78, 0.75))
+
+
+func _button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	return style
+
+
+func _inner_panel_style(bg_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = Color(0.70, 0.88, 0.88, 0.16)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	return style
 
 
 func _current_save_data() -> Dictionary:
@@ -195,3 +506,15 @@ func _save_manager() -> Node:
 
 func _text(key: StringName, fallback: String) -> String:
 	return UITextScript.text(self, key, fallback)
+
+
+func _locale_text(key: StringName, zh_fallback: String, en_fallback: String) -> String:
+	return _text(key, en_fallback if _is_english_locale() else zh_fallback)
+
+
+func _is_english_locale() -> bool:
+	return TranslationServer.get_locale().begins_with("en")
+
+
+func _reward_delimiter() -> String:
+	return ", " if _is_english_locale() else "、"

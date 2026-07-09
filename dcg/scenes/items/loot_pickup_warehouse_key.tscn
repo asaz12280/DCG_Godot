@@ -1,0 +1,82 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/loot_pickup_3d.gd" id="1_pickup"]
+[ext_resource type="Resource" path="res://data/items/keys/warehouse_key.tres" id="2_item"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pickup"]
+radius = 1.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_key_head_horizontal"]
+size = Vector3(0.34, 0.06, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_key_head_vertical"]
+size = Vector3(0.06, 0.06, 0.34)
+
+[sub_resource type="BoxMesh" id="BoxMesh_key_shaft"]
+size = Vector3(0.54, 0.08, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_key_tooth"]
+size = Vector3(0.12, 0.08, 0.17)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_key"]
+albedo_color = Color(0.98, 0.72, 0.18, 1)
+metallic = 0.45
+roughness = 0.38
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_prompt"]
+albedo_color = Color(1, 0.95, 0.55, 1)
+shading_mode = 0
+
+[node name="LootPickupWarehouseKey" type="Area3D"]
+script = ExtResource("1_pickup")
+item_def = ExtResource("2_item")
+quantity = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.35, 0)
+shape = SubResource("SphereShape3D_pickup")
+
+[node name="KeyHeadTop" type="MeshInstance3D" parent="."]
+position = Vector3(-0.28, 0.18, -0.14)
+mesh = SubResource("BoxMesh_key_head_horizontal")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyHeadBottom" type="MeshInstance3D" parent="."]
+position = Vector3(-0.28, 0.18, 0.14)
+mesh = SubResource("BoxMesh_key_head_horizontal")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyHeadLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.45, 0.18, 0)
+mesh = SubResource("BoxMesh_key_head_vertical")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyHeadRight" type="MeshInstance3D" parent="."]
+position = Vector3(-0.11, 0.18, 0)
+mesh = SubResource("BoxMesh_key_head_vertical")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyShaft" type="MeshInstance3D" parent="."]
+position = Vector3(0.3, 0.18, 0)
+mesh = SubResource("BoxMesh_key_shaft")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyToothFront" type="MeshInstance3D" parent="."]
+position = Vector3(0.61, 0.18, 0.08)
+mesh = SubResource("BoxMesh_key_tooth")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="KeyToothBack" type="MeshInstance3D" parent="."]
+position = Vector3(0.46, 0.18, -0.1)
+mesh = SubResource("BoxMesh_key_tooth")
+surface_material_override/0 = SubResource("StandardMaterial3D_key")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+visible = false
+position = Vector3(0, 1.05, 0)
+billboard = 1
+text = ""
+font_size = 36
+modulate = Color(1, 0.95, 0.55, 1)
+outline_size = 8
+outline_modulate = Color(0.05, 0.05, 0.04, 1)

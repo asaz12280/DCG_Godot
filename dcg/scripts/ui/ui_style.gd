@@ -44,6 +44,7 @@ const PANEL_MARGIN_TOP := 30
 const PANEL_MARGIN_BOTTOM := 28
 
 const SIZE_MENU_BUTTON := Vector2(320.0, 58.0)
+const SIZE_MENU_OVERLAY_PANEL := Vector2(1180.0, 680.0)
 const SIZE_PANEL_BACK_BUTTON := Vector2(220.0, 48.0)
 const SIZE_SETTINGS_TAB := Vector2(150.0, 42.0)
 const SIZE_SETTING_ROW := Vector2(0.0, 68.0)

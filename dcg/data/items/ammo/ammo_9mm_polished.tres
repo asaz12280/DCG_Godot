@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://dgom66ouahdc6"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://dxhlkche4dt6g" path="res://scripts/items/ammo_profile.gd" id="2_ammo_profile"]
+
+[sub_resource type="Resource" id="Resource_ammo_profile_ammo_9mm_polished"]
+script = ExtResource("2_ammo_profile")
+ammo_tag = &"S"
+penetration_level = 2.0
+weapon_wear_rate = 0.5
+damage_multiplier = 1.1
+spread_multiplier = 0.75
+recoil_multiplier = 0.85
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"ammo_9mm_polished"
+display_name = "Polished Ammo-S"
+name_key = &"item.ammo_9mm_polished.name"
+description_key = &"item.ammo_9mm_polished.desc"
+item_type = "ammo"
+weight = 0.012
+value = 7
+max_stack = 60
+ammo_tag = &"S"
+ammo_penetration_level = 2.0
+weapon_wear_rate = 0.5
+ammo_damage_multiplier = 1.1
+ammo_spread_multiplier = 0.75
+ammo_recoil_multiplier = 0.85
+ammo_profile = SubResource("Resource_ammo_profile_ammo_9mm_polished")
+tags = Array[StringName]([&"S", &"high_grade", &"low_wear"])

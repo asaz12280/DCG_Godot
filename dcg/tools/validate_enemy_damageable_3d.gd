@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ScavengerScene := preload("res://scenes/enemies/scavenger_3d.tscn")
+const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const StatusDisplayScript := preload("res://scripts/ai/enemy_status_display_3d.gd")
 
@@ -9,8 +10,10 @@ var _errors: Array[String] = []
 
 func _initialize() -> void:
 	await _validate_enemy_health_status_visibility()
+	await _validate_player_style_hud_health_bar()
+	_validate_decoupling()
 	if _errors.is_empty():
-		print("[enemy_damageable_3d] OK healthbar=visible injured=readable death=readable display=decoupled")
+		print("[enemy_damageable_3d] OK healthbar=player_style_overlay injured=readable death=readable display=decoupled")
 		quit(0)
 	else:
 		for error in _errors:
@@ -39,15 +42,10 @@ func _validate_enemy_health_status_visibility() -> void:
 	elif status_label.text.strip_edges() == "":
 		_errors.append("StatusLabel should show an initial readable state.")
 
-	var health_back := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarBack") as MeshInstance3D
-	var health_fill := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarFill") as MeshInstance3D
-	if health_back == null or health_fill == null:
-		_errors.append("Scavenger should include visible 3D health bar back and fill meshes.")
-	else:
-		if not health_back.visible or not health_fill.visible:
-			_errors.append("Scavenger health bar meshes should be visible.")
-		if health_fill.scale.x < 0.95:
-			_errors.append("HealthBarFill should start near full health.")
+	var health_back := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarBack")
+	var health_fill := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarFill")
+	if health_back != null or health_fill != null:
+		_errors.append("Scavenger should remove legacy 3D health bar meshes because PlayerHud3D owns the visible player-style bar.")
 
 	var hurt_event := DamageEventScript.new(12.0, null, null, [&"validation"])
 	if not enemy.apply_damage(hurt_event):
@@ -56,8 +54,6 @@ func _validate_enemy_health_status_visibility() -> void:
 
 	if status_label != null and status_label.text != "受傷":
 		_errors.append("Scavenger status should show 受傷 after taking non-lethal damage.")
-	if health_fill != null and health_fill.scale.x >= 0.95:
-		_errors.append("HealthBarFill should shrink after the enemy is damaged.")
 
 	var lethal_event := DamageEventScript.new(999.0, null, null, [&"validation"])
 	if not enemy.apply_damage(lethal_event):
@@ -66,13 +62,55 @@ func _validate_enemy_health_status_visibility() -> void:
 
 	if status_label != null and status_label.text != "死亡":
 		_errors.append("Scavenger status should show 死亡 after lethal damage.")
-	if health_fill != null and health_fill.scale.x > 0.01:
-		_errors.append("HealthBarFill should be empty after enemy death.")
 	if enemy.has_method("is_alive") and bool(enemy.call("is_alive")):
 		_errors.append("Scavenger is_alive should be false after lethal damage.")
 
-	_validate_decoupling()
 	_free_node(enemy)
+
+
+func _validate_player_style_hud_health_bar() -> void:
+	var scene := GameplayScene.instantiate()
+	root.add_child(scene)
+	await process_frame
+	await process_frame
+
+	var hud := scene.get_node_or_null("HUD/PlayerHud3D")
+	var enemy := scene.get_node_or_null("SceneProps/ScavengerPatrol01")
+	if hud == null or enemy == null:
+		_errors.append("Gameplay scene should expose PlayerHud3D and ScavengerPatrol01 for enemy health HUD validation.")
+		_free_node(scene)
+		return
+
+	var state: Dictionary = hud.call("get_display_state")
+	var bars: Array = state.get("enemy_health_bars", [])
+	if int(state.get("enemy_health_bar_count", 0)) <= 0 or bars.is_empty():
+		_errors.append("PlayerHud3D should expose at least one enemy health bar state.")
+	else:
+		var bar: Dictionary = bars[0]
+		if str(bar.get("style", "")) != "player_health":
+			_errors.append("Enemy health bar should use the same player_health HUD style.")
+		if not bool(bar.get("visible", false)):
+			_errors.append("Enemy health bar should be visible through PlayerHud3D during normal Raid.")
+		if float(bar.get("ratio", 0.0)) < 0.95:
+			_errors.append("Player-style enemy health bar should start near full health.")
+		var enemy_bar_size: Vector2 = bar.get("size", Vector2.ZERO)
+		var player_bar_size: Vector2 = hud.get("health_size")
+		if enemy_bar_size.distance_to(player_bar_size) > 0.01:
+			_errors.append("Enemy health bar should use the same size as the player overhead health bar.")
+
+	var hurt_event := DamageEventScript.new(12.0, null, null, [&"validation"])
+	enemy.apply_damage(hurt_event)
+	await process_frame
+	state = hud.call("get_display_state")
+	bars = state.get("enemy_health_bars", [])
+	if bars.is_empty():
+		_errors.append("PlayerHud3D should keep showing an enemy health bar after non-lethal damage.")
+	else:
+		var hurt_bar: Dictionary = bars[0]
+		if float(hurt_bar.get("ratio", 1.0)) >= 0.95:
+			_errors.append("Player-style enemy health bar should shrink after enemy damage.")
+
+	_free_node(scene)
 
 
 func _validate_decoupling() -> void:

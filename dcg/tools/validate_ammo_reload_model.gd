@@ -4,6 +4,7 @@ const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.g
 const WeaponControllerScript := preload("res://scripts/combat/weapon_controller_3d.gd")
 const DamageableScript := preload("res://scripts/combat/damageable_3d.gd")
 const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const SMG := preload("res://data/items/weapons/smg_9mm.tres")
 const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
 const Wood := preload("res://data/items/crafting/wood.tres")
 
@@ -16,7 +17,7 @@ func _initialize() -> void:
 	_validate_weapon_controller_uses_ammo_model()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[ammo_reload_model] OK data=pistol_9mm model=reload_consume controller=model_bound boundaries=clean")
+		print("[ammo_reload_model] OK data=pistol_s model=reload_consume controller=model_bound boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -27,10 +28,12 @@ func _initialize() -> void:
 func _validate_item_ammo_data() -> void:
 	if Pistol.magazine_capacity != 8:
 		_errors.append("No.5 pistol should define magazine_capacity 8.")
-	if not Pistol.compatible_ammo_tags.has(&"9mm"):
-		_errors.append("No.5 pistol should list 9mm as compatible ammo.")
-	if Ammo.ammo_tag != &"9mm" or not Ammo.tags.has(&"9mm"):
-		_errors.append("No.7 ammo should expose 9mm ammo data.")
+	if not Pistol.compatible_ammo_tags.has(&"S"):
+		_errors.append("No.5 pistol should list S as compatible small-firearm ammo.")
+	if not SMG.get_weapon_compatible_ammo_tags().has(&"S"):
+		_errors.append("SMG-S should list S as compatible small-firearm ammo.")
+	if Ammo.ammo_tag != &"S" or not Ammo.tags.has(&"S"):
+		_errors.append("No.7 ammo should expose S ammo data.")
 	if Ammo.item_type != "ammo":
 		_errors.append("No.7 ammo item_type should be ammo.")
 
@@ -38,9 +41,14 @@ func _validate_item_ammo_data() -> void:
 	var ammo_stack := Ammo.to_stack(24)
 	if int(pistol_stack.get("magazine_capacity", 0)) != 8:
 		_errors.append("Pistol stack should carry magazine capacity for UI/validation.")
-	if not (pistol_stack.get("compatible_ammo_tags", []) as Array).has(&"9mm"):
+	if not (pistol_stack.get("compatible_ammo_tags", []) as Array).has(&"S"):
 		_errors.append("Pistol stack should carry compatible ammo tags.")
-	if StringName(ammo_stack.get("ammo_tag", &"")) != &"9mm":
+	var smg_stack := SMG.to_stack(1)
+	if int(smg_stack.get("magazine_capacity", 0)) != 24:
+		_errors.append("SMG stack should carry 24-round magazine capacity for UI/validation.")
+	if not (smg_stack.get("compatible_ammo_tags", []) as Array).has(&"S"):
+		_errors.append("SMG stack should carry compatible S ammo tags.")
+	if StringName(ammo_stack.get("ammo_tag", &"")) != &"S":
 		_errors.append("Ammo stack should carry its ammo tag.")
 
 
@@ -64,6 +72,15 @@ func _validate_ammo_model() -> void:
 		_errors.append("WeaponAmmoModel should consume a loaded round.")
 	if int(model.get_state().get("loaded_ammo", 0)) != 7:
 		_errors.append("WeaponAmmoModel should reduce loaded ammo after consumption.")
+	model.configure_weapon(SMG)
+	if int(model.get_state().get("magazine_capacity", 0)) != 24:
+		_errors.append("WeaponAmmoModel should read SMG magazine capacity.")
+	if not model.can_use_ammo(Ammo):
+		_errors.append("WeaponAmmoModel should accept S ammo for SMG-S.")
+	if not model.set_reserve_ammo(Ammo, 24):
+		_errors.append("WeaponAmmoModel should store compatible SMG reserve ammo.")
+	if model.reload_from_reserve() != 24:
+		_errors.append("WeaponAmmoModel should fill the 24-round SMG magazine from S ammo.")
 
 
 func _validate_weapon_controller_uses_ammo_model() -> void:
@@ -94,6 +111,18 @@ func _validate_weapon_controller_uses_ammo_model() -> void:
 	var model_state: Dictionary = weapon.get_ammo_model().call("get_state")
 	if int(model_state.get("loaded_ammo", 0)) != 7:
 		_errors.append("WeaponAmmoModel state should match public current_ammo after firing.")
+	if not weapon.equip_weapon(SMG):
+		_errors.append("WeaponController3D should equip SMG-S through its weapon API.")
+	weapon.current_ammo = 0
+	weapon.reserve_ammo = 0
+	if weapon.has_method("_sync_ammo_result"):
+		weapon.call("_sync_ammo_result")
+	if not weapon.add_reserve_ammo_from_item(Ammo, 24):
+		_errors.append("WeaponController3D should accept S ammo for SMG-S through WeaponAmmoModel.")
+	if not weapon.reload_from_reserve():
+		_errors.append("WeaponController3D should reload SMG-S through WeaponAmmoModel.")
+	if int(weapon.get("current_ammo")) != 24:
+		_errors.append("WeaponController3D should load 24 S-ammo rounds into SMG-S.")
 
 	weapon.queue_free()
 	target.queue_free()

@@ -1,15 +1,26 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://dybrhtg27nb14"]
 
-[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://diaiqdpg0pkvk" path="res://scripts/items/armor_profile.gd" id="2_armor_profile"]
+
+[sub_resource type="Resource" id="Resource_armor_profile_light_armor"]
+script = ExtResource("2_armor_profile")
+defense_bonus = 4.0
+protection_level = 4.0
+max_durability = 80
+repair_max_durability_loss = 6
 
 [resource]
 script = ExtResource("1_item_def")
 id = &"light_armor"
-catalog_number = 8
+catalog_number = 9
 name_key = &"item.light_armor.name"
 description_key = &"item.light_armor.desc"
 item_type = "armor"
 weight = 4.5
 value = 260
-max_stack = 1
 defense_bonus = 4.0
+max_durability = 80
+repair_max_durability_loss = 6
+armor_protection_level = 4.0
+armor_profile = SubResource("Resource_armor_profile_light_armor")

@@ -4,7 +4,6 @@ extends Node3D
 @export var damageable_path: NodePath = NodePath("..")
 @export var controller_path: NodePath = NodePath("../EnemyController3D")
 @export var status_label_path: NodePath = NodePath("StatusLabel")
-@export var health_fill_path: NodePath = NodePath("HealthBarFill")
 @export var name_label_path: NodePath = NodePath("../NameLabel")
 @export var body_path: NodePath = NodePath("../Body")
 @export var head_path: NodePath = NodePath("../Head")
@@ -13,7 +12,6 @@ var _damageable: Node = null
 var _controller: Node = null
 var _status_label: Label3D = null
 var _name_label: Label3D = null
-var _health_fill: MeshInstance3D = null
 var _body: MeshInstance3D = null
 var _head: MeshInstance3D = null
 var _base_body_color := Color(0.42, 0.48, 0.38, 1.0)
@@ -27,7 +25,6 @@ func _ready() -> void:
 	_controller = get_node_or_null(controller_path)
 	_status_label = get_node_or_null(status_label_path) as Label3D
 	_name_label = get_node_or_null(name_label_path) as Label3D
-	_health_fill = get_node_or_null(health_fill_path) as MeshInstance3D
 	_body = get_node_or_null(body_path) as MeshInstance3D
 	_head = get_node_or_null(head_path) as MeshInstance3D
 
@@ -62,9 +59,6 @@ func _on_health_changed(current: float, maximum: float) -> void:
 	var ratio := 0.0
 	if maximum > 0.0:
 		ratio = clampf(current / maximum, 0.0, 1.0)
-	if _health_fill != null:
-		_health_fill.scale.x = maxf(ratio, 0.001)
-		_health_fill.position.x = -0.45 + (0.45 * ratio)
 	if current <= 0.0:
 		_set_status_key(&"enemy.status.dead", "死亡")
 		_set_body_color(Color(0.22, 0.22, 0.22, 1.0), Color(0.28, 0.25, 0.23, 1.0))
@@ -83,6 +77,9 @@ func _on_state_changed(state: StringName) -> void:
 		&"chase":
 			_set_status_key(&"enemy.status.chase", "追蹤中")
 			_set_body_color(_base_body_color, _base_head_color)
+		&"search":
+			_set_status_key(&"enemy.status.search", "搜索")
+			_set_body_color(Color(0.68, 0.58, 0.32, 1.0), Color(0.78, 0.68, 0.42, 1.0))
 		&"attack":
 			_set_status_key(&"enemy.status.attack", "攻擊")
 			_set_body_color(Color(0.82, 0.22, 0.16, 1.0), Color(0.9, 0.38, 0.28, 1.0))
@@ -97,8 +94,6 @@ func _on_state_changed(state: StringName) -> void:
 func _on_died(_event: DamageEvent) -> void:
 	_set_status_key(&"enemy.status.dead", "死亡")
 	_set_body_color(Color(0.22, 0.22, 0.22, 1.0), Color(0.28, 0.25, 0.23, 1.0))
-	if _health_fill != null:
-		_health_fill.scale.x = 0.001
 
 
 func _set_status_key(key: StringName, fallback: String) -> void:

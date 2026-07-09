@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CraftingRecipeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_def.gd" id="1_recipe_def"]
+
+[resource]
+script = ExtResource("1_recipe_def")
+id = &"workbench_ammo_9mm"
+station_id = &"workbench"
+display_name_key = &"recipe.workbench_ammo_9mm.name"
+description_key = &"recipe.workbench_ammo_9mm.desc"
+output_item_path = "res://data/items/ammo/ammo_9mm.tres"
+output_quantity = 20
+ingredient_costs = Array[Dictionary]([{
+"item_path": "res://data/items/loot/junk.tres",
+"quantity": 2
+}, {
+"item_path": "res://data/items/electronics/wire.tres",
+"quantity": 1
+}])
+required_upgrade_id = &"workbench_level_1"

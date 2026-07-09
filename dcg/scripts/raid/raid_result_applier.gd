@@ -5,6 +5,7 @@ const StashModelScript := preload("res://scripts/base/stash_model.gd")
 const RaidResultSchema := preload("res://scripts/raid/raid_result.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
+const CASH_ITEM_PATH := "res://data/items/currency/cash.tres"
 
 @export var raid_session_path: NodePath = NodePath("../RaidSession")
 @export var player_path: NodePath = NodePath("../Player3D")
@@ -53,33 +54,34 @@ func apply_raid_result(result: Dictionary) -> bool:
 		last_apply_result["reason"] = "missing_save_slot"
 		return false
 
-	var stash := StashModelScript.new()
-	var stash_data: Array = []
-	var existing_stash: Variant = save_data.get("stash", [])
-	if typeof(existing_stash) == TYPE_ARRAY:
-		stash_data = existing_stash as Array
-	stash.load_save_data(stash_data)
-
 	var extracted_items: Variant = result.get("extracted_items", [])
+	var extracted_money := 0
 	if typeof(extracted_items) == TYPE_ARRAY:
 		for stack in extracted_items as Array:
 			if typeof(stack) == TYPE_DICTIONARY:
-				stash.add_stack(_to_stash_stack(stack))
+				var stack_dict := stack as Dictionary
+				if _is_cash_stack(stack_dict):
+					extracted_money += _cash_value(stack_dict)
 
-	save_data["stash"] = stash.to_save_data()
-	save_data["money"] = maxi(int(save_data.get("money", 0)) + int(result.get("money_delta", 0)), 0)
+	var stored_item_count := _store_extracted_items(save_data, extracted_items)
+	_store_extracted_equipment(save_data, result.get(RaidResultSchema.KEY_EXTRACTED_EQUIPMENT, {}))
+	save_data["money"] = maxi(int(save_data.get("money", 0)) + int(result.get("money_delta", 0)) + extracted_money, 0)
 	_update_first_salvage_quest(save_data, extracted_items)
 	var saved := bool(save_manager.save_slot_data(slot_index, save_data))
 	if not saved:
 		last_apply_result["reason"] = "save_failed"
 		return false
 
+	if save_manager.has_method("set_pending_raid_loadout"):
+		save_manager.call("set_pending_raid_loadout", _extracted_loadout_from_result(result))
 	_clear_player_inventory()
 	last_apply_result = {
 		"attempted": true,
 		"applied": true,
 		"slot_index": slot_index,
-		"stash_count": (save_data["stash"] as Array).size(),
+		"stash_count": (save_data.get("stash", []) as Array).size() if typeof(save_data.get("stash", [])) == TYPE_ARRAY else 0,
+		"stored_item_count": stored_item_count,
+		"pending_loadout": true,
 	}
 	return true
 
@@ -121,6 +123,27 @@ func _to_stash_stack(stack: Dictionary) -> Dictionary:
 	return normalized
 
 
+func _extracted_loadout_from_result(result: Dictionary) -> Dictionary:
+	return {
+		"version": 1,
+		"source": "raid_extraction",
+		"backpack": [],
+		"safe_pocket": [],
+		"equipment": _extracted_equipment_dict(result.get(RaidResultSchema.KEY_EXTRACTED_EQUIPMENT, {})),
+	}
+
+
+func _is_cash_stack(stack: Dictionary) -> bool:
+	var path := str(stack.get("item_path", ""))
+	if path == "":
+		path = str(stack.get("resource_path", ""))
+	return path == CASH_ITEM_PATH
+
+
+func _cash_value(stack: Dictionary) -> int:
+	return maxi(int(stack.get("quantity", 0)), 0) * maxi(int(stack.get("value", 1)), 1)
+
+
 func _store_safe_pocket_items(items: Variant) -> bool:
 	if typeof(items) != TYPE_ARRAY:
 		return false
@@ -151,12 +174,56 @@ func _store_safe_pocket_items(items: Variant) -> bool:
 	return bool(save_manager.save_slot_data(slot_index, save_data))
 
 
+func _store_extracted_items(save_data: Dictionary, items: Variant) -> int:
+	if typeof(items) != TYPE_ARRAY:
+		return 0
+	var stash := StashModelScript.new()
+	var stash_data: Array = []
+	var existing_stash: Variant = save_data.get("stash", [])
+	if typeof(existing_stash) == TYPE_ARRAY:
+		stash_data = existing_stash as Array
+	stash.load_save_data(stash_data)
+
+	var stored_count := 0
+	for stack in items as Array:
+		if typeof(stack) != TYPE_DICTIONARY:
+			continue
+		var stack_dict := stack as Dictionary
+		if _is_cash_stack(stack_dict):
+			continue
+		if stash.add_stack(_to_stash_stack(stack_dict)):
+			stored_count += 1
+
+	save_data["stash"] = stash.to_save_data()
+	return stored_count
+
+
+func _store_extracted_equipment(save_data: Dictionary, equipment_data: Variant) -> void:
+	if typeof(equipment_data) != TYPE_DICTIONARY:
+		return
+	var equipment_dict := equipment_data as Dictionary
+	if not equipment_dict.has("slots"):
+		return
+	save_data["equipment"] = equipment_dict.duplicate(true)
+
+
+func _extracted_equipment_dict(equipment_data: Variant) -> Dictionary:
+	if typeof(equipment_data) != TYPE_DICTIONARY:
+		return {"slots": {}}
+	var equipment_dict := equipment_data as Dictionary
+	if not equipment_dict.has("slots"):
+		return {"slots": {}}
+	return equipment_dict.duplicate(true)
+
+
 func _update_first_salvage_quest(save_data: Dictionary, extracted_items: Variant) -> void:
 	if typeof(extracted_items) != TYPE_ARRAY:
 		return
 	var quests: Dictionary = _quests_dict(save_data.get("quests", {}))
 	var quest_id := str(FirstSalvageQuest.get("id"))
-	var current_state: Dictionary = quests.get(quest_id, QuestStateScript.create(FirstSalvageQuest)) as Dictionary
+	if not quests.has(quest_id):
+		return
+	var current_state: Dictionary = quests.get(quest_id, {}) as Dictionary
 	quests[quest_id] = QuestStateScript.update_from_extracted_items(current_state, FirstSalvageQuest, extracted_items as Array)
 	save_data["quests"] = quests
 

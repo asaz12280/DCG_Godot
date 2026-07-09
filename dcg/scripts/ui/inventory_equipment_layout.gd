@@ -33,15 +33,9 @@ func safe_pocket_rect(panel: Rect2, safe_slot_count: int) -> Rect2:
 	return Rect2(Vector2(panel.end.x + 18.0 * ui_scale, panel.position.y + 90.0 * ui_scale), Vector2(168.0 * ui_scale, safe_height))
 
 
-func premium_currency_rect(panel: Rect2) -> Rect2:
-	var center_x := panel.position.x + panel.size.x * 0.5
-	return Rect2(Vector2(center_x - 104.0 * ui_scale, panel.position.y + 34.0 * ui_scale), Vector2(88.0 * ui_scale, 44.0 * ui_scale))
-
-
 func money_currency_rect(panel: Rect2) -> Rect2:
-	var premium := premium_currency_rect(panel)
 	var center_x := panel.position.x + panel.size.x * 0.5
-	return Rect2(Vector2(center_x + 16.0 * ui_scale, premium.position.y), premium.size)
+	return Rect2(Vector2(center_x - 44.0 * ui_scale, panel.position.y + 34.0 * ui_scale), Vector2(88.0 * ui_scale, 44.0 * ui_scale))
 
 
 func can_show_safe_pocket(rect: Rect2, viewport_size: Vector2) -> bool:

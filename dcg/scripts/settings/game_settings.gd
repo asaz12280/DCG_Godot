@@ -3,7 +3,9 @@
 const CONFIG_PATH := "user://game_settings.cfg"
 const DISPLAY_MODE_FULLSCREEN := "fullscreen"
 const DISPLAY_MODE_WINDOWED := "windowed"
+const SUPPORTED_DISPLAY_MODES := [DISPLAY_MODE_FULLSCREEN, DISPLAY_MODE_WINDOWED]
 const DEFAULT_LOCALE := "zh_TW"
+const SUPPORTED_LANGUAGE_LOCALES := [DEFAULT_LOCALE, "en"]
 const STANDARD_WINDOW_SIZE := Vector2i(1920, 1080)
 const DEFAULT_RESOLUTION := STANDARD_WINDOW_SIZE
 const DEFAULT_DISPLAY_MODE := DISPLAY_MODE_FULLSCREEN
@@ -34,9 +36,10 @@ func _ready() -> void:
 
 
 func set_language_locale(locale: String) -> void:
-	if language_locale == locale:
+	var normalized := _normalize_language_locale(locale)
+	if language_locale == normalized:
 		return
-	language_locale = locale
+	language_locale = normalized
 	_apply_language()
 	save_settings()
 	settings_changed.emit()
@@ -54,10 +57,11 @@ func set_resolution(value: Vector2i) -> void:
 
 
 func set_display_mode(value: String) -> void:
-	if display_mode == value:
+	var normalized := _normalize_display_mode(value)
+	if display_mode == normalized:
 		_apply_display()
 		return
-	display_mode = value
+	display_mode = normalized
 	_apply_display()
 	save_settings()
 	settings_changed.emit()
@@ -141,11 +145,11 @@ func load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(CONFIG_PATH) != OK:
 		return
-	language_locale = str(config.get_value("general", "language_locale", DEFAULT_LOCALE))
+	language_locale = _normalize_language_locale(str(config.get_value("general", "language_locale", DEFAULT_LOCALE)))
 	var width := int(config.get_value("video", "resolution_width", DEFAULT_RESOLUTION.x))
 	var height := int(config.get_value("video", "resolution_height", DEFAULT_RESOLUTION.y))
 	resolution = _clamp_resolution(Vector2i(width, height))
-	display_mode = str(config.get_value("video", "display_mode", DEFAULT_DISPLAY_MODE))
+	display_mode = _normalize_display_mode(str(config.get_value("video", "display_mode", DEFAULT_DISPLAY_MODE)))
 	master_volume = clampi(int(config.get_value("audio", "master_volume", DEFAULT_MASTER_VOLUME)), 0, 100)
 	bgm_volume = clampi(int(config.get_value("audio", "bgm_volume", DEFAULT_BGM_VOLUME)), 0, 100)
 	sfx_volume = clampi(int(config.get_value("audio", "sfx_volume", DEFAULT_SFX_VOLUME)), 0, 100)
@@ -195,6 +199,14 @@ func _clamp_resolution(value: Vector2i) -> Vector2i:
 		maxi(value.x, MIN_RENDER_RESOLUTION.x),
 		maxi(value.y, MIN_RENDER_RESOLUTION.y)
 	)
+
+
+func _normalize_language_locale(value: String) -> String:
+	return value if value in SUPPORTED_LANGUAGE_LOCALES else DEFAULT_LOCALE
+
+
+func _normalize_display_mode(value: String) -> String:
+	return value if value in SUPPORTED_DISPLAY_MODES else DEFAULT_DISPLAY_MODE
 
 
 func _apply_suggested_window_size() -> void:

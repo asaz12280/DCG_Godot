@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_item_def")
 id = &"cash"
-catalog_number = 20
+catalog_number = 13
 name_key = &"item.cash.name"
 description_key = &"item.cash.desc"
 item_type = "currency"

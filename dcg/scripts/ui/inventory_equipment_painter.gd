@@ -72,6 +72,22 @@ func item_label(rect: Rect2, label: String, quantity: int) -> void:
 		text("x%d" % quantity, rect.position + v(8.0, 64.0), 13, Color(0.86, 0.92, 0.86), HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x - 16.0 * ui_scale)
 
 
+func lock_badge(rect: Rect2) -> void:
+	var badge_rect := Rect2(rect.position + v(6.0, 6.0), v(22.0, 18.0))
+	badge(badge_rect, "L", Color(0.94, 0.68, 0.24, 0.95), Color(0.18, 0.10, 0.02, 0.75), Color(0.06, 0.04, 0.02, 1.0))
+
+
+func needed_badge(rect: Rect2) -> void:
+	var badge_size := v(22.0, 18.0)
+	var badge_rect := Rect2(rect.position + Vector2(rect.size.x - badge_size.x - 6.0 * ui_scale, 6.0 * ui_scale), badge_size)
+	badge(badge_rect, "N", Color(0.98, 0.36, 0.43, 0.95), Color(0.22, 0.04, 0.07, 0.78), Color(1.0, 0.96, 0.95, 1.0))
+
+
+func badge(rect: Rect2, label: String, fill_color: Color, border_color: Color, text_color: Color) -> void:
+	panel(rect, fill_color, border_color, 1, 4)
+	text(label, rect.position + v(2.0, 14.0), 11, text_color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 4.0 * ui_scale)
+
+
 func scroll_bar(rect: Rect2, scroll_row: int, max_scroll_row: int, scaled_slot_size: Vector2, scaled_slot_gap: float) -> void:
 	var visible_scroll_rows := 4
 	var track_height := float(visible_scroll_rows) * scaled_slot_size.y + float(maxi(visible_scroll_rows - 1, 0)) * scaled_slot_gap

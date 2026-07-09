@@ -1,8 +1,9 @@
 class_name InventoryContextMenu
 extends RefCounted
 
+signal use_requested(stack_index: int)
+signal mod_requested(stack_index: int)
 signal drop_requested(stack_index: int, stack: Dictionary, screen_position: Vector2, random_near_player: bool)
-signal equip_requested(stack_index: int, stack: Dictionary)
 
 var owner: Control
 var painter: InventoryEquipmentPainter
@@ -10,10 +11,11 @@ var backpack_model: InventoryModel
 var ui_scale: float = 1.0
 var stack_index: int = -1
 var menu_position: Vector2 = Vector2.ZERO
-var equip_rect: Rect2 = Rect2()
+var menu_size: Vector2 = Vector2(148.0, 140.0)
+var use_rect: Rect2 = Rect2()
+var mod_rect: Rect2 = Rect2()
 var split_rect: Rect2 = Rect2()
 var drop_rect: Rect2 = Rect2()
-var can_equip_stack: bool = false
 var split_stack_index: int = -1
 var split_quantity: int = 1
 var dialog_rect: Rect2 = Rect2()
@@ -44,10 +46,10 @@ func handle_mouse_motion(event: InputEventMouseMotion) -> bool:
 	return true
 
 
-func handle_mouse_button(event: InputEventMouseButton, hit_stack_index: int, backpack_items: Array[Dictionary], backpack_slots: int, can_equip: bool = false) -> bool:
+func handle_mouse_button(event: InputEventMouseButton, hit_stack_index: int, backpack_items: Array[Dictionary], backpack_slots: int) -> bool:
 	if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		if hit_stack_index >= 0 and hit_stack_index < backpack_items.size():
-			open_context_menu(hit_stack_index, event.position, can_equip)
+			open_context_menu(hit_stack_index, event.position, backpack_items, backpack_slots)
 		else:
 			close_context_menu()
 		return true
@@ -69,13 +71,20 @@ func handle_mouse_button(event: InputEventMouseButton, hit_stack_index: int, bac
 		return true
 
 	if event.button_index == MOUSE_BUTTON_LEFT and event.pressed and is_context_menu_open(backpack_items):
-		if equip_rect.has_point(event.position):
-			equip_stack_from_context_menu(backpack_items)
+		if not use_rect.size.is_zero_approx() and use_rect.has_point(event.position):
+			var target_use_index := stack_index
+			close_context_menu()
+			use_requested.emit(target_use_index)
 			return true
-		if split_rect.has_point(event.position):
+		if not mod_rect.size.is_zero_approx() and mod_rect.has_point(event.position):
+			var target_mod_index := stack_index
+			close_context_menu()
+			mod_requested.emit(target_mod_index)
+			return true
+		if not split_rect.size.is_zero_approx() and split_rect.has_point(event.position):
 			open_split_dialog(stack_index, backpack_items, backpack_slots)
 			return true
-		if drop_rect.has_point(event.position):
+		if not drop_rect.size.is_zero_approx() and drop_rect.has_point(event.position):
 			drop_stack_from_context_menu(backpack_items)
 			return true
 		if not context_menu_rect().has_point(event.position):
@@ -85,11 +94,10 @@ func handle_mouse_button(event: InputEventMouseButton, hit_stack_index: int, bac
 	return false
 
 
-func open_context_menu(target_stack_index: int, target_menu_position: Vector2, target_can_equip: bool = false) -> void:
+func open_context_menu(target_stack_index: int, target_menu_position: Vector2, backpack_items: Array[Dictionary], backpack_slots: int) -> void:
 	close_split_dialog()
 	stack_index = target_stack_index
-	can_equip_stack = target_can_equip
-	var menu_size := Vector2(148.0, 140.0) * ui_scale
+	menu_size = _context_menu_size_for_stack(target_stack_index, backpack_items, backpack_slots)
 	var viewport_size := owner.get_viewport_rect().size if owner != null else Vector2(1920.0, 1080.0)
 	menu_position = Vector2(
 		clampf(target_menu_position.x, 8.0, viewport_size.x - menu_size.x - 8.0),
@@ -105,8 +113,8 @@ func close_all() -> void:
 
 func close_context_menu() -> void:
 	stack_index = -1
-	can_equip_stack = false
-	equip_rect = Rect2()
+	use_rect = Rect2()
+	mod_rect = Rect2()
 	split_rect = Rect2()
 	drop_rect = Rect2()
 	_request_redraw()
@@ -117,7 +125,7 @@ func is_context_menu_open(backpack_items: Array[Dictionary]) -> bool:
 
 
 func context_menu_rect() -> Rect2:
-	return Rect2(menu_position, Vector2(148.0, 140.0) * ui_scale)
+	return Rect2(menu_position, menu_size)
 
 
 func draw(backpack_items: Array[Dictionary], backpack_slots: int) -> void:
@@ -158,27 +166,34 @@ func drop_stack_from_context_menu(backpack_items: Array[Dictionary]) -> void:
 	drop_requested.emit(target_stack_index, stack, drop_position, true)
 
 
-func equip_stack_from_context_menu(backpack_items: Array[Dictionary]) -> void:
-	if not can_equip_stack or not is_context_menu_open(backpack_items):
-		return
-	var target_stack_index := stack_index
-	var stack := backpack_items[target_stack_index].duplicate(true)
-	close_context_menu()
-	equip_requested.emit(target_stack_index, stack)
-
-
 func _draw_context_menu(backpack_items: Array[Dictionary], backpack_slots: int) -> void:
 	var rect := context_menu_rect()
 	painter.panel(Rect2(rect.position + _v(5.0, 5.0), rect.size), Color(0.0, 0.0, 0.0, 0.24), Color.TRANSPARENT, 0, 14)
 	painter.panel(rect, Color(0.13, 0.18, 0.20, 0.96), Color(0.65, 0.83, 0.88, 0.28), 1, 14)
 
-	equip_rect = Rect2(rect.position + _v(8.0, 8.0), Vector2(rect.size.x - 16.0 * ui_scale, 36.0 * ui_scale))
-	split_rect = Rect2(rect.position + _v(8.0, 52.0), Vector2(rect.size.x - 16.0 * ui_scale, 36.0 * ui_scale))
-	drop_rect = Rect2(rect.position + _v(8.0, 96.0), Vector2(rect.size.x - 16.0 * ui_scale, 36.0 * ui_scale))
-	var can_split := _can_split_stack(stack_index, backpack_items, backpack_slots)
-	_draw_context_button(equip_rect, _localized_text(&"ui.inventory.equip", "裝備"), Color(0.25, 0.56, 0.78, 0.96), can_equip_stack)
-	_draw_context_button(split_rect, _localized_text(&"ui.inventory.split", "拆分"), Color(0.92, 0.50, 0.26, 0.96), can_split)
-	_draw_context_button(drop_rect, _localized_text(&"ui.inventory.drop", "丟棄"), Color(0.82, 0.22, 0.27, 0.96), true)
+	use_rect = Rect2()
+	mod_rect = Rect2()
+	split_rect = Rect2()
+	drop_rect = Rect2()
+	var next_y := 8.0
+	if _can_use_stack(stack_index):
+		use_rect = _action_rect(rect, next_y)
+		_draw_context_button(use_rect, _localized_text(&"ui.inventory.use", "Use"), Color(0.30, 0.55, 0.44, 0.96), true)
+		next_y += 44.0
+	if _can_mod_stack(stack_index):
+		mod_rect = _action_rect(rect, next_y)
+		_draw_context_button(mod_rect, _localized_text(&"ui.inventory.mod", "Mod"), Color(0.30, 0.43, 0.68, 0.96), true)
+		next_y += 44.0
+	if _can_split_stack(stack_index, backpack_items, backpack_slots):
+		split_rect = _action_rect(rect, next_y)
+		_draw_context_button(split_rect, _localized_text(&"ui.inventory.split", "Split"), Color(0.92, 0.50, 0.26, 0.96), true)
+		next_y += 44.0
+	drop_rect = _action_rect(rect, next_y)
+	_draw_context_button(drop_rect, _localized_text(&"ui.inventory.drop", "Drop"), Color(0.82, 0.22, 0.27, 0.96), true)
+
+
+func _action_rect(menu_rect: Rect2, y_offset: float) -> Rect2:
+	return Rect2(menu_rect.position + _v(8.0, y_offset), Vector2(menu_rect.size.x - 16.0 * ui_scale, 36.0 * ui_scale))
 
 
 func _draw_context_button(rect: Rect2, text: String, color: Color, enabled: bool) -> void:
@@ -193,8 +208,8 @@ func _draw_split_dialog() -> void:
 	dialog_rect = Rect2((viewport_size - Vector2(360.0, 210.0) * ui_scale) * 0.5, Vector2(360.0, 210.0) * ui_scale)
 	painter.panel(Rect2(dialog_rect.position + _v(8.0, 8.0), dialog_rect.size), Color(0.0, 0.0, 0.0, 0.28), Color.TRANSPARENT, 0, 18)
 	painter.panel(dialog_rect, Color(0.12, 0.18, 0.20, 0.96), Color(0.68, 0.88, 0.92, 0.32), 1, 18)
-	painter.text(_localized_text(&"ui.inventory.split", "拆分"), dialog_rect.position + _v(0.0, 42.0), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, dialog_rect.size.x)
-	painter.text(_localized_text(&"ui.inventory.split_amount", "拆分數量"), dialog_rect.position + _v(0.0, 76.0), 16, Color(0.80, 0.92, 0.92, 0.84), HORIZONTAL_ALIGNMENT_CENTER, dialog_rect.size.x)
+	painter.text(_localized_text(&"ui.inventory.split", "Split"), dialog_rect.position + _v(0.0, 42.0), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, dialog_rect.size.x)
+	painter.text(_localized_text(&"ui.inventory.split_amount", "Split Amount"), dialog_rect.position + _v(0.0, 76.0), 16, Color(0.80, 0.92, 0.92, 0.84), HORIZONTAL_ALIGNMENT_CENTER, dialog_rect.size.x)
 	painter.text(str(split_quantity), dialog_rect.position + _v(0.0, 108.0), 30, Color(0.72, 0.93, 1.0, 1.0), HORIZONTAL_ALIGNMENT_CENTER, dialog_rect.size.x)
 
 	slider_rect = Rect2(dialog_rect.position + _v(42.0, 122.0), Vector2(dialog_rect.size.x - 84.0 * ui_scale, 18.0 * ui_scale))
@@ -207,8 +222,8 @@ func _draw_split_dialog() -> void:
 
 	confirm_rect = Rect2(dialog_rect.position + _v(34.0, 156.0), Vector2(138.0, 36.0) * ui_scale)
 	cancel_rect = Rect2(dialog_rect.position + _v(188.0, 156.0), Vector2(138.0, 36.0) * ui_scale)
-	_draw_context_button(confirm_rect, _localized_text(&"ui.inventory.split_confirm", "確認拆分"), Color(0.26, 0.58, 0.76, 0.96), true)
-	_draw_context_button(cancel_rect, _localized_text(&"ui.main.back", "返回"), Color(0.34, 0.38, 0.40, 0.96), true)
+	_draw_context_button(confirm_rect, _localized_text(&"ui.inventory.split_confirm", "Confirm Split"), Color(0.26, 0.58, 0.76, 0.96), true)
+	_draw_context_button(cancel_rect, _localized_text(&"ui.main.back", "Back"), Color(0.34, 0.38, 0.40, 0.96), true)
 
 
 func _update_split_quantity_from_position(mouse_position: Vector2) -> void:
@@ -239,6 +254,29 @@ func _can_split_stack(target_stack_index: int, backpack_items: Array[Dictionary]
 	if backpack_model == null or backpack_model.stacks.size() >= backpack_slots:
 		return false
 	return int(backpack_items[target_stack_index].get("quantity", 1)) > 1
+
+
+func _can_use_stack(target_stack_index: int) -> bool:
+	if owner != null and owner.has_method("can_use_backpack_stack"):
+		return bool(owner.call("can_use_backpack_stack", target_stack_index))
+	return false
+
+
+func _can_mod_stack(target_stack_index: int) -> bool:
+	if owner != null and owner.has_method("can_mod_backpack_stack"):
+		return bool(owner.call("can_mod_backpack_stack", target_stack_index))
+	return false
+
+
+func _context_menu_size_for_stack(target_stack_index: int, backpack_items: Array[Dictionary], backpack_slots: int) -> Vector2:
+	var action_count := 1
+	if _can_use_stack(target_stack_index):
+		action_count += 1
+	if _can_mod_stack(target_stack_index):
+		action_count += 1
+	if _can_split_stack(target_stack_index, backpack_items, backpack_slots):
+		action_count += 1
+	return Vector2(148.0, float(action_count * 44 + 16)) * ui_scale
 
 
 func _localized_text(key: StringName, fallback: String) -> String:

@@ -6,7 +6,6 @@ const REQUIRED_INTERACTIONS := {
 	"quests": "任務板",
 	"workbench": "工作台",
 	"raid_gate": "出擊門",
-	"medical": "醫療站",
 }
 
 var _errors: Array[String] = []
@@ -22,7 +21,7 @@ func _initialize() -> void:
 		_validate_not_old_base_panel(scene)
 		scene.queue_free()
 	if _errors.is_empty():
-		print("[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=5")
+		print("[base_3d_scene] OK scene=loadable player=present camera=targeted boundaries=present points=4 medical=removed")
 		quit(0)
 	else:
 		for error in _errors:
@@ -94,6 +93,8 @@ func _validate_interaction_points(scene: Node) -> void:
 	for id in REQUIRED_INTERACTIONS.keys():
 		if not found.has(id):
 			_errors.append("Base 3D missing interaction point id: %s." % id)
+	if found.has("medical"):
+		_errors.append("Base 3D should not include the removed medical station point.")
 
 
 func _collect_interaction_points(node: Node, points: Array[Node]) -> void:

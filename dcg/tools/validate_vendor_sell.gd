@@ -5,7 +5,6 @@ const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd"
 const StashVendorScript := preload("res://scripts/base/stash_vendor.gd")
 
 const JUNK_PATH := "res://data/items/loot/junk.tres"
-const WATCH_PATH := "res://data/items/valuables/old_watch.tres"
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
 
 var _errors: Array[String] = []
@@ -27,13 +26,12 @@ func _initialize() -> void:
 func _validate_vendor_rules() -> void:
 	var stash_data: Array = [
 		{"item_path": JUNK_PATH, "quantity": 5},
-		{"item_path": WATCH_PATH, "quantity": 1},
 		{"item_path": WOOD_PATH, "quantity": 3},
 	]
 	var result: Dictionary = StashVendorScript.sell_all_junk(stash_data, 7)
-	if int(result.get("money_delta", 0)) != 120:
+	if int(result.get("money_delta", 0)) != 10:
 		_errors.append("StashVendor should use ItemDef.value * quantity for sellable junk.")
-	if int(result.get("money", 0)) != 127:
+	if int(result.get("money", 0)) != 17:
 		_errors.append("StashVendor should add sale value to starting money.")
 	var remaining: Array = result.get("remaining_stash", []) as Array
 	if remaining.size() != 1 or str((remaining[0] as Dictionary).get("item_path", "")) != WOOD_PATH:
@@ -51,7 +49,6 @@ func _validate_base_sell_and_save_round_trip() -> void:
 		"money": 10,
 		"stash": [
 			{"item_path": JUNK_PATH, "quantity": 5},
-			{"item_path": WATCH_PATH, "quantity": 1},
 			{"item_path": WOOD_PATH, "quantity": 3},
 		],
 		"base_upgrades": {},
@@ -70,16 +67,16 @@ func _validate_base_sell_and_save_round_trip() -> void:
 		_errors.append("Base sell button should be enabled when stash has sellable junk.")
 
 	var sale_result: Dictionary = base_screen.sell_all_junk()
-	if int(sale_result.get("money_delta", 0)) != 120:
+	if int(sale_result.get("money_delta", 0)) != 10:
 		_errors.append("BaseScreen sell_all_junk should report the sold value.")
 	var after_state: Dictionary = base_screen.get_display_state()
-	if not str(after_state.get("money", "")).contains("$130"):
+	if not str(after_state.get("money", "")).contains("$20"):
 		_errors.append("Base money label should update after selling junk.")
 	if int(after_state.get("stash_rows", 0)) != 1:
 		_errors.append("Base stash rows should remove sold items and keep unsold materials.")
 
 	var loaded: Dictionary = save_manager.get_slot_data(1)
-	if int(loaded.get("money", 0)) != 130:
+	if int(loaded.get("money", 0)) != 20:
 		_errors.append("Saved slot should restore money after selling junk.")
 	var loaded_stash: Array = loaded.get("stash", []) as Array
 	if loaded_stash.size() != 1:

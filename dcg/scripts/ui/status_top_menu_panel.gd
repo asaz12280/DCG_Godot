@@ -234,10 +234,22 @@ func _slot_label(slot_id: StringName) -> String:
 			return _text(&"ui.top.status_slot_headset", "耳機")
 		&"backpack":
 			return _text(&"ui.top.status_slot_backpack", "背包")
+		&"weapon_mag":
+			return _text(&"ui.top.status_slot_weapon_mag", "Magazine")
+		&"weapon_grip":
+			return _text(&"ui.top.status_slot_weapon_grip", "Grip")
+		&"weapon_muzzle":
+			return _text(&"ui.top.status_slot_weapon_muzzle", "Muzzle")
+		&"weapon_scope":
+			return _text(&"ui.top.status_slot_weapon_scope", "Scope")
+		&"weapon_stock":
+			return _text(&"ui.top.status_slot_weapon_stock", "Stock")
+		&"weapon_tactic":
+			return _text(&"ui.top.status_slot_weapon_tactic", "Tactic")
 		&"charm_1":
-			return _text(&"ui.top.status_slot_charm_1", "掛飾 1")
+			return _text(&"ui.top.status_slot_charm_1", "圖騰 1")
 		&"charm_2":
-			return _text(&"ui.top.status_slot_charm_2", "掛飾 2")
+			return _text(&"ui.top.status_slot_charm_2", "圖騰 2")
 		_:
 			return str(slot_id)
 

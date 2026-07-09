@@ -3,6 +3,7 @@ extends Node3D
 
 const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.gd")
+const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
 const DEFAULT_PROJECTILE_SCENE := preload("res://scenes/combat/projectile_3d.tscn")
 const DEFAULT_SHOT_FEEDBACK_SCENE := preload("res://scenes/combat/shot_feedback_3d.tscn")
 
@@ -20,6 +21,7 @@ signal reload_blocked(reason: StringName)
 @export var shot_feedback_scene: PackedScene = DEFAULT_SHOT_FEEDBACK_SCENE
 @export_range(0.0, 5.0, 0.01) var fire_cooldown_seconds := 0.28
 @export_range(0, 999, 1) var magazine_size := 8
+@export_range(0, 999, 1) var magazine_capacity_bonus := 0
 @export_range(0, 999, 1) var current_ammo := 0
 @export_range(0, 999, 1) var reserve_ammo := 0
 
@@ -40,6 +42,7 @@ var last_reload_result := {
 
 var _last_fire_time := -9999.0
 var _ammo_model := WeaponAmmoModelScript.new()
+var _attachment_modifiers: Dictionary = {}
 
 
 func _init() -> void:
@@ -48,6 +51,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	_connect_ammo_model()
+	_apply_weapon_tuning_from_def()
 	_sync_ammo_model_from_public_counts()
 
 
@@ -116,14 +120,18 @@ func get_reload_block_reason() -> StringName:
 	return &""
 
 
-func equip_weapon(item_def: ItemDef) -> bool:
+func equip_weapon(item_def: ItemDef, capacity_bonus: int = 0, attachment_modifiers: Dictionary = {}) -> bool:
 	if item_def == null or item_def.item_type != "weapon":
 		clear_weapon()
 		return false
 	var loaded_count := current_ammo
 	var reserve_count := reserve_ammo
 	weapon_def = item_def
-	_ammo_model.configure_weapon(item_def, true)
+	_attachment_modifiers = _attachment_modifiers_with_capacity(capacity_bonus, attachment_modifiers)
+	var snapshot := get_tuning_snapshot()
+	magazine_capacity_bonus = maxi(int(snapshot.get("magazine_capacity_bonus", capacity_bonus)), 0)
+	_apply_weapon_tuning_from_def()
+	_ammo_model.configure_weapon(item_def, true, magazine_capacity_bonus)
 	_ammo_model.set_counts(loaded_count, reserve_count)
 	_sync_public_ammo_counts()
 	return true
@@ -131,6 +139,8 @@ func equip_weapon(item_def: ItemDef) -> bool:
 
 func clear_weapon() -> void:
 	weapon_def = null
+	magazine_capacity_bonus = 0
+	_attachment_modifiers = {}
 	_ammo_model.clear_weapon(true)
 	_sync_public_ammo_counts()
 
@@ -141,6 +151,10 @@ func has_weapon() -> bool:
 
 func get_ammo_model() -> RefCounted:
 	return _ammo_model
+
+
+func get_tuning_snapshot(durability_state: Dictionary = {}) -> Dictionary:
+	return WeaponTuningServiceScript.resolve_snapshot(weapon_def, _current_ammo_item(), _attachment_modifiers, durability_state)
 
 
 func set_reserve_ammo_from_item(ammo_item: ItemDef, quantity: int) -> bool:
@@ -215,12 +229,42 @@ func force_cooldown_ready() -> void:
 
 
 func _make_damage_event() -> DamageEvent:
-	var damage := fallback_damage
+	var snapshot := get_tuning_snapshot()
+	var damage := maxf(float(snapshot.get("damage", fallback_damage)), 0.0)
+	if not bool(snapshot.get("valid", false)):
+		damage = fallback_damage
 	var tags: Array[StringName] = []
+	var critical_chance := WeaponTuningServiceScript.chance_percent(float(snapshot.get("critical_chance", 0.0)))
+	var projectile_pierce_chance := WeaponTuningServiceScript.chance_percent(float(snapshot.get("projectile_pierce_chance", 0.0)))
 	if weapon_def != null:
-		damage = float(maxi(weapon_def.damage, roundi(fallback_damage)))
 		tags = weapon_def.tags.duplicate()
-	return DamageEventScript.new(damage, get_parent(), weapon_def, tags)
+	var is_critical := WeaponTuningServiceScript.chance_succeeds(critical_chance)
+	if is_critical:
+		damage *= WeaponTuningServiceScript.CRITICAL_DAMAGE_MULTIPLIER
+	var event: DamageEvent = DamageEventScript.new(damage, get_parent(), weapon_def, tags)
+	var penetration := maxf(float(snapshot.get("armor_penetration_level", 0.0)), 0.0)
+	event.critical_chance = critical_chance
+	event.is_critical = is_critical
+	event.projectile_pierce_chance = projectile_pierce_chance
+	var ammo_item := _current_ammo_item()
+	if ammo_item != null:
+		event.ammo_def = ammo_item
+	event.armor_penetration_level = penetration
+	return event
+
+
+func _current_ammo_damage_multiplier() -> float:
+	var ammo_item := _current_ammo_item()
+	if ammo_item == null:
+		return 1.0
+	return ammo_item.get_ammo_damage_multiplier()
+
+
+func _current_ammo_item() -> ItemDef:
+	var ammo_item := _ammo_model.ammo_def
+	if ammo_item == null or ammo_item.item_type != "ammo":
+		return null
+	return ammo_item
 
 
 func _begin_fire_attempt() -> bool:
@@ -276,6 +320,8 @@ func _spawn_projectile(origin: Vector3, direction: Vector3) -> bool:
 		projectile.call("setup", origin, direction, event, weapon_def, get_parent())
 	else:
 		projectile.global_position = origin
+	if _object_has_property(projectile, &"max_distance"):
+		projectile.set("max_distance", maxf(weapon_range, 0.0))
 	if projectile.has_signal("projectile_hit"):
 		projectile.projectile_hit.connect(_on_projectile_hit)
 	if projectile.has_signal("projectile_missed"):
@@ -345,6 +391,7 @@ func _connect_ammo_model() -> void:
 
 func _sync_public_ammo_counts() -> void:
 	magazine_size = int(_ammo_model.get_state().get("magazine_capacity", magazine_size))
+	magazine_capacity_bonus = int(_ammo_model.get_state().get("magazine_capacity_bonus", magazine_capacity_bonus))
 	current_ammo = int(_ammo_model.get_state().get("loaded_ammo", current_ammo))
 	reserve_ammo = int(_ammo_model.get_state().get("reserve_ammo", reserve_ammo))
 	last_fire_result["current_ammo"] = current_ammo
@@ -360,9 +407,37 @@ func _sync_ammo_model_from_public_counts() -> void:
 		_ammo_model.clear_weapon(true)
 		_ammo_model.set_counts(loaded_count, reserve_count)
 		return
-	if _ammo_model.get_state().get("weapon_id", &"") != weapon_def.id:
-		_ammo_model.configure_weapon(weapon_def, true)
+	var model_state: Dictionary = _ammo_model.get_state()
+	if model_state.get("weapon_id", &"") != weapon_def.id or int(model_state.get("magazine_capacity_bonus", 0)) != maxi(magazine_capacity_bonus, 0):
+		_ammo_model.configure_weapon(weapon_def, true, magazine_capacity_bonus)
 	_ammo_model.set_counts(loaded_count, reserve_count)
+
+
+func _apply_weapon_tuning_from_def() -> void:
+	if weapon_def == null:
+		return
+	var snapshot := get_tuning_snapshot()
+	if float(snapshot.get("fire_rate_per_second", 0.0)) > 0.0:
+		fire_cooldown_seconds = float(snapshot.get("fire_cooldown_seconds", fire_cooldown_seconds))
+	if float(snapshot.get("projectile_range", 0.0)) > 0.0:
+		weapon_range = float(snapshot.get("projectile_range_meters", weapon_range))
+
+
+func _attachment_modifiers_with_capacity(capacity_bonus: int, attachment_modifiers: Dictionary) -> Dictionary:
+	var result := attachment_modifiers.duplicate(true)
+	if result.is_empty():
+		result = {
+			"magazine_capacity_bonus": maxi(capacity_bonus, 0),
+			"vertical_recoil_multiplier": 1.0,
+			"horizontal_recoil_multiplier": 1.0,
+			"recoil_recovery_multiplier": 1.0,
+			"spread_multiplier": 1.0,
+			"attachment_ids": [],
+			"attachment_slots": [],
+		}
+	else:
+		result["magazine_capacity_bonus"] = maxi(int(result.get("magazine_capacity_bonus", capacity_bonus)), maxi(capacity_bonus, 0))
+	return result
 
 
 func _cooldown_remaining() -> float:
@@ -371,6 +446,15 @@ func _cooldown_remaining() -> float:
 
 func _now_seconds() -> float:
 	return float(Time.get_ticks_msec()) / 1000.0
+
+
+func _object_has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property in object.get_property_list():
+		if StringName(str(property.get("name", ""))) == property_name:
+			return true
+	return false
 
 
 func _resolve_damage_target(target: Node) -> Node:

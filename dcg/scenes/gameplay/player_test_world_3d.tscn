@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://ddcgv3rfkvh5i"]
+[gd_scene format=3 uid="uid://ddcgv3rfkvh5i"]
 
 [ext_resource type="PackedScene" uid="uid://bxq7u5q3qmt3e" path="res://scenes/player/player_3d.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://cue3rog74713e" path="res://scripts/ui/player_hud_3d.gd" id="2_hud"]
@@ -8,24 +8,30 @@
 [ext_resource type="PackedScene" uid="uid://uu11pgwdptgi" path="res://scenes/props/fence_post_prop.tscn" id="6_post"]
 [ext_resource type="Script" uid="uid://o686vypu1rvs" path="res://scripts/ui/inventory_equipment_ui.gd" id="7_inventory_ui"]
 [ext_resource type="Script" uid="uid://buy17adl3daxv" path="res://scripts/gameplay/display_mode_3d.gd" id="8_display_mode"]
-[ext_resource type="PackedScene" uid="uid://dxu3jeh2qcaii" path="res://scenes/items/loot_pickup_wood.tscn" id="9_loot_pickup"]
 [ext_resource type="Script" uid="uid://bnmfsqa7lp6fl" path="res://scripts/ui/item_codex_ui.gd" id="10_item_codex_ui"]
 [ext_resource type="Script" uid="uid://c88trysktctm7" path="res://scripts/ui/top_menu_bar.gd" id="11_top_menu_bar"]
 [ext_resource type="Script" uid="uid://devi22diatgl3" path="res://scripts/combat/damageable_3d.gd" id="12_damageable"]
 [ext_resource type="Script" uid="uid://dtlj10iy2nmcq" path="res://scripts/ui/pause_menu.gd" id="13_pause_menu"]
-[ext_resource type="Script" path="res://scripts/raid/raid_session.gd" id="14_raid_session"]
-[ext_resource type="Script" path="res://scripts/raid/extraction_zone_3d.gd" id="15_extraction_zone"]
+[ext_resource type="Script" uid="uid://br1o1k1cugpa4" path="res://scripts/raid/raid_session.gd" id="14_raid_session"]
+[ext_resource type="Script" uid="uid://dea7t22rge4yw" path="res://scripts/raid/extraction_zone_3d.gd" id="15_extraction_zone"]
 [ext_resource type="PackedScene" path="res://scenes/ui/raid_result_panel.tscn" id="16_raid_result_panel"]
-[ext_resource type="Script" path="res://scripts/raid/raid_result_applier.gd" id="17_raid_result_applier"]
+[ext_resource type="Script" uid="uid://c4caub3visqfm" path="res://scripts/raid/raid_result_applier.gd" id="17_raid_result_applier"]
 [ext_resource type="PackedScene" path="res://scenes/loot/loot_container_basic.tscn" id="18_loot_container"]
 [ext_resource type="PackedScene" path="res://scenes/ui/raid_hud_panel.tscn" id="19_raid_hud_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/container_inventory_ui.tscn" id="20_container_inventory_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/quest_top_menu_panel.tscn" id="21_quest_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/status_top_menu_panel.tscn" id="22_status_top_menu_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/map_top_menu_panel.tscn" id="23_map_top_menu_panel"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/scavenger_3d.tscn" id="24_scavenger"]
+[ext_resource type="PackedScene" uid="uid://dbvid3gp3f26y" path="res://scenes/enemies/scavenger_3d.tscn" id="24_scavenger"]
 [ext_resource type="Resource" path="res://data/items/keys/warehouse_key.tres" id="25_warehouse_key"]
-[ext_resource type="Script" path="res://scripts/quests/location_quest_trigger_3d.gd" id="26_location_quest"]
+[ext_resource type="Script" uid="uid://ckkkrriwcjnrb" path="res://scripts/quests/location_quest_trigger_3d.gd" id="26_location_quest"]
+[ext_resource type="Script" uid="uid://h7s3p6x6alq3" path="res://scripts/gameplay/navigation_manager_3d.gd" id="27_navigation_manager"]
+[ext_resource type="Resource" uid="uid://dj54tnruqnpro" path="res://data/loot_tables/crate_dark_green_weapons.tres" id="28_dark_green_loot"]
+[ext_resource type="Resource" uid="uid://cir0jcwv0dq6a" path="res://data/loot_tables/crate_red_supplies.tres" id="29_red_loot"]
+[ext_resource type="Resource" uid="uid://01qc7g2cpa5h" path="res://data/loot_tables/crate_white_misc_food.tres" id="30_white_loot"]
+[ext_resource type="Resource" uid="uid://b7wcqqfnarg1j" path="res://data/loot_tables/crate_yellow_locked_cache.tres" id="31_yellow_loot"]
+[ext_resource type="Resource" uid="uid://j2dc08skvhje" path="res://data/loot_tables/crate_blue_locked_armor.tres" id="32_blue_loot"]
+[ext_resource type="PackedScene" path="res://scenes/items/loot_pickup_warehouse_key.tscn" id="33_warehouse_key_pickup"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -46,6 +52,10 @@ roughness = 0.92
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(32, 0.2, 32)
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_raid_walkable"]
+vertices = PackedVector3Array(-16, 0, -16, -4.8, 0, -16, 3.8, 0, -16, 16, 0, -16, -16, 0, 3.05, -4.8, 0, 3.05, 3.8, 0, 3.05, 16, 0, 3.05, -16, 0, 4.95, -4.8, 0, 4.95, 3.8, 0, 4.95, 16, 0, 4.95, -16, 0, 16, -4.8, 0, 16, 3.8, 0, 16, 16, 0, 16)
+polygons = [PackedInt32Array(0, 1, 5, 4), PackedInt32Array(1, 2, 6, 5), PackedInt32Array(2, 3, 7, 6), PackedInt32Array(4, 5, 9, 8), PackedInt32Array(6, 7, 11, 10), PackedInt32Array(8, 9, 13, 12), PackedInt32Array(9, 10, 14, 13), PackedInt32Array(10, 11, 15, 14)]
+
 [sub_resource type="BoxMesh" id="BoxMesh_rope"]
 size = Vector3(0.08, 0.08, 1.6)
 
@@ -55,29 +65,6 @@ roughness = 0.9
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rope"]
 size = Vector3(0.08, 0.08, 1.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_combat_target"]
-size = Vector3(0.9, 1.2, 0.9)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_combat_target"]
-albedo_color = Color(0.72, 0.22, 0.18, 1)
-roughness = 0.82
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_combat_target"]
-size = Vector3(0.9, 1.2, 0.9)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_extraction_zone"]
-top_radius = 1.6
-bottom_radius = 1.6
-height = 0.08
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_extraction_zone"]
-albedo_color = Color(0.22, 0.72, 0.58, 0.72)
-roughness = 0.68
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_extraction_zone"]
-radius = 1.6
-height = 1.8
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_radio_zone"]
 top_radius = 1.1
@@ -96,8 +83,31 @@ albedo_color = Color(0.38, 0.44, 0.5, 1)
 roughness = 0.68
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_radio_zone"]
-radius = 1.15
 height = 1.6
+radius = 1.15
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_extraction_zone"]
+top_radius = 1.6
+bottom_radius = 1.6
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_extraction_zone"]
+albedo_color = Color(0.22, 0.72, 0.58, 0.72)
+roughness = 0.68
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_extraction_zone"]
+height = 1.8
+radius = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_combat_target"]
+size = Vector3(0.9, 1.2, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_combat_target"]
+albedo_color = Color(0.72, 0.22, 0.18, 1)
+roughness = 0.82
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_combat_target"]
+size = Vector3(0.9, 1.2, 0.9)
 
 [node name="PlayerTestWorld3D" type="Node3D" unique_id=533737286]
 
@@ -128,10 +138,21 @@ surface_material_override/0 = SubResource("StandardMaterial3D_floor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_floor")
 
+[node name="RaidNavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=735030229]
+navigation_mesh = SubResource("NavigationMesh_raid_walkable")
+
+[node name="NavigationManager3D" type="Node" parent="." unique_id=617932876]
+script = ExtResource("27_navigation_manager")
+navigation_region_path = NodePath("../RaidNavigationRegion3D")
+scope_root_path = NodePath("../SceneProps")
+
 [node name="SceneProps" type="Node3D" parent="." unique_id=2039664955]
 
 [node name="PlayerSpawnMarker" type="Node3D" parent="SceneProps" unique_id=1719324676 groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+
+[node name="LootPickupWarehouseKey" parent="SceneProps" unique_id=1327673698 instance=ExtResource("33_warehouse_key_pickup")]
+transform = Transform3D(0.95, 0, 0, 0, 0.95, 0, 0, 0, 0.95, 0.9, 0, 3.2)
 
 [node name="TreeSmall" parent="SceneProps" unique_id=1264764924 instance=ExtResource("4_tree")]
 transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -6.8, 0, 3.8)
@@ -154,7 +175,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 3.8)
 [node name="FencePostSouth05" parent="SceneProps" unique_id=1021701242 instance=ExtResource("6_post")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 4.3)
 
-[node name="RopeSouth01" type="StaticBody3D" parent="SceneProps" unique_id=1054148740]
+[node name="RopeSouth01" type="StaticBody3D" parent="SceneProps" unique_id=1054148740 groups=["navigation_blocker"]]
 transform = Transform3D(-0.20065436, 0, 1.0707707, 0, 1, 0, -0.97966206, 0, -0.21931523, -3.35, 0.75, 4.1)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth01" unique_id=708237648]
@@ -164,7 +185,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_rope")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth01" unique_id=492128359]
 shape = SubResource("BoxShape3D_rope")
 
-[node name="RopeSouth02" type="StaticBody3D" parent="SceneProps" unique_id=1004280752]
+[node name="RopeSouth02" type="StaticBody3D" parent="SceneProps" unique_id=1004280752 groups=["navigation_blocker"]]
 transform = Transform3D(0.14027438, 0, 1.1901156, 0, 1, 0, -0.99011266, 0, 0.16860978, -1.55, 0.75, 4.05)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth02" unique_id=1061197115]
@@ -174,7 +195,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_rope")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth02" unique_id=945337018]
 shape = SubResource("BoxShape3D_rope")
 
-[node name="RopeSouth03" type="StaticBody3D" parent="SceneProps" unique_id=1288219299]
+[node name="RopeSouth03" type="StaticBody3D" parent="SceneProps" unique_id=1288219299 groups=["navigation_blocker"]]
 transform = Transform3D(-0.21339189, 0, 1.1264427, 0, 1, 0, -0.9769666, 0, -0.24604087, 0.3, 0.75, 4)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth03" unique_id=118895292]
@@ -184,7 +205,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_rope")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth03" unique_id=2079887272]
 shape = SubResource("BoxShape3D_rope")
 
-[node name="RopeSouth04" type="StaticBody3D" parent="SceneProps" unique_id=1562635261]
+[node name="RopeSouth04" type="StaticBody3D" parent="SceneProps" unique_id=1562635261 groups=["navigation_blocker"]]
 transform = Transform3D(0.2830674, 0, 1.1307789, 0, 1, 0, -0.9591, 0, 0.3337365, 2.1, 0.75, 4.05)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SceneProps/RopeSouth04" unique_id=85058424]
@@ -194,70 +215,87 @@ surface_material_override/0 = SubResource("StandardMaterial3D_rope")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RopeSouth04" unique_id=1242632377]
 shape = SubResource("BoxShape3D_rope")
 
-[node name="LootPickupWood" parent="SceneProps" unique_id=167904670 instance=ExtResource("9_loot_pickup")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0, 0)
-
 [node name="LootContainerNorth" parent="SceneProps" unique_id=780359184 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.95, 0, 0, 0, 0.95, 0, 0, 0, 0.95, -4.8, 0, -2.8)
+loot_table = ExtResource("28_dark_green_loot")
+body_color = Color(0.08, 0.18, 0.12, 1)
+lid_color = Color(0.03, 0.11, 0.07, 1)
+prompt_color = Color(0.72, 1, 0.72, 1)
 
 [node name="LootContainerEast" parent="SceneProps" unique_id=1888719321 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.86, 0, 0.28, 0, 0.9, 0, -0.28, 0, 0.86, 5.2, 0, 1.9)
+loot_table = ExtResource("29_red_loot")
+body_color = Color(0.68, 0.08, 0.06, 1)
+lid_color = Color(0.42, 0.03, 0.03, 1)
+prompt_color = Color(1, 0.62, 0.52, 1)
 
 [node name="LootContainerSouth" parent="SceneProps" unique_id=1499102481 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.72, 0, -0.42, 0, 0.84, 0, 0.42, 0, 0.72, -1.8, 0, 5.2)
+loot_table = ExtResource("30_white_loot")
+body_color = Color(0.92, 0.92, 0.84, 1)
+lid_color = Color(0.72, 0.72, 0.66, 1)
+prompt_color = Color(1, 1, 0.86, 1)
 
-[node name="LockedWarehouseCache" parent="SceneProps" instance=ExtResource("18_loot_container")]
+[node name="LockedWarehouseCache" parent="SceneProps" unique_id=1602622676 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.86, 0, 0, 0, 0.86, 0, 0, 0, 0.86, 2.8, 0, -3.25)
+loot_table = ExtResource("31_yellow_loot")
+body_color = Color(0.95, 0.72, 0.08, 1)
+lid_color = Color(0.74, 0.48, 0.02, 1)
+prompt_color = Color(1, 0.86, 0.32, 1)
 is_locked = true
 required_key = ExtResource("25_warehouse_key")
-display_name = "上鎖箱"
 display_name_key = &"ui.container.locked_name"
+display_name = "上鎖箱"
 prompt_text = "按 E 開啟上鎖箱"
 opened_prompt_text = "按 E 查看上鎖箱"
-locked_prompt_text = "需要鑰匙"
-unlocked_prompt_text = "按 E 開啟上鎖箱"
-missing_key_feedback = "需要倉庫鑰匙"
 
-[node name="LockedLabel" type="Label3D" parent="SceneProps/LockedWarehouseCache"]
+[node name="LockedLabel" type="Label3D" parent="SceneProps/LockedWarehouseCache" unique_id=339237195]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
 billboard = 1
+modulate = Color(1, 0.86, 0.32, 1)
+outline_modulate = Color(0.08, 0.07, 0.04, 1)
 text = "上鎖箱"
 font_size = 36
 outline_size = 8
-modulate = Color(1, 0.86, 0.32, 1)
-outline_modulate = Color(0.08, 0.07, 0.04, 1)
 
-[node name="RadioTowerQuestPoint" type="Area3D" parent="SceneProps" groups=["location_quest_point"]]
+[node name="LockedBlueArmorCache" parent="SceneProps" unique_id=1590471518 instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.78, 0, -0.2, 0, 0.82, 0, 0.2, 0, 0.78, 4.6, 0, -4.4)
+loot_table = ExtResource("32_blue_loot")
+body_color = Color(0.08, 0.22, 0.58, 1)
+lid_color = Color(0.04, 0.12, 0.34, 1)
+prompt_color = Color(0.58, 0.82, 1, 1)
+is_locked = true
+required_key = ExtResource("25_warehouse_key")
+display_name_key = &"ui.container.blue_locked_name"
+
+[node name="RadioTowerQuestPoint" type="Area3D" parent="SceneProps" unique_id=2139692445 groups=["location_quest_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7, 0.85, -3.45)
 script = ExtResource("26_location_quest")
-location_id = "radio_tower"
-prompt_text = "按 E 調查訊號塔"
 completed_text = "訊號塔已記錄"
 
-[node name="ZoneMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint"]
+[node name="ZoneMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint" unique_id=1728845996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82, 0)
 mesh = SubResource("CylinderMesh_radio_zone")
 surface_material_override/0 = SubResource("StandardMaterial3D_radio_zone")
 
-[node name="TowerMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint"]
+[node name="TowerMarker" type="MeshInstance3D" parent="SceneProps/RadioTowerQuestPoint" unique_id=57320756]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 0.25, 0)
 mesh = SubResource("BoxMesh_radio_tower")
 surface_material_override/0 = SubResource("StandardMaterial3D_radio_tower")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RadioTowerQuestPoint"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SceneProps/RadioTowerQuestPoint" unique_id=223470673]
 shape = SubResource("CylinderShape3D_radio_zone")
 
-[node name="PromptLabel" type="Label3D" parent="SceneProps/RadioTowerQuestPoint"]
+[node name="PromptLabel" type="Label3D" parent="SceneProps/RadioTowerQuestPoint" unique_id=203340901]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.55, 0)
 billboard = 1
-text = "按 E 調查訊號塔"
-font_size = 32
-outline_size = 8
 modulate = Color(0.64, 0.84, 1, 1)
 outline_modulate = Color(0.05, 0.08, 0.16, 1)
+text = "按 E 調查訊號塔"
+outline_size = 8
 
 [node name="ScavengerPatrol01" parent="SceneProps" unique_id=1735923851 instance=ExtResource("24_scavenger")]
-transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 4.8, 0, -1.6)
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.6662855, 0, -12.115003)
 
 [node name="ExtractionZone" type="Area3D" parent="SceneProps" unique_id=1094740989 groups=["extraction_zone"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0.9, -5.6)
@@ -275,10 +313,10 @@ shape = SubResource("CylinderShape3D_extraction_zone")
 [node name="PromptLabel" type="Label3D" parent="SceneProps/ExtractionZone" unique_id=928440655]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 1.25, 0)
 billboard = 1
+modulate = Color(0.88, 1, 0.94, 1)
 text = "Extraction Zone"
 font_size = 42
 outline_size = 8
-modulate = Color(0.88, 1, 0.94, 1)
 
 [node name="CombatTarget" type="StaticBody3D" parent="SceneProps" unique_id=1245573211 groups=["damageable"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.6, -2.4)
@@ -293,6 +331,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_combat_target")
 shape = SubResource("BoxShape3D_combat_target")
 
 [node name="Player3D" parent="." unique_id=1420536322 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.0077815)
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=364342368]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, 6.8)
@@ -315,11 +354,11 @@ offset_bottom = 104.0
 grow_horizontal = 2
 script = ExtResource("11_top_menu_bar")
 
-[node name="QuestTopMenuPanel" parent="HUD" instance=ExtResource("21_quest_top_menu_panel")]
+[node name="QuestTopMenuPanel" parent="HUD" unique_id=1889116025 instance=ExtResource("21_quest_top_menu_panel")]
 
-[node name="StatusTopMenuPanel" parent="HUD" instance=ExtResource("22_status_top_menu_panel")]
+[node name="StatusTopMenuPanel" parent="HUD" unique_id=170171689 instance=ExtResource("22_status_top_menu_panel")]
 
-[node name="MapTopMenuPanel" parent="HUD" instance=ExtResource("23_map_top_menu_panel")]
+[node name="MapTopMenuPanel" parent="HUD" unique_id=1594096944 instance=ExtResource("23_map_top_menu_panel")]
 
 [node name="PlayerHud3D" type="Control" parent="HUD" unique_id=203906436]
 layout_mode = 3
@@ -330,10 +369,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_hud")
 
-[node name="RaidHudPanel" parent="HUD" instance=ExtResource("19_raid_hud_panel")]
+[node name="RaidHudPanel" parent="HUD" unique_id=687850984 instance=ExtResource("19_raid_hud_panel")]
 visible = false
 
-[node name="ContainerInventoryUI" parent="HUD" instance=ExtResource("20_container_inventory_ui")]
+[node name="ContainerInventoryUI" parent="HUD" unique_id=1993171954 instance=ExtResource("20_container_inventory_ui")]
 
 [node name="InventoryEquipmentUI" type="Control" parent="HUD" unique_id=1088497690]
 layout_mode = 3

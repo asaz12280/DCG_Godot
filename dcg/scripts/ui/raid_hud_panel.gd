@@ -3,6 +3,7 @@ extends Control
 
 const RaidHUDStyle := preload("res://scripts/ui/ui_style.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
+const RecoilReticleScript := preload("res://scripts/ui/recoil_reticle.gd")
 
 @export var raid_session_path: NodePath = NodePath("../../RaidSession")
 @export var extraction_zone_path: NodePath = NodePath("../../SceneProps/ExtractionZone")
@@ -27,6 +28,7 @@ var _raid_session: Node = null
 var _extraction_zone: Node = null
 var _player: Node = null
 var _weapon_controller: Node = null
+var _recoil_reticle: Control = null
 var _extraction_active := false
 var _extraction_remaining := 0.0
 var _reload_status_hold := 0.0
@@ -40,13 +42,17 @@ func _ready() -> void:
 	if get_viewport() != null and not get_viewport().size_changed.is_connected(_apply_responsive_layout):
 		get_viewport().size_changed.connect(_apply_responsive_layout)
 	_apply_responsive_layout()
+	_ensure_recoil_reticle.call_deferred()
 
 
 func _process(_delta: float) -> void:
+	if not visible:
+		return
 	_update_raid_status()
 	_update_vitals()
 	_update_ammo()
 	_update_weapon_status()
+	_update_recoil_reticle()
 	_update_reload_hold(_delta)
 
 
@@ -66,6 +72,7 @@ func get_display_state() -> Dictionary:
 		"reload": reload_label.text,
 		"reload_progress": reload_progress.value,
 		"reload_visible": reload_progress.visible,
+		"recoil_reticle": _recoil_reticle.call("get_display_state") if _recoil_reticle != null else {},
 		"panel_rect": Rect2(global_position, size),
 		"mouse_filter": mouse_filter,
 		"visible": visible,
@@ -91,6 +98,8 @@ func _bind_world_nodes() -> void:
 	_update_ammo()
 	_update_weapon_status()
 	_update_reload_idle()
+	_ensure_recoil_reticle()
+	_update_recoil_reticle()
 
 
 func _connect_raid_session() -> void:
@@ -122,6 +131,33 @@ func _connect_player_reload() -> void:
 		return
 	if _player.has_signal("reload_progress_changed") and not _player.reload_progress_changed.is_connected(_on_reload_progress_changed):
 		_player.reload_progress_changed.connect(_on_reload_progress_changed)
+	if _player.has_signal("item_use_progress_changed") and not _player.item_use_progress_changed.is_connected(_on_item_use_progress_changed):
+		_player.item_use_progress_changed.connect(_on_item_use_progress_changed)
+
+
+func _ensure_recoil_reticle() -> void:
+	if _recoil_reticle != null and is_instance_valid(_recoil_reticle):
+		return
+	var container := _reticle_container()
+	if container == null:
+		return
+	var existing := container.get_node_or_null("RecoilReticle")
+	if existing != null and existing.get_script() == RecoilReticleScript:
+		_recoil_reticle = existing as Control
+	else:
+		_recoil_reticle = RecoilReticleScript.new() as Control
+		_recoil_reticle.name = "RecoilReticle"
+		container.add_child(_recoil_reticle)
+	_recoil_reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_recoil_reticle.visible = visible
+	_recoil_reticle.set_anchors_preset(Control.PRESET_FULL_RECT)
+
+
+func _reticle_container() -> Node:
+	var parent := get_parent()
+	if parent != null:
+		return parent
+	return self
 
 
 func _apply_styles() -> void:
@@ -240,15 +276,32 @@ func _update_weapon_status() -> void:
 	]
 
 
+func _update_recoil_reticle() -> void:
+	if _recoil_reticle == null or not is_instance_valid(_recoil_reticle):
+		_ensure_recoil_reticle()
+	if _recoil_reticle == null:
+		return
+	_recoil_reticle.visible = visible
+	var state := {}
+	if _player != null and _player.has_method("get_last_weapon_recoil_state"):
+		state = _player.call("get_last_weapon_recoil_state")
+	_recoil_reticle.call("set_recoil_state", state)
+
+
 func _weapon_status_text() -> String:
 	if _is_player_reloading():
 		return _text(&"ui.raid_hud.weapon_status_reloading", "裝填中")
+	if _is_player_using_item():
+		return _text(&"ui.raid_hud.weapon_status_using_item", "")
 	if _weapon_controller == null:
 		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
 	if _weapon_controller.has_method("has_weapon") and not bool(_weapon_controller.call("has_weapon")):
 		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
 	if _weapon_controller.get("weapon_def") == null:
 		return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	var durability_status := _weapon_durability_status_text(true)
+	if durability_status != "":
+		return durability_status
 	var current := int(_weapon_controller.get("current_ammo"))
 	if current <= 0:
 		return _text(&"ui.raid_hud.weapon_status_empty", "空彈")
@@ -260,13 +313,40 @@ func _weapon_status_text() -> String:
 			return _text(&"ui.raid_hud.weapon_status_empty", "空彈")
 		if reason == &"no_weapon":
 			return _text(&"ui.raid_hud.weapon_status_unarmed", "未裝備")
+	durability_status = _weapon_durability_status_text()
+	if durability_status != "":
+		return durability_status
 	return _text(&"ui.raid_hud.weapon_status_ready", "可射擊")
+
+
+func _weapon_durability_status_text(broken_only: bool = false) -> String:
+	if _player == null or not _player.has_method("get_active_weapon_durability_state"):
+		return ""
+	var state: Dictionary = _player.call("get_active_weapon_durability_state")
+	if not bool(state.get("has_durability", false)):
+		return ""
+	var current := int(state.get("current_durability", 0))
+	var maximum := int(state.get("max_durability", 0))
+	if bool(state.get("durability_is_broken", false)):
+		return _text(&"ui.raid_hud.weapon_status_durability_broken_format", "耐久耗盡 %d/%d") % [current, maximum]
+	if broken_only:
+		return ""
+	if bool(state.get("durability_is_low", false)):
+		return _text(&"ui.raid_hud.weapon_status_durability_low_format", "耐久低 %d/%d") % [current, maximum]
+	return ""
 
 
 func _is_player_reloading() -> bool:
 	if _player == null or not _player.has_method("get_reload_state"):
 		return false
 	var state: Dictionary = _player.call("get_reload_state")
+	return bool(state.get("active", false))
+
+
+func _is_player_using_item() -> bool:
+	if _player == null or not _player.has_method("get_item_use_state"):
+		return false
+	var state: Dictionary = _player.call("get_item_use_state")
 	return bool(state.get("active", false))
 
 
@@ -320,6 +400,8 @@ func _on_extraction_completed(_body: Node3D) -> void:
 
 
 func _on_reload_progress_changed(state: Dictionary) -> void:
+	if not visible:
+		return
 	var active := bool(state.get("active", false))
 	var status := str(state.get("status", "idle"))
 	var progress := clampf(float(state.get("progress", 0.0)), 0.0, 1.0)
@@ -348,6 +430,47 @@ func _on_reload_progress_changed(state: Dictionary) -> void:
 		return
 	_update_reload_idle()
 	_update_weapon_status()
+
+
+func _on_item_use_progress_changed(state: Dictionary) -> void:
+	if not visible:
+		return
+	var active := bool(state.get("active", false))
+	var status := str(state.get("status", "idle"))
+	var progress := clampf(float(state.get("progress", 0.0)), 0.0, 1.0)
+	reload_progress.value = progress * 100.0
+	if active:
+		_reload_status_hold = 0.0
+		reload_label.visible = true
+		reload_progress.visible = true
+		reload_label.text = "%s %.0f%%" % [_item_use_progress_label(state), progress * 100.0]
+		_update_weapon_status()
+		return
+	if status == "complete":
+		reload_label.visible = true
+		reload_progress.visible = true
+		reload_progress.value = 100.0
+		reload_label.text = _text(&"ui.item_use.complete", "使用完成")
+		_reload_status_hold = 0.55
+		_update_weapon_status()
+		return
+	if status != "idle":
+		reload_label.visible = true
+		reload_progress.visible = false
+		reload_label.text = _text(&"ui.item_use.cancelled", "使用取消")
+		_reload_status_hold = 0.55
+		_update_weapon_status()
+		return
+	_update_reload_idle()
+	_update_weapon_status()
+
+
+func _item_use_progress_label(state: Dictionary) -> String:
+	var item_name := _text(StringName(str(state.get("name_key", ""))), _text(&"item_type.consumable", "消耗品"))
+	var format_text := _text(&"ui.item_use.using_format", "使用 %s")
+	if format_text == "":
+		return item_name
+	return format_text % item_name
 
 
 func _text(key: StringName, fallback: String) -> String:

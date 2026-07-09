@@ -1,101 +1,156 @@
-[gd_scene load_steps=12 format=3 uid="uid://bxq7u5q3qmt3e"]
+[gd_scene format=3 uid="uid://bxq7u5q3qmt3e"]
 
-[ext_resource type="Script" path="res://scripts/player/player_controller_3d.gd" id="1_controller"]
-[ext_resource type="Script" path="res://scripts/combat/weapon_controller_3d.gd" id="2_weapon_controller"]
+[ext_resource type="Script" uid="uid://y7mp75ha5btk" path="res://scripts/player/player_controller_3d.gd" id="1_controller"]
+[ext_resource type="Script" uid="uid://cg10x41wr32yu" path="res://scripts/combat/weapon_controller_3d.gd" id="2_weapon_controller"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.28
 height = 1.1
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
-albedo_color = Color(0.9, 0.88, 0.78, 1)
-roughness = 0.78
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wing"]
-albedo_color = Color(0.76, 0.78, 0.72, 1)
-roughness = 0.84
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_foot"]
-albedo_color = Color(0.82, 0.16, 0.08, 1)
-roughness = 0.7
-
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 radius = 0.32
 height = 1.18
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.9, 0.88, 0.78, 1)
+roughness = 0.78
 
 [sub_resource type="SphereMesh" id="SphereMesh_wing"]
 radius = 0.18
 height = 0.36
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wing"]
+albedo_color = Color(0.76, 0.78, 0.72, 1)
+roughness = 0.84
+
 [sub_resource type="BoxMesh" id="BoxMesh_foot"]
 size = Vector3(0.18, 0.05, 0.32)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_bg"]
-albedo_color = Color(0.16, 0.16, 0.14, 0.86)
-transparency = 1
-shading_mode = 0
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_foot"]
+albedo_color = Color(0.82, 0.16, 0.08, 1)
+roughness = 0.7
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_fill"]
-albedo_color = Color(1, 0.22, 0.18, 1)
-shading_mode = 0
+[sub_resource type="BoxMesh" id="BoxMesh_pistol_slide"]
+size = Vector3(0.42, 0.12, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pistol_grip"]
+size = Vector3(0.14, 0.28, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_knife_blade"]
+size = Vector3(0.12, 0.06, 0.58)
+
+[sub_resource type="BoxMesh" id="BoxMesh_knife_handle"]
+size = Vector3(0.12, 0.1, 0.26)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pistol_dark"]
+albedo_color = Color(0.11, 0.16, 0.18, 1)
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pistol_metal"]
+albedo_color = Color(0.42, 0.5, 0.5, 1)
+metallic = 0.2
+roughness = 0.42
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_knife_blade"]
+albedo_color = Color(0.86, 0.9, 0.86, 1)
+metallic = 0.35
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_knife_handle"]
+albedo_color = Color(0.12, 0.16, 0.14, 1)
+roughness = 0.7
 
 [sub_resource type="BoxMesh" id="BoxMesh_health_bg"]
 size = Vector3(1.12, 0.12, 0.04)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_bg"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.16, 0.16, 0.14, 0.86)
+
 [sub_resource type="BoxMesh" id="BoxMesh_health_fill"]
 size = Vector3(1, 0.06, 0.05)
 
-[node name="Player3D" type="CharacterBody3D" groups=["player"]]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_fill"]
+shading_mode = 0
+albedo_color = Color(1, 0.22, 0.18, 1)
+
+[node name="Player3D" type="CharacterBody3D" unique_id=286445638 groups=["player"]]
 script = ExtResource("1_controller")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-position = Vector3(0, 0.6, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2038266665]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("CapsuleShape3D_player")
 
-[node name="Body" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.63, 0)
+[node name="Body" type="MeshInstance3D" parent="." unique_id=407166126]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, 0)
 mesh = SubResource("CapsuleMesh_body")
 surface_material_override/0 = SubResource("StandardMaterial3D_body")
 
-[node name="LeftWing" type="MeshInstance3D" parent="."]
-position = Vector3(-0.32, 0.45, 0.06)
-rotation = Vector3(0, 0.18, -0.55)
-scale = Vector3(0.55, 0.72, 1)
+[node name="LeftWing" type="MeshInstance3D" parent="." unique_id=63060077]
+transform = Transform3D(0.46131298, 0.37025464, 0.17902958, -0.287478, 0.6138177, 0, -0.08394491, -0.06737507, 0.9838437, -0.32, 0.45, 0.06)
 mesh = SubResource("SphereMesh_wing")
 surface_material_override/0 = SubResource("StandardMaterial3D_wing")
 
-[node name="RightWing" type="MeshInstance3D" parent="."]
-position = Vector3(0.32, 0.45, 0.06)
-rotation = Vector3(0, -0.18, 0.55)
-scale = Vector3(0.55, 0.72, 1)
+[node name="RightWing" type="MeshInstance3D" parent="." unique_id=916930940]
+transform = Transform3D(0.46131298, -0.37025464, -0.17902958, 0.287478, 0.6138177, 0, 0.08394491, -0.06737507, 0.9838437, 0.32, 0.45, 0.06)
 mesh = SubResource("SphereMesh_wing")
 surface_material_override/0 = SubResource("StandardMaterial3D_wing")
 
-[node name="LeftFoot" type="MeshInstance3D" parent="."]
-position = Vector3(-0.17, 0.04, -0.17)
-rotation = Vector3(0, 0.25, 0)
+[node name="LeftFoot" type="MeshInstance3D" parent="." unique_id=357287809]
+transform = Transform3D(0.9689124, 0, 0.24740396, 0, 1, 0, -0.24740396, 0, 0.9689124, -0.17, 0.04, -0.17)
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = SubResource("StandardMaterial3D_foot")
 
-[node name="RightFoot" type="MeshInstance3D" parent="."]
-position = Vector3(0.17, 0.04, -0.17)
-rotation = Vector3(0, -0.25, 0)
+[node name="RightFoot" type="MeshInstance3D" parent="." unique_id=930869425]
+transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.9689124, 0.17, 0.04, -0.17)
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = SubResource("StandardMaterial3D_foot")
 
-[node name="HealthBarRoot" type="Node3D" parent="."]
+[node name="WeaponVisualRoot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.5, -0.08)
+
+[node name="PistolVisual" type="Node3D" parent="WeaponVisualRoot"]
 visible = false
-position = Vector3(0, 1.5, 0)
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0)
 
-[node name="HealthBarBackground" type="MeshInstance3D" parent="HealthBarRoot"]
+[node name="Slide" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual"]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.9848077, 0.03, 0.02, -0.1)
+mesh = SubResource("BoxMesh_pistol_slide")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_metal")
+
+[node name="Grip" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual"]
+transform = Transform3D(1, 0, 0, 0, 0.9063078, 0.42261827, 0, -0.42261827, 0.9063078, -0.08, -0.12, 0.04)
+mesh = SubResource("BoxMesh_pistol_grip")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_dark")
+
+[node name="KnifeVisual" type="Node3D" parent="WeaponVisualRoot"]
+visible = false
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0.02, 0.02, -0.08)
+
+[node name="Blade" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 0.02, -0.22)
+mesh = SubResource("BoxMesh_knife_blade")
+surface_material_override/0 = SubResource("StandardMaterial3D_knife_blade")
+
+[node name="Handle" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, -0.03, 0.18)
+mesh = SubResource("BoxMesh_knife_handle")
+surface_material_override/0 = SubResource("StandardMaterial3D_knife_handle")
+
+[node name="HealthBarRoot" type="Node3D" parent="." unique_id=33759387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+visible = false
+
+[node name="HealthBarBackground" type="MeshInstance3D" parent="HealthBarRoot" unique_id=2077106285]
 mesh = SubResource("BoxMesh_health_bg")
 surface_material_override/0 = SubResource("StandardMaterial3D_health_bg")
 
-[node name="HealthBar" type="MeshInstance3D" parent="HealthBarRoot"]
+[node name="HealthBar" type="MeshInstance3D" parent="HealthBarRoot" unique_id=395973928]
 unique_name_in_owner = true
-position = Vector3(0, 0, 0.03)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 mesh = SubResource("BoxMesh_health_fill")
 surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")
 
-[node name="WeaponController3D" type="Node3D" parent="."]
+[node name="WeaponController3D" type="Node3D" parent="." unique_id=818663098]
 script = ExtResource("2_weapon_controller")

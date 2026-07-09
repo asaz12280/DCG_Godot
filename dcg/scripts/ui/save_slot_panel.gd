@@ -5,9 +5,12 @@ signal closed
 
 const PanelUIStyle := preload("res://scripts/ui/ui_style.gd")
 
+const STATUS_MIN_HEIGHT := 44.0
+
 var title_label: Label
 var description_label: Label
 var status_label: Label
+var slot_scroll: ScrollContainer
 var rows_box: VBoxContainer
 var back_button: Button
 var slot_rows: Array[Dictionary] = []
@@ -46,6 +49,31 @@ func get_slot_count() -> int:
 	return slot_rows.size()
 
 
+func get_preferred_panel_size() -> Vector2:
+	return PanelUIStyle.SIZE_MENU_OVERLAY_PANEL
+
+
+func get_display_state() -> Dictionary:
+	var slot_button_rects: Array[Rect2] = []
+	var slot_label_rects: Array[Rect2] = []
+	for row_data in slot_rows:
+		var label := row_data.get("label") as Label
+		var button := row_data.get("button") as Button
+		if label != null:
+			slot_label_rects.append(label.get_global_rect())
+		if button != null:
+			slot_button_rects.append(button.get_global_rect())
+	return {
+		"visible": visible,
+		"panel_rect": get_global_rect(),
+		"slot_button_rects": slot_button_rects,
+		"slot_label_rects": slot_label_rects,
+		"back_button_rect": back_button.get_global_rect() if back_button != null else Rect2(),
+		"scroll_rect": slot_scroll.get_global_rect() if slot_scroll != null else Rect2(),
+		"status_rect": status_label.get_global_rect() if status_label != null else Rect2(),
+	}
+
+
 func _build() -> void:
 	var panel_margin := MarginContainer.new()
 	panel_margin.add_theme_constant_override("margin_left", PanelUIStyle.PANEL_MARGIN_LEFT)
@@ -62,34 +90,38 @@ func _build() -> void:
 	PanelUIStyle.apply_font_size(title_label, PanelUIStyle.FONT_PANEL_TITLE)
 	box.add_child(title_label)
 
+	slot_scroll = ScrollContainer.new()
+	slot_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(slot_scroll)
+
+	var form_margin := MarginContainer.new()
+	form_margin.add_theme_constant_override("margin_left", 34)
+	form_margin.add_theme_constant_override("margin_right", 34)
+	form_margin.add_theme_constant_override("margin_top", 8)
+	form_margin.add_theme_constant_override("margin_bottom", 8)
+	slot_scroll.add_child(form_margin)
+
+	rows_box = VBoxContainer.new()
+	rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rows_box.add_theme_constant_override("separation", PanelUIStyle.SPACING_SETTING_ROWS)
+	form_margin.add_child(rows_box)
+
 	description_label = Label.new()
 	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description_label.custom_minimum_size = Vector2(0.0, 44.0)
 	PanelUIStyle.apply_font_size(description_label, PanelUIStyle.FONT_BODY)
 	PanelUIStyle.apply_font_color(description_label, PanelUIStyle.COLOR_TEXT_HELP)
-	box.add_child(description_label)
-
-	var rows_margin := MarginContainer.new()
-	rows_margin.add_theme_constant_override("margin_left", 34)
-	rows_margin.add_theme_constant_override("margin_right", 34)
-	rows_margin.add_theme_constant_override("margin_top", 8)
-	rows_margin.add_theme_constant_override("margin_bottom", 8)
-	box.add_child(rows_margin)
-
-	rows_box = VBoxContainer.new()
-	rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rows_box.add_theme_constant_override("separation", PanelUIStyle.SPACING_SETTING_ROWS)
-	rows_margin.add_child(rows_box)
+	rows_box.add_child(description_label)
 
 	for slot_index in range(1, 4):
 		rows_box.add_child(_make_slot_row(slot_index))
 
 	status_label = Label.new()
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.custom_minimum_size = Vector2(0.0, 54.0)
+	status_label.custom_minimum_size = Vector2(0.0, STATUS_MIN_HEIGHT)
 	PanelUIStyle.apply_font_size(status_label, PanelUIStyle.FONT_PLACEHOLDER)
 	PanelUIStyle.apply_font_color(status_label, PanelUIStyle.COLOR_TEXT_MUTED)
-	box.add_child(status_label)
+	rows_box.add_child(status_label)
 
 	back_button = Button.new()
 	back_button.custom_minimum_size = PanelUIStyle.SIZE_PANEL_BACK_BUTTON
@@ -110,7 +142,7 @@ func _make_slot_row(slot_index: int) -> HBoxContainer:
 
 	var button := Button.new()
 	button.custom_minimum_size = PanelUIStyle.SIZE_SETTING_CONTROL
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(_on_slot_pressed.bind(slot_index))
 	PanelUIStyle.apply_font_size(button, PanelUIStyle.FONT_BODY)

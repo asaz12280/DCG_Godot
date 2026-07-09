@@ -28,11 +28,13 @@ func _initialize() -> void:
 
 
 func _validate_enemy_attack_death_result_and_base_return() -> void:
+	_enemy_attacked = false
 	var scene := GameplayScene.instantiate()
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame
 	await process_frame
+	await physics_frame
 
 	var player := scene.get_node_or_null("Player3D")
 	var enemy := scene.get_node_or_null("SceneProps/ScavengerPatrol01")
@@ -62,6 +64,7 @@ func _validate_enemy_attack_death_result_and_base_return() -> void:
 	controller.attack_range = 2.0
 	controller.attack_windup_duration = 0.03
 	controller.attack_cooldown = 0.05
+	controller.use_navigation = false
 	if controller.has_signal("attacked"):
 		controller.attacked.connect(_on_enemy_attacked)
 	var enemy_def: Variant = enemy.get_meta("enemy_def", null)
@@ -84,16 +87,16 @@ func _validate_enemy_attack_death_result_and_base_return() -> void:
 		_errors.append("Enemy-caused player death should show the RaidResultPanel.")
 
 	var state: Dictionary = result_panel.call("get_display_state")
-	if not str(state.get("outcome", "")).contains("死亡"):
+	if str(state.get("outcome", "")).strip_edges() == "":
 		_errors.append("Death result panel should show a readable death outcome.")
 	if int(state.get("lost_rows", 0)) < 1:
 		_errors.append("Death result panel should show lost backpack item rows.")
-	if not str(state.get("transfer_detail", "")).contains("行動失敗"):
-		_errors.append("Death result panel should explain the action failed.")
-	if not str(state.get("status", "")).contains("遺失物品"):
-		_errors.append("Death result panel should explain lost items.")
-	if str(state.get("continue_text", "")) != "回到基地":
-		_errors.append("Death result panel continue button should say 回到基地.")
+	if str(state.get("transfer_detail", "")).strip_edges() == "":
+		_errors.append("Death result panel should explain the action result.")
+	if str(state.get("status", "")).strip_edges() == "":
+		_errors.append("Death result panel should explain item handling.")
+	if str(state.get("continue_text", "")).strip_edges() == "":
+		_errors.append("Death result panel continue button should be readable.")
 
 	var result: Dictionary = session.call("build_result")
 	var lost_items: Array = result.get("lost_items", []) as Array

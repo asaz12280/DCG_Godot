@@ -55,19 +55,31 @@ func _validate_ui_content_and_layout() -> void:
 			_errors.append("ContainerInventoryUI should fit inside %s." % viewport_size)
 		if not panel_rect.encloses(scroll_rect):
 			_errors.append("ContainerInventoryUI slot grid should stay inside the main panel at %s." % viewport_size)
+		if bool(state.get("sort_visible", true)):
+			_errors.append("ContainerInventoryUI should not expose warehouse-style sort controls.")
 		_assert_clean_tree_text(panel, "ContainerInventoryUI")
 		_free_node(panel)
 
 
 func _validate_scene_is_node_first() -> void:
 	var scene_text := FileAccess.get_file_as_string("res://scenes/ui/container_inventory_ui.tscn")
+	if UITextScript.looks_corrupt(scene_text):
+		_errors.append("ContainerInventoryUI scene should not contain mojibake default text.")
 	for required_node in ["PanelContainer", "MarginContainer", "VBoxContainer", "GridContainer", "ScrollContainer", "Button"]:
 		if not scene_text.contains("type=\"%s\"" % required_node):
 			_errors.append("ContainerInventoryUI scene should use node-first %s layout." % required_node)
+	if scene_text.contains("name=\"SortButton\""):
+		_errors.append("ContainerInventoryUI scene should not contain a warehouse-style SortButton node.")
 
 
 func _validate_responsibility_boundary() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/container_inventory_ui.gd")
+	if UITextScript.looks_corrupt(source):
+		_errors.append("ContainerInventoryUI source should not contain mojibake fallback text.")
+	var localization_source := FileAccess.get_file_as_string("res://data/localization/game_text.csv")
+	for key in ["ui.container.sorted_type", "ui.container.sorted_value", "ui.container.sorted_weight", "ui.container.sorted_value_weight"]:
+		if localization_source.contains(key):
+			_errors.append("ContainerInventoryUI should not keep obsolete container sorting localization key: %s." % key)
 	var forbidden_terms := PackedStringArray([
 		"LootContainer3D",
 		"WeaponController",
@@ -79,6 +91,9 @@ func _validate_responsibility_boundary() -> void:
 	for term in forbidden_terms:
 		if source.contains(term):
 			_errors.append("ContainerInventoryUI should not own %s responsibility." % term)
+	for forbidden in ["ItemStackSorter", "organize_container", "_sort_button_text", "_consume_sort_mode"]:
+		if source.contains(forbidden):
+			_errors.append("ContainerInventoryUI should not keep warehouse-style sorting responsibility: %s." % forbidden)
 
 
 func _assert_clean_tree_text(node: Node, label: String) -> void:

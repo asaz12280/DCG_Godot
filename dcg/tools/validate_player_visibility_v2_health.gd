@@ -34,8 +34,6 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_raid_return_to_base_3d.gd",
 	"res://tools/validate_player_visible_v2_slice.gd",
 	"res://tools/validate_base_3d_runtime_hud.gd",
-	"res://scripts/base/base_medical_service.gd",
-	"res://tools/validate_base_medical_station.gd",
 	"res://data/items/armor/light_armor.tres",
 	"res://tools/validate_equipment_armor_effect.gd",
 	"res://tools/validate_enemy_loot_drop.gd",
@@ -205,8 +203,11 @@ func _validate_known_current_risks_are_visible() -> void:
 		_errors.append("Player scene should not hardwire No.5 pistol after V2 task thirteen.")
 
 	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
-	for required in PackedStringArray(["_sync_weapon_from_equipment", "get_equipped_item", "equip_weapon", "clear_weapon"]):
+	for required in PackedStringArray(["_sync_weapon_from_equipment", "_equipment.sync_weapon_from_equipment", "_get_equipped_weapon_item"]):
 		_expect_contains(player_text, required, "PlayerController3D should sync EquipmentModel weapons through %s." % required)
+	var player_equipment_text := _read_text("res://scripts/player/player_equipment_controller_3d.gd")
+	for required in PackedStringArray(["sync_weapon_from_equipment", "get_equipped_item", "equip_weapon", "clear_weapon"]):
+		_expect_contains(player_equipment_text, required, "PlayerEquipmentController3D should own EquipmentModel weapon sync through %s." % required)
 
 	var weapon_text := _read_text("res://scripts/combat/weapon_controller_3d.gd")
 	for required in PackedStringArray(["no_weapon", "equip_weapon", "clear_weapon", "has_weapon"]):
@@ -259,8 +260,11 @@ func _validate_health_d_ui_boundaries() -> void:
 			_errors.append("MapTopMenuPanel should stay display-only and not control gameplay state: %s." % forbidden)
 
 	var player_hud_text := _read_text("res://scripts/ui/player_hud_3d.gd")
-	for required in PackedStringArray(["_paint_lower_left_health", "_paint_ammo_panel", "_paint_reload_progress", "_paint_crosshair", "get_display_state"]):
+	for required in PackedStringArray(["PlayerHUDPainterScript", "get_display_state"]):
 		_expect_contains(player_hud_text, required, "PlayerHud3D should keep minimal combat HUD term %s." % required)
+	var player_hud_painter_text := _read_text("res://scripts/ui/player_hud_painter.gd")
+	for required in PackedStringArray(["_paint_lower_left_health", "_paint_ammo_panel", "_paint_reload_progress", "_paint_crosshair"]):
+		_expect_contains(player_hud_painter_text, required, "PlayerHUDPainter should own minimal combat HUD paint term %s." % required)
 	for forbidden in PackedStringArray(["QuestTopMenuPanel", "MapTopMenuPanel", "QuestState", "change_scene_to_file"]):
 		if player_hud_text.contains(forbidden):
 			_errors.append("PlayerHud3D should not own detailed route/quest/scene state: %s." % forbidden)
@@ -273,12 +277,10 @@ func _validate_health_d_ui_boundaries() -> void:
 
 
 func _validate_health_e_base_service_and_armor_boundaries() -> void:
-	var medical_service_text := _read_text("res://scripts/base/base_medical_service.gd")
-	for required in PackedStringArray(["class_name BaseMedicalService", "get_state", "apply_heal", "HEAL_COST", "save_slot_data", "restore_health_to_full"]):
-		_expect_contains(medical_service_text, required, "Health Check E requires BaseMedicalService to expose %s." % required)
-	for forbidden in PackedStringArray(["RaidSession", "EnemyController3D", "WeaponController3D", "InventoryEquipmentUI", "change_scene", "get_tree()", "SceneTree"]):
-		if medical_service_text.contains(forbidden):
-			_errors.append("BaseMedicalService should not directly mutate Raid/UI/scene state: %s." % forbidden)
+	if FileAccess.file_exists("res://scripts/base/base_medical_service.gd"):
+		_errors.append("Removed medical station service should not remain in base scripts.")
+	if FileAccess.file_exists("res://tools/validate_base_medical_station.gd"):
+		_errors.append("Removed medical station validator should not remain in tools.")
 
 	var medical_panel_text := _read_text("res://scripts/base/base_interaction_panel.gd")
 	for forbidden in PackedStringArray(["SaveGameManager", "save_slot_data", "restore_health_to_full", "RaidSession", "WeaponController3D"]):
@@ -298,8 +300,10 @@ func _validate_health_e_base_service_and_armor_boundaries() -> void:
 			_errors.append("EquipmentModel should keep owning slots only, not combat/UI/save behavior: %s." % forbidden)
 
 	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
-	for required in PackedStringArray(["get_equipment_defense_bonus", "get_armor_effect_state", "get_total_defense", "mitigated_amount := maxf(event.amount - defense, 1.0)"]):
+	for required in PackedStringArray(["get_equipment_defense_bonus", "get_equipment_armor_protection_level", "get_armor_effect_state", "get_total_defense", "_equipment.damage_after_armor"]):
 		_expect_contains(player_text, required, "PlayerController3D should bridge armor stats through %s." % required)
+	var player_equipment_text := _read_text("res://scripts/player/player_equipment_controller_3d.gd")
+	_expect_contains(player_equipment_text, "ArmorMitigationServiceScript.damage_after_armor", "PlayerEquipmentController3D should own armor mitigation service usage.")
 	for forbidden in PackedStringArray(["StatusTopMenuPanel", "InventoryEquipmentUI"]):
 		if player_text.contains(forbidden):
 			_errors.append("PlayerController3D armor effect should not depend on UI scripts: %s." % forbidden)

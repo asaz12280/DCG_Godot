@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://bgcjgrh5067yx"]
 
-[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
 
 [resource]
 script = ExtResource("1_item_def")
 id = &"life_totem"
-catalog_number = 18
+catalog_number = 16
 name_key = &"item.life_totem.name"
 description_key = &"item.life_totem.desc"
 item_type = "totem"
 weight = 0.4
 value = 180
-max_stack = 1
+max_health_bonus = 20.0
 tags = Array[StringName]([&"life"])

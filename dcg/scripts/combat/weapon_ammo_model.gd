@@ -5,21 +5,27 @@ signal changed
 
 var weapon_def: ItemDef = null
 var ammo_def: ItemDef = null
+var base_magazine_capacity: int = 0
+var magazine_capacity_bonus: int = 0
 var magazine_capacity: int = 0
 var loaded_ammo: int = 0
 var reserve_ammo: int = 0
 var compatible_ammo_tags: Array[StringName] = []
 
 
-func configure_weapon(item_def: ItemDef, keep_counts: bool = false) -> void:
+func configure_weapon(item_def: ItemDef, keep_counts: bool = false, capacity_bonus: int = 0) -> void:
 	weapon_def = item_def
-	magazine_capacity = _weapon_capacity(item_def)
+	base_magazine_capacity = _weapon_capacity(item_def)
+	magazine_capacity_bonus = maxi(capacity_bonus, 0)
+	magazine_capacity = base_magazine_capacity + magazine_capacity_bonus
 	compatible_ammo_tags = _weapon_ammo_tags(item_def)
 	if not keep_counts:
 		loaded_ammo = 0
 		reserve_ammo = 0
 	else:
+		var excess_loaded := maxi(loaded_ammo - magazine_capacity, 0)
 		loaded_ammo = clampi(loaded_ammo, 0, magazine_capacity)
+		reserve_ammo += excess_loaded
 		reserve_ammo = maxi(reserve_ammo, 0)
 	if ammo_def != null and not can_use_ammo(ammo_def):
 		ammo_def = null
@@ -28,6 +34,8 @@ func configure_weapon(item_def: ItemDef, keep_counts: bool = false) -> void:
 
 func clear_weapon(keep_counts: bool = true) -> void:
 	weapon_def = null
+	base_magazine_capacity = 0
+	magazine_capacity_bonus = 0
 	magazine_capacity = 0
 	compatible_ammo_tags.clear()
 	if not keep_counts:
@@ -102,6 +110,8 @@ func get_state() -> Dictionary:
 	return {
 		"weapon_id": weapon_def.id if weapon_def != null else &"",
 		"ammo_id": ammo_def.id if ammo_def != null else &"",
+		"base_magazine_capacity": base_magazine_capacity,
+		"magazine_capacity_bonus": magazine_capacity_bonus,
 		"magazine_capacity": magazine_capacity,
 		"loaded_ammo": loaded_ammo,
 		"reserve_ammo": reserve_ammo,
@@ -112,14 +122,14 @@ func get_state() -> Dictionary:
 func _weapon_capacity(item_def: ItemDef) -> int:
 	if item_def == null or item_def.item_type != "weapon":
 		return 0
-	return maxi(int(item_def.magazine_capacity), 0)
+	return item_def.get_weapon_magazine_capacity()
 
 
 func _weapon_ammo_tags(item_def: ItemDef) -> Array[StringName]:
 	var result: Array[StringName] = []
 	if item_def == null:
 		return result
-	for tag in item_def.compatible_ammo_tags:
+	for tag in item_def.get_weapon_compatible_ammo_tags():
 		if not result.has(tag):
 			result.append(tag)
 	if result.is_empty():
@@ -133,8 +143,9 @@ func _ammo_tags(ammo_item: ItemDef) -> Array[StringName]:
 	var result: Array[StringName] = []
 	if ammo_item == null:
 		return result
-	if ammo_item.ammo_tag != &"":
-		result.append(ammo_item.ammo_tag)
+	var ammo_tag := ammo_item.get_ammo_tag()
+	if ammo_tag != &"":
+		result.append(ammo_tag)
 	for tag in ammo_item.tags:
 		if not result.has(tag):
 			result.append(tag)

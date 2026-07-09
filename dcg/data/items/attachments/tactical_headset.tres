@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://cblcph1qj7g1k"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://cda3025r20br4" path="res://scripts/items/attachment_profile.gd" id="2_attachment_profile"]
+
+[sub_resource type="Resource" id="Resource_attachment_profile_tactical_headset"]
+script = ExtResource("2_attachment_profile")
+slot_tags = Array[StringName]([&"headset"])
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"tactical_headset"
+catalog_number = 17
+name_key = &"item.tactical_headset.name"
+description_key = &"item.tactical_headset.desc"
+item_type = "attachment"
+weight = 0.35
+value = 95
+attachment_profile = SubResource("Resource_attachment_profile_tactical_headset")
+tags = Array[StringName]([&"headset"])

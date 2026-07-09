@@ -17,7 +17,8 @@ roughness = 0.9
 albedo_color = Color(0.24, 0.34, 0.31, 1)
 roughness = 0.85
 
-[node name="LootContainerBasic" type="Area3D" groups=["loot_container"]]
+[node name="LootContainerBasic" type="Area3D" groups=["loot_container", "navigation_blocker"]]
+metadata/navigation_blocker_source = "visual"
 script = ExtResource("1_container")
 loot_table = ExtResource("2_loot_table")
 roll_count = 2
@@ -46,3 +47,13 @@ font_size = 36
 modulate = Color(1, 0.95, 0.55, 1)
 outline_size = 8
 outline_modulate = Color(0.05, 0.05, 0.04, 1)
+
+[node name="OpenProgressLabel" type="Label3D" parent="."]
+visible = false
+position = Vector3(0, 1.78, 0)
+billboard = 1
+text = ""
+font_size = 30
+modulate = Color(0.58, 0.82, 1, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.05, 0.08, 1)

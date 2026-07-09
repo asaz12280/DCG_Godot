@@ -39,7 +39,9 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 		"money": 0,
 		"stash": [],
 		"base_upgrades": {},
-		"quests": {},
+		"quests": {
+			"first_salvage": QuestStateScript.accept(FirstSalvageQuest),
+		},
 	})
 
 	var test_root := Node3D.new()
@@ -55,11 +57,11 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 	var after_extract: Dictionary = save_manager.get_slot_data(1)
 	var quests: Dictionary = after_extract.get("quests", {}) as Dictionary
 	if not quests.has("first_salvage"):
-		_errors.append("Extraction should create first_salvage quest state in save data.")
+		_errors.append("Extraction should keep accepted first_salvage quest state in save data.")
 	else:
 		var quest_state: Dictionary = quests.get("first_salvage", {}) as Dictionary
 		if str(quest_state.get("state", "")) != QuestStateScript.STATE_READY:
-			_errors.append("Extracting wire should ready First Salvage quest.")
+			_errors.append("Extracting wire should ready accepted First Salvage quest.")
 
 	var base_screen: BaseScreen = BaseScreenScene.instantiate()
 	root.add_child(base_screen)
@@ -84,10 +86,10 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 	if not bool(claimed_state.get("claimed", false)):
 		_errors.append("Submitting First Salvage should save claimed=true.")
 	var completed_state: Dictionary = base_screen.get_display_state()
-	if str(completed_state.get("quest_id", "")) != "first_scavenger_hunt":
-		_errors.append("Base should advance to the next active quest after First Salvage is completed.")
+	if str(completed_state.get("quest_id", "")) != "":
+		_errors.append("Base should not auto-track a new quest after First Salvage is completed.")
 	if not bool(completed_state.get("submit_quest_disabled", false)):
-		_errors.append("Base quest submit button should disable for the next active quest.")
+		_errors.append("Base quest submit button should disable when no accepted quest is ready.")
 
 	_free_node(base_screen)
 	_free_node(test_root)
@@ -104,7 +106,9 @@ func _validate_scavenger_kill_updates_quest_and_base_submit() -> void:
 		"money": 0,
 		"stash": [],
 		"base_upgrades": {},
-		"quests": {},
+		"quests": {
+			"first_scavenger_hunt": QuestStateScript.accept(FirstScavengerHuntQuest),
+		},
 	})
 
 	var enemy := ScavengerScene.instantiate()
@@ -119,15 +123,15 @@ func _validate_scavenger_kill_updates_quest_and_base_submit() -> void:
 	var after_kill: Dictionary = save_manager.get_slot_data(1)
 	var quests: Dictionary = after_kill.get("quests", {}) as Dictionary
 	if not quests.has("first_scavenger_hunt"):
-		_errors.append("Killing a Scavenger should create first_scavenger_hunt quest state in save data.")
+		_errors.append("Killing a Scavenger should keep accepted first_scavenger_hunt quest state in save data.")
 	else:
 		var quest_state: Dictionary = quests.get("first_scavenger_hunt", {}) as Dictionary
 		var progress: Dictionary = quest_state.get("progress", {}) as Dictionary
 		var progress_key := QuestStateScript.kill_progress_key("scavenger")
 		if int(progress.get(progress_key, 0)) != 1:
-			_errors.append("Scavenger kill should save kill:scavenger progress immediately.")
+			_errors.append("Scavenger kill should save accepted kill:scavenger progress immediately.")
 		if str(quest_state.get("state", "")) != QuestStateScript.STATE_READY:
-			_errors.append("Killing one Scavenger should ready First Scavenger Hunt.")
+			_errors.append("Killing one Scavenger should ready accepted First Scavenger Hunt.")
 
 	if tracker != null and tracker.has_method("record_kill"):
 		tracker.record_kill("scavenger")

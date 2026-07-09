@@ -111,7 +111,7 @@ func _validate_source_boundaries() -> void:
 			_errors.append("QuestKillTracker3D should not hard-reference display or scene flow: %s." % forbidden)
 
 	var panel_source := FileAccess.get_file_as_string("res://scripts/ui/quest_top_menu_panel.gd")
-	for required in ["slot_saved", "refresh", "BaseScreenViewModelScript.quest_defs"]:
+	for required in ["slot_saved", "refresh", "BaseScreenViewModelScript.tracked_quest_defs"]:
 		if not panel_source.contains(required):
 			_errors.append("QuestTopMenuPanel should refresh from save/model state through %s." % required)
 	for forbidden in ["save_slot_data", "QuestKillTracker3D", "ScavengerPatrol01", "WeaponController3D"]:
@@ -131,7 +131,9 @@ func _prepare_save_manager(save_manager: Node) -> void:
 		"money": 0,
 		"stash": [],
 		"base_upgrades": {},
-		"quests": {},
+		"quests": {
+			KILL_QUEST_ID: QuestStateScript.accept(load("res://data/quests/first_scavenger_hunt.tres")),
+		},
 	})
 
 

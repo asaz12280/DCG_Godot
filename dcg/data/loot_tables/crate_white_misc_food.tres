@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://01qc7g2cpa5h"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_warehouse_key"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/keys/warehouse_key.tres"
+min_quantity = 2
+max_quantity = 2
+tags = Array[StringName]([&"white_crate", &"key", &"warehouse"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_white_misc_food"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_warehouse_key")])

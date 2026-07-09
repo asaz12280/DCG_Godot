@@ -163,9 +163,14 @@ func _layout_settings_panel() -> void:
 	if settings_panel == null:
 		return
 	var viewport_size := get_viewport_rect().size
+	var preferred_size := PauseUIStyle.SIZE_MENU_OVERLAY_PANEL
+	if settings_panel.has_method("get_preferred_panel_size"):
+		var preferred_value: Variant = settings_panel.call("get_preferred_panel_size")
+		if preferred_value is Vector2:
+			preferred_size = preferred_value
 	var panel_size := Vector2(
-		minf(1180.0, viewport_size.x - 160.0),
-		minf(680.0, viewport_size.y - 140.0)
+		minf(preferred_size.x, viewport_size.x - 160.0),
+		minf(preferred_size.y, viewport_size.y - 140.0)
 	)
 	settings_panel.position = Vector2(
 		floor((viewport_size.x - panel_size.x) * 0.5),

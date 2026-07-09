@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://bguxw0lxm841k"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://cda3025r20br4" path="res://scripts/items/attachment_profile.gd" id="2_attachment_profile"]
+
+[sub_resource type="Resource" id="Resource_attachment_profile_balanced_grip"]
+script = ExtResource("2_attachment_profile")
+vertical_recoil_multiplier = 0.8
+horizontal_recoil_multiplier = 0.8
+recoil_recovery_multiplier = 1.2
+slot_tags = Array[StringName]([&"grip"])
+compatibility_tags = Array[StringName]([&"pistol", &"smg"])
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"balanced_grip"
+name_key = &"item.balanced_grip.name"
+description_key = &"item.balanced_grip.desc"
+item_type = "attachment"
+weight = 0.16
+value = 85
+attachment_vertical_recoil_multiplier = 0.8
+attachment_horizontal_recoil_multiplier = 0.8
+attachment_recoil_recovery_multiplier = 1.2
+attachment_profile = SubResource("Resource_attachment_profile_balanced_grip")
+tags = Array[StringName]([&"grip", &"pistol", &"smg"])

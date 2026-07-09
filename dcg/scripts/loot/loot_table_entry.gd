@@ -22,6 +22,11 @@ func get_validation_errors() -> Array[String]:
 		var item := load(item_path) as ItemDef
 		if item == null:
 			errors.append("Loot entry item_path is not an ItemDef: %s" % item_path)
+		else:
+			if item.catalog_number < 1:
+				errors.append("Loot entry item is not in the codex: %s" % item_path)
+			if item.name_key == &"":
+				errors.append("Loot entry item is missing name_key: %s" % item_path)
 	if min_quantity <= 0:
 		errors.append("Loot entry min_quantity must be positive.")
 	if max_quantity < min_quantity:

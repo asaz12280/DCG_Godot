@@ -9,16 +9,38 @@ var _errors: Array[String] = []
 
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
+	_validate_key_inventory_stack_rules()
 	await _validate_locked_container_requires_key()
+	await _validate_world_pickup_is_required_key()
 	await _validate_key_opens_existing_container_grid()
 	_validate_responsibility_boundary()
 	if _errors.is_empty():
-		print("[locked_container_flow] OK locked=visible key=required open=container_grid boundaries=clean")
+		print("[locked_container_flow] OK locked=visible pickup=key stack=single key=consumed open=container_grid boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
 			push_error(error)
 		quit(1)
+
+
+func _validate_key_inventory_stack_rules() -> void:
+	var inventory := InventoryModel.new()
+	inventory.setup(4)
+	if not inventory.add_item(WarehouseKey, 2):
+		_errors.append("InventoryModel should accept two warehouse keys as separate stacks.")
+		return
+	var stacks := inventory.get_display_items()
+	if stacks.size() != 2:
+		_errors.append("Key items should not merge into one inventory stack.")
+	for value in stacks:
+		if typeof(value) != TYPE_DICTIONARY:
+			_errors.append("Key inventory stack should be a dictionary.")
+			continue
+		var stack := value as Dictionary
+		if int(stack.get("quantity", 0)) != 1:
+			_errors.append("Each key stack should have quantity 1.")
+		if int(stack.get("max_stack", 0)) != 1:
+			_errors.append("Each key stack should expose max_stack 1.")
 
 
 func _validate_locked_container_requires_key() -> void:
@@ -55,7 +77,38 @@ func _validate_locked_container_requires_key() -> void:
 	_free_node(context["scene"])
 
 
+func _validate_world_pickup_is_required_key() -> void:
+	var context := await _create_context()
+	if context.is_empty():
+		return
+
+	var scene: Node = context["scene"]
+	var pickup := scene.get_node_or_null("SceneProps/LootPickupWarehouseKey")
+	if pickup == null:
+		_errors.append("Gameplay scene should place the visible No.11 warehouse key pickup near the player.")
+		_free_node(scene)
+		return
+
+	var pickup_item := pickup.get("item_def") as ItemDef
+	if pickup_item == null:
+		_errors.append("World key pickup should bind an ItemDef.")
+	elif pickup_item.resource_path != WarehouseKey.resource_path:
+		_errors.append("World pickup should be No.11 warehouse key, got %s." % pickup_item.resource_path)
+	elif int(pickup_item.catalog_number) != 11:
+		_errors.append("Warehouse key pickup should remain catalog No.11.")
+	elif pickup_item.item_type != "key":
+		_errors.append("Warehouse key pickup should use item_type=key.")
+	elif pickup_item.max_stack != 1 or pickup_item.get_max_stack() != 1:
+		_errors.append("Warehouse key pickup should be non-stackable.")
+	if int(pickup.get("quantity")) != 1:
+		_errors.append("World key pickup should grant one warehouse key.")
+
+	_free_node(scene)
+
+
 func _validate_key_opens_existing_container_grid() -> void:
+	await _validate_key_opens_existing_container_grid_timed()
+	return
 	var context := await _create_context()
 	if context.is_empty():
 		return
@@ -63,9 +116,14 @@ func _validate_key_opens_existing_container_grid() -> void:
 	var scene: Node = context["scene"]
 	var container: LootContainer3D = context["container"]
 	var player: Node = context["player"]
+	var pickup := scene.get_node_or_null("SceneProps/LootPickupWarehouseKey")
 	var container_ui := scene.find_child("ContainerInventoryUI", true, false) as Control
 	if container_ui == null:
 		_errors.append("Gameplay HUD should include ContainerInventoryUI for locked container opening.")
+		_free_node(scene)
+		return
+	if pickup == null:
+		_errors.append("Gameplay scene should include the warehouse key pickup before opening the locked container.")
 		_free_node(scene)
 		return
 	if not player.has_method("add_item_resource"):
@@ -73,13 +131,14 @@ func _validate_key_opens_existing_container_grid() -> void:
 		_free_node(scene)
 		return
 
-	player.call("add_item_resource", WarehouseKey, 1)
+	player.call("add_item_resource", pickup.get("item_def"), int(pickup.get("quantity")))
 	var opened := container.try_open(player)
 	await process_frame
 	await process_frame
 
 	var ui_manager := root.get_node_or_null("UIManager")
 	var container_model: RefCounted = container.get_container_inventory_model()
+	var inventory: InventoryModel = player.call("get_inventory_model")
 	var state: Dictionary = container_ui.call("get_display_state")
 	if not opened:
 		_errors.append("Locked container should open after the player has the required key.")
@@ -93,6 +152,72 @@ func _validate_key_opens_existing_container_grid() -> void:
 		_errors.append("Locked container should use the same visible capacity grid as normal containers.")
 	if not str(state.get("capacity", "")).contains("/"):
 		_errors.append("Locked container UI should show used/capacity text.")
+	if _stack_quantity(inventory.get_display_items(), WarehouseKey.resource_path) != 0:
+		_errors.append("Opening the locked container should consume the warehouse key.")
+
+	_free_node(scene)
+
+
+func _validate_key_opens_existing_container_grid_timed() -> void:
+	var context := await _create_context()
+	if context.is_empty():
+		return
+
+	var scene: Node = context["scene"]
+	var container: LootContainer3D = context["container"]
+	var player: Node = context["player"]
+	var pickup := scene.get_node_or_null("SceneProps/LootPickupWarehouseKey")
+	var container_ui := scene.find_child("ContainerInventoryUI", true, false) as Control
+	if container_ui == null:
+		_errors.append("Gameplay HUD should include ContainerInventoryUI for locked container opening.")
+		_free_node(scene)
+		return
+	if pickup == null:
+		_errors.append("Gameplay scene should include the warehouse key pickup before opening the locked container.")
+		_free_node(scene)
+		return
+	if not player.has_method("add_item_resource"):
+		_errors.append("Player should expose add_item_resource for validation setup.")
+		_free_node(scene)
+		return
+
+	player.call("add_item_resource", pickup.get("item_def"), int(pickup.get("quantity")))
+	container.set("locked_open_duration_seconds", 0.05)
+	var opened := container.try_open(player)
+	await process_frame
+
+	var ui_manager := root.get_node_or_null("UIManager")
+	var container_model: RefCounted = container.get_container_inventory_model()
+	var inventory: InventoryModel = player.call("get_inventory_model")
+	var opening_state: Dictionary = container.call("get_state")
+	if not opened:
+		_errors.append("Locked container should start opening after the player has the required key.")
+	if not bool(opening_state.get("is_opening", false)):
+		_errors.append("Locked container should expose timed opening progress before it opens.")
+	if bool(opening_state.get("has_opened", false)):
+		_errors.append("Locked container should not finish immediately while timed opening is active.")
+	if _stack_quantity(inventory.get_display_items(), WarehouseKey.resource_path) != 1:
+		_errors.append("Timed locked container should not consume the key until progress completes.")
+	if ui_manager != null and ui_manager.has_method("get_active_ui") and ui_manager.get_active_ui() == &"container":
+		_errors.append("Timed locked container should not open ContainerInventoryUI before progress completes.")
+
+	for _index in range(8):
+		await process_frame
+
+	var state: Dictionary = container_ui.call("get_display_state")
+	if int(container_model.call("get_used_slots")) <= 0:
+		_errors.append("Opened locked container should roll visible contents.")
+	if ui_manager != null and ui_manager.has_method("get_active_ui") and ui_manager.get_active_ui() != &"container":
+		_errors.append("Locked container should open through the existing container UI state.")
+	var title := str(state.get("title", ""))
+	if title != "上鎖箱" and title != "藍色上鎖箱":
+		_errors.append("ContainerInventoryUI should show the locked container display name.")
+	if int(state.get("slot_count", 0)) != int(container_model.call("get_capacity")):
+		_errors.append("Locked container should use the same visible capacity grid as normal containers.")
+	if not str(state.get("capacity", "")).contains("/"):
+		_errors.append("Locked container UI should show used/capacity text.")
+	if _stack_quantity(inventory.get_display_items(), WarehouseKey.resource_path) != 0:
+		_errors.append("Opening the locked container should consume the warehouse key after progress completes.")
 
 	_free_node(scene)
 
@@ -152,6 +277,17 @@ func _find_locked_container(scene: Node) -> LootContainer3D:
 		if bool(state.get("is_locked", false)):
 			return node as LootContainer3D
 	return null
+
+
+func _stack_quantity(stacks: Array, item_path: String) -> int:
+	var total := 0
+	for value in stacks:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var stack := value as Dictionary
+		if str(stack.get("resource_path", stack.get("item_path", ""))) == item_path:
+			total += int(stack.get("quantity", 0))
+	return total
 
 
 func _free_node(node: Node) -> void:

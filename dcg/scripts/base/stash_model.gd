@@ -3,6 +3,9 @@ extends RefCounted
 
 signal changed
 
+const ItemStackSorterScript := preload("res://scripts/inventory/item_stack_sorter.gd")
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
+
 var stacks: Array[Dictionary] = []
 
 
@@ -18,6 +21,7 @@ func add_item(item_def: ItemDef, quantity: int = 1) -> bool:
 		return false
 
 	var remaining := quantity
+	var item_max_stack := item_def.get_max_stack()
 	for index in range(stacks.size()):
 		var stack := stacks[index]
 		if not _can_merge_item(stack, item_def):
@@ -32,7 +36,7 @@ func add_item(item_def: ItemDef, quantity: int = 1) -> bool:
 			return true
 
 	while remaining > 0:
-		var moved_to_new_stack := mini(maxi(item_def.max_stack, 1), remaining)
+		var moved_to_new_stack := mini(item_max_stack, remaining)
 		stacks.append(item_def.to_stack(moved_to_new_stack))
 		remaining -= moved_to_new_stack
 
@@ -44,6 +48,10 @@ func add_stack(stack: Dictionary) -> bool:
 	var item_def := _load_item_from_stack(stack)
 	if item_def == null:
 		return false
+	if ItemStackSaveCodecScript.has_persistent_state(stack):
+		stacks.append(ItemStackSaveCodecScript.stack_from_entry(stack, item_def, 1))
+		changed.emit()
+		return true
 	return add_item(item_def, int(stack.get("quantity", 1)))
 
 
@@ -92,6 +100,11 @@ func get_stack_count() -> int:
 	return stacks.size()
 
 
+func organize(sort_mode: StringName = &"type") -> void:
+	ItemStackSorterScript.sort_stacks_in_place(stacks, sort_mode)
+	changed.emit()
+
+
 func get_item_quantity(item_def: ItemDef) -> int:
 	if item_def == null:
 		return 0
@@ -105,14 +118,10 @@ func get_item_quantity(item_def: ItemDef) -> int:
 func to_save_data() -> Array[Dictionary]:
 	var data: Array[Dictionary] = []
 	for stack in stacks:
-		var item_path := str(stack.get("resource_path", ""))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
+		var entry: Dictionary = ItemStackSaveCodecScript.to_save_entry(stack)
+		if entry.is_empty():
 			continue
-		data.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
+		data.append(entry)
 	return data
 
 
@@ -132,13 +141,18 @@ func load_save_data(data: Array) -> bool:
 		if item_def == null or quantity <= 0:
 			loaded_all = false
 			continue
-		add_item(item_def, quantity)
+		if ItemStackSaveCodecScript.has_persistent_state(entry as Dictionary):
+			stacks.append(ItemStackSaveCodecScript.stack_from_entry(entry as Dictionary, item_def, 1))
+		else:
+			add_item(item_def, quantity)
 	changed.emit()
 	return loaded_all
 
 
 func _can_merge_item(stack: Dictionary, item_def: ItemDef) -> bool:
 	if str(stack.get("resource_path", "")) != item_def.resource_path:
+		return false
+	if item_def.get_max_stack() <= 1:
 		return false
 	var max_stack := int(stack.get("max_stack", 1))
 	if max_stack <= 1:
@@ -147,7 +161,7 @@ func _can_merge_item(stack: Dictionary, item_def: ItemDef) -> bool:
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:
-	var item_path := str(stack.get("resource_path", ""))
+	var item_path := ItemStackSaveCodecScript.get_item_path(stack)
 	if item_path == "":
 		return null
 	return load(item_path) as ItemDef

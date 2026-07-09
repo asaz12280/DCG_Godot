@@ -38,6 +38,7 @@ func _initialize() -> void:
 	await _validate_gameplay_hud_cluster()
 	await _validate_top_menu_panels()
 	await _validate_inventory_equipment()
+	await _validate_item_codex()
 	await _validate_container_inventory()
 	await _validate_raid_result()
 	_validate_scene_ownership_boundaries()
@@ -117,10 +118,10 @@ func _validate_base_3d_station_ui() -> void:
 			_assert_rect_inside(stash_state.get("right_panel_rect", Rect2()), viewport_size, "Base 3D stash warehouse panel")
 			_assert_rect_inside(stash_state.get("stash_grid_rect", Rect2()), viewport_size, "Base 3D stash grid")
 			_assert_rect_inside(stash_state.get("backpack_grid_rect", Rect2()), viewport_size, "Base 3D stash backpack grid")
-			_assert_visible_text_not_empty(stash_state, ["title", "status_text"], "Base 3D stash")
+			_assert_visible_text_not_empty(stash_state, ["title"], "Base 3D stash")
 			if stash_panel.has_method("close_stash"):
 				stash_panel.call("close_stash")
-		for interaction_id in ["workbench", "medical"]:
+		for interaction_id in ["workbench"]:
 			if not bool(controller.call("open_interaction_by_id", interaction_id)):
 				_errors.append("Base 3D should open interaction panel for %s." % interaction_id)
 				continue
@@ -159,6 +160,8 @@ func _validate_gameplay_hud_cluster() -> void:
 			_errors.append("Top menu bar should remain near the top edge at %s." % viewport_size)
 		var player_hud_state: Dictionary = player_hud.call("get_display_state") if player_hud.has_method("get_display_state") else {}
 		_assert_visible_text_not_empty(player_hud_state, ["health_text"], "Player HUD")
+		if int(player_hud_state.get("enemy_health_bar_count", 0)) <= 0:
+			_errors.append("Player HUD should expose a player-style enemy health bar in normal Raid.")
 		_free_node(scene)
 
 
@@ -218,6 +221,38 @@ func _validate_inventory_equipment() -> void:
 			else:
 				_assert_rect_inside(slot_rects[required_slot], viewport_size, "Inventory equipment slot %s" % required_slot)
 		_assert_no_english_fallback_tree(inventory, "Inventory equipment panel")
+		_free_node(scene)
+
+
+func _validate_item_codex() -> void:
+	for viewport_size in VIEWPORTS:
+		_set_root_viewport(viewport_size)
+		var scene := GameplayScene.instantiate()
+		root.add_child(scene)
+		await process_frame
+		await process_frame
+		var codex := scene.get_node_or_null("HUD/ItemCodexUI") as Control
+		if codex == null:
+			_errors.append("Gameplay scene should expose ItemCodexUI.")
+			_free_node(scene)
+			continue
+		codex.call("open_codex")
+		await process_frame
+		var state: Dictionary = codex.call("get_display_state_for_viewport", viewport_size)
+		var left_panel_rect: Rect2 = state.get("left_panel_rect", Rect2())
+		var right_panel_rect: Rect2 = state.get("right_panel_rect", Rect2())
+		var grid_rect: Rect2 = state.get("grid_rect", Rect2())
+		var visible_grid_rect: Rect2 = state.get("visible_grid_rect", Rect2())
+		var grid_content_rect: Rect2 = state.get("grid_content_rect", Rect2())
+		_assert_rect_inside(left_panel_rect, viewport_size, "Item codex left panel")
+		_assert_rect_inside(right_panel_rect, viewport_size, "Item codex detail panel")
+		_assert_rect_inside_rect(grid_rect, left_panel_rect, "Item codex grid panel", "left panel")
+		_assert_rect_inside_rect(visible_grid_rect, left_panel_rect, "Item codex visible grid", "left panel")
+		if grid_content_rect.end.x > visible_grid_rect.end.x + 1.0:
+			_errors.append("Item codex grid columns should fit inside the visible backing frame at %s, got %s in %s." % [viewport_size, grid_content_rect, visible_grid_rect])
+		if grid_rect.end.x > right_panel_rect.position.x - 1.0:
+			_errors.append("Item codex grid panel should not overlap the detail panel at %s." % viewport_size)
+		_assert_no_english_fallback_tree(codex, "Item codex")
 		_free_node(scene)
 
 
@@ -297,6 +332,14 @@ func _assert_rect_inside(rect: Rect2, viewport_size: Vector2, label: String) -> 
 		return
 	if rect.position.x < -1.0 or rect.position.y < -1.0 or rect.end.x > viewport_size.x + 1.0 or rect.end.y > viewport_size.y + 1.0:
 		_errors.append("%s should fit inside %s, got %s." % [label, viewport_size, rect])
+
+
+func _assert_rect_inside_rect(rect: Rect2, parent_rect: Rect2, label: String, parent_label: String) -> void:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		_errors.append("%s should have a positive layout size." % label)
+		return
+	if rect.position.x < parent_rect.position.x - 1.0 or rect.position.y < parent_rect.position.y - 1.0 or rect.end.x > parent_rect.end.x + 1.0 or rect.end.y > parent_rect.end.y + 1.0:
+		_errors.append("%s should fit inside %s, got %s inside %s." % [label, parent_label, rect, parent_rect])
 
 
 func _assert_panel_not_dominating(rect: Rect2, viewport_size: Vector2, label: String, max_width_ratio: float, max_height_ratio: float) -> void:

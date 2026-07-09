@@ -5,6 +5,13 @@ const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 const InventoryModelScript := preload("res://scripts/inventory/inventory_model.gd")
 const CommonTable := preload("res://data/loot_tables/refuge_outskirts_common.tres")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
+const CRATE_TABLE_BY_NODE := {
+	"LootContainerNorth": "res://data/loot_tables/crate_dark_green_weapons.tres",
+	"LootContainerEast": "res://data/loot_tables/crate_red_supplies.tres",
+	"LootContainerSouth": "res://data/loot_tables/crate_white_misc_food.tres",
+	"LockedWarehouseCache": "res://data/loot_tables/crate_yellow_locked_cache.tres",
+	"LockedBlueArmorCache": "res://data/loot_tables/crate_blue_locked_armor.tres",
+}
 
 var _errors: Array[String] = []
 var _opened_signal_count := 0
@@ -86,6 +93,9 @@ func _validate_scene_wiring() -> void:
 	var prompt_label := container.get_node_or_null("PromptLabel")
 	if prompt_label == null or not prompt_label is Label3D:
 		_errors.append("Loot container scene should include a Label3D prompt.")
+	var progress_label := container.get_node_or_null("OpenProgressLabel")
+	if progress_label == null or not progress_label is Label3D:
+		_errors.append("Loot container scene should include a Label3D locked-open progress label.")
 	if container.get("loot_table") == null:
 		_errors.append("Loot container scene should bind a LootTable resource.")
 	_free_node(container)
@@ -106,9 +116,38 @@ func _validate_gameplay_map_wiring() -> void:
 		for child in scene_props.get_children():
 			if child.get_script() == LootContainerScript:
 				loot_container_count += 1
+				_validate_colored_container_wiring(child)
 	if loot_container_count < 2:
 		_errors.append("Gameplay map should include at least two LootContainer3D instances.")
+	if loot_container_count < 4:
+		_errors.append("Gameplay map should include the four typed loot containers.")
 	_free_node(scene)
+
+
+func _validate_colored_container_wiring(container: Node) -> void:
+	var expected_path := str(CRATE_TABLE_BY_NODE.get(container.name, ""))
+	if expected_path == "":
+		return
+	var table := container.get("loot_table") as Resource
+	if table == null or table.resource_path != expected_path:
+		_errors.append("%s should use %s." % [container.name, expected_path])
+	var body_color: Color = container.get("body_color")
+	if container.name == "LootContainerNorth" and body_color.g <= body_color.r:
+		_errors.append("LootContainerNorth should be the dark green weapon/ammo crate.")
+	if container.name == "LootContainerEast" and body_color.r <= body_color.g:
+		_errors.append("LootContainerEast should be the red medicine/food crate.")
+	if container.name == "LootContainerSouth" and body_color.r < 0.8:
+		_errors.append("LootContainerSouth should be the white misc/food crate.")
+	if container.name == "LockedWarehouseCache":
+		if not bool(container.get("is_locked")):
+			_errors.append("LockedWarehouseCache should remain locked.")
+		if body_color.r < 0.8 or body_color.g < 0.5:
+			_errors.append("LockedWarehouseCache should be the yellow locked crate.")
+	if container.name == "LockedBlueArmorCache":
+		if not bool(container.get("is_locked")):
+			_errors.append("LockedBlueArmorCache should be locked.")
+		if body_color.b <= body_color.r or body_color.b <= body_color.g:
+			_errors.append("LockedBlueArmorCache should be the blue locked crate.")
 
 
 func _validate_ui_independence() -> void:

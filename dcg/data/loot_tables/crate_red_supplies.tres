@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://cir0jcwv0dq6a"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_stamina_potion"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/consumables/stamina_potion.tres"
+weight = 2.0
+tags = Array[StringName]([&"red_crate", &"consumable", &"medical"])
+
+[sub_resource type="Resource" id="LootTableEntry_bandage"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/medical/bandage.tres"
+weight = 3.0
+tags = Array[StringName]([&"red_crate", &"medical"])
+
+[sub_resource type="Resource" id="LootTableEntry_bottled_water"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/food/bottled_water.tres"
+max_quantity = 2
+weight = 2.0
+tags = Array[StringName]([&"red_crate", &"food"])
+
+[sub_resource type="Resource" id="LootTableEntry_bread"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/food/bread.tres"
+max_quantity = 2
+weight = 2.0
+tags = Array[StringName]([&"red_crate", &"food"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_red_supplies"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_bandage"), SubResource("LootTableEntry_bottled_water"), SubResource("LootTableEntry_bread")])
+entries = Array[Resource]([SubResource("LootTableEntry_stamina_potion")])

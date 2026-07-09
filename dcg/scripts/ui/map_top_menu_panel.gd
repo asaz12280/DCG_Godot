@@ -5,10 +5,11 @@ const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
 const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 
-@export var design_panel_size := Vector2(860.0, 500.0)
+@export var design_panel_size := Vector2(860.0, 96.0)
 @export var design_top_margin := 126.0
 
 @onready var main_panel: PanelContainer = %MainPanel
+@onready var info_panel: PanelContainer = $MainPanel/PanelMargin/Content/InfoPanel
 @onready var title_label: Label = %TitleLabel
 @onready var hint_label: Label = %HintLabel
 @onready var area_label: Label = %AreaLabel
@@ -31,6 +32,7 @@ func _ready() -> void:
 	if get_viewport() != null and not get_viewport().size_changed.is_connected(_apply_responsive_layout):
 		get_viewport().size_changed.connect(_apply_responsive_layout)
 	refresh()
+	_clear_body_text()
 
 
 func open_map() -> void:
@@ -49,15 +51,8 @@ func close_map() -> void:
 
 func refresh() -> void:
 	title_label.text = _text(&"ui.top.map_panel_title", "區域地圖")
-	hint_label.text = _text(&"ui.top.map_panel_hint_v2", "早期導覽：確認撤離、危險區與箱子區，不新增第二張地圖。")
 	_map_summary = _build_map_summary()
-	area_label.text = "%s：%s" % [_text(&"ui.top.map_area", "目前區域"), str(_map_summary.get("area", _unknown_text()))]
-	route_label.text = "%s：%s" % [_text(&"ui.top.map_route", "建議路線"), str(_map_summary.get("route", _unknown_text()))]
-	extraction_label.text = "%s：%s" % [_text(&"ui.top.map_extraction", "撤離方向"), str(_map_summary.get("extraction", _unknown_text()))]
-	danger_label.text = "%s：%s" % [_text(&"ui.top.map_danger", "危險區"), str(_map_summary.get("danger", _unknown_text()))]
-	loot_label.text = "%s：%s" % [_text(&"ui.top.map_loot", "箱子區"), str(_map_summary.get("loot", _unknown_text()))]
-	flow_state_label.text = "%s：%s" % [_text(&"ui.top.map_flow_state", "基地 / 出擊狀態"), str(_map_summary.get("flow_state", _unknown_text()))]
-	note_label.text = str(_map_summary.get("note", _text(&"ui.top.map_note_v2", "此頁是出擊用的資訊地圖；完整可探索大地圖會在核心流程穩定後再製作。")))
+	_clear_body_text()
 
 
 func get_display_state() -> Dictionary:
@@ -82,6 +77,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"summary": _map_summary.duplicate(true),
 		"panel_rect": rect,
 		"mouse_filter": mouse_filter,
+		"body_visible": info_panel.visible if info_panel != null else false,
 	}
 
 
@@ -98,6 +94,19 @@ func _apply_styles() -> void:
 	for label in [area_label, route_label, extraction_label, danger_label, loot_label, flow_state_label, note_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_STATUS)
+
+
+func _clear_body_text() -> void:
+	if hint_label != null:
+		hint_label.text = _text(&"ui.top.map_panel_hint", "早期導覽：確認目前位置、撤離方向與行動狀態。")
+		hint_label.visible = true
+	if info_panel != null:
+		info_panel.visible = false
+	for label in [area_label, route_label, extraction_label, danger_label, loot_label, flow_state_label, note_label]:
+		if label == null:
+			continue
+		label.text = ""
+		label.visible = false
 
 
 func _apply_responsive_layout() -> void:

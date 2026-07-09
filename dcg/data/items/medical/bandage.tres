@@ -12,3 +12,6 @@ item_type = "medical"
 weight = 0.12
 value = 12
 max_stack = 10
+heal_amount = 25.0
+use_duration_seconds = 2.5
+tags = Array[StringName]([&"healing"])

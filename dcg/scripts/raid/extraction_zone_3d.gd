@@ -1,6 +1,8 @@
 class_name ExtractionZone3D
 extends Area3D
 
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
+
 signal extraction_started(body: Node3D)
 signal extraction_progress(progress: float, remaining_time: float)
 signal extraction_cancelled(body: Node3D)
@@ -85,6 +87,7 @@ func _complete_extraction() -> void:
 		"source": "extraction_zone",
 		"zone_path": str(get_path()) if is_inside_tree() else name,
 		"extracted_items": _collect_player_carried_items(_tracked_player),
+		"extracted_equipment": _collect_player_equipment(_tracked_player),
 	}
 	if not bool(session.call("register_extraction", context)):
 		return
@@ -113,7 +116,6 @@ func _collect_player_carried_items(player: Node) -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 	items.append_array(_collect_inventory_model(player.call("get_inventory_model") if player != null and player.has_method("get_inventory_model") else null))
 	items.append_array(_collect_inventory_model(player.call("get_safe_pocket_model") if player != null and player.has_method("get_safe_pocket_model") else null))
-	items.append_array(_collect_equipment_model(player.call("get_equipment_model") if player != null and player.has_method("get_equipment_model") else null))
 	return items
 
 
@@ -121,21 +123,17 @@ func _collect_player_inventory(player: Node) -> Array[Dictionary]:
 	return _collect_player_carried_items(player)
 
 
+func _collect_player_equipment(player: Node) -> Dictionary:
+	var equipment: Variant = player.call("get_equipment_model") if player != null and player.has_method("get_equipment_model") else null
+	if equipment == null or not equipment.has_method("to_save_data"):
+		return {"slots": {}}
+	return equipment.call("to_save_data")
+
+
 func _collect_inventory_model(inventory: Variant) -> Array[Dictionary]:
 	if inventory == null or not inventory.has_method("get_display_items"):
 		return []
 	return _normalize_stack_list(inventory.get_display_items())
-
-
-func _collect_equipment_model(equipment: Variant) -> Array[Dictionary]:
-	if equipment == null or not equipment.has_method("get_slots"):
-		return []
-	var stacks: Array[Dictionary] = []
-	var slots: Dictionary = equipment.call("get_slots")
-	for stack in slots.values():
-		if typeof(stack) == TYPE_DICTIONARY:
-			stacks.append((stack as Dictionary).duplicate(true))
-	return _normalize_stack_list(stacks)
 
 
 func _normalize_stack_list(stacks: Variant) -> Array[Dictionary]:
@@ -145,14 +143,10 @@ func _normalize_stack_list(stacks: Variant) -> Array[Dictionary]:
 	for stack in stacks as Array:
 		if typeof(stack) != TYPE_DICTIONARY:
 			continue
-		var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
-		var quantity := int(stack.get("quantity", 1))
-		if item_path == "" or quantity <= 0:
+		var entry: Dictionary = ItemStackSaveCodecScript.to_save_entry(stack as Dictionary)
+		if entry.is_empty():
 			continue
-		items.append({
-			"item_path": item_path,
-			"quantity": quantity,
-		})
+		items.append(entry)
 	return items
 
 

@@ -1,15 +1,14 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://c46x4sa2ufcgr"]
 
-[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
 
 [resource]
 script = ExtResource("1_item_def")
 id = &"junk"
-catalog_number = 21
+catalog_number = 12
 display_name = "垃圾"
 name_key = &"item.junk.name"
 description_key = &"item.junk.desc"
-item_type = "loot"
 weight = 0.3
 value = 2
 max_stack = 20
