@@ -2,8 +2,8 @@ extends SceneTree
 
 const ContainerInventoryModelScript := preload("res://scripts/inventory/container_inventory_model.gd")
 const Wood := preload("res://data/items/crafting/wood.tres")
-const Wire := preload("res://data/items/electronics/wire.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Junk := preload("res://data/items/loot/junk.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 
@@ -47,7 +47,7 @@ func _validate_capacity_and_stacking() -> void:
 		_errors.append("Merged wood stack should increase from 3 to 8.")
 
 	var before_reject := container.get_slots()
-	if container.add_item(Wire, 1):
+	if container.add_item(Junk, 1):
 		_errors.append("ContainerInventoryModel should reject full-container additions.")
 	if container.get_slots() != before_reject:
 		_errors.append("Rejected additions should not mutate existing container slots.")
@@ -77,7 +77,7 @@ func _validate_remove_and_clear() -> void:
 func _validate_sort_modes() -> void:
 	var container := ContainerInventoryModelScript.new(4)
 	container.add_item(Wood, 1)
-	container.add_item(Wire, 1)
+	container.add_item(Junk, 1)
 	container.add_item(Pistol, 1)
 
 	container.organize(&"value")
@@ -91,7 +91,7 @@ func _validate_sort_modes() -> void:
 		_errors.append("Container weight sort should keep the heavier wood stack before wire.")
 
 	container.organize(&"value_weight")
-	if int(container.get_slot(1).get("catalog_number", 0)) != Wire.catalog_number:
+	if int(container.get_slot(1).get("catalog_number", 0)) != Junk.catalog_number:
 		_errors.append("Container value/kg sort should put wire after the pistol and before wood.")
 
 

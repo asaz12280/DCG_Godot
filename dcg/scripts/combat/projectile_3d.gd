@@ -5,16 +5,15 @@ signal projectile_hit(target: Node, event: DamageEvent)
 signal projectile_missed
 
 const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
-const DEFAULT_HIT_FEEDBACK_SCENE := preload("res://scenes/combat/projectile_hit_feedback_3d.tscn")
 
 @export var speed := 34.0
 @export var max_distance := 28.0
 @export var lifetime_seconds := 1.25
-@export var hit_feedback_scene: PackedScene = DEFAULT_HIT_FEEDBACK_SCENE
 
 var damage_event: DamageEvent = null
 var shooter: Node = null
 var weapon_def: ItemDef = null
+var combat_vfx_spawner: Node = null
 
 var _direction := Vector3.FORWARD
 var _start_position := Vector3.ZERO
@@ -32,7 +31,7 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
-func setup(origin: Vector3, direction: Vector3, event: DamageEvent, source_weapon: ItemDef, source_shooter: Node) -> void:
+func setup(origin: Vector3, direction: Vector3, event: DamageEvent, source_weapon: ItemDef, source_shooter: Node, source_vfx_spawner: Node = null) -> void:
 	if is_inside_tree():
 		global_position = origin
 	else:
@@ -42,10 +41,13 @@ func setup(origin: Vector3, direction: Vector3, event: DamageEvent, source_weapo
 	damage_event = event
 	weapon_def = source_weapon
 	shooter = source_shooter
+	combat_vfx_spawner = source_vfx_spawner
 	_pierced_damage_targets.clear()
 	_pierced_colliders.clear()
 	if is_inside_tree():
 		look_at_from_position(origin, origin + _direction, Vector3.UP)
+	if combat_vfx_spawner != null and combat_vfx_spawner.has_method("attach_projectile_travel"):
+		combat_vfx_spawner.call("attach_projectile_travel", self, weapon_def)
 
 
 func _physics_process(delta: float) -> void:
@@ -74,18 +76,19 @@ func _try_hit(target: Node, hit_position: Vector3) -> void:
 		return
 	var damage_target := _resolve_damage_target(target)
 	if damage_target == null:
-		_spawn_hit_feedback(hit_position)
+		_play_impact_vfx(hit_position, false)
 		_finish_miss()
 		return
 	if _pierced_damage_targets.has(damage_target):
 		return
 	var did_hit: bool = damage_target.apply_damage(damage_event)
 	if did_hit:
-		_spawn_hit_feedback(hit_position)
+		_play_impact_vfx(hit_position, true, damage_target as Node3D)
 		projectile_hit.emit(damage_target, damage_event)
 		if _should_pierce_after_hit(damage_target, target):
 			return
 	else:
+		_play_impact_vfx(hit_position, false)
 		projectile_missed.emit()
 	_has_finished = true
 	queue_free()
@@ -118,25 +121,15 @@ func _should_pierce_after_hit(damage_target: Node, collider: Node) -> bool:
 	return true
 
 
+func _play_impact_vfx(hit_position: Vector3, did_damage: bool, damaged_target: Node3D = null) -> void:
+	if combat_vfx_spawner != null and combat_vfx_spawner.has_method("play_projectile_impact"):
+		combat_vfx_spawner.call("play_projectile_impact", hit_position, _direction, weapon_def, did_damage, damaged_target)
+
+
 func _finish_miss() -> void:
 	_has_finished = true
 	projectile_missed.emit()
 	queue_free()
-
-
-func _spawn_hit_feedback(hit_position: Vector3) -> void:
-	if hit_feedback_scene == null:
-		return
-	var feedback := hit_feedback_scene.instantiate()
-	if not (feedback is Node3D):
-		if feedback != null:
-			feedback.queue_free()
-		return
-	var parent := get_parent()
-	if parent == null:
-		return
-	parent.add_child(feedback)
-	feedback.global_position = hit_position
 
 
 func _resolve_damage_target(target: Node) -> Node:

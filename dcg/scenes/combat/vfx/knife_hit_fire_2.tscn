@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://bw4whkso0nih"]
+
+[ext_resource type="Shader" uid="uid://cs5j2ttejnhf6" path="res://scenes/combat/vfx/knife_hit_fire_2_assets/shaders/s_Disolver.tres" id="3_giul7"]
+[ext_resource type="Texture2D" uid="uid://wcgdnx774tdj" path="res://scenes/combat/vfx/knife_hit_fire_2_assets/textures/T_VFX_Noise_075.png" id="4_bdvm7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a3jmr"]
+render_priority = 1
+shader = ExtResource("3_giul7")
+shader_parameter/Scale = Vector2(1, 1)
+shader_parameter/Texture = ExtResource("4_bdvm7")
+shader_parameter/Proximity_Fade = 0.5
+
+[sub_resource type="Curve" id="Curve_wfppq"]
+_data = [Vector2(0, 0.011043), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_3qq4t"]
+texture_mode = 1
+curve = SubResource("Curve_wfppq")
+
+[sub_resource type="Gradient" id="Gradient_sb7ji"]
+offsets = PackedFloat32Array(0, 0.691525)
+colors = PackedColorArray(1, 1, 1, 1, 0.203922, 0.152941, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_wqg7x"]
+gradient = SubResource("Gradient_sb7ji")
+
+[sub_resource type="Curve" id="Curve_h3t83"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveXYZTexture" id="CurveXYZTexture_gi7h1"]
+curve_y = SubResource("Curve_h3t83")
+
+[sub_resource type="Curve" id="Curve_lm7q7"]
+_data = [Vector2(0, 0.0907975), 0.0, 2.51167, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_smilp"]
+curve = SubResource("Curve_lm7q7")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_5d0f5"]
+particle_flag_rotate_y = true
+angle_min = -180.0
+angle_max = 180.0
+directional_velocity_min = 6.0
+directional_velocity_max = 9.0
+directional_velocity_curve = SubResource("CurveXYZTexture_gi7h1")
+gravity = Vector3(0, 0, 0)
+scale_min = 1.5
+scale_max = 2.0
+scale_curve = SubResource("CurveTexture_smilp")
+color = Color(1, 1, 1, 0.5)
+color_ramp = SubResource("GradientTexture1D_wqg7x")
+alpha_curve = SubResource("CurveTexture_3qq4t")
+
+[sub_resource type="TorusMesh" id="TorusMesh_ump7r"]
+inner_radius = 1.047
+outer_radius = 1.344
+rings = 32
+ring_segments = 16
+
+[sub_resource type="Animation" id="Animation_ltyvd"]
+resource_name = "Init"
+length = 1.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("torus white simple:emitting")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_7sug1"]
+length = 0.001
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ncn83"]
+_data = {
+&"Init": SubResource("Animation_ltyvd"),
+&"RESET": SubResource("Animation_7sug1")
+}
+
+[node name="KnifeHitFire2" type="Node3D" unique_id=1713625355]
+
+[node name="torus white simple" type="GPUParticles3D" parent="." unique_id=306780244]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_a3jmr")
+cast_shadow = 0
+emitting = false
+amount = 1
+lifetime = 0.7
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_5d0f5")
+draw_pass_1 = SubResource("TorusMesh_ump7r")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1998950724]
+libraries/ = SubResource("AnimationLibrary_ncn83")
+autoplay = &"Init"

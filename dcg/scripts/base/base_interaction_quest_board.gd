@@ -5,14 +5,14 @@ const BaseScreenViewModelScript := preload("res://scripts/base/base_screen_view_
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 
 
-static func panel_context(controller, save_manager) -> Dictionary:
+static func panel_context(controller, save_manager, quest_giver_profile: Resource = null) -> Dictionary:
 	if save_manager == null or not save_manager.has_method("get_slot_data"):
 		return unavailable_context(controller._localized_text(&"ui.base.quest_no_save", "Create a save first."))
 	var slot_index := int(save_manager.call("get_current_slot_index")) if save_manager.has_method("get_current_slot_index") else 1
 	var save_data: Dictionary = save_manager.call("get_slot_data", slot_index)
 	if save_data.is_empty():
 		return unavailable_context(controller._localized_text(&"ui.base.quest_no_save", "Create a save first."))
-	var selected := BaseScreenViewModelScript.selected_quest_def(save_data)
+	var selected := BaseScreenViewModelScript.selected_quest_def(save_data, quest_giver_profile)
 	if selected != null:
 		var state := BaseScreenViewModelScript.quest_state(save_data, selected)
 		return {
@@ -23,7 +23,7 @@ static func panel_context(controller, save_manager) -> Dictionary:
 			"action_mode": "quest_submit",
 			"quest_id": str(selected.get("id")),
 		}
-	var available := BaseScreenViewModelScript.next_available_quest_def(save_data)
+	var available := BaseScreenViewModelScript.next_available_quest_def(save_data, quest_giver_profile)
 	if available != null:
 		return {
 			"body": "%s\n%s\n%s" % [
@@ -64,7 +64,7 @@ static func status_text(controller, quest_state: Dictionary) -> String:
 	return controller._localized_text(&"ui.top.quest_inactive", "Inactive")
 
 
-static func execute_action(controller, panel: Control, save_manager) -> Dictionary:
+static func execute_action(controller, panel: Control, save_manager, quest_giver_profile: Resource = null) -> Dictionary:
 	if save_manager == null or not save_manager.has_method("get_slot_data") or not save_manager.has_method("save_slot_data"):
 		return {"success": false, "reason": "no_save"}
 	var slot_index := int(save_manager.call("get_current_slot_index")) if save_manager.has_method("get_current_slot_index") else 1
@@ -73,7 +73,7 @@ static func execute_action(controller, panel: Control, save_manager) -> Dictiona
 		return {"success": false, "reason": "no_save"}
 	var mode := str(panel.active_context.get("action_mode", "")) if panel != null else ""
 	var quest_id := str(panel.active_context.get("quest_id", "")) if panel != null else ""
-	var quest_def := quest_def_by_id(quest_id)
+	var quest_def := quest_def_by_id(quest_id, quest_giver_profile)
 	if quest_def == null:
 		return {"success": false, "reason": "missing_quest"}
 	var quests: Dictionary = BaseScreenViewModelScript.quests_dict(save_data.get("quests", {}))
@@ -95,8 +95,8 @@ static func execute_action(controller, panel: Control, save_manager) -> Dictiona
 	return {"success": false, "reason": "invalid_mode"}
 
 
-static func quest_def_by_id(quest_id: String) -> Resource:
-	for quest_def in BaseScreenViewModelScript.quest_defs():
+static func quest_def_by_id(quest_id: String, quest_giver_profile: Resource = null) -> Resource:
+	for quest_def in BaseScreenViewModelScript.quest_defs(quest_giver_profile):
 		if str(quest_def.get("id")) == quest_id:
 			return quest_def
 	return null

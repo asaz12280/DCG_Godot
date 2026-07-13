@@ -9,7 +9,7 @@ const InventoryModelScript := preload("res://scripts/inventory/inventory_model.g
 const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const WoodItem := preload("res://data/items/crafting/wood.tres")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 
 var _errors: Array[String] = []

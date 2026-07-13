@@ -23,6 +23,7 @@ static func perform_arc_attack(
 	forward = forward.normalized()
 	var half_arc := deg_to_rad(maxf(arc_degrees, 1.0) * 0.5)
 	var hit_paths: Array[String] = []
+	var hit_positions: Array[Vector3] = []
 	var hit_count := 0
 	for candidate in attacker.get_tree().get_nodes_in_group("damageable"):
 		var target := candidate as Node3D
@@ -46,10 +47,12 @@ static func perform_arc_attack(
 		if bool(damage_target.call("apply_damage", event)):
 			hit_count += 1
 			hit_paths.append(str(damage_target.get_path()))
+			hit_positions.append(target.global_position + Vector3.UP * 0.65)
 	return {
 		"attacked": true,
 		"hit_count": hit_count,
 		"hit_paths": hit_paths,
+		"hit_positions": hit_positions,
 		"damage": damage,
 		"range": range_meters,
 		"arc_degrees": arc_degrees,
@@ -76,6 +79,7 @@ static func _empty_result() -> Dictionary:
 		"attacked": false,
 		"hit_count": 0,
 		"hit_paths": [],
+		"hit_positions": [],
 		"damage": 0.0,
 		"range": 0.0,
 		"arc_degrees": 0.0,

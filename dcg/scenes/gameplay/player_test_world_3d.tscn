@@ -32,6 +32,7 @@
 [ext_resource type="Resource" uid="uid://b7wcqqfnarg1j" path="res://data/loot_tables/crate_yellow_locked_cache.tres" id="31_yellow_loot"]
 [ext_resource type="Resource" uid="uid://j2dc08skvhje" path="res://data/loot_tables/crate_blue_locked_armor.tres" id="32_blue_loot"]
 [ext_resource type="PackedScene" path="res://scenes/items/loot_pickup_warehouse_key.tscn" id="33_warehouse_key_pickup"]
+[ext_resource type="Resource" uid="uid://dvsmyjm702q05" path="res://data/loot_tables/crate_orange_shotgun_kit.tres" id="34_orange_shotgun_loot"]
 
 [sub_resource type="Environment" id="Environment_sunny"]
 background_mode = 1
@@ -128,7 +129,7 @@ transform = Transform3D(0.309058, -0.7285415, 0.61131865, -9.775169e-09, 0.64278
 shadow_enabled = true
 
 [node name="Floor" type="MeshInstance3D" parent="." unique_id=189956493]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08094692, -0.09999905, -0.018536568)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04922521, -0.10748444, -0.002755642)
 mesh = SubResource("BoxMesh_floor")
 surface_material_override/0 = SubResource("StandardMaterial3D_floor")
 
@@ -139,6 +140,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_floor")
 
 [node name="RaidNavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=735030229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014955759, 0, 0.001478672)
 navigation_mesh = SubResource("NavigationMesh_raid_walkable")
 
 [node name="NavigationManager3D" type="Node" parent="." unique_id=617932876]
@@ -258,6 +260,13 @@ text = "上鎖箱"
 font_size = 36
 outline_size = 8
 
+[node name="OrangeShotgunCache" parent="SceneProps" unique_id=1402932322 instance=ExtResource("18_loot_container")]
+transform = Transform3D(0.86, 0, 0, 0, 0.86, 0, 0, 0, 0.86, 1.8, 0, 3.8)
+loot_table = ExtResource("34_orange_shotgun_loot")
+body_color = Color(0.92, 0.34, 0.06, 1)
+lid_color = Color(0.68, 0.18, 0.02, 1)
+prompt_color = Color(1, 0.68, 0.28, 1)
+
 [node name="LockedBlueArmorCache" parent="SceneProps" unique_id=1590471518 instance=ExtResource("18_loot_container")]
 transform = Transform3D(0.78, 0, -0.2, 0, 0.82, 0, 0.2, 0, 0.78, 4.6, 0, -4.4)
 loot_table = ExtResource("32_blue_loot")
@@ -295,7 +304,34 @@ text = "按 E 調查訊號塔"
 outline_size = 8
 
 [node name="ScavengerPatrol01" parent="SceneProps" unique_id=1735923851 instance=ExtResource("24_scavenger")]
-transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.6662855, 0, -12.115003)
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.190244, 0, -12.854838)
+
+[node name="ScavengerPatrol04" parent="SceneProps" unique_id=560807691 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 10.614131, 0, -12.854838)
+
+[node name="ScavengerPatrol05" parent="SceneProps" unique_id=2082390831 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 8.681859, 0, -12.854838)
+
+[node name="ScavengerPatrol02" parent="SceneProps" unique_id=33870677 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.190244, 0, -11.290698)
+
+[node name="ScavengerPatrol06" parent="SceneProps" unique_id=2070761753 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 10.745551, 0, -11.290698)
+
+[node name="ScavengerPatrol07" parent="SceneProps" unique_id=1105891235 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 8.6907835, 0, -11.290698)
+
+[node name="ScavengerPatrol08" parent="SceneProps" unique_id=2115748252 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 8.6907835, 0, -9.356141)
+
+[node name="ScavengerPatrol09" parent="SceneProps" unique_id=87780291 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 10.469491, 0, -9.356141)
+
+[node name="ScavengerPatrol10" parent="SceneProps" unique_id=1485460486 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.252238, 0, -9.356141)
+
+[node name="ScavengerPatrol03" parent="SceneProps" unique_id=1543646891 instance=ExtResource("24_scavenger")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 12.190244, 0, -11.290698)
 
 [node name="ExtractionZone" type="Area3D" parent="SceneProps" unique_id=1094740989 groups=["extraction_zone"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0.9, -5.6)

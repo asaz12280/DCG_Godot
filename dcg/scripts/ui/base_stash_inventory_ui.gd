@@ -3,33 +3,34 @@ extends Control
 
 const StashModelScript := preload("res://scripts/base/stash_model.gd")
 const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
+const StashCurrencyServiceScript := preload("res://scripts/base/stash_currency_service.gd")
 const BaseNeededItemServiceScript := preload("res://scripts/base/base_needed_item_service.gd")
 const BaseStorageUpgradeServiceScript := preload("res://scripts/base/base_storage_upgrade_service.gd")
 const InventoryLayoutScript := preload("res://scripts/ui/inventory_equipment_layout.gd")
 const InventoryPainterScript := preload("res://scripts/ui/inventory_equipment_painter.gd")
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
+const ItemCodexCatalogScript := preload("res://scripts/ui/item_codex_catalog.gd")
+const ItemCodexPresenterScript := preload("res://scripts/ui/item_codex_presenter.gd")
+const ItemDetailPanelPresenterScript := preload("res://scripts/ui/item_detail_panel_presenter.gd")
+const WeaponModPanelPresenterScript := preload("res://scripts/ui/weapon_mod_panel_presenter.gd")
 const ItemStackSorterScript := preload("res://scripts/inventory/item_stack_sorter.gd")
 const InventoryGridMetricsScript := preload("res://scripts/ui/inventory_grid_metrics.gd")
+const WeaponModPanelStateBuilderScript := preload("res://scripts/ui/weapon_mod_panel_state_builder.gd")
 const BaseStashInventoryMarkerSupportScript := preload("res://scripts/ui/base_stash_inventory_marker_support.gd")
 const BaseStashInventoryReferenceSupportScript := preload("res://scripts/ui/base_stash_inventory_reference_support.gd")
 const BaseStashInventoryLayoutSupportScript := preload("res://scripts/ui/base_stash_inventory_layout_support.gd")
 const BaseStashInventoryPainterSupportScript := preload("res://scripts/ui/base_stash_inventory_painter_support.gd")
+const BaseStashInventoryCategorySupportScript := preload("res://scripts/ui/base_stash_inventory_category_support.gd")
 const BaseStashInventoryTransferSupportScript := preload("res://scripts/ui/base_stash_inventory_transfer_support.gd")
-
-const STASH_PANEL_FILL := Color(0.50, 0.52, 0.46, 0.68)
-const STASH_PANEL_BORDER := Color(1.0, 1.0, 1.0, 0.12)
-const STASH_SLOT_FILL := Color(0.74, 0.75, 0.68, 0.24)
-const STASH_SLOT_BORDER := Color(1.0, 1.0, 1.0, 0.28)
-const STASH_BUTTON_FILL := Color(0.74, 0.78, 0.73, 0.68)
-const STASH_BUTTON_BORDER := Color(1.0, 1.0, 1.0, 0.18)
-const STASH_BUTTON_TEXT := Color.WHITE
+const StashCurrencyTransferDialogScript := preload("res://scripts/ui/stash_currency_transfer_dialog.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 # 基地倉庫 UI 負責開關狀態、輸入協調與對外 API。
 # 標記紀錄、Tab 背包鏡像、版面計算、繪製與物品轉移流程
 # 交給共用輔助腳本，避免主面板繼續累積不相干責任。
 @export var stash_capacity: int = 250
 @export var grid_columns: int = 5
-@export var visible_stash_rows: int = 6
+@export var visible_stash_rows: int = 8
 @export var visible_backpack_rows: int = 4
 @export var slot_size: Vector2 = Vector2(75.0, 75.0)
 @export var slot_gap: float = 12.0
@@ -43,6 +44,8 @@ var stash_model := StashModelScript.new()
 var backpack_items: Array[Dictionary] = []
 var safe_pocket_items: Array[Dictionary] = []
 var stash_items: Array[Dictionary] = []
+var filtered_stash_items: Array[Dictionary] = []
+var filtered_stash_source_indices: Array[int] = []
 var backpack_scroll_row: int = 0
 var stash_scroll_row: int = 0
 var locked_backpack_slots: Dictionary = {}
@@ -55,6 +58,10 @@ var _storage_upgrade_state: Dictionary = {}
 var _needed_item_state: Dictionary = {}
 var _needed_item_paths: Dictionary = {}
 var _next_sort_mode: StringName = &"value"
+var _active_stash_category_id := "all"
+var _stash_category_counts: Dictionary = {}
+var _stash_money := 0
+var _wallet_money := 0
 
 var equipment_slot_label_keys: Array[StringName] = [
 	&"ui.equipment.primary",
@@ -92,6 +99,11 @@ var _inventory_layout := InventoryLayoutScript.new()
 var _inventory_ui: Control = null
 var _opened_inventory_reference := false
 var _painter := InventoryPainterScript.new(self)
+var _item_codex_catalog := ItemCodexCatalogScript.new()
+var _item_detail_panel := ItemDetailPanelPresenterScript.new()
+var _weapon_mod_panel := WeaponModPanelPresenterScript.new()
+var _weapon_mod_stash_stack_index: int = -1
+var _currency_transfer_dialog := StashCurrencyTransferDialogScript.new()
 
 
 func _ready() -> void:
@@ -107,6 +119,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
+			if _currency_transfer_dialog.is_open():
+				_currency_transfer_dialog.close()
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
 			_request_managed_close()
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_L and toggle_lock_at_position(_current_mouse_position()):
@@ -118,10 +135,28 @@ func _unhandled_input(event: InputEvent) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if not _is_open:
 		return
+	if _currency_transfer_dialog.is_open():
+		if event is InputEventMouseMotion:
+			_last_mouse_position = event.position
+			if _currency_transfer_dialog.handle_mouse_motion(event):
+				queue_redraw()
+			accept_event()
+			return
+		if event is InputEventMouseButton:
+			var dialog_mouse_event := event as InputEventMouseButton
+			_last_mouse_position = dialog_mouse_event.position
+			var dialog_result := _currency_transfer_dialog.handle_mouse_button(dialog_mouse_event)
+			if not dialog_result.is_empty():
+				_match_currency_transfer_dialog_action(dialog_result)
+				accept_event()
+				return
+			if dialog_mouse_event.button_index == MOUSE_BUTTON_LEFT:
+				accept_event()
+				return
 	if event is InputEventMouseMotion:
 		_last_mouse_position = event.position
+		_forward_inventory_reference_mouse_event(event)
 		if _forwarding_inventory_reference_drag:
-			_forward_inventory_reference_mouse_event(event)
 			accept_event()
 			return
 		queue_redraw()
@@ -145,10 +180,16 @@ func _gui_input(event: InputEvent) -> void:
 func open_stash(source_player: Node = null, source_save_manager: Node = null) -> bool:
 	player = source_player if source_player != null else _find_player()
 	save_manager = source_save_manager if source_save_manager != null else _find_save_manager()
+	_item_codex_catalog.reload()
+	_active_stash_category_id = "all"
 	_bind_models()
 	_load_stash_from_save()
+	_refresh_stash_money()
 	backpack_scroll_row = 0
 	stash_scroll_row = 0
+	_item_detail_panel.close()
+	_close_weapon_mod_panel()
+	_currency_transfer_dialog.close()
 	# 左側使用一般 Tab 背包介面；這個面板只繪製右側倉庫，
 	# 並把需要共用的背包操作轉交給該背包 UI。
 	_open_inventory_reference()
@@ -169,6 +210,9 @@ func close_stash(close_inventory_reference: bool = true, update_ui_manager: bool
 	_is_open = false
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_item_detail_panel.close()
+	_close_weapon_mod_panel()
+	_currency_transfer_dialog.close()
 	_close_inventory_reference(close_inventory_reference)
 	queue_redraw()
 	if update_ui_manager:
@@ -218,6 +262,10 @@ func withdraw_stash_stack(stack_index: int) -> bool:
 	return BaseStashInventoryTransferSupportScript.withdraw_stash_stack(self, stack_index)
 
 
+func withdraw_stash_stack_to_equipment_or_backpack(stack_index: int) -> bool:
+	return BaseStashInventoryTransferSupportScript.withdraw_stash_stack_to_equipment_or_backpack(self, stack_index)
+
+
 func organize_stash(sort_mode: StringName = &"") -> void:
 	var selected_mode := _consume_sort_mode(sort_mode)
 	stash_model.organize(selected_mode)
@@ -225,6 +273,50 @@ func organize_stash(sort_mode: StringName = &"") -> void:
 	_status_key = _sort_status_key(selected_mode)
 	locked_stash_slots.clear()
 	_on_stash_changed()
+
+
+func open_currency_deposit() -> bool:
+	return _open_currency_transfer(StashCurrencyTransferDialogScript.MODE_DEPOSIT, _wallet_money)
+
+
+func open_currency_withdraw() -> bool:
+	return _open_currency_transfer(StashCurrencyTransferDialogScript.MODE_WITHDRAW, _stash_money)
+
+
+func _open_currency_transfer(mode: StringName, source_amount: int) -> bool:
+	if not _currency_transfer_dialog.open_transfer(mode, source_amount):
+		_status_key = &"ui.stash.money_source_empty"
+		queue_redraw()
+		return false
+	_close_item_detail_panel()
+	_close_weapon_mod_panel()
+	queue_redraw()
+	return true
+
+
+func _match_currency_transfer_dialog_action(action: Dictionary) -> void:
+	match str(action.get("action", "")):
+		"confirm":
+			var amount := int(action.get("amount", 0))
+			var mode := StringName(str(action.get("mode", "")))
+			var result := StashCurrencyServiceScript.deposit(save_manager, amount) if mode == StashCurrencyTransferDialogScript.MODE_DEPOSIT else StashCurrencyServiceScript.withdraw(save_manager, amount)
+			_apply_stash_currency_result(result, &"ui.stash.money_deposited" if mode == StashCurrencyTransferDialogScript.MODE_DEPOSIT else &"ui.stash.money_withdrawn")
+			_currency_transfer_dialog.close()
+		"cancel":
+			_currency_transfer_dialog.close()
+			queue_redraw()
+
+
+func select_stash_category(category_id: String) -> bool:
+	if not BaseStashInventoryCategorySupportScript.category_ids().has(category_id):
+		return false
+	_active_stash_category_id = category_id
+	stash_scroll_row = 0
+	_close_item_detail_panel()
+	_close_weapon_mod_panel()
+	_refresh_stash_filter()
+	queue_redraw()
+	return true
 
 
 func toggle_lock_at_position(position: Vector2) -> bool:
@@ -293,6 +385,11 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"backpack_items": backpack_items.duplicate(true),
 		"safe_pocket_items": safe_pocket_items.duplicate(true),
 		"stash_items": stash_items.duplicate(true),
+		"visible_stash_items": filtered_stash_items.duplicate(true),
+		"visible_stash_source_indices": filtered_stash_source_indices.duplicate(),
+		"stash_category_id": _active_stash_category_id,
+		"stash_category_counts": _stash_category_counts.duplicate(true),
+		"stash_category_tabs": _stash_category_tabs(right_rect),
 		"left_panel_role": "tab_inventory_reference",
 		"right_panel_role": "warehouse",
 		"uses_tab_inventory_surface": true,
@@ -300,12 +397,15 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"dims_inventory_surface": false,
 		"equipment_surface_visible": true,
 		"store_all_button_visible": false,
-		"sort_button_visible": false,
+		"sort_button_visible": true,
 		"storage_upgrade_button_visible": false,
 		"stash_hint_visible": false,
 		"stash_status_visible": false,
 		"stash_used": stash_model.get_stack_count(),
 		"stash_capacity": stash_capacity,
+		"visible_stash_rows": visible_stash_rows,
+		"stash_money": _stash_money,
+		"wallet_money": _wallet_money,
 		"base_stash_capacity": _base_stash_capacity,
 		"stash_capacity_bonus": maxi(stash_capacity - _base_stash_capacity, 0),
 		"storage_upgrade_state": _storage_upgrade_state.duplicate(true),
@@ -319,7 +419,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"locked_stash_slots": BaseStashInventoryMarkerSupportScript.locked_index_array(locked_stash_slots),
 		"locked_equipment_slots": BaseStashInventoryMarkerSupportScript.locked_string_array(locked_equipment_slots),
 		"next_sort_mode": str(_next_sort_mode),
-		"sort_button_text": _sort_button_text(),
+		"sort_button_text": _localized_text(&"ui.stash.sort", "Sort"),
 		"needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("item_paths", []) as Array),
 		"automatic_needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("automatic_item_paths", []) as Array),
 		"upgrade_needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("upgrade_item_paths", []) as Array),
@@ -328,13 +428,25 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"recipe_needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("recipe_item_paths", []) as Array),
 		"quest_needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("quest_item_paths", []) as Array),
 		"manual_needed_item_paths": BaseStashInventoryMarkerSupportScript.path_array(_needed_item_state.get("manual_item_paths", []) as Array),
+		"weapon_mod_panel": _weapon_mod_panel.state.duplicate(true),
+		"weapon_mod_panel_rect": _weapon_mod_panel.panel_rect(_ui_scale, viewport_size) if _weapon_mod_panel.is_open() else Rect2(),
+		"weapon_mod_panel_text": _weapon_mod_panel.visible_text(self),
+		"item_detail_panel": _item_detail_panel.state.duplicate(true),
+		"item_detail_panel_rect": _item_detail_panel.panel_rect(_ui_scale, viewport_size) if _item_detail_panel.is_open() else Rect2(),
+		"item_detail_panel_text": _item_detail_panel.visible_text(self),
 		"left_panel_rect": left_rect,
 		"right_panel_rect": right_rect,
 		"stash_grid_rect": _stash_grid_rect(right_rect),
+		"stash_scroll_track_rect": _stash_scroll_track_rect(right_rect),
+		"stash_currency_panel_rect": _stash_currency_panel_rect(right_rect),
+		"stash_currency_balance_rect": _stash_currency_balance_rect(right_rect),
+		"stash_currency_deposit_rect": _stash_currency_deposit_rect(right_rect),
+		"stash_currency_withdraw_rect": _stash_currency_withdraw_rect(right_rect),
+		"currency_transfer_dialog": _currency_transfer_dialog.get_state(viewport_size, _ui_scale),
 		"backpack_grid_rect": _backpack_grid_rect(left_rect),
 		"safe_pocket_rect": _safe_pocket_panel_rect(left_rect),
-		"close_button_rect": _close_button_rect(right_rect),
-		"sort_button_rect": Rect2(),
+		"close_button_rect": Rect2(),
+		"sort_button_rect": _sort_button_rect(right_rect),
 		"store_all_button_rect": Rect2(),
 		"storage_upgrade_button_rect": Rect2(),
 	}
@@ -363,11 +475,22 @@ func _draw() -> void:
 	# 左側裝備/背包畫面由 Tab 背包參照自行繪製；
 	# 這裡只繪製右側倉庫與共用浮動提示。
 	_draw_stash_panel(right_rect)
+	_draw_item_detail_panel()
+	_draw_weapon_mod_panel()
 	_draw_hover_tooltip(_current_mouse_position())
+	_currency_transfer_dialog.draw(self, _painter, _ui_scale, viewport_size)
 
 
 func _draw_stash_panel(rect: Rect2) -> void:
 	BaseStashInventoryPainterSupportScript.draw_stash_panel(self, rect)
+
+
+func _draw_item_detail_panel() -> void:
+	_item_detail_panel.draw(self, _painter, _ui_scale, get_viewport_rect().size)
+
+
+func _draw_weapon_mod_panel() -> void:
+	_weapon_mod_panel.draw(self, _painter, _ui_scale, get_viewport_rect().size)
 
 
 func _draw_equipment_grid(rect: Rect2) -> void:
@@ -402,6 +525,10 @@ func _handle_scroll(event: InputEventMouseButton) -> void:
 	var left_rect := _left_panel_rect(viewport_size)
 	var right_rect := _right_panel_rect(viewport_size)
 	var direction := 1 if event.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1
+	if _scroll_weapon_mod_details_at(event.position, direction):
+		return
+	if _scroll_inventory_reference_weapon_mod(event.position, direction):
+		return
 	if right_rect.has_point(event.position):
 		_scroll_stash(direction)
 	elif left_rect.has_point(event.position):
@@ -416,29 +543,66 @@ func _handle_left_click(event: InputEventMouseButton) -> bool:
 	var right_rect := _right_panel_rect(viewport_size)
 	if _handle_inventory_reference_action_click(position):
 		return true
-	if _close_button_rect(right_rect).has_point(position):
-		_request_managed_close()
+	if _stash_currency_deposit_rect(right_rect).has_point(position):
+		open_currency_deposit()
 		return true
+	if _stash_currency_withdraw_rect(right_rect).has_point(position):
+		open_currency_withdraw()
+		return true
+	if _sort_button_rect(right_rect).has_point(position):
+		organize_stash(&"type")
+		return true
+	var category_id := _stash_category_id_at(position, right_rect)
+	if category_id != "":
+		return select_stash_category(category_id)
 	var equipment_index := _equipment_index_at(position, left_rect)
 	if equipment_index >= 0:
-		_open_inventory_reference_weapon_slot(equipment_slot_ids[equipment_index])
+		_close_item_detail_panel()
+		var slot_id := equipment_slot_ids[equipment_index]
+		if event.double_click:
+			store_equipment_slot(slot_id)
+			return true
+		_open_inventory_reference_weapon_slot(slot_id)
+		_forwarding_inventory_reference_drag = true
+		_forward_inventory_reference_mouse_event(event)
 		return true
 	var safe_index := _safe_pocket_index_at(position, left_rect)
 	if safe_index >= 0 and safe_index < safe_pocket_items.size():
+		_close_item_detail_panel()
 		if event.double_click:
 			store_safe_pocket_stack(safe_index)
+		else:
+			_forwarding_inventory_reference_drag = true
+			_forward_inventory_reference_mouse_event(event)
 		return true
 	var backpack_index := _backpack_index_at(position, left_rect)
 	if backpack_index >= 0 and backpack_index < backpack_items.size():
+		_close_item_detail_panel()
 		if event.double_click:
 			store_backpack_stack(backpack_index)
 		else:
 			_forwarding_inventory_reference_drag = true
 			_forward_inventory_reference_mouse_event(event)
 		return true
-	var stash_index := _stash_index_at(position, right_rect)
+	if backpack_index >= 0 and backpack_index < _get_backpack_slots():
+		_close_item_detail_panel()
+		_forward_inventory_reference_mouse_event(event)
+		return true
+	var stash_display_index := _stash_display_index_at(position, right_rect)
+	var stash_index := _stash_source_index_for_display_index(stash_display_index)
 	if stash_index >= 0 and stash_index < stash_items.size():
-		withdraw_stash_stack(stash_index)
+		if event.double_click:
+			_close_item_detail_panel()
+			_close_weapon_mod_panel()
+			withdraw_stash_stack_to_equipment_or_backpack(stash_index)
+		else:
+			if not _open_weapon_mod_panel_for_stash_stack(stash_index):
+				_open_item_detail_panel_for_stack(stash_items[stash_index])
+		return true
+	if stash_display_index >= 0 and stash_display_index < _stash_display_slot_count():
+		_close_item_detail_panel()
+		_close_weapon_mod_panel()
+		_close_inventory_reference_detail_panels()
 		return true
 	return false
 
@@ -461,6 +625,70 @@ func _handle_inventory_reference_action_click(position: Vector2) -> bool:
 	event.pressed = true
 	_inventory_ui.call("_gui_input", event)
 	return true
+
+
+func _scroll_inventory_reference_weapon_mod(position: Vector2, direction: int) -> bool:
+	if _inventory_ui == null or not _inventory_ui.has_method("scroll_weapon_mod_details_at"):
+		return false
+	var inventory_position := _inventory_reference_local_position(position)
+	return bool(_inventory_ui.call("scroll_weapon_mod_details_at", inventory_position, direction))
+
+
+func _scroll_weapon_mod_details_at(position: Vector2, direction: int) -> bool:
+	if not _weapon_mod_panel.has_point(position, _ui_scale, get_viewport_rect().size):
+		return false
+	_weapon_mod_panel.scroll_details(direction, _ui_scale, get_viewport_rect().size)
+	queue_redraw()
+	return true
+
+
+func _close_inventory_reference_weapon_mod_panel() -> void:
+	if _inventory_ui == null or not _inventory_ui.has_method("_close_weapon_mod_panel"):
+		return
+	_inventory_ui.call("_close_weapon_mod_panel")
+
+
+func _close_inventory_reference_detail_panels() -> void:
+	if _inventory_ui == null:
+		return
+	if _inventory_ui.has_method("_close_weapon_mod_panel"):
+		_inventory_ui.call("_close_weapon_mod_panel")
+	if _inventory_ui.has_method("_close_item_detail_panel"):
+		_inventory_ui.call("_close_item_detail_panel")
+
+
+func _open_item_detail_panel_for_stack(stack: Dictionary) -> bool:
+	var state := _tooltip_state_for_stack(stack)
+	if state.is_empty():
+		return false
+	_close_inventory_reference_detail_panels()
+	_close_weapon_mod_panel()
+	_item_detail_panel.open(state)
+	queue_redraw()
+	return true
+
+
+func _open_weapon_mod_panel_for_stash_stack(stack_index: int) -> bool:
+	var state := _weapon_mod_panel_state_for_stash_stack(stack_index)
+	if not _weapon_mod_panel.open(&"stash_weapon", state):
+		return false
+	_weapon_mod_stash_stack_index = stack_index
+	_item_detail_panel.close()
+	_close_inventory_reference_detail_panels()
+	queue_redraw()
+	return true
+
+
+func _close_item_detail_panel() -> void:
+	if not _item_detail_panel.is_open():
+		return
+	_item_detail_panel.close()
+	queue_redraw()
+
+
+func _close_weapon_mod_panel() -> void:
+	_weapon_mod_stash_stack_index = -1
+	_weapon_mod_panel.close()
 
 
 func _forward_inventory_reference_mouse_event(event: InputEvent) -> void:
@@ -514,6 +742,29 @@ func _refresh_storage_upgrade_state() -> void:
 func _refresh_needed_item_state() -> void:
 	_needed_item_state = BaseNeededItemServiceScript.get_state(save_manager)
 	_needed_item_paths = BaseStashInventoryMarkerSupportScript.path_array_to_map(_needed_item_state.get("item_paths", []) as Array)
+
+
+func _refresh_stash_money() -> void:
+	var balance := StashCurrencyServiceScript.get_balance(save_manager)
+	_wallet_money = int(balance.get("wallet_money", 0))
+	_stash_money = int(balance.get("stash_money", 0))
+
+
+func _apply_stash_currency_result(result: Dictionary, success_status: StringName) -> void:
+	if bool(result.get("success", false)):
+		_wallet_money = int(result.get("wallet_money", 0))
+		_stash_money = int(result.get("stash_money", 0))
+		_status_key = success_status
+	else:
+		match str(result.get("reason", "")):
+			"empty_source", "invalid_amount", "insufficient_source":
+				_status_key = &"ui.stash.money_source_empty"
+			"save_failed":
+				_status_key = &"ui.stash.save_failed"
+			_:
+				_status_key = &"ui.stash.money_transfer_failed"
+	_refresh_stash_money()
+	queue_redraw()
 
 
 func _save_stash() -> bool:
@@ -596,6 +847,7 @@ func _on_equipment_changed() -> void:
 
 func _on_stash_changed() -> void:
 	stash_items = stash_model.get_stacks()
+	_refresh_stash_filter()
 	stash_scroll_row = clampi(stash_scroll_row, 0, _max_stash_scroll_row())
 	BaseStashInventoryMarkerSupportScript.cleanup_index_locks(locked_stash_slots, stash_items.size())
 	queue_redraw()
@@ -605,12 +857,22 @@ func _refresh_display_items() -> void:
 	backpack_items = backpack_model.get_display_items()
 	safe_pocket_items = safe_pocket_model.get_display_items()
 	stash_items = stash_model.get_stacks()
+	_refresh_stash_filter()
 	backpack_scroll_row = clampi(backpack_scroll_row, 0, _max_backpack_scroll_row())
 	stash_scroll_row = clampi(stash_scroll_row, 0, _max_stash_scroll_row())
 	BaseStashInventoryMarkerSupportScript.cleanup_index_locks(locked_backpack_slots, backpack_items.size())
 	BaseStashInventoryMarkerSupportScript.cleanup_index_locks(locked_safe_pocket_slots, safe_pocket_items.size())
 	BaseStashInventoryMarkerSupportScript.cleanup_index_locks(locked_stash_slots, stash_items.size())
 	_cleanup_equipment_locks()
+
+
+func _refresh_stash_filter() -> void:
+	var filter_state := BaseStashInventoryCategorySupportScript.build_filter_state(stash_items, _active_stash_category_id, _item_codex_catalog)
+	_active_stash_category_id = str(filter_state.get("active_category_id", "all"))
+	filtered_stash_items.assign(filter_state.get("visible_items", []) as Array)
+	filtered_stash_source_indices.assign(filter_state.get("source_indices", []) as Array)
+	_stash_category_counts = (filter_state.get("counts", {}) as Dictionary).duplicate(true)
+	stash_scroll_row = clampi(stash_scroll_row, 0, _max_stash_scroll_row())
 
 
 func _open_inventory_reference() -> void:
@@ -693,6 +955,54 @@ func _stash_grid_rect(panel_rect: Rect2) -> Rect2:
 	return BaseStashInventoryLayoutSupportScript.stash_grid_rect(panel_rect, grid_columns, visible_stash_rows, _scaled_slot_size, _scaled_slot_gap, _ui_scale)
 
 
+func _stash_grid_region_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_grid_region_rect(panel_rect, _stash_grid_rect(panel_rect), _ui_scale)
+
+
+func _stash_scroll_track_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_scroll_track_rect(panel_rect, _stash_grid_rect(panel_rect), _ui_scale)
+
+
+func _stash_currency_panel_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_currency_panel_rect(panel_rect, _stash_grid_rect(panel_rect), _ui_scale)
+
+
+func _stash_currency_balance_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_currency_balance_rect(_stash_currency_panel_rect(panel_rect), _ui_scale)
+
+
+func _stash_currency_deposit_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_currency_deposit_rect(_stash_currency_panel_rect(panel_rect), _ui_scale)
+
+
+func _stash_currency_withdraw_rect(panel_rect: Rect2) -> Rect2:
+	return BaseStashInventoryLayoutSupportScript.stash_currency_withdraw_rect(_stash_currency_panel_rect(panel_rect), _ui_scale)
+
+
+func _stash_category_tabs(panel_rect: Rect2) -> Array[Dictionary]:
+	var category_ids := BaseStashInventoryCategorySupportScript.category_ids()
+	var rects := BaseStashInventoryLayoutSupportScript.category_tab_rects(panel_rect, _stash_grid_rect(panel_rect), category_ids.size(), _ui_scale)
+	var tabs: Array[Dictionary] = []
+	for index in range(category_ids.size()):
+		var category_id := category_ids[index]
+		tabs.append({
+			"id": category_id,
+			"label": _localized_text(ItemCodexPresenterScript.storage_category_label_key(category_id), category_id.capitalize()),
+			"short_label": _localized_text(ItemCodexPresenterScript.storage_category_short_label_key(category_id), category_id.left(1).to_upper()),
+			"count": int(_stash_category_counts.get(category_id, 0)),
+			"selected": category_id == _active_stash_category_id,
+			"rect": rects[index],
+		})
+	return tabs
+
+
+func _stash_category_id_at(position: Vector2, panel_rect: Rect2) -> String:
+	for tab in _stash_category_tabs(panel_rect):
+		if (tab.get("rect", Rect2()) as Rect2).has_point(position):
+			return str(tab.get("id", ""))
+	return ""
+
+
 func _backpack_grid_rect(panel_rect: Rect2) -> Rect2:
 	return BaseStashInventoryLayoutSupportScript.backpack_grid_rect(_inventory_layout, panel_rect, grid_columns, visible_backpack_rows, _scaled_slot_size, _scaled_slot_gap, _ui_scale)
 
@@ -721,10 +1031,6 @@ func _storage_upgrade_button_rect(panel_rect: Rect2) -> Rect2:
 	return BaseStashInventoryLayoutSupportScript.storage_upgrade_button_rect(panel_rect, _ui_scale)
 
 
-func _close_button_rect(panel_rect: Rect2) -> Rect2:
-	return BaseStashInventoryLayoutSupportScript.close_button_rect(panel_rect, _ui_scale)
-
-
 func _equipment_index_at(position: Vector2, panel_rect: Rect2) -> int:
 	return BaseStashInventoryLayoutSupportScript.equipment_index_at(position, panel_rect, equipment_slot_ids, _inventory_layout, _ui_scale)
 
@@ -737,8 +1043,18 @@ func _safe_pocket_index_at(position: Vector2, panel_rect: Rect2) -> int:
 	return BaseStashInventoryLayoutSupportScript.safe_pocket_index_at(position, _safe_pocket_panel_rect(panel_rect), _get_safe_pocket_slots(), _ui_scale)
 
 
+func _stash_display_index_at(position: Vector2, panel_rect: Rect2) -> int:
+	return InventoryGridMetricsScript.absolute_index_at(position, _stash_grid_rect(panel_rect), grid_columns, visible_stash_rows, stash_scroll_row, _stash_display_slot_count(), _scaled_slot_size, _scaled_slot_gap)
+
+
+func _stash_source_index_for_display_index(display_index: int) -> int:
+	if display_index < 0 or display_index >= filtered_stash_source_indices.size():
+		return -1
+	return filtered_stash_source_indices[display_index]
+
+
 func _stash_index_at(position: Vector2, panel_rect: Rect2) -> int:
-	return InventoryGridMetricsScript.absolute_index_at(position, _stash_grid_rect(panel_rect), grid_columns, visible_stash_rows, stash_scroll_row, stash_capacity, _scaled_slot_size, _scaled_slot_gap)
+	return _stash_source_index_for_display_index(_stash_display_index_at(position, panel_rect))
 
 
 func _scroll_stash(direction: int) -> void:
@@ -753,7 +1069,13 @@ func _scroll_backpack(direction: int) -> void:
 
 
 func _max_stash_scroll_row() -> int:
-	return InventoryGridMetricsScript.max_scroll_row(stash_capacity, grid_columns, visible_stash_rows)
+	return InventoryGridMetricsScript.max_scroll_row(_stash_display_slot_count(), grid_columns, visible_stash_rows)
+
+
+func _stash_display_slot_count() -> int:
+	if _active_stash_category_id == "all":
+		return stash_capacity
+	return maxi(filtered_stash_items.size(), grid_columns * visible_stash_rows)
 
 
 func _max_backpack_scroll_row() -> int:
@@ -828,10 +1150,37 @@ func _stack_at_position(position: Vector2) -> Dictionary:
 	return {}
 
 
+func _tooltip_stack_at_position(position: Vector2) -> Dictionary:
+	var viewport_size := get_viewport_rect().size
+	_update_layout_scale(viewport_size)
+	var right_rect := _right_panel_rect(viewport_size)
+	if not right_rect.has_point(position):
+		return {}
+	var stash_index := _stash_index_at(position, right_rect)
+	if stash_index >= 0 and stash_index < stash_items.size():
+		return stash_items[stash_index]
+	return {}
+
+
 func _tooltip_state_for_stack(stack: Dictionary) -> Dictionary:
 	if stack.is_empty():
 		return {}
 	return ItemStackTooltipPresenterScript.build(self, stack, BaseStashInventoryMarkerSupportScript.tooltip_context_for_path(BaseStashInventoryMarkerSupportScript.stack_item_path(stack), _needed_item_state))
+
+
+func _weapon_mod_panel_state_for_stash_stack(stack_index: int) -> Dictionary:
+	if stack_index < 0 or stack_index >= stash_items.size():
+		return {"has_weapon": false, "weapon_slot_id": "stash_weapon", "slots": []}
+	var weapon_stack := stash_items[stack_index].duplicate(true)
+	var weapon_def := _load_item_from_stack(weapon_stack)
+	return WeaponModPanelStateBuilderScript.build(weapon_stack, weapon_def, &"stash_weapon")
+
+
+func _load_item_from_stack(stack: Dictionary) -> ItemDef:
+	var item_path := BaseStashInventoryMarkerSupportScript.stack_item_path(stack)
+	if item_path == "" or not ResourceLoader.exists(item_path):
+		return null
+	return load(item_path) as ItemDef
 
 
 func _get_stack_display_name(stack: Dictionary) -> String:
@@ -848,8 +1197,8 @@ func _get_stack_display_name(stack: Dictionary) -> String:
 
 func _storage_upgrade_button_color() -> Color:
 	if bool(_storage_upgrade_state.get("can_upgrade", false)):
-		return Color(0.74, 0.88, 0.62, 0.92)
-	return Color(0.34, 0.43, 0.48, 0.82)
+		return UISurfacePaletteScript.button_fill(&"success")
+	return UISurfacePaletteScript.button_fill(&"neutral")
 
 
 func _consume_sort_mode(sort_mode: StringName) -> StringName:

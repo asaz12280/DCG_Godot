@@ -68,10 +68,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func interact_with_nearest() -> bool:
 	if _nearest_point == null:
 		return false
+	if _player_is_timed_action_busy():
+		return false
 	return open_interaction_by_id(str(_nearest_point.get_meta("interaction_id", "")))
 
 
 func open_interaction_by_id(interaction_id: String) -> bool:
+	if _player_is_timed_action_busy():
+		return false
 	var point := _find_point_by_id(interaction_id)
 	if point == null:
 		return false
@@ -83,7 +87,7 @@ func open_interaction_by_id(interaction_id: String) -> bool:
 	if interaction_id == "workbench":
 		return _open_workbench_station(display_name)
 	if interaction_id == "quests":
-		return _open_quest_station(display_name)
+		return _open_quest_station(display_name, _quest_giver_profile_for_point(point))
 	if _panel == null or not _panel.has_method("open_interaction"):
 		return false
 	_panel.call("open_interaction", interaction_id, display_name)
@@ -156,18 +160,23 @@ func _open_workbench_station(display_name: String) -> bool:
 	return true
 
 
-func _open_quest_station(display_name: String) -> bool:
+func _open_quest_station(display_name: String, quest_giver_profile: Resource = null) -> bool:
 	if _is_interaction_panel_open():
 		_panel.call("close_panel")
 	if _is_stash_panel_open():
 		_stash_panel.call("close_stash")
 	var ui_manager := get_node_or_null("/root/UIManager") if is_inside_tree() else null
-	if ui_manager != null and ui_manager.has_method("open_ui"):
-		ui_manager.call("open_ui", &"quests")
-		return str(ui_manager.call("get_active_ui")) == "quests"
+	if ui_manager != null:
+		if ui_manager.has_method("open_quests_for_giver"):
+			return bool(ui_manager.call("open_quests_for_giver", quest_giver_profile))
+		if ui_manager.has_method("open_ui"):
+			ui_manager.call("open_ui", &"quests")
+			return str(ui_manager.call("get_active_ui")) == "quests"
 	var quest_panel := _quest_panel()
 	if quest_panel == null or not quest_panel.has_method("open_quests"):
 		return false
+	if quest_panel.has_method("set_quest_giver_profile"):
+		quest_panel.call("set_quest_giver_profile", quest_giver_profile)
 	quest_panel.call("open_quests")
 	return true
 
@@ -189,7 +198,7 @@ func _workbench_panel_context() -> Dictionary:
 
 
 func _quest_panel_context() -> Dictionary:
-	return QuestBoardScript.panel_context(self, _get_save_manager())
+	return QuestBoardScript.panel_context(self, _get_save_manager(), _quest_giver_profile_for_point(_nearest_point))
 
 
 func _connect_interaction_panel() -> void:
@@ -250,7 +259,7 @@ func _on_interaction_panel_action_requested(interaction_id: String) -> void:
 
 
 func _execute_quest_board_action() -> Dictionary:
-	return QuestBoardScript.execute_action(self, _panel, _get_save_manager())
+	return QuestBoardScript.execute_action(self, _panel, _get_save_manager(), _quest_giver_profile_for_point(_nearest_point))
 
 
 func _on_interaction_panel_recipe_selected(interaction_id: String, recipe_id: String) -> void:
@@ -351,6 +360,9 @@ func _update_prompt() -> void:
 		_prompt_label.text = ""
 		return
 	_prompt_label.global_position = _nearest_point.global_position + Vector3(0.0, 1.35, 0.0)
+	if _player_is_timed_action_busy():
+		_prompt_label.text = _localized_text(&"prompt.player_busy", "Busy")
+		return
 	var display_name := _display_name(_nearest_point)
 	if str(_nearest_point.get_meta("interaction_id", "")) == "raid_gate":
 		_prompt_label.text = _localized_text(&"prompt.start_raid_format", "Press E to raid: %s") % display_name
@@ -369,6 +381,20 @@ func _display_name(point: Node) -> String:
 	var interaction_id := str(point.get_meta("interaction_id", ""))
 	var key: StringName = INTERACTION_NAME_KEYS.get(interaction_id, &"")
 	return _localized_text(key, str(point.get_meta("display_name_zh", _localized_text(&"ui.base.station.default", "Base station"))))
+
+
+func _quest_giver_profile_for_point(point: Node) -> Resource:
+	if point == null:
+		return null
+	var value: Variant = point.get_meta("quest_giver_profile", "")
+	if value is Resource:
+		return value
+	var profile_path := str(value)
+	if profile_path == "":
+		profile_path = str(point.get_meta("quest_giver_profile_path", ""))
+	if profile_path == "" or not ResourceLoader.exists(profile_path):
+		return null
+	return load(profile_path) as Resource
 
 
 func _is_any_panel_open() -> bool:
@@ -400,6 +426,10 @@ func _close_active_gameplay_ui() -> void:
 	var ui_manager := get_node_or_null("/root/UIManager") if is_inside_tree() else null
 	if ui_manager != null and ui_manager.has_method("close_active_ui") and str(ui_manager.call("get_active_ui")) != "":
 		ui_manager.call("close_active_ui")
+
+
+func _player_is_timed_action_busy() -> bool:
+	return _player != null and _player.has_method("is_timed_action_active") and bool(_player.call("is_timed_action_active"))
 
 
 func _get_save_manager() -> Node:

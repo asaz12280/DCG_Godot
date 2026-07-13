@@ -1,8 +1,8 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 
@@ -60,9 +60,8 @@ func _validate_reload_progress_is_player_visible() -> void:
 	var ammo_state: Dictionary = hud.call("get_display_state")
 	if int(ammo_state.get("ammo_loaded", -1)) != 0 or int(ammo_state.get("ammo_backpack", -1)) != 24:
 		_errors.append("PlayerHud3D should show loaded ammo and matching backpack ammo before reload, got `%s`." % str(ammo_state))
-	var loaded_bullets := TranslationServer.translate("ui.player_hud.loaded_bullets")
-	if not str(ammo_state.get("ammo_text", "")).contains("0 %s / 24" % loaded_bullets):
-		_errors.append("PlayerHud3D should show loaded bullets / matching backpack ammo before reload, got `%s`." % str(ammo_state.get("ammo_text", "")))
+	if not str(ammo_state.get("ammo_text", "")).contains("0 / 24"):
+		_errors.append("PlayerHud3D should show compact loaded / backpack ammo before reload, got `%s`." % str(ammo_state.get("ammo_text", "")))
 
 	_press_reload(player)
 	await physics_frame
@@ -82,8 +81,8 @@ func _validate_reload_progress_is_player_visible() -> void:
 		_errors.append("Reload UI flow should complete and load the pistol magazine.")
 	if int(state.get("ammo_loaded", -1)) != 8 or int(state.get("ammo_backpack", -1)) != 16:
 		_errors.append("PlayerHud3D should show loaded ammo and reduced matching backpack ammo after reload, got `%s`." % str(state))
-	if not str(state.get("ammo_text", "")).contains("8 %s / 16" % loaded_bullets):
-		_errors.append("PlayerHud3D should show loaded bullets / matching backpack ammo after reload, got `%s`." % str(state.get("ammo_text", "")))
+	if not str(state.get("ammo_text", "")).contains("8 / 16"):
+		_errors.append("PlayerHud3D should show compact loaded / backpack ammo after reload, got `%s`." % str(state.get("ammo_text", "")))
 	if reload_progress_signal_count > 24:
 		_errors.append("Reload progress should be throttled to avoid UI stutter, got %d signals for a 0.60s reload." % reload_progress_signal_count)
 
@@ -114,9 +113,15 @@ func _validate_source_boundaries() -> void:
 			_errors.append("PlayerHud3D should not own reload data mutation: %s." % forbidden)
 
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")
-	for required in ["reload_progress_changed", "reload_duration_seconds", "_update_reload", "_emit_reload_state", "_should_emit_reload_state", "RELOAD_PROGRESS_EMIT_STEP"]:
+	var timed_action_source := FileAccess.get_file_as_string("res://scripts/player/player_timed_action_controller_3d.gd")
+	for required in ["reload_progress_changed", "reload_duration_seconds", "PlayerTimedActionControllerScript"]:
 		if not player_source.contains(required):
-			_errors.append("PlayerController3D should expose timed reload state term: %s." % required)
+			_errors.append("PlayerController3D should expose timed reload bridge term: %s." % required)
+	for required in ["_reload_timer", "_start_reload_timer", "_on_reload_timer_timeout", "_emit_reload_state", "_should_emit_reload_state", "RELOAD_PROGRESS_EMIT_STEP"]:
+		if not timed_action_source.contains(required):
+			_errors.append("PlayerTimedActionController3D should own timed reload term: %s." % required)
+	if player_source.contains("_update_reload(delta)") or timed_action_source.contains("_update_reload(delta)"):
+		_errors.append("Reload should not poll progress from _physics_process.")
 	if not player_source.contains("get_compatible_backpack_ammo_count"):
 		_errors.append("PlayerController3D should expose a read-only compatible backpack ammo count for PlayerHud3D.")
 	var csv := FileAccess.get_file_as_string("res://data/localization/game_text.csv")
@@ -125,7 +130,6 @@ func _validate_source_boundaries() -> void:
 		"ui.raid_hud.reloading",
 		"ui.raid_hud.reload_complete",
 		"ui.raid_hud.reload_cancelled",
-		"ui.player_hud.loaded_bullets",
 	]:
 		if not csv.contains(key):
 			_errors.append("Localization should include reload HUD key: %s." % key)

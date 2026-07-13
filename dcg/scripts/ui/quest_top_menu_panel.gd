@@ -6,6 +6,7 @@ signal quest_action_requested(quest_id: String, action_mode: String)
 const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
 const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 const QuestTopMenuLayoutBuilderScript := preload("res://scripts/ui/quest_top_menu_layout_builder.gd")
 const QuestTopMenuPresenterScript := preload("res://scripts/ui/quest_top_menu_presenter.gd")
 const BaseScreenViewModelScript := preload("res://scripts/base/base_screen_view_model.gd")
@@ -19,9 +20,8 @@ const ACTION_SUBMIT := "quest_submit"
 const ACTION_ACTIVE := "quest_active"
 const ACTION_COMPLETED := "quest_completed"
 const ACTION_CANCEL := "quest_cancel"
-
-@export var design_panel_size := Vector2(1060.0, 650.0)
-@export var design_top_margin := 110.0
+@export var design_panel_size := UISurfacePaletteScript.SIZE_QUEST_PANEL
+@export var design_top_margin := UISurfacePaletteScript.TOP_MENU_PANEL_TOP_MARGIN
 
 @onready var main_panel: PanelContainer = get_node_or_null("MainPanel") as PanelContainer
 
@@ -30,6 +30,8 @@ var hint_label: Label = null
 var available_tab_button: Button = null
 var active_tab_button: Button = null
 var completed_tab_button: Button = null
+var left_column: VBoxContainer = null
+var detail_panel: PanelContainer = null
 var sort_label: Label = null
 var quest_list: VBoxContainer = null
 var empty_list_label: Label = null
@@ -51,6 +53,7 @@ var _filtered_entries: Array[Dictionary] = []
 var _save_manager_node: Node = null
 var _has_save_data := false
 var _prefer_default_category_on_next_refresh := false
+var _quest_giver_profile: Resource = null
 
 
 func _ready() -> void:
@@ -73,6 +76,13 @@ func open_quests() -> void:
 	_prefer_default_category_on_next_refresh = true
 	refresh()
 	_apply_responsive_layout()
+
+
+func set_quest_giver_profile(profile: Resource) -> void:
+	_quest_giver_profile = profile
+	if is_open:
+		_prefer_default_category_on_next_refresh = true
+		refresh()
 
 
 func close_quests() -> void:
@@ -151,6 +161,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"active_count": _count_for_category(CATEGORY_ACTIVE),
 		"completed_count": _count_for_category(CATEGORY_COMPLETED),
 		"quest_count": _quest_entries.size(),
+		"quest_giver_id": _quest_giver_id(),
 		"list_count": _filtered_entries.size(),
 		"quests": _filtered_entries.duplicate(true),
 		"all_quests": _quest_entries.duplicate(true),
@@ -166,6 +177,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"action_mode": str(selected.get("action_mode", "")),
 		"action_enabled": action_button.visible and not action_button.disabled,
 		"panel_rect": rect,
+		"title_origin": _title_origin_for_viewport(viewport_size),
 		"mouse_filter": mouse_filter,
 	}
 
@@ -182,6 +194,8 @@ func _ensure_layout_nodes() -> void:
 	available_tab_button = nodes.get("available_tab_button") as Button
 	active_tab_button = nodes.get("active_tab_button") as Button
 	completed_tab_button = nodes.get("completed_tab_button") as Button
+	left_column = nodes.get("left_column") as VBoxContainer
+	detail_panel = nodes.get("detail_panel") as PanelContainer
 	sort_label = nodes.get("sort_label") as Label
 	quest_list = nodes.get("quest_list") as VBoxContainer
 	empty_list_label = nodes.get("empty_list_label") as Label
@@ -194,6 +208,8 @@ func _ensure_layout_nodes() -> void:
 	reward_rows = nodes.get("reward_rows") as VBoxContainer
 	status_message_label = nodes.get("status_message_label") as Label
 	action_button = nodes.get("action_button") as Button
+	if available_tab_button != null and not available_tab_button.resized.is_connected(_sync_tab_body_grid):
+		available_tab_button.resized.connect(_sync_tab_body_grid)
 
 func _connect_controls() -> void:
 	available_tab_button.pressed.connect(_on_category_pressed.bind(CATEGORY_AVAILABLE))
@@ -203,7 +219,7 @@ func _connect_controls() -> void:
 
 
 func _apply_styles() -> void:
-	UIStyleScript.apply_overlay_panel_style(main_panel)
+	UIStyleScript.apply_top_menu_panel_style(main_panel)
 	for label in [title_label, detail_title_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PANEL_TITLE)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_PRIMARY)
@@ -227,29 +243,61 @@ func _apply_responsive_layout() -> void:
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = Vector2(1920.0, 1080.0)
 	var rect := _layout_for_viewport(viewport_size)
+	UIStyleScript.apply_top_menu_panel_margins(_panel_margin(), _top_menu_scale(viewport_size))
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	position = rect.position
 	size = rect.size
+	call_deferred("_sync_tab_body_grid")
+
+
+func _sync_tab_body_grid() -> void:
+	if left_column == null or available_tab_button == null or available_tab_button.size.x <= 0.0:
+		return
+	if is_equal_approx(left_column.custom_minimum_size.x, available_tab_button.size.x):
+		return
+	left_column.custom_minimum_size = Vector2(available_tab_button.size.x, 0.0)
 
 
 func _layout_for_viewport(viewport_size: Vector2) -> Rect2:
-	return UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, 0.58, 1.0)
+	var rect := UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
+	rect.size.y = minf(rect.size.y, viewport_size.y * UISurfacePaletteScript.TOP_MENU_PANEL_MAX_VIEWPORT_HEIGHT_RATIO)
+	return rect
+
+
+func _title_origin_for_viewport(viewport_size: Vector2) -> Vector2:
+	var rect := _layout_for_viewport(viewport_size)
+	return rect.position + UISurfacePaletteScript.TOP_MENU_TITLE_ORIGIN * _top_menu_scale(viewport_size)
+
+
+func _top_menu_scale(viewport_size: Vector2) -> float:
+	return UILayoutScript.design_scale(viewport_size, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
+
+
+func _panel_margin() -> MarginContainer:
+	if main_panel == null:
+		return null
+	return main_panel.get_node_or_null("PanelMargin") as MarginContainer
 
 
 func _build_quest_entries(save_data: Dictionary) -> Array[Dictionary]:
-	var tracked_defs := BaseScreenViewModelScript.tracked_quest_defs(save_data)
+	var tracked_defs := BaseScreenViewModelScript.tracked_quest_defs(save_data, _quest_giver_profile)
 	var tracked_ids := {}
 	for quest_def in tracked_defs:
 		tracked_ids[str(quest_def.get("id"))] = true
 
 	var available_defs: Array[Resource] = []
-	for quest_def in BaseScreenViewModelScript.quest_defs():
-		if tracked_ids.has(str(quest_def.get("id"))):
-			continue
-		available_defs.append(quest_def)
+	if _quest_giver_profile != null:
+		for quest_def in BaseScreenViewModelScript.quest_defs(_quest_giver_profile):
+			if tracked_ids.has(str(quest_def.get("id"))):
+				continue
+			available_defs.append(quest_def)
 
 	var entries := QuestTopMenuPresenterScript.build_entries(self, save_data, tracked_defs)
 	entries.append_array(QuestTopMenuPresenterScript.build_entries(self, save_data, available_defs))
+	if _quest_giver_profile == null:
+		for entry in entries:
+			if str(entry.get("action_mode", "")) == ACTION_SUBMIT or str(entry.get("action_mode", "")) == ACTION_CANCEL:
+				entry["action_mode"] = ACTION_ACTIVE
 	return entries
 
 
@@ -294,7 +342,7 @@ func _render_quest_list() -> void:
 		var button := Button.new()
 		button.text = "%s\n%s" % [str(entry.get("name", "")), str(entry.get("status", ""))]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size = Vector2(0.0, 72.0)
+		button.custom_minimum_size = Vector2(0.0, UIStyleScript.SIZE_MENU_BUTTON.y + UIStyleScript.SPACING_LOAD_PANEL_CONTENT)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.focus_mode = Control.FOCUS_ALL
 		button.pressed.connect(_on_quest_pressed.bind(str(entry.get("id", ""))))
@@ -419,52 +467,44 @@ func _clear_children(parent: Node) -> void:
 
 
 func _style_tab_button(button: Button, is_selected: bool) -> void:
-	var normal := _button_style(Color(0.30, 0.28, 0.24, 0.96), Color(0.74, 0.72, 0.64, 0.26))
-	var selected := _button_style(Color(0.96, 0.58, 0.20, 1.0), Color(1.0, 0.82, 0.46, 0.45))
+	var normal := _button_style(&"neutral")
+	var selected := _button_style(&"primary")
 	var style := selected if is_selected else normal
 	button.add_theme_stylebox_override("normal", style)
-	button.add_theme_stylebox_override("hover", selected if is_selected else _button_style(Color(0.40, 0.37, 0.31, 0.98), Color(0.86, 0.82, 0.68, 0.36)))
+	button.add_theme_stylebox_override("hover", selected if is_selected else _button_style(&"hover"))
 	button.add_theme_stylebox_override("pressed", selected)
-	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_color_override("font_color", UIStyleScript.COLOR_TEXT_PRIMARY)
 
 
 func _style_list_button(button: Button, is_selected: bool) -> void:
-	var style := _button_style(Color(0.16, 0.20, 0.22, 0.96), Color(0.52, 0.72, 0.82, 0.25))
-	var selected := _button_style(Color(0.20, 0.32, 0.36, 1.0), Color(0.66, 0.90, 1.0, 0.48))
+	var style := _button_style(&"neutral")
+	var selected := _button_style(&"primary")
 	button.add_theme_stylebox_override("normal", selected if is_selected else style)
 	button.add_theme_stylebox_override("hover", selected)
 	button.add_theme_stylebox_override("pressed", selected)
-	button.add_theme_color_override("font_color", Color.WHITE)
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_color", UIStyleScript.COLOR_TEXT_PRIMARY)
+	button.add_theme_color_override("font_hover_color", UIStyleScript.COLOR_TEXT_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", UIStyleScript.COLOR_TEXT_PRIMARY)
 
 
 func _style_action_button(is_disabled: bool) -> void:
-	var style := _button_style(Color(0.96, 0.58, 0.20, 1.0), Color(1.0, 0.82, 0.46, 0.45))
-	var disabled := _button_style(Color(0.26, 0.26, 0.25, 0.92), Color(0.58, 0.58, 0.52, 0.18))
+	var style := _button_style(&"primary")
+	var disabled := _button_style(&"disabled")
 	action_button.add_theme_stylebox_override("normal", disabled if is_disabled else style)
 	action_button.add_theme_stylebox_override("hover", style)
 	action_button.add_theme_stylebox_override("pressed", style)
 	action_button.add_theme_stylebox_override("disabled", disabled)
-	action_button.add_theme_color_override("font_color", Color.WHITE)
-	action_button.add_theme_color_override("font_disabled_color", Color(0.82, 0.82, 0.78, 0.75))
+	action_button.add_theme_color_override("font_color", UIStyleScript.COLOR_TEXT_PRIMARY)
+	action_button.add_theme_color_override("font_disabled_color", UIStyleScript.COLOR_TEXT_MUTED)
 
 
-func _button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg_color
-	style.border_color = border_color
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	return style
+func _button_style(kind: StringName) -> StyleBoxFlat:
+	return UIStyleScript.make_button_style(kind)
 
 
 func _inner_panel_style(bg_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
+	var style := UIStyleScript.make_inner_panel_style()
 	style.bg_color = bg_color
-	style.border_color = Color(0.70, 0.88, 0.88, 0.16)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
 	return style
 
 
@@ -502,6 +542,12 @@ func _save_manager() -> Node:
 		if node != null:
 			return node
 	return null
+
+
+func _quest_giver_id() -> String:
+	if _quest_giver_profile == null:
+		return ""
+	return str(_quest_giver_profile.get("id"))
 
 
 func _text(key: StringName, fallback: String) -> String:

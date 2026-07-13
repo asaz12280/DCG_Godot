@@ -40,20 +40,20 @@ max_quantity = 3
 weight = 2.0
 tags = Array[StringName]([&"common", &"vendor_trash"])
 
-[sub_resource type="Resource" id="LootTableEntry_pistol_9mm"]
+[sub_resource type="Resource" id="LootTableEntry_pistol_S"]
 script = ExtResource("2_loot_table_entry")
-item_path = "res://data/items/weapons/pistol_9mm.tres"
-tags = Array[StringName]([&"early_proof", &"weapon", &"pistol", &"9mm"])
+item_path = "res://data/items/weapons/pistol_S.tres"
+tags = Array[StringName]([&"early_proof", &"weapon", &"pistol", &"S"])
 
-[sub_resource type="Resource" id="LootTableEntry_ammo_9mm"]
+[sub_resource type="Resource" id="LootTableEntry_ammo_S"]
 script = ExtResource("2_loot_table_entry")
-item_path = "res://data/items/ammo/ammo_9mm.tres"
+item_path = "res://data/items/ammo/ammo_S.tres"
 min_quantity = 24
 max_quantity = 24
-tags = Array[StringName]([&"early_proof", &"ammo", &"9mm"])
+tags = Array[StringName]([&"early_proof", &"ammo", &"S"])
 
 [resource]
 script = ExtResource("1_loot_table")
 id = &"refuge_outskirts_common"
-guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_pistol_9mm"), SubResource("LootTableEntry_ammo_9mm")])
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_pistol_S"), SubResource("LootTableEntry_ammo_S")])
 entries = Array[Resource]([SubResource("LootTableEntry_wood"), SubResource("LootTableEntry_cash"), SubResource("LootTableEntry_water"), SubResource("LootTableEntry_bread"), SubResource("LootTableEntry_junk")])

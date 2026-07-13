@@ -1,7 +1,7 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 
@@ -70,7 +70,7 @@ func _validate_equipped_pistol_syncs_to_weapon_controller() -> void:
 
 func _validate_source_boundaries() -> void:
 	var player_scene := FileAccess.get_file_as_string("res://scenes/player/player_3d.tscn")
-	if player_scene.contains("weapon_def = ExtResource(\"3_pistol\")") or player_scene.contains("data/items/weapons/pistol_9mm.tres"):
+	if player_scene.contains("weapon_def = ExtResource(\"3_pistol\")") or player_scene.contains("data/items/weapons/pistol_S.tres"):
 		_errors.append("Player scene should not hardwire No.5 pistol into WeaponController3D.")
 
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")

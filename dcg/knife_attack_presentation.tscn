@@ -1,0 +1,211 @@
+[gd_scene format=3 uid="uid://ctwtworr0k3bb"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_trail_process"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_trail_draw"]
+resource_local_to_scene = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_trail"]
+material = SubResource("ShaderMaterial_trail_draw")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_blade_glow"]
+
+[sub_resource type="Gradient" id="Gradient_blade_glow"]
+offsets = PackedFloat32Array(0, 0.493631, 1)
+colors = PackedColorArray(1, 1, 1, 0.294118, 1, 1, 1, 1, 1, 1, 1, 0.290196)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture_blade_glow"]
+gradient = SubResource("Gradient_blade_glow")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_blade_glow"]
+gravity = Vector3(0, 0, 0)
+color = Color(0, 0.5, 1.5, 1)
+color_ramp = SubResource("GradientTexture_blade_glow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_blade_glow"]
+size = Vector2(0.2, 1)
+
+[sub_resource type="Animation" id="Animation_reset"]
+resource_name = "RESET"
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(-0.04, 0.02, 0.1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0.785398, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("KnifeAttackPresentation/TrailDemo:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("KnifeAttackPresentation/TrailDemo:length")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("KnifeAttackPresentation/BladeGlow:emitting")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("KnifeAttackPresentation/TrailDemo:process_mode")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [4]
+}
+
+[sub_resource type="Animation" id="Animation_swing"]
+resource_name = "swing"
+length = 0.52
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.08, 0.13, 0.34, 0.4, 0.52),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.04, 0.02, 0.1), Vector3(-0.04, 0.02, 0.1), Vector3(-0.04, 0.02, 0.1), Vector3(-0.04, 0.02, 0.1), Vector3(-0.04, 0.02, 0.1), Vector3(-0.04, 0.02, 0.1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.08, 0.13, 0.34, 0.4, 0.52),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0.785398, 0), Vector3(0, -1.92, 0), Vector3(0, -1.75, 0), Vector3(0, 1.55, 0), Vector3(0, 1.75, 0), Vector3(0, 0.785398, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("KnifeAttackPresentation/TrailDemo:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.11, 0.39),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("KnifeAttackPresentation/TrailDemo:length")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.11, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [1, 30, 1]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("KnifeAttackPresentation/BladeGlow:emitting")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.11, 0.39),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("KnifeAttackPresentation/TrailDemo:process_mode")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.11, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [4, 0, 4]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_knife"]
+_data = {
+&"RESET": SubResource("Animation_reset"),
+&"swing": SubResource("Animation_swing")
+}
+
+[node name="KnifeAttackPresentation" type="Node3D" unique_id=295919101]
+transform = Transform3D(0.95, 0, 0, 0, -3.4389907e-06, 0.95, 0, -0.95, -3.4389907e-06, 0, 0, 0)
+
+[node name="TrailDemo" type="GPUParticles3D" parent="." unique_id=701054213]
+process_mode = 4
+transform = Transform3D(0.3, -6.02136e-16, -2.03198e-08, 0, 0.3, -8.8899e-09, 2.03198e-08, 8.8899e-09, 0.3, -0.00248188, 0.341067, 9.45517e-07)
+visible = false
+amount = 1
+explosiveness = 1.0
+fixed_fps = 0
+process_material = SubResource("ShaderMaterial_trail_process")
+draw_pass_1 = SubResource("QuadMesh_trail")
+
+[node name="BladeGlow" type="GPUParticles3D" parent="." unique_id=1852651736]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00184223, 0.344369, 0.000709116)
+material_override = SubResource("ShaderMaterial_blade_glow")
+emitting = false
+amount = 1
+fixed_fps = 60
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_blade_glow")
+draw_pass_1 = SubResource("QuadMesh_blade_glow")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=125715024]
+root_node = NodePath("../..")
+libraries/ = SubResource("AnimationLibrary_knife")

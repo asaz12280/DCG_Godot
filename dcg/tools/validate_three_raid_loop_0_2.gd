@@ -17,7 +17,6 @@ const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
 const VALIDATION_SAVE_ROOT := "user://validation_three_raid_loop_0_2"
 
@@ -65,7 +64,7 @@ func _validate_raid_one_extract_then_3d_base_upgrade() -> void:
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
 		"extracted_items": [
 			{"item_path": WOOD_PATH, "quantity": 4},
-			{"item_path": WIRE_PATH, "quantity": 2},
+			{"item_path": WOOD_PATH, "quantity": 2},
 		],
 		"duration": 42.0,
 	})
@@ -75,7 +74,7 @@ func _validate_raid_one_extract_then_3d_base_upgrade() -> void:
 		return
 
 	var after_extract: Dictionary = _save_manager.get_slot_data(1)
-	if _stash_quantity(after_extract, WOOD_PATH) != 4 or _stash_quantity(after_extract, WIRE_PATH) != 2:
+	if _stash_quantity(after_extract, WOOD_PATH) != 6:
 		_errors.append("Raid one should store extracted wood and wire in persistent stash.")
 	if str(_quest_state(after_extract, "first_salvage").get("state", "")) != QuestStateScript.STATE_READY:
 		_errors.append("Raid one should ready First Salvage from extracted materials.")
@@ -109,7 +108,7 @@ func _validate_raid_one_extract_then_3d_base_upgrade() -> void:
 	var after_base: Dictionary = _save_manager.get_slot_data(1)
 	if int(after_base.get("money", 0)) != 20:
 		_errors.append("Raid one 3D Base phase should leave money at 20 after quest reward and upgrade cost.")
-	if _stash_quantity(after_base, WOOD_PATH) != 1 or _stash_quantity(after_base, WIRE_PATH) != 0:
+	if _stash_quantity(after_base, WOOD_PATH) != 1:
 		_errors.append("3D Base workbench purchase should consume tuned material costs and keep excess wood.")
 	if not BaseProgressionScript.is_upgrade_purchased(after_base, WorkbenchUpgrade.id):
 		_errors.append("Workbench Level 1 should persist after raid one 3D Base phase.")

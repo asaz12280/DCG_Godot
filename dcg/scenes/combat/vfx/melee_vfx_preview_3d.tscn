@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cgv06tml180n6"]
+
+[ext_resource type="Script" uid="uid://6xwljvgjkpx3" path="res://scripts/combat/melee_vfx_preview_3d.gd" id="1_script"]
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 1
+background_color = Color(0.045, 0.055, 0.07, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.65, 0.72, 0.85, 1)
+ambient_light_energy = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial_floor"]
+albedo_color = Color(0.26, 0.27, 0.24, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+material = SubResource("StandardMaterial_floor")
+size = Vector2(8, 8)
+
+[node name="MeleeVfxPreview3D" type="Node3D" unique_id=237932299]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=761686055]
+environment = SubResource("Environment_preview")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=761315778]
+transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
+light_energy = 1.1
+
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=1204958942]
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="PreviewFocus" type="Marker3D" parent="." unique_id=1003983005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, -0.2)
+
+[node name="PreviewCamera3D" type="Camera3D" parent="." unique_id=1446563004]
+transform = Transform3D(1, 0, 0, 0, 0.46752444, 0.8839801, 0, -0.8839801, 0.46752444, 0, 2.0512486, 1.2654597)
+current = true

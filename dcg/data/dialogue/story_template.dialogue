@@ -1,0 +1,5 @@
+~ start
+這是可翻譯的故事腳本範本。 [ID:dialogue.template.intro]
+- 繼續 [ID:dialogue.template.continue]
+	後續故事文字會沿用目前的語言設定。 [ID:dialogue.template.ready]
+=> END

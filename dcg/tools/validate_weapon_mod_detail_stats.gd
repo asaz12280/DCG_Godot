@@ -1,21 +1,24 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const SMG := preload("res://data/items/weapons/smg_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const SMG := preload("res://data/items/weapons/smg_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 const YellowLockedCrateTable := preload("res://data/loot_tables/crate_yellow_locked_cache.tres")
+const WeaponModPanelStateBuilderScript := preload("res://scripts/ui/weapon_mod_panel_state_builder.gd")
 
 var _errors: Array[String] = []
 
 
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
-	_validate_weapon_data_model(Pistol, "Pistol-S", 24, 8, 100)
-	_validate_weapon_data_model(SMG, "SMG-S", 16, 24, 120)
+	_validate_weapon_data_model(Pistol, "Pistol-S", 20, 8, 100)
+	_validate_weapon_data_model(SMG, "SMG-S", 18, 20, 120)
+	_validate_weapon_panel_state_builder()
 	_validate_yellow_locked_cache_entry()
 	await _validate_weapon_panel_attach_and_reload_flow()
+	_validate_duckov_relative_balance()
 	_validate_source_boundaries()
 	if _errors.is_empty():
 		print("[weapon_mod_detail_stats] OK data=minimal_weapon_model loot=yellow_extended_mag ui=details_panel attach=8_to_12 reload=12 hold_fire=enabled boundaries=clean")
@@ -73,9 +76,47 @@ func _validate_yellow_locked_cache_entry() -> void:
 	_errors.append("Yellow locked crate guaranteed entries should include the tactical headset from the new equipment bundle.")
 
 
+func _validate_weapon_panel_state_builder() -> void:
+	var weapon_stack := SMG.to_stack(1)
+	weapon_stack["weapon_ammo_state"] = {
+		"ammo_item_path": Ammo.resource_path,
+		"loaded_ammo": 4,
+	}
+	var state := WeaponModPanelStateBuilderScript.build(weapon_stack, SMG, &"stash_weapon")
+	var summary: Dictionary = state.get("summary", {}) as Dictionary
+	if not bool(state.get("has_weapon", false)) or int(state.get("catalog_number", 0)) != SMG.catalog_number:
+		_errors.append("Shared weapon panel builder should preserve weapon identity for stash and backpack panels.")
+	if StringName(str(summary.get("type_key", ""))) != &"item_type.weapon":
+		_errors.append("Shared weapon panel builder should provide the weapon type summary.")
+	if float(summary.get("weight", 0.0)) <= float(SMG.weight):
+		_errors.append("Shared weapon panel builder should include loaded ammo in total weight.")
+	if int(summary.get("loaded_ammo", -1)) != 4 or int(summary.get("magazine_capacity", 0)) != SMG.get_weapon_magazine_capacity():
+		_errors.append("Shared weapon panel builder should provide loaded ammo and magazine capacity.")
+	if int(summary.get("max_durability", 0)) != SMG.get_max_durability():
+		_errors.append("Shared weapon panel builder should provide weapon durability.")
+
+
 func _validate_weapon_panel_attach_and_reload_flow() -> void:
 	await _validate_weapon_panel_attach_and_reload_flow_for_weapon(Pistol, "Pistol-S", 8, 12)
-	await _validate_weapon_panel_attach_and_reload_flow_for_weapon(SMG, "SMG-S", 24, 28)
+	await _validate_weapon_panel_attach_and_reload_flow_for_weapon(SMG, "SMG-S", 20, 24)
+
+
+func _validate_duckov_relative_balance() -> void:
+	var pistol_dps := float(Pistol.get_weapon_damage()) * Pistol.get_weapon_fire_rate_per_second()
+	var smg_dps := float(SMG.get_weapon_damage()) * SMG.get_weapon_fire_rate_per_second()
+	var dps_ratio := smg_dps / maxf(pistol_dps, 0.001)
+	if dps_ratio < 1.35 or dps_ratio > 1.65:
+		_errors.append("Duckov-inspired S-tier balance should keep SMG sustained DPS about 1.5x pistol, got %.2fx." % dps_ratio)
+	if Pistol.get_weapon_magazine_capacity() != 8:
+		_errors.append("Duckov-inspired pistol baseline should keep the 8-round service pistol magazine.")
+	if SMG.get_weapon_magazine_capacity() != 20:
+		_errors.append("Duckov-inspired MP5-like SMG baseline should use a 20-round magazine before attachments.")
+	if Pistol.get_weapon_damage() <= SMG.get_weapon_damage():
+		_errors.append("Duckov-inspired S-tier balance should keep pistol single-shot damage above SMG single-shot damage.")
+	if SMG.get_weapon_fire_rate_per_second() <= Pistol.get_weapon_fire_rate_per_second():
+		_errors.append("Duckov-inspired S-tier balance should keep SMG fire rate above pistol fire rate.")
+	if SMG.get_weapon_projectile_range() <= Pistol.get_weapon_projectile_range():
+		_errors.append("Duckov-inspired S-tier balance should give SMG slightly longer effective range than pistol.")
 
 
 func _validate_weapon_panel_attach_and_reload_flow_for_weapon(weapon_def: ItemDef, label: String, base_capacity: int, extended_capacity: int) -> void:
@@ -107,7 +148,7 @@ func _validate_weapon_panel_attach_and_reload_flow_for_weapon(weapon_def: ItemDe
 	var before_state: Dictionary = inventory_ui.call("_weapon_mod_panel_state_for_backpack_stack", 0)
 	_expect_panel_stats(before_state, base_capacity, 0)
 	var display_state: Dictionary = inventory_ui.call("get_display_state_for_viewport", Vector2(1920.0, 1080.0))
-	_expect_panel_text(display_state, false, "")
+	_expect_panel_text(display_state, before_state, false, "")
 
 	var pistol_stack := (backpack_model.stacks[0] as Dictionary).duplicate(true)
 	pistol_stack["weapon_mods"] = {"magazine": ExtendedMagazine.to_stack(1)}
@@ -118,7 +159,7 @@ func _validate_weapon_panel_attach_and_reload_flow_for_weapon(weapon_def: ItemDe
 	var after_state: Dictionary = inventory_ui.call("_weapon_mod_panel_state_for_backpack_stack", 0)
 	_expect_panel_stats(after_state, extended_capacity, 4)
 	display_state = inventory_ui.call("get_display_state_for_viewport", Vector2(1920.0, 1080.0))
-	_expect_panel_text(display_state, true, "%d (%d+4)" % [extended_capacity, base_capacity])
+	_expect_panel_text(display_state, after_state, true, "%d (%d+4)" % [extended_capacity, base_capacity])
 	if not bool(player.call("equip_inventory_stack", 0, &"primary_weapon")):
 		_errors.append("Validation should equip modified %s before reload testing." % label)
 	await process_frame
@@ -147,9 +188,18 @@ func _expect_panel_stats(panel_state: Dictionary, expected_capacity: int, expect
 	if rows.size() < 10:
 		_errors.append("Weapon mod panel should expose the full minimal weapon stat row set.")
 	var capacity_found := false
+	var recoil_found := false
 	for row in rows:
 		var row_dict := row as Dictionary
-		if StringName(str(row_dict.get("label_key", ""))) != &"ui.weapon_stat.magazine_capacity":
+		var label_key := StringName(str(row_dict.get("label_key", "")))
+		if label_key == &"ui.weapon_stat.recoil_angle":
+			recoil_found = true
+			var recoil_value := str(row_dict.get("value", ""))
+			if recoil_value.contains("V"):
+				_errors.append("Weapon mod panel recoil angle should hide the vertical recoil value, got %s." % recoil_value)
+			if not recoil_value.contains("H"):
+				_errors.append("Weapon mod panel recoil angle should still show horizontal recoil, got %s." % recoil_value)
+		if label_key != &"ui.weapon_stat.magazine_capacity":
 			continue
 		capacity_found = true
 		var value := str(row_dict.get("value", ""))
@@ -159,14 +209,26 @@ func _expect_panel_stats(panel_state: Dictionary, expected_capacity: int, expect
 			_errors.append("Weapon mod panel magazine stat should show attachment bonus +%d, got %s." % [expected_bonus, value])
 	if not capacity_found:
 		_errors.append("Weapon mod panel should include a magazine capacity stat row.")
+	if not recoil_found:
+		_errors.append("Weapon mod panel should include a recoil angle stat row.")
 
 
-func _expect_panel_text(display_state: Dictionary, expect_extended_magazine: bool, expected_capacity_text: String) -> void:
+func _expect_panel_text(display_state: Dictionary, panel_state: Dictionary, expect_extended_magazine: bool, expected_capacity_text: String) -> void:
 	var panel_rect: Rect2 = display_state.get("weapon_mod_panel_rect", Rect2())
 	if panel_rect.size.y < 420.0:
 		_errors.append("Weapon mod panel should reserve a lower detail area under attachment slots.")
 	var panel_text := str(display_state.get("weapon_mod_panel_text", ""))
+	var summary: Dictionary = panel_state.get("summary", {}) as Dictionary
+	if StringName(str(summary.get("type_key", ""))) != &"item_type.weapon":
+		_errors.append("Weapon mod panel summary should identify the item as a weapon.")
+	if float(summary.get("weight", 0.0)) <= 0.0:
+		_errors.append("Weapon mod panel summary should include total weight.")
+	if int(summary.get("max_durability", 0)) <= 0:
+		_errors.append("Weapon mod panel summary should include durability.")
+	if int(summary.get("magazine_capacity", 0)) <= 0:
+		_errors.append("Weapon mod panel summary should include magazine capacity.")
 	for key in [
+		"ui.weapon_mod.summary_title",
 		"ui.weapon_mod.details_title",
 		"ui.weapon_stat.damage",
 		"ui.weapon_stat.fire_rate",
@@ -187,6 +249,14 @@ func _expect_panel_text(display_state: Dictionary, expect_extended_magazine: boo
 		_errors.append("Weapon mod panel should show Extended Magazine-S after installation.")
 	if expect_extended_magazine and expected_capacity_text != "" and not panel_text.contains(expected_capacity_text):
 		_errors.append("Weapon mod panel should show magazine capacity as %s after installation." % expected_capacity_text)
+	var recoil_label := TranslationServer.translate("ui.weapon_stat.recoil_angle")
+	var recoil_index := panel_text.find(recoil_label)
+	if recoil_index >= 0:
+		var next_text := panel_text.substr(recoil_index, 40)
+		if next_text.contains("V"):
+			_errors.append("Weapon mod panel text should hide vertical recoil in recoil angle row, got %s." % next_text)
+	if panel_text.contains(TranslationServer.translate("ui.weapon_mod.unload_ammo")):
+		_errors.append("Weapon mod panel should not show the unload-ammo action; equipment right-click owns that action.")
 
 
 func _validate_source_boundaries() -> void:
@@ -199,13 +269,26 @@ func _validate_source_boundaries() -> void:
 		if not player_source.contains(required):
 			_errors.append("PlayerController3D should bridge held fire and weapon reload duration through %s." % required)
 	var equipment_source := FileAccess.get_file_as_string("res://scripts/player/player_equipment_controller_3d.gd")
-	for required in ["_weapon_stat_rows", "stat_rows", "weapon_durability_wear_per_shot"]:
+	for required in ["_weapon_stat_rows", "_weapon_summary", "stat_rows", "weapon_durability_wear_per_shot"]:
 		if not equipment_source.contains(required):
 			_errors.append("PlayerEquipmentController3D should own weapon stat panel state term: %s." % required)
 	var presenter_source := FileAccess.get_file_as_string("res://scripts/ui/weapon_mod_panel_presenter.gd")
-	for required in ["details_title", "stat_rows", "scroll_details", "_draw_detail_scrollbar"]:
+	for required in ["catalog_number", "_detail_items", "summary_title", "details_title", "stat_rows", "scroll_details", "_draw_detail_scrollbar"]:
 		if not presenter_source.contains(required):
 			_errors.append("WeaponModPanelPresenter should draw detail rows and scrollbar through %s." % required)
+	var state_builder_source := FileAccess.get_file_as_string("res://scripts/ui/weapon_mod_panel_state_builder.gd")
+	for required in ["catalog_number", "summary", "weapon_total_weight", "loaded_ammo", "max_durability"]:
+		if not state_builder_source.contains(required):
+			_errors.append("Shared weapon panel state builder should include summary data through %s." % required)
+	for owner_source in [
+		FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_ui.gd"),
+		FileAccess.get_file_as_string("res://scripts/ui/base_stash_inventory_ui.gd"),
+	]:
+		if not owner_source.contains("WeaponModPanelStateBuilderScript.build"):
+			_errors.append("Both inventory and stash weapon panels should use the shared state builder.")
+	for forbidden in ["hit_unload_button", "unload_button_rect", "_draw_unload_button"]:
+		if presenter_source.contains(forbidden):
+			_errors.append("WeaponModPanelPresenter should not keep removed unload button term: %s." % forbidden)
 	var text_source := FileAccess.get_file_as_string("res://data/localization/game_text.csv")
 	for required in ["ui.weapon_mod.details_title", "ui.weapon_stat.damage", "ui.weapon_stat.durability"]:
 		if not text_source.contains(required):

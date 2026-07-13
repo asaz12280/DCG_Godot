@@ -1,0 +1,125 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/firearm_muzzle_feedback_3d.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/vendor/lelu_vfx2/firearm/soft_circle.png" id="2_circle"]
+[ext_resource type="Texture2D" path="res://assets/vendor/lelu_vfx2/firearm/hit_fire2_flare.png" id="3_flare"]
+[ext_resource type="Texture2D" path="res://assets/vendor/lelu_vfx2/firearm/muzzle_burst.png" id="4_burst"]
+[ext_resource type="PackedScene" path="res://VFX/Scenes/VFX_Hit_fire_2.tscn" id="5_hit_fire2"]
+
+[sub_resource type="Gradient" id="Gradient_contrast"]
+offsets = PackedFloat32Array(0, 0.42, 1)
+colors = PackedColorArray(1, 1, 1, 0.72, 1, 1, 1, 0.48, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="Texture_contrast"]
+gradient = SubResource("Gradient_contrast")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="Material_contrast"]
+transparency = 1
+shading_mode = 0
+cull_mode = 2
+albedo_texture = SubResource("Texture_contrast")
+albedo_color = Color(0.01, 0.003, 0.001, 1)
+billboard_mode = 1
+billboard_keep_scale = true
+
+[sub_resource type="StandardMaterial3D" id="Material_halo"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+cull_mode = 2
+albedo_texture = ExtResource("2_circle")
+albedo_color = Color(1, 0.48, 0.08, 0.92)
+emission_enabled = true
+emission = Color(1, 0.24, 0.02, 1)
+emission_energy_multiplier = 6.2
+billboard_mode = 1
+billboard_keep_scale = true
+
+[sub_resource type="StandardMaterial3D" id="Material_core"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+cull_mode = 2
+albedo_texture = ExtResource("3_flare")
+albedo_color = Color(1, 0.7, 0.22, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.04, 1)
+emission_energy_multiplier = 9.0
+billboard_mode = 1
+billboard_keep_scale = true
+
+[sub_resource type="StandardMaterial3D" id="Material_burst"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+cull_mode = 2
+albedo_texture = ExtResource("4_burst")
+albedo_color = Color(1, 0.38, 0.04, 0.92)
+emission_enabled = true
+emission = Color(1, 0.16, 0.01, 1)
+emission_energy_multiplier = 5.8
+billboard_mode = 1
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="Mesh_contrast"]
+material = SubResource("Material_contrast")
+size = Vector2(0.7, 0.7)
+
+[sub_resource type="QuadMesh" id="Mesh_halo"]
+material = SubResource("Material_halo")
+size = Vector2(0.88, 0.88)
+
+[sub_resource type="QuadMesh" id="Mesh_core"]
+material = SubResource("Material_core")
+size = Vector2(0.55, 0.55)
+
+[sub_resource type="QuadMesh" id="Mesh_burst"]
+material = SubResource("Material_burst")
+size = Vector2(0.66, 0.66)
+
+[sub_resource type="ParticleProcessMaterial" id="Process_ring"]
+gravity = Vector3(0, 0, 0)
+scale_min = 0.86
+scale_max = 1.18
+color = Color(1, 0.55, 0.1, 0.72)
+
+[sub_resource type="QuadMesh" id="Mesh_ring"]
+material = SubResource("Material_halo")
+size = Vector2(0.46, 0.46)
+
+[node name="LeLuFirearmMuzzleFeedback3D" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="ContrastBacking" type="MeshInstance3D" parent="."]
+sorting_offset = -2.0
+mesh = SubResource("Mesh_contrast")
+
+[node name="MuzzleHalo" type="MeshInstance3D" parent="."]
+sorting_offset = -1.0
+mesh = SubResource("Mesh_halo")
+
+[node name="CoreFlare" type="MeshInstance3D" parent="."]
+sorting_offset = 1.0
+mesh = SubResource("Mesh_core")
+
+[node name="MuzzleBurst" type="MeshInstance3D" parent="."]
+sorting_offset = 0.0
+mesh = SubResource("Mesh_burst")
+
+[node name="VendorHitFire2" parent="." instance=ExtResource("5_hit_fire2")]
+scale = Vector3(0.38, 0.38, 0.38)
+
+[node name="WarmRing" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 1
+lifetime = 0.16
+one_shot = true
+explosiveness = 1.0
+fixed_fps = 60
+process_material = SubResource("Process_ring")
+draw_pass_1 = SubResource("Mesh_ring")

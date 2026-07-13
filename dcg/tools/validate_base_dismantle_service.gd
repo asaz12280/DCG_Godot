@@ -7,9 +7,8 @@ const BaseProgressionScript := preload("res://scripts/base/base_progression.gd")
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
 const DisassembleStationUpgrade := preload("res://data/base_upgrades/workbench_disassemble_station.tres")
 
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 
 var _errors: Array[String] = []
 var _created_save_manager: Node = null
@@ -37,7 +36,7 @@ func _validate_service_locked_state() -> void:
 		_errors.append("Dismantle service should stay locked before Disassemble Station is purchased.")
 	if not (state.get("dismantle_rows", []) as Array).is_empty():
 		_errors.append("Dismantle service should not expose rows before Disassemble Station is purchased.")
-	var result: Dictionary = BaseDismantleServiceScript.dismantle_from_save_data(save_data, &"stash:0:workbench_pistol_9mm_parts")
+	var result: Dictionary = BaseDismantleServiceScript.dismantle_from_save_data(save_data, &"stash:0:workbench_pistol_S_parts")
 	if bool(result.get("success", false)) or str(result.get("reason", "")) != "dismantle_locked":
 		_errors.append("Dismantle execution should be blocked before Disassemble Station is purchased.")
 
@@ -59,7 +58,7 @@ func _validate_dismantle_rows_selection_and_save_data() -> void:
 	if str(row.get("output_text", "")).strip_edges() == "":
 		_errors.append("Dismantle row should expose readable output text.")
 	var output_stacks: Array = row.get("output_stacks", []) as Array
-	if _stack_quantity_in_array(output_stacks, JUNK_PATH) != 3 or _stack_quantity_in_array(output_stacks, WIRE_PATH) != 1:
+	if _stack_quantity_in_array(output_stacks, JUNK_PATH) != 4:
 		_errors.append("Dismantle row should expose configured output material data.")
 	if str(state.get("selected_dismantle_id", "")) != str(row.get("id", "")):
 		_errors.append("Dismantle service should select the first available row by default.")
@@ -76,7 +75,7 @@ func _validate_dismantle_rows_selection_and_save_data() -> void:
 	var updated: Dictionary = result.get("save_data", {}) as Dictionary
 	if _stash_quantity(updated, PISTOL_PATH) != 0:
 		_errors.append("Dismantle should consume the input pistol stack.")
-	if _stash_quantity(updated, JUNK_PATH) != 3 or _stash_quantity(updated, WIRE_PATH) != 1:
+	if _stash_quantity(updated, JUNK_PATH) != 4:
 		_errors.append("Dismantle should add configured output material stacks.")
 	var after_state: Dictionary = BaseDismantleServiceScript.get_state_from_save_data(updated)
 	if not (after_state.get("dismantle_rows", []) as Array).is_empty():
@@ -185,7 +184,7 @@ func _validate_base_3d_dismantle_flow() -> void:
 		var loaded: Dictionary = save_manager.get_slot_data(1)
 		if _stash_quantity(loaded, PISTOL_PATH) != 0:
 			_errors.append("Base 3D dismantle action should consume the stash input item.")
-		if _stash_quantity(loaded, JUNK_PATH) != 3 or _stash_quantity(loaded, WIRE_PATH) != 1:
+		if _stash_quantity(loaded, JUNK_PATH) != 4:
 			_errors.append("Base 3D dismantle action should save output materials.")
 		var after_state: Dictionary = controller.call("get_panel_state")
 		if not str(after_state.get("body", "")).contains(TranslationServer.translate("ui.base.workbench_dismantle_done")):

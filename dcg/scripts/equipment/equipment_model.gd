@@ -168,6 +168,21 @@ func equip_stack(slot_id: StringName, stack: Dictionary) -> bool:
 	return true
 
 
+func update_slot_stack_state(slot_id: StringName, state: Dictionary, emit_change: bool = true) -> bool:
+	if not has_slot(slot_id) or state.is_empty():
+		return false
+	var stack: Dictionary = (slots.get(slot_id, {}) as Dictionary).duplicate(true)
+	if stack.is_empty():
+		return false
+	for key in state.keys():
+		var value: Variant = state[key]
+		stack[key] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
+	slots[slot_id] = stack
+	if emit_change:
+		changed.emit()
+	return true
+
+
 func unequip(slot_id: StringName) -> Dictionary:
 	if not has_slot(slot_id):
 		return {}

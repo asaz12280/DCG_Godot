@@ -1,0 +1,15 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon_shot_audio_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = &"smg_S"
+fallback_duration_seconds = 0.13
+fallback_body_frequency_hz = 88.0
+fallback_noise_mix = 0.82
+fallback_variation_count = 4
+volume_db = -7.0
+min_pitch_scale = 0.98
+max_pitch_scale = 1.05
+source_license_note = "Original procedural fallback. Replace streams with commercially licensed WAV or OGG variations when available."

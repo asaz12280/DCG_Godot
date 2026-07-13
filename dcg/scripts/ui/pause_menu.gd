@@ -62,7 +62,7 @@ func _build_menu() -> void:
 	title_label = Label.new()
 	title_label.position = Vector2(84.0, 300.0)
 	title_label.size = Vector2(280.0, 64.0)
-	PauseUIStyle.apply_font_size(title_label, 42)
+	PauseUIStyle.apply_font_size(title_label, PauseUIStyle.FONT_PANEL_TITLE)
 	PauseUIStyle.apply_font_color(title_label, PauseUIStyle.COLOR_TEXT_PRIMARY)
 	add_child(title_label)
 

@@ -142,6 +142,60 @@ static func withdraw_stash_stack(ui: Control, stack_index: int) -> bool:
 	return true
 
 
+static func withdraw_stash_stack_to_equipment_or_backpack(ui: Control, stack_index: int) -> bool:
+	var stash_items: Array = ui.get("stash_items")
+	if stack_index < 0 or stack_index >= stash_items.size():
+		return false
+	if BaseStashInventoryMarkerSupportScript.is_locked(ui.get("locked_stash_slots"), stack_index):
+		_set_status(ui, &"ui.stash.locked_item")
+		ui.queue_redraw()
+		return false
+	var item_def := _load_item_from_stack(stash_items[stack_index] as Dictionary)
+	var target_slot := _empty_equipment_slot_for_item(ui, item_def)
+	if target_slot == &"":
+		return withdraw_stash_stack(ui, stack_index)
+	return _withdraw_stash_stack_to_equipment(ui, stack_index, target_slot)
+
+
+static func _withdraw_stash_stack_to_equipment(ui: Control, stack_index: int, slot_id: StringName) -> bool:
+	var stash_model = ui.get("stash_model")
+	var equipment_model = ui.get("equipment_model")
+	if stash_model == null or equipment_model == null or not equipment_model.has_method("equip_stack"):
+		return false
+	var previous_stash: Array[Dictionary] = stash_model.to_save_data()
+	var removed_stack: Dictionary = stash_model.remove_stack_at(stack_index)
+	if removed_stack.is_empty():
+		return false
+	if not bool(ui.call("_save_stash")):
+		stash_model.load_save_data(previous_stash)
+		_set_status(ui, &"ui.stash.save_failed")
+		_refresh_display(ui)
+		return false
+	if not bool(equipment_model.call("equip_stack", slot_id, removed_stack)):
+		stash_model.load_save_data(previous_stash)
+		ui.call("_save_stash")
+		_set_status(ui, &"ui.stash.withdraw_failed")
+		_refresh_display(ui)
+		return false
+	_set_status(ui, &"ui.stash.saved")
+	_refresh_display(ui)
+	return true
+
+
+static func _empty_equipment_slot_for_item(ui: Control, item_def: ItemDef) -> StringName:
+	var equipment_model = ui.get("equipment_model")
+	if item_def == null or equipment_model == null:
+		return &""
+	if not equipment_model.has_method("can_equip") or not equipment_model.has_method("is_empty"):
+		return &""
+	var equipment_slot_ids: Array = ui.get("equipment_slot_ids")
+	for raw_slot_id in equipment_slot_ids:
+		var slot_id := StringName(str(raw_slot_id))
+		if bool(equipment_model.call("is_empty", slot_id)) and bool(equipment_model.call("can_equip", slot_id, item_def)):
+			return slot_id
+	return &""
+
+
 static func _add_removed_stack_to_stash(ui: Control, removed_stack: Dictionary) -> bool:
 	if not _stash_can_accept_stack(ui, removed_stack):
 		return false

@@ -5,6 +5,7 @@ extends Control
 signal slot_selected(catalog_number: int)
 
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 var catalog_number: int = 0
 var item_def: ItemDef = null
@@ -40,7 +41,7 @@ func clear_slot(number: int) -> void:
 
 func set_selected(value: bool) -> void:
 	is_selected = value
-	modulate = Color(1.0, 1.0, 1.0, 1.0) if not is_selected else Color(0.82, 1.0, 1.0, 1.0)
+	modulate = Color.WHITE if not is_selected else UISurfacePaletteScript.SELECTED_MODULATE
 	queue_redraw()
 
 
@@ -69,7 +70,7 @@ func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	var style := StyleBoxFlat.new()
 	style.bg_color = _background_color()
-	style.border_color = Color(0.35, 0.58, 0.68, 0.82) if not is_selected else Color(0.62, 0.94, 1.0, 0.95)
+	style.border_color = UISurfacePaletteScript.codex_slot_border(is_selected)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
 	draw_style_box(style, rect)
@@ -84,24 +85,20 @@ func _draw_label() -> void:
 	var text_width := maxf(size.x - 14.0, 1.0)
 	var text_height := font.get_height(font_size)
 	var draw_y: float = floor((size.y - text_height) * 0.5 + font.get_ascent(font_size))
-	draw_string(font, Vector2(7.0, draw_y), text, HORIZONTAL_ALIGNMENT_CENTER, text_width, font_size, Color(0.91, 0.96, 0.96, 1.0))
+	draw_string(font, Vector2(7.0, draw_y), text, HORIZONTAL_ALIGNMENT_CENTER, text_width, font_size, UISurfacePaletteScript.TEXT_PRIMARY)
 
 
 func _label_font_size(font: Font) -> int:
 	var text_width := maxf(size.x - 14.0, 1.0)
-	var max_size := clampi(roundi(size.y * 0.22), 14, 22)
-	for font_size in range(max_size, 11, -1):
+	var max_size := clampi(roundi(size.y * 0.22), 18, 22)
+	for font_size in range(max_size, 17, -1):
 		if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x <= text_width:
 			return font_size
-	return 12
+	return 18
 
 
 func _background_color() -> Color:
-	if is_selected:
-		return Color(0.19, 0.33, 0.37, 0.94)
-	if _is_hovered:
-		return Color(0.22, 0.34, 0.39, 0.94)
-	return Color(0.19, 0.28, 0.33, 0.90)
+	return UISurfacePaletteScript.codex_slot_fill(is_selected, _is_hovered)
 
 
 func _on_mouse_entered() -> void:

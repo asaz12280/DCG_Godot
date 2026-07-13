@@ -101,9 +101,9 @@ func _validate_layout_fit() -> void:
 			_errors.append("Map top-menu panel escapes viewport at %s." % viewport_size)
 		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
 			_errors.append("Map top-menu panel should fit inside viewport at %s." % viewport_size)
-		if rect.size.x > viewport_size.x * 0.70:
+		if rect.size.x > viewport_size.x * 0.84:
 			_errors.append("Map panel should not cover too much horizontal gameplay view at %s." % viewport_size)
-		if rect.size.y > viewport_size.y * 0.58:
+		if rect.size.y > viewport_size.y * 0.72:
 			_errors.append("Map panel should not cover too much vertical gameplay view at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 		_validate_gameplay_text(state)

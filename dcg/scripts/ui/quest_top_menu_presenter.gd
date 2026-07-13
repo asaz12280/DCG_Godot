@@ -108,8 +108,6 @@ static func item_name(owner: Control, item_path: String) -> String:
 		match item_path:
 			"res://data/items/crafting/wood.tres":
 				return "Wood"
-			"res://data/items/electronics/wire.tres":
-				return "Wire"
 	var item_name_text := BaseScreenViewModelScript.item_name_from_path(owner, item_path)
 	if item_name_text.strip_edges() == "" or UITextScript.looks_corrupt(item_name_text):
 		return "Unknown item"

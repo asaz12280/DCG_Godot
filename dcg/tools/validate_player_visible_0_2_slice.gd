@@ -3,8 +3,6 @@ extends SceneTree
 const Base3DScene := preload("res://scenes/base/base_3d.tscn")
 const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
 const ProjectileScript := preload("res://scripts/combat/projectile_3d.gd")
-const ShotFeedbackScript := preload("res://scripts/combat/shot_feedback_3d.gd")
-const HitFeedbackScript := preload("res://scripts/combat/projectile_hit_feedback_3d.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
 const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
@@ -12,8 +10,8 @@ const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt
 const BASE_3D_SCENE := "res://scenes/base/base_3d.tscn"
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const BASE_SCREEN_SCENE := "res://scenes/base/base_screen.tscn"
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
-const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_S.tres"
 const KILL_QUEST_ID := "first_scavenger_hunt"
 const VALIDATION_SAVE_ROOT := "user://validation_player_visible_0_2_slice"
 
@@ -58,7 +56,6 @@ func _validate_source_boundaries() -> void:
 		"res://tools/validate_enemy_chase_player.gd",
 		"res://tools/validate_enemy_attack_player.gd",
 		"res://tools/validate_projectile_hit_enemy.gd",
-		"res://tools/validate_pistol_fire_vfx.gd",
 		"res://tools/validate_quest_kill_enemy_flow.gd",
 		"res://tools/validate_enemy_player_death_result.gd",
 		"res://tools/validate_ui_layout_quality_0_2.gd",
@@ -305,8 +302,9 @@ func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment
 	if ammo_after >= ammo_before:
 		_errors.append("Reload should consume compatible No.7 backpack ammo.")
 	var loaded_hud: Dictionary = player_hud.call("get_display_state")
-	if not str(loaded_hud.get("ammo_text", "")).contains("發子彈"):
-		_errors.append("Player HUD ammo text should show loaded bullets and backpack reserve count.")
+	var ammo_text := str(loaded_hud.get("ammo_text", ""))
+	if not ammo_text.contains("/") or ammo_text.contains("發子彈"):
+		_errors.append("Player HUD ammo text should use compact loaded / backpack reserve count.")
 
 
 func _kill_enemy_with_visible_projectiles(gameplay: Node, player: Node, enemy: Node, controller: Node, weapon: Node) -> void:
@@ -319,9 +317,7 @@ func _kill_enemy_with_visible_projectiles(gameplay: Node, player: Node, enemy: N
 	weapon.set("fire_cooldown_seconds", 0.0)
 	await _wait_frames(2)
 
-	var shot_feedback_before := _count_by_script(gameplay, ShotFeedbackScript)
 	var projectile_seen := false
-	var impact_seen := false
 	for _shot in range(2):
 		if weapon.has_method("force_cooldown_ready"):
 			weapon.call("force_cooldown_ready")
@@ -336,17 +332,11 @@ func _kill_enemy_with_visible_projectiles(gameplay: Node, player: Node, enemy: N
 		for _frame in range(35):
 			await physics_frame
 			await process_frame
-			if _count_by_script(gameplay, HitFeedbackScript) > 0:
-				impact_seen = true
 			if enemy.has_method("is_alive") and not bool(enemy.call("is_alive")):
 				break
 
-	if _count_by_script(gameplay, ShotFeedbackScript) <= shot_feedback_before:
-		_errors.append("Firing should show muzzle spark/tracer feedback.")
 	if not projectile_seen:
-		_errors.append("Firing should spawn a visible 3D projectile trajectory.")
-	if not impact_seen:
-		_errors.append("Projectile hit should spawn visible impact feedback.")
+		_errors.append("Firing should spawn the logic-only Projectile3D collision carrier.")
 	if _hit_count < 2:
 		_errors.append("WeaponController3D should emit hit events when bullets damage the enemy.")
 	if enemy.has_method("is_alive") and bool(enemy.call("is_alive")):

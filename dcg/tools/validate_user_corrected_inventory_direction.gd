@@ -6,9 +6,8 @@ const InventoryEquipmentUIScript := preload("res://scripts/ui/inventory_equipmen
 const BaseStashInventoryUIScript := preload("res://scripts/ui/base_stash_inventory_ui.gd")
 const ContainerInventoryScene := preload("res://scenes/ui/container_inventory_ui.tscn")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
-const BalancedGrip := preload("res://data/items/attachments/balanced_grip.tres")
 
 const WRONG_EQUIPMENT_SLOTS := [
 	"weapon_mag",
@@ -65,13 +64,13 @@ func _validate_legacy_equipment_mods_migrate_into_weapon() -> void:
 	var model := EquipmentModelScript.new()
 	if not model.equip_item(&"primary_weapon", Pistol):
 		_errors.append("Legacy migration validation should equip Pistol-S.")
-	if not model.equip_item(&"weapon_grip", BalancedGrip):
-		_errors.append("Legacy weapon_grip entry should still be accepted as migration input.")
-	if not model.is_empty(&"weapon_grip"):
-		_errors.append("Legacy weapon_grip should be emptied after migration into Pistol-S.")
+	if not model.equip_item(&"weapon_mag", ExtendedMagazine):
+		_errors.append("Legacy weapon_mag entry should still be accepted as migration input.")
+	if not model.is_empty(&"weapon_mag"):
+		_errors.append("Legacy weapon_mag should be emptied after migration into Pistol-S.")
 	var mods: Dictionary = model.get_slot(&"primary_weapon").get("weapon_mods", {}) as Dictionary
-	if (mods.get("grip", {}) as Dictionary).is_empty():
-		_errors.append("Legacy weapon_grip should migrate into Pistol-S weapon_mods.grip.")
+	if (mods.get("magazine", {}) as Dictionary).is_empty():
+		_errors.append("Legacy weapon_mag should migrate into Pistol-S weapon_mods.magazine.")
 
 
 func _validate_inventory_surfaces_hide_weapon_mod_slots() -> void:

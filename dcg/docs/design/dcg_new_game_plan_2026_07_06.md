@@ -510,7 +510,7 @@ Near-term acceptable rule:
 Future split candidates:
 
 - `WeaponProfile`: weapon-only base values.
-- `AmmoProfile`: ammo-only multipliers and penetration.
+- Ammo stays simple: compatibility tag, stack/catalog data, localization, and tags only. Do not split ammo into combat tuning profiles.
 - `ArmorProfile`: armor and durability rules.
 - `AttachmentProfile`: slot, compatibility, and modifier values.
 - `ConsumableProfile`: healing, stamina, buff duration.
@@ -575,4 +575,3 @@ Dev Slice 0.3 is done only when:
 - Do not add Steam Workshop support.
 - Do not polish final art before the loop is stable.
 - Do not rely on completion reports without rerunning current validators.
-

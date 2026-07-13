@@ -5,8 +5,8 @@ const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd"
 
 const BASE_3D_SCENE := "res://scenes/base/base_3d.tscn"
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_S.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
 
 var _errors: Array[String] = []
 var _save_manager: Node = null

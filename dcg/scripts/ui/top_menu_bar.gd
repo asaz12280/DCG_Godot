@@ -1,6 +1,7 @@
 ﻿extends Control
 
 const UILayoutHelper := preload("res://scripts/ui/ui_layout.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 signal selected_changed(index: int, id: StringName)
 signal menu_item_requested(id: StringName)
@@ -14,11 +15,11 @@ const MENU_ITEMS: Array[Dictionary] = [
 ]
 
 @export var selected_index: int = 0
-@export var button_size: Vector2 = Vector2(55.0, 55.0)
-@export var button_gap: float = 24.0
-@export var panel_color: Color = Color(0.33, 0.35, 0.35, 0.46)
+@export var button_size: Vector2 = UISurfacePaletteScript.SIZE_TOP_BAR_BUTTON
+@export var button_gap: float = UISurfacePaletteScript.TOP_BAR_BUTTON_GAP
+@export var panel_color: Color = UISurfacePaletteScript.PANEL_FILL
 
-const DESIGN_PANEL_SIZE := Vector2(700.0, 84.0)
+const DESIGN_PANEL_SIZE := UISurfacePaletteScript.SIZE_TOP_BAR_PANEL
 const DESIGN_TOP_MARGIN := 20.0
 
 var _button_rects: Array[Rect2] = []
@@ -99,8 +100,8 @@ func _apply_responsive_layout() -> void:
 func _draw() -> void:
 	_button_rects.clear()
 	_paint_panel(Rect2(Vector2.ZERO, size))
-	var scaled_button_size := button_size * _layout_scale
-	var scaled_button_gap := button_gap * _layout_scale
+	var scaled_button_size := UISurfacePaletteScript.SIZE_TOP_BAR_BUTTON * _layout_scale
+	var scaled_button_gap := UISurfacePaletteScript.TOP_BAR_BUTTON_GAP * _layout_scale
 	var total_width := float(MENU_ITEMS.size()) * scaled_button_size.x + float(MENU_ITEMS.size() - 1) * scaled_button_gap
 	var start_x := (size.x - total_width) * 0.5
 	var start_y := (size.y - scaled_button_size.y) * 0.5
@@ -113,10 +114,10 @@ func _draw() -> void:
 
 func _paint_panel(rect: Rect2) -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = panel_color
-	style.border_color = Color(0.70, 0.78, 0.82, 0.18)
-	style.set_border_width_all(maxi(1, roundi(_layout_scale)))
-	style.set_corner_radius_all(roundi(22.0 * _layout_scale))
+	style.bg_color = UISurfacePaletteScript.panel_fill()
+	style.border_color = UISurfacePaletteScript.panel_border()
+	style.set_border_width_all(maxi(UISurfacePaletteScript.BORDER_WIDTH, roundi(_layout_scale)))
+	style.set_corner_radius_all(roundi(float(UISurfacePaletteScript.RADIUS_FLOATING_PANEL) * _layout_scale))
 	draw_style_box(style, rect.grow(-2.0 * _layout_scale))
 
 
@@ -124,11 +125,11 @@ func _paint_button(rect: Rect2, index: int) -> void:
 	var is_selected := index == selected_index
 	var center := rect.get_center()
 	if is_selected:
-		draw_circle(center, rect.size.x * 0.5, Color(0.06, 0.64, 1.0, 0.95))
-		draw_circle(center, rect.size.x * 0.5 + 4.0 * _layout_scale, Color(0.20, 0.82, 1.0, 0.22))
+		draw_circle(center, rect.size.x * 0.5, UISurfacePaletteScript.TOP_BAR_SELECTED_FILL)
+		draw_circle(center, rect.size.x * 0.5 + float(UISurfacePaletteScript.SPACE_XXS) * _layout_scale, UISurfacePaletteScript.TOP_BAR_SELECTED_GLOW)
 
-	_paint_icon(index, center + Vector2(0.0, 1.0 * _layout_scale), rect.size.x * 0.39, Color(0.33, 0.88, 1.0, 0.26), 6.0 * _layout_scale)
-	_paint_icon(index, center + Vector2(0.0, 1.0 * _layout_scale), rect.size.x * 0.39, Color.WHITE, 3.0 * _layout_scale)
+	_paint_icon(index, center + Vector2(0.0, 1.0 * _layout_scale), rect.size.x * 0.39, UISurfacePaletteScript.TOP_BAR_ICON_SHADOW, 6.0 * _layout_scale)
+	_paint_icon(index, center + Vector2(0.0, 1.0 * _layout_scale), rect.size.x * 0.39, UISurfacePaletteScript.TEXT_PRIMARY, 3.0 * _layout_scale)
 
 
 func _paint_icon(index: int, center: Vector2, radius: float, color: Color, width: float) -> void:

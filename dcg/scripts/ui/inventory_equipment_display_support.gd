@@ -1,6 +1,8 @@
 extends RefCounted
 
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
+const TOOLTIP_LINE_HEIGHT := 28.0
 const CASH_ITEM_PATH := "res://data/items/currency/cash.tres"
 
 
@@ -16,6 +18,9 @@ static func build_state(owner: Control, viewport_size: Vector2, models: Dictiona
 		"weapon_mod_panel": state.get("weapon_mod_panel", {}),
 		"weapon_mod_panel_rect": rects.get("weapon_mod_panel_rect", Rect2()),
 		"weapon_mod_panel_text": str(text.get("weapon_mod_panel_text", "")),
+		"item_detail_panel": state.get("item_detail_panel", {}),
+		"item_detail_panel_rect": rects.get("item_detail_panel_rect", Rect2()),
+		"item_detail_panel_text": str(text.get("item_detail_panel_text", "")),
 		"panel_rect": rects.get("panel_rect", Rect2()),
 		"backpack_used": int(models.get("backpack_used", 0)),
 		"backpack_slots": int(models.get("backpack_slots", 0)),
@@ -30,11 +35,12 @@ static func build_state(owner: Control, viewport_size: Vector2, models: Dictiona
 		"store_all_button_visible": bool(state.get("store_all_button_visible", false)),
 		"store_all_button_text": str(text.get("store_all_button_text", "")),
 		"store_all_button_rect": rects.get("store_all_button_rect", Rect2()),
+		"overlay_scrim_visible": bool(state.get("overlay_scrim_visible", true)),
 		"viewport_size": viewport_size,
 	}
 
 
-static func build_owner_state(owner: Control, viewport_size: Vector2, layout: RefCounted, weapon_mod_panel: RefCounted, backpack_model: RefCounted, safe_pocket_model: RefCounted) -> Dictionary:
+static func build_owner_state(owner: Control, viewport_size: Vector2, layout: RefCounted, weapon_mod_panel: RefCounted, item_detail_panel: RefCounted, backpack_model: RefCounted, safe_pocket_model: RefCounted) -> Dictionary:
 	owner.call("_update_layout_scale", viewport_size)
 	var panel_rect: Rect2 = owner.call("_panel_rect")
 	var backpack_rect: Rect2 = layout.backpack_rect(panel_rect)
@@ -57,19 +63,23 @@ static func build_owner_state(owner: Control, viewport_size: Vector2, layout: Re
 			"equipment_slots": owner.call("_get_equipment_slots_state"),
 			"equipment_slot_rects": owner.call("_get_equipment_slot_rects_state"),
 			"weapon_mod_panel": weapon_mod_panel.state.duplicate(true),
+			"item_detail_panel": item_detail_panel.state.duplicate(true),
 			"money": owner.get("money"),
 			"current_weight": owner.call("_get_current_weight"),
 			"carry_weight_limit": owner.call("_get_carry_weight_limit"),
 			"store_all_button_visible": store_all_visible,
+			"overlay_scrim_visible": owner.get("_overlay_scrim_visible"),
 		},
 		{
 			"panel_rect": panel_rect,
 			"weapon_mod_panel_rect": weapon_mod_panel.panel_rect(owner.get("_ui_scale"), owner.get("_layout_viewport_size")) if weapon_mod_panel.is_open() else Rect2(),
+			"item_detail_panel_rect": item_detail_panel.panel_rect(owner.get("_ui_scale"), owner.get("_layout_viewport_size")) if item_detail_panel.is_open() else Rect2(),
 			"store_all_button_rect": store_all_rect,
 		},
 		{
 			"equipment_text": owner.call("_get_equipment_visible_text"),
 			"weapon_mod_panel_text": weapon_mod_panel.visible_text(owner),
+			"item_detail_panel_text": item_detail_panel.visible_text(owner),
 			"weight_label": owner.call("_weight_label_text"),
 			"weight_text": owner.call("_weight_value_text"),
 			"sort_button_text": owner.call("_sort_button_text"),
@@ -101,17 +111,17 @@ static func draw_tooltip(owner: Control, painter: RefCounted, screen_position: V
 	var lines: Array = tooltip.get("lines", []) as Array
 	var max_lines := mini(lines.size(), 8)
 	var width := 340.0 * ui_scale
-	var height := (44.0 + float(max_lines) * 18.0) * ui_scale
+	var height := (50.0 + float(max_lines) * TOOLTIP_LINE_HEIGHT) * ui_scale
 	var viewport_size := owner.get_viewport_rect().size
 	var tooltip_position := screen_position + Vector2(18.0, 18.0) * ui_scale
 	tooltip_position.x = clampf(tooltip_position.x, 10.0 * ui_scale, viewport_size.x - width - 10.0 * ui_scale)
 	tooltip_position.y = clampf(tooltip_position.y, 10.0 * ui_scale, viewport_size.y - height - 10.0 * ui_scale)
 	var rect := Rect2(tooltip_position, Vector2(width, height))
-	painter.panel(rect, Color(0.025, 0.055, 0.075, 0.96), Color(0.58, 0.78, 0.86, 0.90), 2, 8)
+	painter.panel(rect, UISurfacePaletteScript.tooltip_fill(), UISurfacePaletteScript.tooltip_border(), 2, 8)
 	var title_width := rect.size.x - 24.0 * ui_scale
-	painter.text(str(tooltip.get("title", "")), rect.position + Vector2(12.0, 24.0) * ui_scale, 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, title_width)
+	painter.text(str(tooltip.get("title", "")), rect.position + Vector2(12.0, 24.0) * ui_scale, 20, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, title_width)
 	for index in range(max_lines):
-		painter.text(str(lines[index]), rect.position + Vector2(12.0, 46.0 + float(index) * 18.0) * ui_scale, 12, Color(0.82, 0.92, 0.91, 0.95), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
+		painter.text(str(lines[index]), rect.position + Vector2(12.0, 52.0 + float(index) * TOOLTIP_LINE_HEIGHT) * ui_scale, 18, UISurfacePaletteScript.TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
 
 
 static func stack_at_position(owner: Control, screen_position: Vector2) -> Dictionary:

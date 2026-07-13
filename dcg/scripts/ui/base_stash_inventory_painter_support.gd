@@ -1,62 +1,83 @@
 extends RefCounted
 
 const BaseStashInventoryMarkerSupportScript := preload("res://scripts/ui/base_stash_inventory_marker_support.gd")
-
-const STASH_PANEL_FILL := Color(0.50, 0.52, 0.46, 0.68)
-const STASH_PANEL_BORDER := Color(1.0, 1.0, 1.0, 0.12)
-const STASH_SLOT_FILL := Color(0.74, 0.75, 0.68, 0.24)
-const STASH_SLOT_BORDER := Color(1.0, 1.0, 1.0, 0.28)
-const STASH_BUTTON_FILL := Color(0.74, 0.78, 0.73, 0.68)
-const STASH_BUTTON_BORDER := Color(1.0, 1.0, 1.0, 0.18)
-const STASH_BUTTON_TEXT := Color.WHITE
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
+const TOOLTIP_LINE_HEIGHT := 28.0
 
 
 static func draw_stash_panel(ui: Control, rect: Rect2) -> void:
 	var painter = ui.get("_painter")
 	var ui_scale := float(ui.get("_ui_scale"))
 	painter.panel_shadow(rect)
-	painter.panel(rect, STASH_PANEL_FILL, STASH_PANEL_BORDER, 1, 18)
+	painter.panel(rect, UISurfacePaletteScript.panel_fill(), UISurfacePaletteScript.panel_border(), 1, 18)
 	painter.panel_highlight(rect)
-	painter.text(ui.call("_stash_title_text"), rect.position + _scaled_v(ui_scale, 22.0, 42.0), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 140.0 * ui_scale)
-	draw_button(ui, ui.call("_close_button_rect", rect), ui.call("_localized_text", &"ui.common.close", "Close"), STASH_BUTTON_FILL)
+	painter.text(ui.call("_stash_title_text"), rect.position + _scaled_v(ui_scale, 22.0, 42.0), 24, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 164.0 * ui_scale)
+	draw_button(ui, ui.call("_sort_button_rect", rect), ui.call("_localized_text", &"ui.stash.sort", "Sort"), UISurfacePaletteScript.button_fill())
 
 	var grid_rect: Rect2 = ui.call("_stash_grid_rect", rect)
+	var category_tabs: Array = ui.call("_stash_category_tabs", rect)
+	for tab_state in category_tabs:
+		var tab: Dictionary = tab_state as Dictionary
+		var tab_rect: Rect2 = tab.get("rect", Rect2())
+		var selected := bool(tab.get("selected", false))
+		painter.panel(tab_rect, UISurfacePaletteScript.button_fill() if selected else UISurfacePaletteScript.slot_fill(&"equipment"), UISurfacePaletteScript.button_border() if selected else UISurfacePaletteScript.slot_border(), 1, 7)
+		painter.text(str(tab.get("short_label", "")), tab_rect.position + _scaled_v(ui_scale, 3.0, 25.0), 16, UISurfacePaletteScript.button_text(), HORIZONTAL_ALIGNMENT_CENTER, tab_rect.size.x - 6.0 * ui_scale)
+
 	var grid_columns := int(ui.get("grid_columns"))
 	var stash_scroll_row := int(ui.get("stash_scroll_row"))
-	var stash_capacity := int(ui.get("stash_capacity"))
-	var stash_items: Array = ui.get("stash_items")
+	var stash_display_slot_count := int(ui.call("_stash_display_slot_count"))
+	var stash_items: Array = ui.get("filtered_stash_items")
+	var source_indices: Array = ui.get("filtered_stash_source_indices")
 	var visible_stash_rows := int(ui.get("visible_stash_rows"))
 	for slot_index in range(grid_columns * visible_stash_rows):
-		var absolute_index := stash_scroll_row * grid_columns + slot_index
-		if absolute_index >= stash_capacity:
+		var display_index := stash_scroll_row * grid_columns + slot_index
+		if display_index >= stash_display_slot_count:
 			continue
 		var slot_rect: Rect2 = ui.call("_grid_slot_rect", grid_rect, slot_index, grid_columns)
-		painter.slot(slot_rect, STASH_SLOT_FILL, STASH_SLOT_BORDER)
-		if absolute_index < stash_items.size():
-			paint_item_label(ui, slot_rect, stash_items[absolute_index])
-			if BaseStashInventoryMarkerSupportScript.is_needed_stack(stash_items[absolute_index], ui.get("_needed_item_paths")):
+		painter.slot(slot_rect, UISurfacePaletteScript.slot_fill(), UISurfacePaletteScript.slot_border())
+		if display_index < stash_items.size():
+			var source_index := int(source_indices[display_index])
+			paint_item_label(ui, slot_rect, stash_items[display_index])
+			if BaseStashInventoryMarkerSupportScript.is_needed_stack(stash_items[display_index], ui.get("_needed_item_paths")):
 				paint_needed_indicator(ui, slot_rect)
-			if BaseStashInventoryMarkerSupportScript.is_locked(ui.get("locked_stash_slots"), absolute_index):
+			if BaseStashInventoryMarkerSupportScript.is_locked(ui.get("locked_stash_slots"), source_index):
 				paint_lock_indicator(ui, slot_rect)
 	var max_scroll_row := int(ui.call("_max_stash_scroll_row"))
+	var scroll_track_rect: Rect2 = ui.call("_stash_scroll_track_rect", rect)
 	if max_scroll_row > 0:
-		painter.scroll_bar(rect, stash_scroll_row, max_scroll_row, ui.get("_scaled_slot_size"), float(ui.get("_scaled_slot_gap")))
+		painter.scroll_bar_in_track(scroll_track_rect, stash_scroll_row, max_scroll_row)
+	else:
+		painter.panel(scroll_track_rect, UISurfacePaletteScript.SCROLL_TRACK, UISurfacePaletteScript.TRANSPARENT, 0, 3)
+		painter.panel(scroll_track_rect, UISurfacePaletteScript.SCROLL_THUMB, UISurfacePaletteScript.TRANSPARENT, 0, 3)
+	draw_stash_currency_panel(ui, rect)
+
+
+static func draw_stash_currency_panel(ui: Control, panel_rect: Rect2) -> void:
+	var painter = ui.get("_painter")
+	var ui_scale := float(ui.get("_ui_scale"))
+	var currency_rect: Rect2 = ui.call("_stash_currency_panel_rect", panel_rect)
+	painter.panel(currency_rect, UISurfacePaletteScript.section_fill(), UISurfacePaletteScript.button_border(), 1, 8)
+	var balance_rect: Rect2 = ui.call("_stash_currency_balance_rect", panel_rect)
+	painter.panel(balance_rect, UISurfacePaletteScript.slot_fill(), UISurfacePaletteScript.slot_border(), 1, 8)
+	painter.text("$ %d" % int(ui.get("_stash_money")), balance_rect.position + _scaled_v(ui_scale, 6.0, 33.0), 20, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, balance_rect.size.x - 12.0 * ui_scale)
+	draw_button(ui, ui.call("_stash_currency_deposit_rect", panel_rect), ui.call("_localized_text", &"ui.stash.deposit", "Deposit"), UISurfacePaletteScript.button_fill(&"success"))
+	draw_button(ui, ui.call("_stash_currency_withdraw_rect", panel_rect), ui.call("_localized_text", &"ui.stash.withdraw", "Withdraw"), UISurfacePaletteScript.button_fill())
 
 
 static func draw_equipment_grid(ui: Control, rect: Rect2) -> void:
 	var painter = ui.get("_painter")
 	var ui_scale := float(ui.get("_ui_scale"))
 	var origin := rect.position + _scaled_v(ui_scale, 24.0, 74.0)
-	painter.text(ui.call("_localized_text", &"ui.inventory.equipment", "Equipment"), origin + _scaled_v(ui_scale, 0.0, -12.0), 16, Color(0.85, 0.94, 0.94, 0.95), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 48.0 * ui_scale)
+	painter.text(ui.call("_localized_text", &"ui.inventory.equipment", "Equipment"), origin + _scaled_v(ui_scale, 0.0, -12.0), 20, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 48.0 * ui_scale)
 	var equipment_slot_ids: Array = ui.get("equipment_slot_ids")
 	var equipment_slot_label_keys: Array = ui.get("equipment_slot_label_keys")
 	for index in range(equipment_slot_ids.size()):
 		var slot_rect: Rect2 = ui.call("_equipment_slot_rect", rect, index)
-		painter.slot(slot_rect, Color(0.08, 0.17, 0.25, 0.92), Color(0.55, 0.66, 0.74, 0.72))
+		painter.slot(slot_rect, UISurfacePaletteScript.slot_fill(&"equipment"), UISurfacePaletteScript.slot_border())
 		painter.equipment_icon(slot_rect.grow(-13.0 * ui_scale), index)
 		var stack: Dictionary = ui.call("_get_equipment_stack_at", index)
 		if stack.is_empty():
-			painter.text(ui.call("_localized_text", equipment_slot_label_keys[index], ""), slot_rect.position + _scaled_v(ui_scale, 7.0, 62.0), 11, Color(0.72, 0.80, 0.80, 0.72), HORIZONTAL_ALIGNMENT_CENTER, slot_rect.size.x - 14.0 * ui_scale)
+			painter.text(ui.call("_localized_text", equipment_slot_label_keys[index], ""), slot_rect.position + _scaled_v(ui_scale, 7.0, 62.0), 18, UISurfacePaletteScript.TEXT_MUTED, HORIZONTAL_ALIGNMENT_CENTER, slot_rect.size.x - 14.0 * ui_scale)
 		else:
 			paint_item_label(ui, slot_rect, stack)
 			if BaseStashInventoryMarkerSupportScript.is_needed_stack(stack, ui.get("_needed_item_paths")):
@@ -82,7 +103,7 @@ static func draw_backpack_grid(ui: Control, rect: Rect2) -> void:
 		if absolute_index >= backpack_slots:
 			continue
 		var slot_rect: Rect2 = ui.call("_grid_slot_rect", backpack_grid_rect, slot_index, grid_columns)
-		painter.slot(slot_rect, Color(0.07, 0.16, 0.24, 0.92), Color(0.51, 0.62, 0.70, 0.72))
+		painter.slot(slot_rect, UISurfacePaletteScript.slot_fill(), UISurfacePaletteScript.slot_border())
 		if absolute_index < backpack_items.size():
 			paint_item_label(ui, slot_rect, backpack_items[absolute_index])
 			if BaseStashInventoryMarkerSupportScript.is_needed_stack(backpack_items[absolute_index], ui.get("_needed_item_paths")):
@@ -106,7 +127,7 @@ static func draw_safe_pocket_grid(ui: Control, rect: Rect2) -> void:
 	var scaled_slot_gap := float(ui.get("_scaled_slot_gap"))
 	for index in range(safe_pocket_slots):
 		var slot_rect := Rect2(slot_origin + Vector2(float(index) * (scaled_slot_size.x + scaled_slot_gap), 0.0), scaled_slot_size)
-		painter.slot(slot_rect, Color(0.10, 0.20, 0.19, 0.92), Color(0.57, 0.82, 0.74, 0.74))
+		painter.slot(slot_rect, UISurfacePaletteScript.slot_fill(&"safe"), UISurfacePaletteScript.slot_border())
 		if index < safe_pocket_items.size():
 			paint_item_label(ui, slot_rect, safe_pocket_items[index])
 			if BaseStashInventoryMarkerSupportScript.is_needed_stack(safe_pocket_items[index], ui.get("_needed_item_paths")):
@@ -118,8 +139,8 @@ static func draw_safe_pocket_grid(ui: Control, rect: Rect2) -> void:
 static func draw_button(ui: Control, rect: Rect2, label: String, fill: Color) -> void:
 	var painter = ui.get("_painter")
 	var ui_scale := float(ui.get("_ui_scale"))
-	painter.panel(rect, fill, STASH_BUTTON_BORDER, 1, 8)
-	painter.text(label, rect.position + _scaled_v(ui_scale, 8.0, 24.0), 14, STASH_BUTTON_TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16.0 * ui_scale)
+	painter.panel(rect, fill, UISurfacePaletteScript.button_border(), 1, 8)
+	painter.text(label, rect.position + _scaled_v(ui_scale, 8.0, 24.0), 18, UISurfacePaletteScript.button_text(), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16.0 * ui_scale)
 
 
 static func paint_item_label(ui: Control, rect: Rect2, stack: Dictionary) -> void:
@@ -127,7 +148,7 @@ static func paint_item_label(ui: Control, rect: Rect2, stack: Dictionary) -> voi
 
 
 static func draw_hover_tooltip(ui: Control, position: Vector2) -> void:
-	var stack: Dictionary = ui.call("_stack_at_position", position)
+	var stack: Dictionary = ui.call("_tooltip_stack_at_position", position) if ui.has_method("_tooltip_stack_at_position") else ui.call("_stack_at_position", position)
 	if stack.is_empty():
 		return
 	var tooltip: Dictionary = ui.call("_tooltip_state_for_stack", stack)
@@ -137,17 +158,17 @@ static func draw_hover_tooltip(ui: Control, position: Vector2) -> void:
 	var max_lines := mini(lines.size(), 8)
 	var ui_scale := float(ui.get("_ui_scale"))
 	var width := 340.0 * ui_scale
-	var height := (44.0 + float(max_lines) * 18.0) * ui_scale
+	var height := (50.0 + float(max_lines) * TOOLTIP_LINE_HEIGHT) * ui_scale
 	var viewport_size := ui.get_viewport_rect().size
 	var tooltip_position := position + _scaled_v(ui_scale, 18.0, 18.0)
 	tooltip_position.x = clampf(tooltip_position.x, 10.0 * ui_scale, viewport_size.x - width - 10.0 * ui_scale)
 	tooltip_position.y = clampf(tooltip_position.y, 10.0 * ui_scale, viewport_size.y - height - 10.0 * ui_scale)
 	var rect := Rect2(tooltip_position, Vector2(width, height))
 	var painter = ui.get("_painter")
-	painter.panel(rect, Color(0.025, 0.055, 0.075, 0.96), Color(0.58, 0.78, 0.86, 0.90), 2, 8)
-	painter.text(str(tooltip.get("title", "")), rect.position + _scaled_v(ui_scale, 12.0, 24.0), 16, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
+	painter.panel(rect, UISurfacePaletteScript.tooltip_fill(), UISurfacePaletteScript.tooltip_border(), 2, 8)
+	painter.text(str(tooltip.get("title", "")), rect.position + _scaled_v(ui_scale, 12.0, 24.0), 20, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
 	for index in range(max_lines):
-		painter.text(str(lines[index]), rect.position + _scaled_v(ui_scale, 12.0, 46.0 + float(index) * 18.0), 12, Color(0.82, 0.92, 0.91, 0.95), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
+		painter.text(str(lines[index]), rect.position + _scaled_v(ui_scale, 12.0, 52.0 + float(index) * TOOLTIP_LINE_HEIGHT), 18, UISurfacePaletteScript.TEXT_SECONDARY, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0 * ui_scale)
 
 
 static func paint_lock_indicator(ui: Control, rect: Rect2) -> void:

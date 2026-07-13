@@ -77,16 +77,15 @@ static func apply_use_wear(stack: Dictionary, item_def: ItemDef = null, wear_amo
 	return normalize_stack(normalized, item_def)
 
 
-static func apply_ammo_use_wear(stack: Dictionary, item_def: ItemDef = null, ammo_def: ItemDef = null, base_wear_amount: float = 1.0) -> Dictionary:
+static func apply_ammo_use_wear(stack: Dictionary, item_def: ItemDef = null, _ammo_def: ItemDef = null, base_wear_amount: float = 1.0) -> Dictionary:
 	var normalized := normalize_stack(stack, item_def)
 	if not bool(normalized.get("has_durability", false)):
 		return normalized
 	var base_amount := maxf(base_wear_amount, 0.0)
 	if base_amount <= 0:
 		return normalized
-	var wear_rate := ammo_weapon_wear_rate(ammo_def)
 	var accumulated := maxf(float(normalized.get("durability_wear_progress", 0.0)), 0.0)
-	accumulated += base_amount * wear_rate
+	accumulated += base_amount * DEFAULT_WEAPON_WEAR_RATE
 	var whole_wear := floori(accumulated)
 	normalized["durability_wear_progress"] = accumulated - float(whole_wear)
 	if whole_wear > 0:
@@ -94,12 +93,6 @@ static func apply_ammo_use_wear(stack: Dictionary, item_def: ItemDef = null, amm
 		if int(normalized.get("current_durability", 0)) <= 0:
 			normalized["durability_wear_progress"] = 0.0
 	return normalize_stack(normalized, item_def)
-
-
-static func ammo_weapon_wear_rate(ammo_def: ItemDef = null) -> float:
-	if ammo_def == null or ammo_def.item_type != "ammo":
-		return DEFAULT_WEAPON_WEAR_RATE
-	return ammo_def.get_ammo_weapon_wear_rate()
 
 
 static func combat_penalty_state(stack: Dictionary, item_def: ItemDef = null) -> Dictionary:

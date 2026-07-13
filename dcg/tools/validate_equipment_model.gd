@@ -1,18 +1,13 @@
 extends SceneTree
 
 const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const Knife := preload("res://data/items/weapons/combat_knife.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 const Helmet := preload("res://data/items/armor/basic_helmet.tres")
 const Armor := preload("res://data/items/armor/light_armor.tres")
 const Backpack := preload("res://data/items/backpacks/small_backpack.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
-const BalancedGrip := preload("res://data/items/attachments/balanced_grip.tres")
-const CompactMuzzle := preload("res://data/items/attachments/compact_muzzle.tres")
-const ReflexSight := preload("res://data/items/attachments/reflex_sight.tres")
-const StabilizingStock := preload("res://data/items/attachments/stabilizing_stock.tres")
-const TargetingLaser := preload("res://data/items/attachments/targeting_laser.tres")
 const Wood := preload("res://data/items/crafting/wood.tres")
 
 var _errors: Array[String] = []
@@ -78,16 +73,6 @@ func _validate_legal_equips() -> void:
 		_errors.append("Small backpack should equip into backpack slot.")
 	if not model.equip_item(&"weapon_mag", ExtendedMagazine):
 		_errors.append("Extended Magazine-S should equip into the dedicated weapon magazine slot.")
-	if not model.equip_item(&"weapon_grip", BalancedGrip):
-		_errors.append("Balanced Grip-S should equip into the dedicated weapon grip slot.")
-	if not model.equip_item(&"weapon_muzzle", CompactMuzzle):
-		_errors.append("Compact Muzzle-S should equip into the dedicated weapon muzzle slot.")
-	if not model.equip_item(&"weapon_scope", ReflexSight):
-		_errors.append("Reflex Sight-S should equip into the dedicated weapon scope slot.")
-	if not model.equip_item(&"weapon_stock", StabilizingStock):
-		_errors.append("Stabilizing Stock-S should equip into the dedicated weapon stock slot.")
-	if not model.equip_item(&"weapon_tactic", TargetingLaser):
-		_errors.append("Targeting Laser-S should equip into the dedicated weapon tactic slot.")
 
 
 func _validate_rejected_equips() -> void:
@@ -106,30 +91,10 @@ func _validate_rejected_equips() -> void:
 		_errors.append("Body armor should not equip into helmet slot.")
 	if model.equip_item(&"backpack", Wood):
 		_errors.append("Crafting material should not equip into backpack slot.")
-	if model.equip_item(&"weapon_mag", BalancedGrip):
-		_errors.append("Grip attachments should not equip into the weapon magazine slot.")
 	if model.equip_item(&"weapon_grip", ExtendedMagazine):
 		_errors.append("Magazine attachments should not equip into the weapon grip slot.")
-	if model.equip_item(&"weapon_muzzle", BalancedGrip):
-		_errors.append("Grip attachments should not equip into the weapon muzzle slot.")
-	if model.equip_item(&"weapon_scope", BalancedGrip):
-		_errors.append("Grip attachments should not equip into the weapon scope slot.")
-	if model.equip_item(&"weapon_stock", BalancedGrip):
-		_errors.append("Grip attachments should not equip into the weapon stock slot.")
-	if model.equip_item(&"weapon_tactic", BalancedGrip):
-		_errors.append("Grip attachments should not equip into the weapon tactic slot.")
 	if model.equip_item(&"charm_1", ExtendedMagazine):
 		_errors.append("Weapon magazines should no longer equip into generic charm slots.")
-	if model.equip_item(&"charm_2", BalancedGrip):
-		_errors.append("Weapon grips should no longer equip into generic charm slots.")
-	if model.equip_item(&"charm_1", CompactMuzzle):
-		_errors.append("Weapon muzzles should no longer equip into generic charm slots.")
-	if model.equip_item(&"charm_2", ReflexSight):
-		_errors.append("Weapon scopes should no longer equip into generic charm slots.")
-	if model.equip_item(&"charm_1", StabilizingStock):
-		_errors.append("Weapon stocks should no longer equip into generic charm slots.")
-	if model.equip_item(&"charm_2", TargetingLaser):
-		_errors.append("Weapon tactic attachments should no longer equip into generic charm slots.")
 	if model.equip_item(&"unknown_slot", Pistol):
 		_errors.append("Unknown equipment slots should reject items.")
 

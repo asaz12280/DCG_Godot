@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/vendor/lelu_vfx2/firearm/fire_strike_trail.png" id="1_fire_strike"]
+[ext_resource type="PackedScene" path="res://VFX/Scenes/VFX_Fire_strike.tscn" id="2_fire_strike"]
+
+[sub_resource type="StandardMaterial3D" id="Material_head"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.12, 0.025, 0.98)
+emission_enabled = true
+emission = Color(1, 0.02, 0.005, 1)
+emission_energy_multiplier = 9.0
+
+[sub_resource type="StandardMaterial3D" id="Material_tail"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_fire_strike")
+albedo_color = Color(0.82, 0.06, 0.008, 0.62)
+emission_enabled = true
+emission = Color(0.7, 0.012, 0.001, 1)
+emission_energy_multiplier = 3.4
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+material = SubResource("Material_head")
+radius = 0.065
+height = 0.13
+
+[sub_resource type="BoxMesh" id="Mesh_tail"]
+material = SubResource("Material_tail")
+size = Vector3(0.046, 0.046, 1.2)
+
+[node name="LeLuFirearmProjectileTracer3D" type="Node3D"]
+position = Vector3(0, 0, -1.2)
+
+[node name="TracerHead" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, -0.065)
+mesh = SubResource("Mesh_head")
+
+[node name="TracerTail" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0.58)
+mesh = SubResource("Mesh_tail")
+
+[node name="VendorFireStrike" parent="." instance=ExtResource("2_fire_strike")]
+scale = Vector3(0.28, 0.28, 0.28)

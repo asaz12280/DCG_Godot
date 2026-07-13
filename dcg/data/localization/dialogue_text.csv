@@ -1,0 +1,4 @@
+keys,zh_TW,en
+dialogue.template.intro,這是可翻譯的故事腳本範本。,This is a localization-ready story script template.
+dialogue.template.continue,繼續,Continue
+dialogue.template.ready,後續故事文字會沿用目前的語言設定。,Future story text will follow the current language setting.

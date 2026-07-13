@@ -2,6 +2,7 @@ class_name InventoryDropController
 extends RefCounted
 
 const LootPickupScene := preload("res://scenes/items/loot_pickup_wood.tscn")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 const MIN_DROP_DISTANCE := 1.1
 const MAX_DROP_DISTANCE := 2.2
 const CONTEXT_DROP_MIN_RADIUS := 0.55
@@ -61,7 +62,7 @@ func draw_dragged_item(slot_size: Vector2, item_label: Callable) -> void:
 	if not is_dragging() or painter == null:
 		return
 	var drag_rect := Rect2(drag_position - slot_size * 0.5, slot_size)
-	painter.slot(drag_rect, Color(0.30, 0.45, 0.42, 0.68), Color(0.83, 0.95, 0.90, 0.72))
+	painter.slot(drag_rect, UISurfacePaletteScript.drag_slot_fill(), UISurfacePaletteScript.drag_slot_border())
 	item_label.call(drag_rect, dragging_stack)
 
 

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://dvsmyjm702q05"]
+
+[ext_resource type="Script" uid="uid://cxdfwm66kepvt" path="res://scripts/loot/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://bilkg21p2bv85" path="res://scripts/loot/loot_table_entry.gd" id="2_loot_table_entry"]
+
+[sub_resource type="Resource" id="LootTableEntry_shotgun_SG"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/weapons/shotgun_SG.tres"
+tags = Array[StringName]([&"orange_crate", &"weapon", &"shotgun", &"SG"])
+
+[sub_resource type="Resource" id="LootTableEntry_ammo_SG"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/ammo/ammo_SG.tres"
+min_quantity = 20
+max_quantity = 20
+tags = Array[StringName]([&"orange_crate", &"ammo", &"SG"])
+
+[sub_resource type="Resource" id="LootTableEntry_extended_magazine"]
+script = ExtResource("2_loot_table_entry")
+item_path = "res://data/items/attachments/extended_magazine.tres"
+tags = Array[StringName]([&"orange_crate", &"attachment", &"magazine", &"shotgun"])
+
+[resource]
+script = ExtResource("1_loot_table")
+id = &"crate_orange_shotgun_kit"
+guaranteed_entries = Array[Resource]([SubResource("LootTableEntry_shotgun_SG"), SubResource("LootTableEntry_ammo_SG"), SubResource("LootTableEntry_extended_magazine")])

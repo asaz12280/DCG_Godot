@@ -9,9 +9,9 @@ const WhiteCrateTable := preload("res://data/loot_tables/crate_white_misc_food.t
 const YellowLockedCrateTable := preload("res://data/loot_tables/crate_yellow_locked_cache.tres")
 const BlueLockedCrateTable := preload("res://data/loot_tables/crate_blue_locked_armor.tres")
 const LOCALIZATION_SOURCE := "res://data/localization/game_text.csv"
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
-const SMG_PATH := "res://data/items/weapons/smg_9mm.tres"
-const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
+const SMG_PATH := "res://data/items/weapons/smg_S.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_S.tres"
 const KNIFE_PATH := "res://data/items/weapons/combat_knife.tres"
 const WAREHOUSE_KEY_PATH := "res://data/items/keys/warehouse_key.tres"
 const TACTICAL_HEADSET_PATH := "res://data/items/attachments/tactical_headset.tres"
@@ -244,7 +244,7 @@ func _validate_invalid_entry_is_caught() -> void:
 
 func _validate_uncataloged_entry_is_caught() -> void:
 	var entry := LootTableEntryScript.new()
-	entry.item_path = "res://data/items/electronics/wire.tres"
+	entry.item_path = "res://data/items/missing_validation_item.tres"
 	entry.min_quantity = 1
 	entry.max_quantity = 1
 	entry.weight = 1.0

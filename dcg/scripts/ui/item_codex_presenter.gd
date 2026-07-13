@@ -1,6 +1,9 @@
 class_name ItemCodexPresenter
 extends RefCounted
 
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
+const ItemInspectionSnapshotBuilderScript := preload("res://scripts/ui/item_inspection_snapshot_builder.gd")
+
 const CODEX_CATEGORY_ORDER: Array[String] = [
 	"weapon",
 	"ammo",
@@ -20,6 +23,28 @@ const CODEX_CATEGORY_ORDER: Array[String] = [
 	"recipe",
 	"explosive",
 	"other",
+]
+
+const STORAGE_CATEGORY_ORDER: Array[String] = [
+	"all",
+	"weapon",
+	"ammo",
+	"equipment",
+	"attachment",
+	"totem",
+	"medical",
+	"food",
+	"other",
+]
+
+const STORAGE_DIRECT_CATEGORY_IDS: Array[String] = [
+	"weapon",
+	"ammo",
+	"equipment",
+	"attachment",
+	"totem",
+	"medical",
+	"food",
 ]
 
 
@@ -104,97 +129,44 @@ static func codex_category_name(owner: Control, item: ItemDef) -> String:
 	return localized_text(owner, StringName("codex_category.%s" % codex_category_id(item)))
 
 
+static func storage_category_order() -> Array[String]:
+	return STORAGE_CATEGORY_ORDER.duplicate()
+
+
+static func storage_category_id(item: ItemDef) -> String:
+	var category_id := codex_category_id(item)
+	return category_id if STORAGE_DIRECT_CATEGORY_IDS.has(category_id) else "other"
+
+
+static func storage_category_label_key(category_id: String) -> StringName:
+	return StringName("ui.stash.category.%s" % category_id if STORAGE_CATEGORY_ORDER.has(category_id) else "ui.stash.category.other")
+
+
+static func storage_category_short_label_key(category_id: String) -> StringName:
+	return StringName("ui.stash.category_short.%s" % category_id if STORAGE_CATEGORY_ORDER.has(category_id) else "ui.stash.category_short.other")
+
+
 static func stat_rows(owner: Control, item: ItemDef) -> Array[Dictionary]:
-	var rows: Array[Dictionary] = [
-		{"label": localized_text(owner, &"ui.codex.weight"), "value": "%.2f kg" % item.weight},
-		{"label": localized_text(owner, &"ui.codex.value"), "value": str(item.value)},
-	]
-	if item.get_max_stack() > 1:
-		rows.append({"label": localized_text(owner, &"ui.codex.max_stack"), "value": str(item.get_max_stack())})
-	if item.tags.has(&"gun") and item.get_weapon_damage() > 0:
-		rows.append({"label": localized_text(owner, &"ui.codex.damage"), "value": str(item.get_weapon_damage())})
-	if item.get_max_durability() > 0:
-		rows.append({"label": localized_text(owner, &"ui.codex.durability"), "value": str(item.get_max_durability())})
-	return rows
+	return (inspection_state(owner, item).get("codex_stat_rows", []) as Array).duplicate(true)
+
+
+static func inspection_state(owner: Control, item: ItemDef) -> Dictionary:
+	if item == null:
+		return {}
+	return ItemInspectionSnapshotBuilderScript.build(owner, item.to_stack(1))
+
+
+static func info_lines(owner: Control, item: ItemDef) -> Array[String]:
+	var values: Array = inspection_state(owner, item).get("codex_info_lines", []) as Array
+	var lines: Array[String] = []
+	for value in values:
+		lines.append(str(value))
+	return lines
 
 
 static func item_type_color(item_type: String) -> Color:
-	match item_type:
-		"weapon":
-			return Color(0.72, 0.24, 0.20, 0.95)
-		"ammo":
-			return Color(0.76, 0.62, 0.22, 0.95)
-		"armor":
-			return Color(0.34, 0.43, 0.56, 0.95)
-		"backpack":
-			return Color(0.46, 0.34, 0.22, 0.95)
-		"attachment":
-			return Color(0.38, 0.43, 0.46, 0.95)
-		"medical":
-			return Color(0.80, 0.20, 0.26, 0.95)
-		"food":
-			return Color(0.66, 0.46, 0.24, 0.95)
-		"consumable":
-			return Color(0.42, 0.64, 0.28, 0.95)
-		"key":
-			return Color(0.84, 0.72, 0.34, 0.95)
-		"crafting":
-			return Color(0.52, 0.54, 0.47, 0.95)
-		"electronics":
-			return Color(0.18, 0.58, 0.66, 0.95)
-		"explosive":
-			return Color(0.78, 0.32, 0.12, 0.95)
-		"currency":
-			return Color(0.82, 0.62, 0.18, 0.95)
-		"valuable":
-			return Color(0.82, 0.62, 0.18, 0.95)
-		"intel":
-			return Color(0.34, 0.50, 0.76, 0.95)
-		"quest":
-			return Color(0.58, 0.34, 0.76, 0.95)
-		"totem":
-			return Color(0.42, 0.74, 0.58, 0.95)
-		"recipe":
-			return Color(0.58, 0.48, 0.78, 0.95)
-		"loot":
-			return Color(0.30, 0.52, 0.64, 0.95)
-		_:
-			return Color(0.48, 0.48, 0.52, 0.95)
+	return UISurfacePaletteScript.codex_category_color(item_type)
 
 
 static func codex_category_color(item: ItemDef) -> Color:
-	match codex_category_id(item):
-		"weapon":
-			return Color(0.72, 0.24, 0.20, 0.95)
-		"ammo":
-			return Color(0.76, 0.62, 0.22, 0.95)
-		"equipment":
-			return Color(0.34, 0.43, 0.56, 0.95)
-		"attachment":
-			return Color(0.38, 0.43, 0.46, 0.95)
-		"totem":
-			return Color(0.42, 0.74, 0.58, 0.95)
-		"medical":
-			return Color(0.80, 0.20, 0.26, 0.95)
-		"food":
-			return Color(0.66, 0.46, 0.24, 0.95)
-		"crafting":
-			return Color(0.52, 0.54, 0.47, 0.95)
-		"electronics":
-			return Color(0.18, 0.58, 0.66, 0.95)
-		"key":
-			return Color(0.84, 0.72, 0.34, 0.95)
-		"loot":
-			return Color(0.30, 0.52, 0.64, 0.95)
-		"currency", "valuable":
-			return Color(0.82, 0.62, 0.18, 0.95)
-		"intel":
-			return Color(0.34, 0.50, 0.76, 0.95)
-		"quest":
-			return Color(0.58, 0.34, 0.76, 0.95)
-		"recipe":
-			return Color(0.58, 0.48, 0.78, 0.95)
-		"explosive":
-			return Color(0.78, 0.32, 0.12, 0.95)
-		_:
-			return Color(0.30, 0.52, 0.64, 0.95)
+	return UISurfacePaletteScript.codex_category_color(codex_category_id(item))

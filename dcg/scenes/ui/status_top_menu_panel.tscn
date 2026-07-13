@@ -5,10 +5,10 @@
 [node name="StatusTopMenuPanel" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 580.0
+offset_left = 575.0
 offset_top = 126.0
-offset_right = 1340.0
-offset_bottom = 546.0
+offset_right = 1345.0
+offset_bottom = 936.0
 mouse_filter = 2
 script = ExtResource("1_status_top_menu_panel")
 
@@ -23,10 +23,10 @@ grow_vertical = 2
 
 [node name="PanelMargin" type="MarginContainer" parent="MainPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 28
 
 [node name="Content" type="VBoxContainer" parent="MainPanel/PanelMargin"]
 layout_mode = 2

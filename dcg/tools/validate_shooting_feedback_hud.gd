@@ -1,8 +1,8 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 

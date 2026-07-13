@@ -1,8 +1,8 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 
@@ -151,9 +151,13 @@ func _validate_empty_left_click_auto_reloads_without_firing() -> void:
 
 func _validate_source_boundaries() -> void:
 	var player_source := FileAccess.get_file_as_string("res://scripts/player/player_controller_3d.gd")
-	for required in ["KEY_R", "reload_equipped_weapon", "_should_auto_reload_before_fire", "_find_compatible_ammo_stack", "_is_stack_compatible_ammo", "_ammo_model_accepts_tag", "consume_stack_quantity", "empty_fire"]:
+	var timed_action_source := FileAccess.get_file_as_string("res://scripts/player/player_timed_action_controller_3d.gd")
+	for required in ["KEY_R", "reload_equipped_weapon", "_should_auto_reload_before_fire", "empty_fire"]:
 		if not player_source.contains(required):
-			_errors.append("PlayerController3D should expose R reload flow term: %s." % required)
+			_errors.append("PlayerController3D should expose R reload bridge term: %s." % required)
+	for required in ["_find_compatible_ammo_stack", "_is_stack_compatible_ammo", "_ammo_model_accepts_tag", "consume_stack_quantity"]:
+		if not timed_action_source.contains(required):
+			_errors.append("PlayerTimedActionController3D should own reload implementation term: %s." % required)
 
 	var weapon_source := FileAccess.get_file_as_string("res://scripts/combat/weapon_controller_3d.gd")
 	for required in ["reload_from_item", "last_reload_result", "reload_blocked", "reloaded"]:

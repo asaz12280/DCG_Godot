@@ -11,7 +11,7 @@ const LifeTotem := preload("res://data/items/totems/life_totem.tres")
 const DefenseTotem := preload("res://data/items/totems/defense_totem.tres")
 const TacticalHeadset := preload("res://data/items/attachments/tactical_headset.tres")
 const TacticalGlasses := preload("res://data/items/attachments/tactical_glasses.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const CombatKnife := preload("res://data/items/weapons/combat_knife.tres")
 const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
 const PlayerEquipmentControllerScript := preload("res://scripts/player/player_equipment_controller_3d.gd")
@@ -24,8 +24,8 @@ const WAREHOUSE_KEY_PATH := "res://data/items/keys/warehouse_key.tres"
 const BANDAGE_PATH := "res://data/items/medical/bandage.tres"
 const BOTTLED_WATER_PATH := "res://data/items/food/bottled_water.tres"
 const BREAD_PATH := "res://data/items/food/bread.tres"
-const AMMO_9MM_PATH := "res://data/items/ammo/ammo_9mm.tres"
-const SMG_9MM_PATH := "res://data/items/weapons/smg_9mm.tres"
+const AMMO_S_PATH := "res://data/items/ammo/ammo_S.tres"
+const SMG_S_PATH := "res://data/items/weapons/smg_S.tres"
 const COMBAT_KNIFE_PATH := "res://data/items/weapons/combat_knife.tres"
 const LIFE_TOTEM_PATH := "res://data/items/totems/life_totem.tres"
 const BASIC_HELMET_PATH := "res://data/items/armor/basic_helmet.tres"
@@ -90,8 +90,8 @@ func _validate_guaranteed_crate_drops() -> void:
 	_assert_roll_contains(red_roll, BOTTLED_WATER_PATH, "Red crate should always include one bottled water.")
 	_assert_roll_contains(red_roll, BREAD_PATH, "Red crate should always include one bread.")
 	var dark_green_roll := DarkGreenCrateTable.roll(1, 404)
-	_assert_roll_contains(dark_green_roll, AMMO_9MM_PATH, "Dark green crate should always include pistol ammo.")
-	_assert_roll_contains(dark_green_roll, SMG_9MM_PATH, "Dark green crate should always include one SMG-S.")
+	_assert_roll_contains(dark_green_roll, AMMO_S_PATH, "Dark green crate should always include pistol ammo.")
+	_assert_roll_contains(dark_green_roll, SMG_S_PATH, "Dark green crate should always include one SMG-S.")
 	_assert_roll_contains(dark_green_roll, COMBAT_KNIFE_PATH, "Dark green crate should always include one combat knife.")
 	if _rolled_quantity(dark_green_roll, COMBAT_KNIFE_PATH) != 1:
 		_errors.append("Dark green crate should roll exactly one combat knife.")
@@ -108,6 +108,9 @@ func _validate_guaranteed_crate_drops() -> void:
 
 func _validate_drag_only_equipment_source() -> void:
 	var source := FileAccess.get_file_as_string(INVENTORY_UI_SOURCE)
+	source += FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_input_router.gd")
+	source += FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_action_support.gd")
+	source += FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_drag_support.gd")
 	if source.contains("_attach_backpack_stack_to_open_weapon"):
 		_errors.append("Inventory UI should not keep click-to-attach helper paths.")
 	if source.contains("_unequip_equipment_slot(hit_equipment_slot)") and not source.contains("event.double_click and _unequip_equipment_slot(hit_equipment_slot)"):
@@ -124,14 +127,14 @@ func _validate_drag_only_equipment_source() -> void:
 		_errors.append("Inventory UI should open weapon mod panels from the backpack weapon context menu.")
 	if not source.contains("_is_usable_stack"):
 		_errors.append("Inventory UI should hide the Use context action for non-consumable backpack stacks.")
-	if not source.contains("not _weapon_mod_panel.is_open()"):
+	if not source.contains("func context_drop") or not source.contains("if _panel().is_open()"):
 		_errors.append("Inventory UI should disable world drops while the weapon mod panel is open.")
 	var panel_source := FileAccess.get_file_as_string(WEAPON_MOD_PANEL_SOURCE)
-	if panel_source.contains("pistol_9mm") or panel_source.contains("Pistol"):
+	if panel_source.contains("pistol_S") or panel_source.contains("Pistol"):
 		_errors.append("Weapon mod panel should not be hard-coded to pistol-specific content.")
 	var equipment_source := FileAccess.get_file_as_string(PLAYER_EQUIPMENT_SOURCE)
-	if not equipment_source.contains("weapon_def.weapon_attachment_slots"):
-		_errors.append("Weapon mod state should be built from the equipped weapon's attachment slots.")
+	if not equipment_source.contains("weapon_def.get_weapon_attachment_slots()"):
+		_errors.append("Weapon mod state should be built from the equipped weapon's profile-backed attachment slots.")
 
 
 func _validate_weapon_mod_empty_slot_hit_test() -> void:
@@ -257,7 +260,7 @@ func _validate_direct_slot_runtime_equip() -> void:
 	var totem_index := _find_inventory_stack_index(player, LIFE_TOTEM_PATH)
 	if totem_index < 0 or not bool(player.call("equip_inventory_stack", totem_index, &"charm_2")):
 		_errors.append("Life Totem should directly equip from backpack into charm_2.")
-	var pistol_index := _find_inventory_stack_index(player, "res://data/items/weapons/pistol_9mm.tres")
+	var pistol_index := _find_inventory_stack_index(player, "res://data/items/weapons/pistol_S.tres")
 	if pistol_index < 0 or not bool(player.call("equip_inventory_stack", pistol_index, &"sidearm")):
 		_errors.append("Pistol should directly equip from backpack into sidearm.")
 	var equipment_model: RefCounted = player.call("get_equipment_model")
@@ -309,7 +312,13 @@ func _validate_bandage_runtime_use() -> void:
 		_errors.append("Player should start using a damaged-health bandage stack.")
 		player.queue_free()
 		return
-	player.call("_update_item_use", Bandage.use_duration_seconds + 0.25)
+	var timed_actions: RefCounted = player.get("_timed_actions") as RefCounted
+	var item_timer: Timer = timed_actions.get("_item_use_timer") as Timer if timed_actions != null else null
+	if item_timer == null:
+		_errors.append("Bandage use should start an item-use timer instead of relying on per-frame polling.")
+		player.queue_free()
+		return
+	timed_actions.call("_on_item_use_timer_timeout")
 	var after_health := float(player.get("health"))
 	var inventory_model: RefCounted = player.call("get_inventory_model")
 	if after_health <= before_health:

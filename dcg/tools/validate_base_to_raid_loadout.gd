@@ -3,8 +3,8 @@ extends SceneTree
 const Base3DScene := preload("res://scenes/base/base_3d.tscn")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 var _save_manager: Node = null
@@ -126,7 +126,7 @@ func _validate_source_boundaries() -> void:
 			_errors.append("RaidLoadoutTransfer should stay data-only and independent from %s." % forbidden)
 
 	var gameplay_scene := FileAccess.get_file_as_string("res://scenes/gameplay/player_test_world_3d.tscn")
-	for forbidden in ["pistol_9mm.tres", "ammo_9mm.tres", "starter_inventory.tres"]:
+	for forbidden in ["pistol_S.tres", "ammo_S.tres", "starter_inventory.tres"]:
 		if gameplay_scene.contains(forbidden):
 			_errors.append("Raid scene should not hardwire loadout item resource %s." % forbidden)
 

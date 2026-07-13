@@ -2,7 +2,7 @@ extends SceneTree
 
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
 const LocalizationBootstrapScript := preload("res://scripts/localization/localization_bootstrap.gd")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
 const KnifeItem := preload("res://data/items/weapons/combat_knife.tres")
 
 var _errors: Array[String] = []

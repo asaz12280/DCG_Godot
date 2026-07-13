@@ -61,6 +61,12 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not _is_opening():
 		return
+	if _player_is_timed_action_busy(_opening_player):
+		_cancel_timed_unlock()
+		_last_blocked_message = _localized_text(&"prompt.player_busy", "Busy")
+		_update_prompt()
+		open_blocked.emit(&"player_busy", _last_blocked_message)
+		return
 	_open_elapsed += maxf(delta, 0.0)
 	_update_open_progress()
 	if _open_elapsed >= locked_open_duration_seconds:
@@ -79,6 +85,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func try_open(player: Node) -> bool:
 	if player == null:
+		return false
+	if _player_is_timed_action_busy(player):
+		_last_blocked_message = _localized_text(&"prompt.player_busy", "Busy")
+		_update_prompt()
+		open_blocked.emit(&"player_busy", _last_blocked_message)
 		return false
 	if _is_opening():
 		return true
@@ -202,6 +213,9 @@ func _update_prompt() -> void:
 	if _is_opening():
 		_prompt_label.text = _localized_text(opening_feedback_key, opening_feedback) % int(round(_open_progress_ratio() * 100.0))
 		return
+	if _player_in_range != null and _player_is_timed_action_busy(_player_in_range):
+		_prompt_label.text = _localized_text(&"prompt.player_busy", "Busy")
+		return
 	var prompt := _localized_text(prompt_key, prompt_text)
 	if is_locked and not has_opened:
 		if _player_in_range != null and not _can_open_locked_container(_player_in_range):
@@ -254,6 +268,10 @@ func _cancel_timed_unlock(update_visuals: bool = true) -> void:
 
 func _is_opening() -> bool:
 	return _opening_player != null
+
+
+func _player_is_timed_action_busy(player: Node) -> bool:
+	return player != null and player.has_method("is_timed_action_active") and bool(player.call("is_timed_action_active"))
 
 
 func _open_progress_ratio() -> float:

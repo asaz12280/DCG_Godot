@@ -190,6 +190,7 @@ modulate = Color(0.82, 0.95, 0.9, 1)
 [node name="QuestBoardPoint" type="Node3D" parent="InteractionPoints" groups=["base_interaction_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.55, 0, -3.35)
 metadata/interaction_id = "quests"
+metadata/quest_giver_profile = "res://data/quests/givers/base_quest_board.tres"
 metadata/display_name_zh = "任務板"
 
 [node name="Marker" type="MeshInstance3D" parent="InteractionPoints/QuestBoardPoint"]

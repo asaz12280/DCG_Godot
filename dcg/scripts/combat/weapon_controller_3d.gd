@@ -5,7 +5,6 @@ const DamageEventScript := preload("res://scripts/combat/damage_event.gd")
 const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.gd")
 const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
 const DEFAULT_PROJECTILE_SCENE := preload("res://scenes/combat/projectile_3d.tscn")
-const DEFAULT_SHOT_FEEDBACK_SCENE := preload("res://scenes/combat/shot_feedback_3d.tscn")
 
 signal fired(item_def: ItemDef)
 signal hit(target: Node, event: DamageEvent)
@@ -18,7 +17,8 @@ signal reload_blocked(reason: StringName)
 @export var fallback_damage: float = 10.0
 @export var weapon_range: float = 28.0
 @export var projectile_scene: PackedScene = DEFAULT_PROJECTILE_SCENE
-@export var shot_feedback_scene: PackedScene = DEFAULT_SHOT_FEEDBACK_SCENE
+@export var shot_audio_player_path: NodePath = NodePath("../WeaponShotAudio")
+@export var combat_vfx_spawner_path: NodePath = NodePath("../CombatVfxSpawner3D")
 @export_range(0.0, 5.0, 0.01) var fire_cooldown_seconds := 0.28
 @export_range(0, 999, 1) var magazine_size := 8
 @export_range(0, 999, 1) var magazine_capacity_bonus := 0
@@ -28,6 +28,7 @@ signal reload_blocked(reason: StringName)
 var last_fire_result := {
 	"fired": false,
 	"hit": false,
+	"projectiles_fired": 0,
 	"blocked_reason": "",
 	"current_ammo": 0,
 	"reserve_ammo": 0,
@@ -43,6 +44,11 @@ var last_reload_result := {
 var _last_fire_time := -9999.0
 var _ammo_model := WeaponAmmoModelScript.new()
 var _attachment_modifiers: Dictionary = {}
+var _shot_audio_player: Node = null
+var _combat_vfx_spawner: Node = null
+var _next_volley_id := 1
+var _latest_volley_id := 0
+var _volley_results: Dictionary = {}
 
 
 func _init() -> void:
@@ -53,25 +59,30 @@ func _ready() -> void:
 	_connect_ammo_model()
 	_apply_weapon_tuning_from_def()
 	_sync_ammo_model_from_public_counts()
+	_shot_audio_player = get_node_or_null(shot_audio_player_path)
+	_combat_vfx_spawner = get_node_or_null(combat_vfx_spawner_path)
 
 
 func fire_at(target: Node) -> bool:
 	if not _begin_fire_attempt():
 		return false
-	var event := _make_damage_event()
 	var damage_target := _resolve_damage_target(target)
 	if damage_target == null:
 		fired.emit(weapon_def)
 		missed.emit(weapon_def)
-		_record_fire_result(false, "")
+		_record_fire_result(false, "", _projectiles_per_shot())
 		return false
-	var did_hit: bool = damage_target.apply_damage(event)
+	var projectile_count := _projectiles_per_shot()
+	var did_hit := false
+	for _projectile_index in range(projectile_count):
+		var event := _make_damage_event()
+		if damage_target.apply_damage(event):
+			did_hit = true
+			hit.emit(damage_target, event)
 	fired.emit(weapon_def)
-	if did_hit:
-		hit.emit(damage_target, event)
-	else:
+	if not did_hit:
 		missed.emit(weapon_def)
-	_record_fire_result(did_hit, "")
+	_record_fire_result(did_hit, "", projectile_count)
 	return did_hit
 
 
@@ -81,16 +92,25 @@ func fire_forward(origin: Vector3, direction: Vector3, _space_state: PhysicsDire
 	if projectile_scene == null or direction == Vector3.ZERO:
 		fired.emit(weapon_def)
 		missed.emit(weapon_def)
-		_record_fire_result(false, "")
+		_record_fire_result(false, "", 0)
 		return false
-	if not _spawn_projectile(origin, direction.normalized()):
+	var volley_id := _next_volley_id
+	_next_volley_id += 1
+	var spawned_count := 0
+	for projectile_direction in _projectile_directions(direction.normalized()):
+		if _spawn_projectile(origin, projectile_direction, volley_id):
+			spawned_count += 1
+	if spawned_count <= 0:
 		fired.emit(weapon_def)
 		missed.emit(weapon_def)
-		_record_fire_result(false, "")
+		_record_fire_result(false, "", 0)
 		return false
-	_spawn_shot_feedback(origin, direction.normalized())
+	_latest_volley_id = volley_id
+	_volley_results[volley_id] = {"remaining": spawned_count, "hit": false, "projectiles_fired": spawned_count}
+	_play_shot_audio()
+	_play_firearm_vfx(origin, direction.normalized())
 	fired.emit(weapon_def)
-	_record_fire_result(false, "")
+	_record_fire_result(false, "", spawned_count)
 	return true
 
 
@@ -124,8 +144,9 @@ func equip_weapon(item_def: ItemDef, capacity_bonus: int = 0, attachment_modifie
 	if item_def == null or item_def.item_type != "weapon":
 		clear_weapon()
 		return false
-	var loaded_count := current_ammo
-	var reserve_count := reserve_ammo
+	var same_weapon := weapon_def != null and weapon_def.id == item_def.id
+	var loaded_count := current_ammo if same_weapon else 0
+	var reserve_count := reserve_ammo if same_weapon else 0
 	weapon_def = item_def
 	_attachment_modifiers = _attachment_modifiers_with_capacity(capacity_bonus, attachment_modifiers)
 	var snapshot := get_tuning_snapshot()
@@ -135,6 +156,15 @@ func equip_weapon(item_def: ItemDef, capacity_bonus: int = 0, attachment_modifie
 	_ammo_model.set_counts(loaded_count, reserve_count)
 	_sync_public_ammo_counts()
 	return true
+
+
+func restore_ammo_state(ammo_item: ItemDef, loaded_count: int, reserve_count: int) -> bool:
+	if weapon_def == null:
+		return false
+	_sync_ammo_model_from_public_counts()
+	var result := _ammo_model.restore_state(ammo_item, loaded_count, reserve_count)
+	_sync_public_ammo_counts()
+	return result
 
 
 func clear_weapon() -> void:
@@ -224,6 +254,20 @@ func reload_from_item(ammo_item: ItemDef, quantity: int) -> int:
 	return moved
 
 
+func unload_loaded_ammo() -> Dictionary:
+	_sync_ammo_model_from_public_counts()
+	var ammo_item := _current_ammo_item()
+	if weapon_def == null:
+		return _unload_result(false, &"no_weapon", null, 0)
+	if ammo_item == null or current_ammo <= 0:
+		return _unload_result(false, &"no_loaded_ammo", ammo_item, 0)
+	var moved := _ammo_model.unload_loaded_ammo()
+	_sync_public_ammo_counts()
+	if moved <= 0:
+		return _unload_result(false, &"no_loaded_ammo", ammo_item, 0)
+	return _unload_result(true, &"", ammo_item, moved)
+
+
 func force_cooldown_ready() -> void:
 	_last_fire_time = -9999.0
 
@@ -253,13 +297,6 @@ func _make_damage_event() -> DamageEvent:
 	return event
 
 
-func _current_ammo_damage_multiplier() -> float:
-	var ammo_item := _current_ammo_item()
-	if ammo_item == null:
-		return 1.0
-	return ammo_item.get_ammo_damage_multiplier()
-
-
 func _current_ammo_item() -> ItemDef:
 	var ammo_item := _ammo_model.ammo_def
 	if ammo_item == null or ammo_item.item_type != "ammo":
@@ -273,6 +310,7 @@ func _begin_fire_attempt() -> bool:
 		last_fire_result = {
 			"fired": false,
 			"hit": false,
+			"projectiles_fired": 0,
 			"blocked_reason": str(block_reason),
 			"current_ammo": current_ammo,
 			"reserve_ammo": reserve_ammo,
@@ -303,7 +341,7 @@ func _apply_shot_to_target(target: Node) -> bool:
 	return did_hit
 
 
-func _spawn_projectile(origin: Vector3, direction: Vector3) -> bool:
+func _spawn_projectile(origin: Vector3, direction: Vector3, volley_id: int = 0) -> bool:
 	var projectile := projectile_scene.instantiate()
 	if not (projectile is Node3D):
 		if projectile != null:
@@ -317,56 +355,85 @@ func _spawn_projectile(origin: Vector3, direction: Vector3) -> bool:
 	parent.add_child(projectile)
 	var event := _make_damage_event()
 	if projectile.has_method("setup"):
-		projectile.call("setup", origin, direction, event, weapon_def, get_parent())
+		projectile.call("setup", origin, direction, event, weapon_def, get_parent(), _combat_vfx_spawner)
 	else:
 		projectile.global_position = origin
 	if _object_has_property(projectile, &"max_distance"):
 		projectile.set("max_distance", maxf(weapon_range, 0.0))
 	if projectile.has_signal("projectile_hit"):
-		projectile.projectile_hit.connect(_on_projectile_hit)
+		projectile.projectile_hit.connect(_on_projectile_hit.bind(volley_id))
 	if projectile.has_signal("projectile_missed"):
-		projectile.projectile_missed.connect(_on_projectile_missed)
+		projectile.projectile_missed.connect(_on_projectile_missed.bind(volley_id))
 	return true
 
 
-func _spawn_shot_feedback(origin: Vector3, direction: Vector3) -> void:
-	if shot_feedback_scene == null:
-		return
-	var feedback := shot_feedback_scene.instantiate()
-	if not (feedback is Node3D):
-		if feedback != null:
-			feedback.queue_free()
-		return
-	var parent := get_tree().current_scene if is_inside_tree() and get_tree().current_scene != null else null
-	if parent == null and get_parent() != null:
-		parent = get_parent().get_parent() if get_parent().get_parent() != null else get_parent()
-	if parent == null:
-		return
-	parent.add_child(feedback)
-	if feedback.has_method("setup"):
-		feedback.call("setup", origin, direction)
-	else:
-		feedback.global_position = origin
+func _play_shot_audio() -> void:
+	if _shot_audio_player != null and _shot_audio_player.has_method("play_for_weapon"):
+		_shot_audio_player.call("play_for_weapon", weapon_def)
 
 
-func _on_projectile_hit(target: Node, _event: DamageEvent) -> void:
+func _play_firearm_vfx(origin: Vector3, direction: Vector3) -> void:
+	if _combat_vfx_spawner != null and _combat_vfx_spawner.has_method("play_firearm_shot"):
+		_combat_vfx_spawner.call("play_firearm_shot", origin, direction, weapon_def)
+
+
+func _on_projectile_hit(target: Node, _event: DamageEvent, volley_id: int = 0) -> void:
 	hit.emit(target, _event)
-	_record_fire_result(true, "")
+	_finish_volley_projectile(volley_id, true)
 
 
-func _on_projectile_missed() -> void:
-	missed.emit(weapon_def)
-	_record_fire_result(false, "")
+func _on_projectile_missed(volley_id: int = 0) -> void:
+	_finish_volley_projectile(volley_id, false)
 
 
-func _record_fire_result(did_hit: bool, blocked_reason: String) -> void:
+func _record_fire_result(did_hit: bool, blocked_reason: String, projectiles_fired: int = 1) -> void:
 	last_fire_result = {
 		"fired": true,
 		"hit": did_hit,
+		"projectiles_fired": maxi(projectiles_fired, 0),
 		"blocked_reason": blocked_reason,
 		"current_ammo": current_ammo,
 		"reserve_ammo": reserve_ammo,
 	}
+
+
+func _projectiles_per_shot() -> int:
+	return maxi(int(get_tuning_snapshot().get("projectiles_per_shot", 1)), 1)
+
+
+func _projectile_directions(direction: Vector3) -> Array[Vector3]:
+	var count := _projectiles_per_shot()
+	var spread_degrees := maxf(float(get_tuning_snapshot().get("projectile_spread_degrees", 0.0)), 0.0)
+	var result: Array[Vector3] = []
+	if count <= 1 or spread_degrees <= 0.0:
+		result.append(direction.normalized())
+		return result
+	for index in range(count):
+		var ratio := float(index) / float(count - 1)
+		var angle_degrees := lerpf(-spread_degrees * 0.5, spread_degrees * 0.5, ratio)
+		result.append(direction.rotated(Vector3.UP, deg_to_rad(angle_degrees)).normalized())
+	return result
+
+
+func _finish_volley_projectile(volley_id: int, did_hit: bool) -> void:
+	if not _volley_results.has(volley_id):
+		if volley_id == 0:
+			if not did_hit:
+				missed.emit(weapon_def)
+			_record_fire_result(did_hit, "")
+		return
+	var state := _volley_results[volley_id] as Dictionary
+	state["hit"] = bool(state.get("hit", false)) or did_hit
+	state["remaining"] = maxi(int(state.get("remaining", 1)) - 1, 0)
+	if int(state.get("remaining", 0)) > 0:
+		_volley_results[volley_id] = state
+		return
+	_volley_results.erase(volley_id)
+	var volley_hit := bool(state.get("hit", false))
+	if not volley_hit:
+		missed.emit(weapon_def)
+	if volley_id == _latest_volley_id:
+		_record_fire_result(volley_hit, "", int(state.get("projectiles_fired", 1)))
 
 
 func _record_reload_result(did_reload: bool, blocked_reason: StringName, rounds_loaded: int) -> void:
@@ -374,6 +441,17 @@ func _record_reload_result(did_reload: bool, blocked_reason: StringName, rounds_
 		"reloaded": did_reload,
 		"blocked_reason": str(blocked_reason),
 		"rounds_loaded": rounds_loaded,
+		"current_ammo": current_ammo,
+		"reserve_ammo": reserve_ammo,
+	}
+
+
+func _unload_result(success: bool, reason: StringName, ammo_item: ItemDef, quantity: int) -> Dictionary:
+	return {
+		"success": success,
+		"reason": str(reason),
+		"ammo_item": ammo_item,
+		"quantity": quantity,
 		"current_ammo": current_ammo,
 		"reserve_ammo": reserve_ammo,
 	}

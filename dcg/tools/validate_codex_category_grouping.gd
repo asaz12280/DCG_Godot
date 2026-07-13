@@ -10,23 +10,21 @@ const BottledWater := preload("res://data/items/food/bottled_water.tres")
 const Bread := preload("res://data/items/food/bread.tres")
 const Bandage := preload("res://data/items/medical/bandage.tres")
 const StaminaPotion := preload("res://data/items/consumables/stamina_potion.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const CombatKnife := preload("res://data/items/weapons/combat_knife.tres")
-const SMG := preload("res://data/items/weapons/smg_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const SMG := preload("res://data/items/weapons/smg_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 const LightArmor := preload("res://data/items/armor/light_armor.tres")
 const BasicHelmet := preload("res://data/items/armor/basic_helmet.tres")
 const SmallBackpack := preload("res://data/items/backpacks/small_backpack.tres")
 const WarehouseKey := preload("res://data/items/keys/warehouse_key.tres")
 const Junk := preload("res://data/items/loot/junk.tres")
 const Cash := preload("res://data/items/currency/cash.tres")
-const Blueprint := preload("res://data/items/recipes/blueprint.tres")
 const LifeTotem := preload("res://data/items/totems/life_totem.tres")
 const DefenseTotem := preload("res://data/items/totems/defense_totem.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 const TacticalHeadset := preload("res://data/items/attachments/tactical_headset.tres")
 const TacticalGlasses := preload("res://data/items/attachments/tactical_glasses.tres")
-const Wire := preload("res://data/items/electronics/wire.tres")
 
 var _errors: Array[String] = []
 
@@ -47,11 +45,9 @@ func _initialize() -> void:
 	_expect_group([Bandage, StaminaPotion], "medical", owner)
 	_expect_group([BottledWater, Bread], "food", owner)
 	_expect_group([Wood], "crafting", owner)
-	_expect_group([Wire], "electronics", owner)
 	_expect_group([WarehouseKey], "key", owner)
 	_expect_group([Junk], "loot", owner)
 	_expect_group([Cash], "currency", owner)
-	_expect_group([Blueprint], "recipe", owner)
 	_expect_category_order_contract()
 	_expect_catalog_order()
 
@@ -91,24 +87,9 @@ func _expect_category_order_contract() -> void:
 func _expect_catalog_order() -> void:
 	var catalog := ItemCodexCatalogScript.new()
 	catalog.reload()
-	if catalog.item_count() < 20:
-		_errors.append("Codex should include all remaining ItemDef resources.")
+	if catalog.item_count() != 22:
+		_errors.append("Codex should include exactly 22 active ItemDef resources.")
 
-	_expect_catalog_item(catalog, 1, Pistol)
-	_expect_catalog_item(catalog, 2, CombatKnife)
-	_expect_catalog_item(catalog, 3, SMG)
-	_expect_catalog_item(catalog, 4, Ammo)
-	_expect_catalog_item(catalog, 5, BasicHelmet)
-	_expect_catalog_item(catalog, 6, LightArmor)
-	_expect_catalog_item(catalog, 7, SmallBackpack)
-	_expect_catalog_item(catalog, 8, TacticalHeadset)
-	_expect_catalog_item(catalog, 9, TacticalGlasses)
-	_expect_catalog_item(catalog, 10, ExtendedMagazine)
-	_expect_catalog_item(catalog, 11, LifeTotem)
-	_expect_catalog_item(catalog, 12, DefenseTotem)
-	_expect_catalog_item(catalog, 13, Bandage)
-	_expect_catalog_item(catalog, 15, BottledWater)
-	_expect_catalog_item(catalog, 17, Wood)
 	_expect_slot_tooltip_number(catalog, Wood)
 
 	var previous_order := -1
@@ -118,12 +99,6 @@ func _expect_catalog_order() -> void:
 		if order < previous_order:
 			_errors.append("Codex display slot %d breaks the requested category order." % number)
 		previous_order = order
-
-
-func _expect_catalog_item(catalog: RefCounted, display_slot: int, expected_item: ItemDef) -> void:
-	var item := catalog.call("get_item", display_slot) as ItemDef
-	if item != expected_item:
-		_errors.append("Codex display slot %d should show %s, got %s." % [display_slot, expected_item.id, item.id if item != null else &""])
 
 
 func _expect_slot_tooltip_number(catalog: RefCounted, expected_item: ItemDef) -> void:

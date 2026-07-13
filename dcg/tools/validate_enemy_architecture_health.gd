@@ -208,7 +208,6 @@ func _validate_source_boundaries() -> void:
 		"res://tools/validate_ui_layout_quality_0_2.gd",
 		"res://tools/validate_three_raid_loop_0_2.gd",
 		"res://tools/validate_projectile_hit_enemy.gd",
-		"res://tools/validate_pistol_fire_vfx.gd",
 	]:
 		if not FileAccess.file_exists(validator):
 			_errors.append("Enemy-first health requires validator: %s" % validator)
@@ -228,8 +227,6 @@ func _validate_dev_slice_0_2_validator_coverage() -> void:
 			"KEY_TAB",
 			"KEY_ESCAPE",
 			"ProjectileScript",
-			"ShotFeedbackScript",
-			"HitFeedbackScript",
 			"VALIDATION_SAVE_ROOT",
 		]:
 			if not smoke_text.contains(required):

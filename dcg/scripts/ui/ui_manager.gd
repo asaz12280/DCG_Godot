@@ -36,6 +36,7 @@ var _pending_stash_player: Node = null
 var _pending_stash_save_manager: Node = null
 var _pending_scene_ui: StringName = UI_NONE
 var _pending_scene_ui_attempts := 0
+var _pending_quest_giver_profile: Resource = null
 
 
 func _ready() -> void:
@@ -74,6 +75,8 @@ func open_ui(id: StringName) -> void:
 	if not TOP_MENU_IDS.has(id) and id != UI_PAUSE and id != UI_STASH:
 		close_active_ui()
 		return
+	if id == UI_QUESTS:
+		_pending_quest_giver_profile = null
 	if not _can_open_ui(id):
 		return
 	_set_active_ui(id)
@@ -121,6 +124,17 @@ func open_stash_inventory(source_player: Node = null, source_save_manager: Node 
 	_pending_stash_save_manager = source_save_manager
 	_set_active_ui(UI_STASH)
 	return active_ui == UI_STASH
+
+
+func open_quests_for_giver(quest_giver_profile: Resource = null) -> bool:
+	_bind_ui_nodes()
+	if _quest_ui == null:
+		return false
+	_pending_quest_giver_profile = quest_giver_profile
+	if not _can_open_ui(UI_QUESTS):
+		return false
+	_set_active_ui(UI_QUESTS)
+	return active_ui == UI_QUESTS
 
 
 func open_ui_on_next_scene(id: StringName) -> bool:
@@ -201,6 +215,8 @@ func _set_quest_open(should_open: bool) -> void:
 	if _quest_ui == null:
 		return
 	if should_open and _quest_ui.has_method("open_quests"):
+		if _quest_ui.has_method("set_quest_giver_profile"):
+			_quest_ui.call("set_quest_giver_profile", _pending_quest_giver_profile)
 		_quest_ui.call("open_quests")
 	elif not should_open and _quest_ui.has_method("close_quests"):
 		_quest_ui.call("close_quests")

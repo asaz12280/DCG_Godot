@@ -5,16 +5,26 @@ const ItemCodexPresenterScript := preload("res://scripts/ui/item_codex_presenter
 
 var root_path := "res://data/items"
 var item_by_number: Dictionary = {}
+var item_by_catalog_number: Dictionary = {}
+var item_by_id: Dictionary = {}
+var item_by_path: Dictionary = {}
 var _items: Array[ItemDef] = []
 
 
 func reload() -> void:
 	item_by_number.clear()
+	item_by_catalog_number.clear()
+	item_by_id.clear()
+	item_by_path.clear()
 	_items.clear()
 	_collect_items(root_path)
 	_items.sort_custom(_sort_items_by_codex_category)
 	for index in range(_items.size()):
-		item_by_number[index + 1] = _items[index]
+		var item := _items[index]
+		item_by_number[index + 1] = item
+		item_by_catalog_number[item.catalog_number] = item
+		item_by_id[item.id] = item
+		item_by_path[item.resource_path] = item
 
 
 func highest_catalog_number() -> int:
@@ -31,6 +41,26 @@ func has_item(catalog_number: int) -> bool:
 
 func get_item(catalog_number: int) -> ItemDef:
 	return item_by_number.get(catalog_number, null) as ItemDef
+
+
+func get_item_by_catalog_number(catalog_number: int) -> ItemDef:
+	return item_by_catalog_number.get(catalog_number, null) as ItemDef
+
+
+func get_item_by_id(item_id: StringName) -> ItemDef:
+	return item_by_id.get(item_id, null) as ItemDef
+
+
+func get_item_by_path(item_path: String) -> ItemDef:
+	return item_by_path.get(item_path, null) as ItemDef
+
+
+func all_items() -> Array[ItemDef]:
+	return _items.duplicate()
+
+
+func storage_category_id_for_path(item_path: String) -> String:
+	return ItemCodexPresenterScript.storage_category_id(get_item_by_path(item_path))
 
 
 func display_slot_for_item_id(item_id: StringName) -> int:

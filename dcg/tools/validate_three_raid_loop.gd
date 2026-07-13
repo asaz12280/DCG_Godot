@@ -15,7 +15,6 @@ const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
 const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
 
 var _errors: Array[String] = []
@@ -58,7 +57,7 @@ func _validate_raid_one_extract_and_base_progress() -> void:
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
 		"extracted_items": [
 			{"item_path": WOOD_PATH, "quantity": 4},
-			{"item_path": WIRE_PATH, "quantity": 2},
+			{"item_path": WOOD_PATH, "quantity": 2},
 		],
 		"duration": 42.0,
 	})
@@ -68,7 +67,7 @@ func _validate_raid_one_extract_and_base_progress() -> void:
 		return
 
 	var after_extract: Dictionary = _save_manager.get_slot_data(1)
-	if _stash_quantity(after_extract, WOOD_PATH) != 4 or _stash_quantity(after_extract, WIRE_PATH) != 2:
+	if _stash_quantity(after_extract, WOOD_PATH) != 6:
 		_errors.append("Raid one should store extracted wood and wire in persistent stash.")
 	var salvage_state := _quest_state(after_extract, "first_salvage")
 	if str(salvage_state.get("state", "")) != QuestStateScript.STATE_READY:
@@ -86,7 +85,7 @@ func _validate_raid_one_extract_and_base_progress() -> void:
 	var after_base: Dictionary = _save_manager.get_slot_data(1)
 	if int(after_base.get("money", 0)) != 20:
 		_errors.append("Raid one base phase should leave money at 20 after quest reward and tuned upgrade cost.")
-	if _stash_quantity(after_base, WOOD_PATH) != 1 or _stash_quantity(after_base, WIRE_PATH) != 0:
+	if _stash_quantity(after_base, WOOD_PATH) != 1:
 		_errors.append("Workbench purchase should consume tuned material costs and keep excess wood.")
 	if not BaseProgressionScript.is_upgrade_purchased(after_base, WorkbenchUpgrade.id):
 		_errors.append("Workbench Level 1 should persist after raid one.")

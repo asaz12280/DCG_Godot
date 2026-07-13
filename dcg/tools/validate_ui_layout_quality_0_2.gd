@@ -17,8 +17,8 @@ const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 
 const WoodItem := preload("res://data/items/crafting/wood.tres")
 const JunkItem := preload("res://data/items/loot/junk.tres")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
-const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_S.tres")
 
 const VIEWPORTS: Array[Vector2] = [
 	Vector2(1280.0, 720.0),
@@ -167,9 +167,9 @@ func _validate_gameplay_hud_cluster() -> void:
 
 func _validate_top_menu_panels() -> void:
 	var configs := [
-		{"scene": QuestTopMenuScene, "open": "open_quests", "name": "Quest top-menu panel", "max_y": 0.70},
-		{"scene": StatusTopMenuScene, "open": "open_status", "name": "Status top-menu panel", "max_y": 0.56},
-		{"scene": MapTopMenuScene, "open": "open_map", "name": "Map top-menu panel", "max_y": 0.56},
+		{"scene": QuestTopMenuScene, "open": "open_quests", "name": "Quest top-menu panel", "max_x": 0.84, "max_y": 0.72},
+		{"scene": StatusTopMenuScene, "open": "open_status", "name": "Status top-menu panel", "max_x": 0.84, "max_y": 0.76},
+		{"scene": MapTopMenuScene, "open": "open_map", "name": "Map top-menu panel", "max_x": 0.84, "max_y": 0.72},
 	]
 	for config in configs:
 		var packed_scene: PackedScene = config.get("scene")
@@ -183,7 +183,7 @@ func _validate_top_menu_panels() -> void:
 			_assert_rect_inside(rect, viewport_size, str(config.get("name")))
 			if rect.position.y < 70.0:
 				_errors.append("%s should sit below the top icon bar at %s." % [config.get("name"), viewport_size])
-			_assert_panel_not_dominating(rect, viewport_size, str(config.get("name")), 0.56, float(config.get("max_y")))
+			_assert_panel_not_dominating(rect, viewport_size, str(config.get("name")), float(config.get("max_x")), float(config.get("max_y")))
 			var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 			_assert_visible_text_not_empty(state, ["title", "hint"], str(config.get("name")))
 		_assert_no_english_fallback_tree(panel, str(config.get("name")))

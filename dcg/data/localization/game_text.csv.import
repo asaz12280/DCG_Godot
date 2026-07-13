@@ -6,10 +6,10 @@ uid="uid://bxtnyib4rix7f"
 
 [deps]
 
-files=["res://data/localization/game_text.zh_TW.translation", "res://data/localization/game_text.en.translation", "res://data/localization/game_text.ja.translation", "res://data/localization/game_text.zh_CN.translation"]
+files=["res://data/localization/game_text.zh_TW.translation", "res://data/localization/game_text.en.translation"]
 
 source_file="res://data/localization/game_text.csv"
-dest_files=["res://data/localization/game_text.zh_TW.translation", "res://data/localization/game_text.en.translation", "res://data/localization/game_text.ja.translation", "res://data/localization/game_text.zh_CN.translation"]
+dest_files=["res://data/localization/game_text.zh_TW.translation", "res://data/localization/game_text.en.translation"]
 
 [params]
 

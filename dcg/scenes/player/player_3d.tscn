@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" uid="uid://y7mp75ha5btk" path="res://scripts/player/player_controller_3d.gd" id="1_controller"]
 [ext_resource type="Script" uid="uid://cg10x41wr32yu" path="res://scripts/combat/weapon_controller_3d.gd" id="2_weapon_controller"]
+[ext_resource type="Script" uid="uid://kkd4yd67tqtb" path="res://scripts/combat/weapon_shot_audio_player_3d.gd" id="3_weapon_audio"]
+[ext_resource type="Script" uid="uid://6cl58m5nrjrw" path="res://scripts/combat/combat_vfx_spawner_3d.gd" id="4_combat_vfx"]
+[ext_resource type="Script" uid="uid://bbmwbnxbyc35y" path="res://scripts/combat/melee_vfx_spawner_3d.gd" id="5_melee_vfx"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.28
@@ -33,28 +36,40 @@ roughness = 0.7
 [sub_resource type="BoxMesh" id="BoxMesh_pistol_slide"]
 size = Vector3(0.42, 0.12, 0.16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_pistol_grip"]
-size = Vector3(0.14, 0.28, 0.16)
-
-[sub_resource type="BoxMesh" id="BoxMesh_knife_blade"]
-size = Vector3(0.12, 0.06, 0.58)
-
-[sub_resource type="BoxMesh" id="BoxMesh_knife_handle"]
-size = Vector3(0.12, 0.1, 0.26)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pistol_dark"]
-albedo_color = Color(0.11, 0.16, 0.18, 1)
-roughness = 0.55
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pistol_metal"]
 albedo_color = Color(0.42, 0.5, 0.5, 1)
 metallic = 0.2
 roughness = 0.42
 
+[sub_resource type="BoxMesh" id="BoxMesh_pistol_grip"]
+size = Vector3(0.14, 0.28, 0.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pistol_dark"]
+albedo_color = Color(0.11, 0.16, 0.18, 1)
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_smg_receiver"]
+size = Vector3(0.52, 0.15, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_smg_magazine"]
+size = Vector3(0.13, 0.28, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_smg_barrel"]
+size = Vector3(0.08, 0.08, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_smg_stock"]
+size = Vector3(0.13, 0.12, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_knife_blade"]
+size = Vector3(0.12, 0.06, 0.58)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_knife_blade"]
 albedo_color = Color(0.86, 0.9, 0.86, 1)
 metallic = 0.35
 roughness = 0.3
+
+[sub_resource type="BoxMesh" id="BoxMesh_knife_handle"]
+size = Vector3(0.12, 0.1, 0.26)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_knife_handle"]
 albedo_color = Color(0.12, 0.16, 0.14, 1)
@@ -107,33 +122,62 @@ transform = Transform3D(0.9689124, 0, -0.24740396, 0, 1, 0, 0.24740396, 0, 0.968
 mesh = SubResource("BoxMesh_foot")
 surface_material_override/0 = SubResource("StandardMaterial3D_foot")
 
-[node name="WeaponVisualRoot" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.5, -0.08)
+[node name="WeaponVisualRoot" type="Node3D" parent="." unique_id=729937787]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.5, -0.16)
 
-[node name="PistolVisual" type="Node3D" parent="WeaponVisualRoot"]
-visible = false
+[node name="PistolVisual" type="Node3D" parent="WeaponVisualRoot" unique_id=1041657983]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0)
+visible = false
 
-[node name="Slide" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual"]
+[node name="Slide" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual" unique_id=1401424675]
 transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.9848077, 0.03, 0.02, -0.1)
 mesh = SubResource("BoxMesh_pistol_slide")
 surface_material_override/0 = SubResource("StandardMaterial3D_pistol_metal")
 
-[node name="Grip" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual"]
+[node name="Grip" type="MeshInstance3D" parent="WeaponVisualRoot/PistolVisual" unique_id=1493692590]
 transform = Transform3D(1, 0, 0, 0, 0.9063078, 0.42261827, 0, -0.42261827, 0.9063078, -0.08, -0.12, 0.04)
 mesh = SubResource("BoxMesh_pistol_grip")
 surface_material_override/0 = SubResource("StandardMaterial3D_pistol_dark")
 
-[node name="KnifeVisual" type="Node3D" parent="WeaponVisualRoot"]
-visible = false
-transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0.02, 0.02, -0.08)
+[node name="MuzzleMarker3D" type="Marker3D" parent="WeaponVisualRoot/PistolVisual" unique_id=1826940341]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, 0.02, -0.28)
 
-[node name="Blade" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual"]
+[node name="SmgVisual" type="Node3D" parent="WeaponVisualRoot" unique_id=689530161]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, -0.01, -0.05)
+visible = false
+
+[node name="Receiver" type="MeshInstance3D" parent="WeaponVisualRoot/SmgVisual" unique_id=1385527095]
+mesh = SubResource("BoxMesh_smg_receiver")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_metal")
+
+[node name="Magazine" type="MeshInstance3D" parent="WeaponVisualRoot/SmgVisual" unique_id=1958273630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.17, 0.04)
+mesh = SubResource("BoxMesh_smg_magazine")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_dark")
+
+[node name="Barrel" type="MeshInstance3D" parent="WeaponVisualRoot/SmgVisual" unique_id=924255954]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.32)
+mesh = SubResource("BoxMesh_smg_barrel")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_metal")
+
+[node name="MuzzleMarker3D" type="Marker3D" parent="WeaponVisualRoot/SmgVisual" unique_id=1127282286]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.6)
+
+[node name="Stock" type="MeshInstance3D" parent="WeaponVisualRoot/SmgVisual" unique_id=618645712]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.31)
+mesh = SubResource("BoxMesh_smg_stock")
+surface_material_override/0 = SubResource("StandardMaterial3D_pistol_dark")
+
+[node name="KnifeVisual" type="Node3D" parent="WeaponVisualRoot" unique_id=404140482]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -0.04, 0.02, 0.1)
+visible = false
+
+[node name="Blade" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual" unique_id=1898559551]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 0.02, -0.22)
 mesh = SubResource("BoxMesh_knife_blade")
 surface_material_override/0 = SubResource("StandardMaterial3D_knife_blade")
 
-[node name="Handle" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual"]
+[node name="Handle" type="MeshInstance3D" parent="WeaponVisualRoot/KnifeVisual" unique_id=489383357]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, -0.03, 0.18)
 mesh = SubResource("BoxMesh_knife_handle")
 surface_material_override/0 = SubResource("StandardMaterial3D_knife_handle")
@@ -154,3 +198,15 @@ surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")
 
 [node name="WeaponController3D" type="Node3D" parent="." unique_id=818663098]
 script = ExtResource("2_weapon_controller")
+
+[node name="WeaponShotAudio" type="AudioStreamPlayer3D" parent="." unique_id=502222883]
+unit_size = 8.0
+max_distance = 64.0
+bus = &"SFX"
+script = ExtResource("3_weapon_audio")
+
+[node name="CombatVfxSpawner3D" type="Node3D" parent="." unique_id=122004349]
+script = ExtResource("4_combat_vfx")
+
+[node name="MeleeVfxSpawner3D" type="Node3D" parent="." unique_id=1566213854]
+script = ExtResource("5_melee_vfx")

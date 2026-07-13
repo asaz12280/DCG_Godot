@@ -46,8 +46,13 @@ func clear_weapon(keep_counts: bool = true) -> void:
 
 
 func set_counts(loaded_count: int, reserve_count: int) -> void:
-	loaded_ammo = clampi(loaded_count, 0, magazine_capacity if magazine_capacity > 0 else maxi(loaded_count, 0))
-	reserve_ammo = maxi(reserve_count, 0)
+	var max_loaded := magazine_capacity if magazine_capacity > 0 else maxi(loaded_count, 0)
+	var next_loaded := clampi(loaded_count, 0, max_loaded)
+	var next_reserve := maxi(reserve_count, 0)
+	if loaded_ammo == next_loaded and reserve_ammo == next_reserve:
+		return
+	loaded_ammo = next_loaded
+	reserve_ammo = next_reserve
 	changed.emit()
 
 
@@ -66,6 +71,19 @@ func add_reserve_ammo(ammo_item: ItemDef, quantity: int) -> bool:
 	ammo_def = ammo_item
 	reserve_ammo += quantity
 	changed.emit()
+	return true
+
+
+func restore_state(ammo_item: ItemDef, loaded_count: int, reserve_count: int) -> bool:
+	if ammo_item == null and (loaded_count > 0 or reserve_count > 0):
+		return false
+	if ammo_item != null and not can_use_ammo(ammo_item):
+		return false
+	var previous_ammo := ammo_def
+	ammo_def = ammo_item
+	set_counts(loaded_count, reserve_count)
+	if previous_ammo != ammo_def:
+		changed.emit()
 	return true
 
 
@@ -102,6 +120,15 @@ func reload_from_reserve() -> int:
 	var moved := mini(needed, reserve_ammo)
 	loaded_ammo += moved
 	reserve_ammo -= moved
+	changed.emit()
+	return moved
+
+
+func unload_loaded_ammo() -> int:
+	if weapon_def == null or ammo_def == null or loaded_ammo <= 0:
+		return 0
+	var moved := loaded_ammo
+	loaded_ammo = 0
 	changed.emit()
 	return moved
 

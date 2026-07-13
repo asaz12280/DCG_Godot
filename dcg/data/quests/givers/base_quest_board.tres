@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestGiverProfile" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_giver_profile.gd" id="1_profile"]
+[ext_resource type="Resource" path="res://data/quests/first_salvage.tres" id="2_first_salvage"]
+[ext_resource type="Resource" path="res://data/quests/first_scavenger_hunt.tres" id="3_first_scavenger"]
+[ext_resource type="Resource" path="res://data/quests/radio_tower_scout.tres" id="4_radio_tower"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"base_quest_board"
+display_name_key = &"npc.quest_giver.base_quest_board.name"
+fallback_display_name = "Quest Board"
+quest_defs = Array[Resource]([ExtResource("2_first_salvage"), ExtResource("3_first_scavenger"), ExtResource("4_radio_tower")])

@@ -2,7 +2,7 @@ extends SceneTree
 
 const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
 const Wood := preload("res://data/items/crafting/wood.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 
 var _errors: Array[String] = []
@@ -13,6 +13,7 @@ func _initialize() -> void:
 	_validate_durability_round_trip()
 	_validate_weapon_mods_round_trip()
 	_validate_item_path_fallback()
+	_validate_legacy_s_item_path_alias()
 	if _errors.is_empty():
 		print("[item_stack_save_codec] OK compact=non_durable durability=round_trip weapon_mods=round_trip path=fallback")
 		quit(0)
@@ -76,3 +77,9 @@ func _validate_item_path_fallback() -> void:
 	var path := ItemStackSaveCodecScript.get_item_path({"item_path": Pistol.resource_path, "quantity": 1})
 	if path != Pistol.resource_path:
 		_errors.append("Save codec should read legacy item_path entries.")
+
+
+func _validate_legacy_s_item_path_alias() -> void:
+	var path := ItemStackSaveCodecScript.get_item_path({"item_path": "res://data/items/weapons/pistol_9mm.tres", "quantity": 1})
+	if path != Pistol.resource_path:
+		_errors.append("Save codec should map legacy pistol_9mm paths to pistol_S.")

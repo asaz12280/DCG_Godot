@@ -7,18 +7,16 @@ const ItemCodexCatalogScript := preload("res://scripts/ui/item_codex_catalog.gd"
 const ItemCodexPresenterScript := preload("res://scripts/ui/item_codex_presenter.gd")
 const ItemCodexSlotScript := preload("res://scripts/ui/components/item_codex_slot.gd")
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
-const PolishedAmmo := preload("res://data/items/ammo/ammo_9mm_polished.tres")
-const BalancedGrip := preload("res://data/items/attachments/balanced_grip.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 
 
 func _initialize() -> void:
 	TranslationServer.set_locale("zh_TW")
-	_validate_item_def(Pistol, 5, &"pistol_9mm", "手槍-S")
-	_validate_item_def(Ammo, 7, &"ammo_9mm", "彈藥-S")
+	_validate_item_def(Pistol, 5, &"pistol_S", "手槍-S")
+	_validate_item_def(Ammo, 7, &"ammo_S", "彈藥-S")
 	_validate_stack_identity(Pistol, 1)
 	_validate_stack_identity(Ammo, 24)
 	await _validate_container_surface()
@@ -131,8 +129,8 @@ func _validate_inventory_and_equipment_surface() -> void:
 func _validate_codex_surface() -> void:
 	var catalog := ItemCodexCatalogScript.new()
 	catalog.reload()
-	_validate_uncataloged_item_hidden(catalog, PolishedAmmo)
-	_validate_uncataloged_item_hidden(catalog, BalancedGrip)
+	if int(catalog.call("item_count")) != 22:
+		_errors.append("Codex should contain exactly the 22 active ItemDef resources.")
 	_validate_catalog_item(catalog, Pistol, "手槍-S")
 	_validate_catalog_item(catalog, Ammo, "彈藥-S")
 
@@ -159,24 +157,21 @@ func _validate_codex_surface() -> void:
 	_expect_equals(empty_slot.text, "-", "Empty codex grid slot should only show the empty marker.")
 	_expect_equals(ItemCodexPresenterScript.catalog_label(1), "#1", "Codex detail number should use hash format.")
 	_expect_equals(ItemCodexPresenterScript.catalog_label(11), "#11", "Codex detail number should keep the selected catalog number.")
-	_expect_contains(
-		ItemStackTooltipPresenterScript.tooltip_text(ItemStackTooltipPresenterScript.build(owner, Pistol.to_stack(1))),
+	var pistol_tooltip_text := ItemStackTooltipPresenterScript.tooltip_text(ItemStackTooltipPresenterScript.build(owner, Pistol.to_stack(1)))
+	_expect_not_contains(
+		pistol_tooltip_text,
 		_text(&"ui.item.damage_format", "傷害 %d") % Pistol.damage,
-		"Shared item tooltip presenter should expose weapon stats."
+		"Shared item tooltip presenter should not expose weapon damage in compact hover summaries."
+	)
+	_expect_contains(
+		pistol_tooltip_text,
+		_text(&"ui.weapon_mod.summary_ammo", "彈藥 %d/%d") % [0, Pistol.magazine_capacity],
+		"Shared item tooltip presenter should expose compact weapon ammo state."
 	)
 	var codex_rows := ItemCodexPresenterScript.stat_rows(owner, Pistol)
 	if not _stat_row_has(codex_rows, _text(&"ui.codex.durability", "Durability"), str(Pistol.max_durability)):
 		_errors.append("Codex presenter should expose static durability for repairable items.")
 	owner.queue_free()
-
-
-func _validate_uncataloged_item_hidden(catalog: RefCounted, item: ItemDef) -> void:
-	if item == null:
-		return
-	if item.catalog_number > 0:
-		_errors.append("%s should stay uncataloged for this validation." % item.resource_path)
-	if int(catalog.call("display_slot_for_item_id", item.id)) != 0:
-		_errors.append("Codex catalog should hide uncataloged item %s." % item.id)
 
 
 func _validate_catalog_item(catalog: RefCounted, expected_item: ItemDef, expected_name: String) -> void:
@@ -198,7 +193,7 @@ func _validate_display_ownership() -> void:
 	for path in PackedStringArray([
 		"res://scripts/ui/container_inventory_ui.gd",
 		"res://scripts/ui/item_codex_presenter.gd",
-		"res://scripts/ui/item_stack_tooltip_presenter.gd",
+		"res://scripts/ui/item_inspection_snapshot_builder.gd",
 		"res://scripts/ui/components/item_codex_slot.gd",
 		"res://scripts/ui/inventory_equipment_display_support.gd",
 	]):
@@ -206,6 +201,7 @@ func _validate_display_ownership() -> void:
 		_expect_contains(text, "name_key", "%s should derive item visible names from ItemDef name_key." % path)
 		if text.contains("\"Pistol\"") or text.contains("\"Ammo\""):
 			_errors.append("%s should not hardcode English item names for No.5/No.7." % path)
+	_expect_contains(_read_text("res://scripts/ui/item_stack_tooltip_presenter.gd"), "ItemInspectionSnapshotBuilderScript.build", "Tooltip presenter should delegate display identity and rows to the shared inspection snapshot.")
 
 
 func _validate_stack_list_has(stacks: Array, number: int, expected_name: String, surface: String) -> void:

@@ -8,10 +8,9 @@ const LootTable := preload("res://data/loot_tables/refuge_outskirts_common.tres"
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
 const FixStationUpgrade := preload("res://data/base_upgrades/workbench_fix_station.tres")
 const DisassembleStationUpgrade := preload("res://data/base_upgrades/workbench_disassemble_station.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 const CASH_PATH := "res://data/items/currency/cash.tres"
 const JUNK_PATH := "res://data/items/loot/junk.tres"
 
@@ -103,10 +102,8 @@ func _validate_extraction_timer() -> void:
 func _validate_upgrade_cost() -> void:
 	if int(WorkbenchUpgrade.money_cost) < 10 or int(WorkbenchUpgrade.money_cost) > 20:
 		_errors.append("Workbench Level 1 money cost should stay reachable after the first quest reward.")
-	if _upgrade_cost(WorkbenchUpgrade, WOOD_PATH) != 3:
-		_errors.append("Workbench Level 1 should cost 3 wood in the early balance pass.")
-	if _upgrade_cost(WorkbenchUpgrade, WIRE_PATH) != 2:
-		_errors.append("Workbench Level 1 should cost 2 wire in the early balance pass.")
+	if _upgrade_cost(WorkbenchUpgrade, WOOD_PATH) != 5:
+		_errors.append("Workbench Level 1 should cost 5 wood in the early balance pass.")
 	if WorkbenchUpgrade.starter_ammo_bonus != 1:
 		_errors.append("Workbench Level 1 should keep the small +1 starter ammo reward.")
 	if int(FixStationUpgrade.money_cost) < 15 or int(FixStationUpgrade.money_cost) > 25:

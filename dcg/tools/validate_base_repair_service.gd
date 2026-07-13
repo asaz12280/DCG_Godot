@@ -8,7 +8,7 @@ const StashModelScript := preload("res://scripts/base/stash_model.gd")
 const WorkbenchUpgrade := preload("res://data/base_upgrades/workbench_level_1.tres")
 const FixStationUpgrade := preload("res://data/base_upgrades/workbench_fix_station.tres")
 
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
 
 var _errors: Array[String] = []
 var _created_save_manager: Node = null
@@ -59,7 +59,7 @@ func _validate_service_locked_state() -> void:
 		_errors.append("Repair service should stay locked before Fix Station is purchased.")
 	if not (state.get("repair_rows", []) as Array).is_empty():
 		_errors.append("Repair service should not expose rows before Fix Station is purchased.")
-	var result: Dictionary = BaseRepairServiceScript.repair_from_save_data(save_data, &"stash:0:pistol_9mm")
+	var result: Dictionary = BaseRepairServiceScript.repair_from_save_data(save_data, &"stash:0:pistol_S")
 	if bool(result.get("success", false)) or str(result.get("reason", "")) != "repair_locked":
 		_errors.append("Repair execution should be blocked before Fix Station is purchased.")
 

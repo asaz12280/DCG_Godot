@@ -18,10 +18,14 @@ config/icon="res://icon.svg"
 [autoload]
 
 LocalizationBootstrap="*res://scripts/localization/localization_bootstrap.gd"
+DialogueLocalizationBridge="*res://scripts/localization/dialogue_localization_bridge.gd"
+GameTuningBootstrap="*res://scripts/data/game_tuning_bootstrap.gd"
+SoundManager="*uid://vqnqvndpsftt"
 GameSettings="*res://scripts/settings/game_settings.gd"
 DifficultyManager="*res://scripts/difficulty/difficulty_manager.gd"
 UIManager="*res://scripts/ui/ui_manager.gd"
 SaveGameManager="*res://scripts/save/save_game_manager.gd"
+DialogueManager="*uid://c3rodes2l3gxb"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]
@@ -33,7 +37,7 @@ window/stretch/aspect="expand"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
+enabled=PackedStringArray("res://addons/csv-data-importer/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg", "res://addons/gdfxr/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/sound_manager/plugin.cfg")
 
 [gui]
 
@@ -75,6 +79,7 @@ dodge={
 [internationalization]
 
 locale/translations=[]
+locale/translations_pot_files=PackedStringArray("res://data/dialogue/story_template.dialogue")
 locale/test="zh_TW"
 locale/fallback="zh_TW"
 
@@ -85,3 +90,14 @@ locale/fallback="zh_TW"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+
+[steam]
+
+initialization/app_data/app_type=0
+initialization/app_data/app_id=0
+initialization/app_data/demo_id=0
+initialization/app_data/playtest_id=0
+initialization/app_data/tool_id=0
+initialization/processes/initialize_on_startup=false
+initialization/processes/embed_callbacks=false
+multiplayer_peer/max_channels=4

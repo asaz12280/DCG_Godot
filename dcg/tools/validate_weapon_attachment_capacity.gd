@@ -4,8 +4,8 @@ const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn"
 const WeaponAttachmentServiceScript := preload("res://scripts/combat/weapon_attachment_service.gd")
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
 const WeaponAmmoModelScript := preload("res://scripts/combat/weapon_ammo_model.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 const Helmet := preload("res://data/items/armor/basic_helmet.tres")
 
@@ -127,9 +127,9 @@ func _validate_source_boundaries() -> void:
 		_errors.append("PlayerController3D should bridge weapon stack attachments through WeaponAttachmentService.")
 	if player_source.contains("extended_magazine"):
 		_errors.append("PlayerController3D should not hardcode a specific attachment resource.")
-	var tooltip_source := FileAccess.get_file_as_string("res://scripts/ui/item_stack_tooltip_presenter.gd")
-	if not tooltip_source.contains("ui.item.attachment_magazine_bonus_format"):
-		_errors.append("Shared tooltip presenter should show attachment magazine bonus through localization.")
+	var inspection_source := FileAccess.get_file_as_string("res://scripts/ui/item_inspection_snapshot_builder.gd")
+	if not inspection_source.contains("ui.item.attachment_magazine_bonus_format"):
+		_errors.append("Shared item inspection builder should show attachment magazine bonus through localization.")
 
 
 func _weapon_stack_with_mod(slot_id: StringName, mod_stack: Dictionary) -> Dictionary:

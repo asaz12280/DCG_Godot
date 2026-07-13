@@ -2,10 +2,10 @@ extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
 const LootContainerScript := preload("res://scripts/loot/loot_container_3d.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
-const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_S.tres"
 
 var _errors: Array[String] = []
 

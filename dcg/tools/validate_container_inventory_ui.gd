@@ -4,7 +4,7 @@ const ContainerInventoryUIScene := preload("res://scenes/ui/container_inventory_
 const ContainerInventoryModelScript := preload("res://scripts/inventory/container_inventory_model.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const Wood := preload("res://data/items/crafting/wood.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 

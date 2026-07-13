@@ -163,11 +163,8 @@ Combat and Gear:
 - Add combat-time durability wear. Status: basic equipped weapon wear on fired shots done in pass 27.
 - Add player-facing low-durability warnings. Status: Raid HUD low/depleted durability status done in pass 28.
 - Add low-durability combat consequences. Status: deterministic projectile spread done in pass 29; depleted/broken weapon fire block done in pass 35; damage and random jam rules still pending.
-- Add ammo-specific durability wear rates. Status: ItemDef ammo wear rate, fractional durability progress, tooltip row, and loaded-ammo shot bridge done in pass 30.
-- Add real ammo tier data. Status: first low-wear high-grade 9mm item, rare loot entry, Workbench recipe, and validation done in pass 31.
-- Add ammo combat stat differences. Status: data-backed ammo damage multiplier and direct/projectile damage application done in pass 32.
-- Add armor penetration and armor-level damage reduction. Status: first ammo penetration, armor protection, shared mitigation service, and loaded-ammo damage validation done in pass 33.
-- Add ammo spread/recoil stat differences. Status: first spread multiplier done in pass 34 by scaling existing low-durability projectile spread with loaded ammo; first sustained-fire recoil offset done in pass 40.
+- Keep ammo simple. Status: ammo-specific wear, damage, penetration, spread, and recoil tuning were removed; ammo now stays compatibility/stack/catalog data only.
+- Add armor penetration and armor-level damage reduction. Status: weapon-owned penetration, armor protection, shared mitigation service, and ammo-neutral damage validation covered.
 - Expose recoil state through a visible crosshair/cursor UI. Status: done in pass 41 with a HUD CanvasLayer reticle driven by PlayerController recoil state.
 - Add armor durability combat cutoff and wear. Status: zero-durability equipped body armor disables flat defense and ballistic protection in pass 36; armor wear-on-hit done in pass 37; gradual low-durability armor penalty still pending.
 - Add attachment slot data to weapon items. Status: first runtime capacity modifier done in pass 42, first recoil/recovery grip modifier done in pass 43, first temporary visible equipment-slot bridge in passes 44-50, corrected in pass 51 so Mag/Grip/Muzzle/Scope/Stock/Tactic are weapon-owned hardpoints stored on the weapon stack, and validators retargeted in pass 52 so tests no longer pull the feature back into visible character equipment slots.
@@ -215,17 +212,14 @@ Workbench repair preparation:
 - Add combat-time durability wear after repair execution and carried-gear persistence are stable. Status: done in pass 27 for basic fired-shot wear.
 - Add player-facing low/depleted weapon durability warnings to the Raid HUD. Status: done in pass 28.
 - Add low-durability spread consequences after the readable warning path is stable. Status: done in pass 29 for deterministic spread; no damage multiplier change yet.
-- Add ammo-specific weapon durability wear rates after ammo item stats are expanded beyond caliber tags. Status: done in pass 30 for data-backed wear rates and fractional progress.
-- Add a real higher-grade ammo item to prove different wear rates in loot/craft data. Status: done in pass 31 with Polished Ammo-S.
-- Add ammo damage multiplier after same-caliber tiers exist. Status: done in pass 32 with baseline Ammo-S at 1.0x and Polished Ammo-S at 1.1x.
-- Add armor penetration and armor-level damage reduction after ammo damage multipliers are stable. Status: done in pass 33 with Ammo-S penetration Lv.1, Polished Ammo-S penetration Lv.2, Level 1 Armor protection Lv.1, and shared ballistic mitigation.
-- Add recoil/spread ammo modifiers now that ammo damage and armor penetration stats are data-backed. Status: first spread modifier done in pass 34 with Ammo-S at 1.0x and Polished Ammo-S at 0.75x on the existing low-durability spread path.
+- Keep ammo as compatibility/stack/catalog data instead of weapon-like stat carriers. Status: ammo-specific wear, damage, penetration, spread, and recoil tuning removed.
+- Add armor penetration and armor-level damage reduction through weapon/armor data. Status: weapon-owned penetration, armor protection, shared ballistic mitigation, and ammo-neutral validation covered.
 - Block depleted equipped weapon fire after low-durability spread and HUD depleted status are stable. Status: done in pass 35; blocked shots preserve loaded ammo and repairable durability state.
 - Disable equipped armor protection at zero durability using the same durable-stack state used by repair and raid loss. Status: done in pass 36.
 - Add armor durability wear-on-hit now that zero-durability armor no longer protects. Status: done in pass 37; the hit that breaks armor still uses pre-hit protection and the next hit gets no armor protection.
 - Preserve worn armor durability in death/drop results after lethal hit wear. Status: validated in pass 38 through `RaidSession.build_result()`.
 - Prioritize depleted weapon durability over empty-ammo HUD status for broken guns. Status: done in pass 39; validation covers 0 durability with 0 loaded ammo.
-- Add first sustained-fire recoil handling after ammo spread multiplier is stable. Status: done in pass 40 with weapon recoil data, ammo recoil multiplier, and recoverable aim offset state.
+- Add first sustained-fire recoil handling. Status: done in pass 40 and simplified to weapon/attachment-owned recoil with recoverable aim offset state.
 - Expose sustained-fire recoil as a visible reticle/cursor offset after the player recoil state is stable. Status: done in pass 41 with `RecoilReticle` as a draw-only HUD sibling.
 - Make the first crafted attachment affect combat state instead of staying tooltip-only. Status: done in pass 42 with Extended Magazine-S capacity bonus, `WeaponAttachmentService`, model-backed 12-round reload, and shared tooltip row.
 - Add grip-style attachment recoil tuning after the reticle surface and attachment service are stable. Status: done in pass 43 with Balanced Grip-S vertical/horizontal recoil multipliers, recovery multiplier, loot entry, tooltip rows, and player recoil-state bridge.

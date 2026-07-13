@@ -14,12 +14,27 @@ const WEAPON_MOD_KEYS := [
 	"weapon_mods",
 ]
 
+const WEAPON_RUNTIME_KEYS := [
+	"weapon_ammo_state",
+]
+
+const ITEM_PATH_ALIASES := {
+	"res://data/items/weapons/pistol_9mm.tres": "res://data/items/weapons/pistol_S.tres",
+	"res://data/items/weapons/smg_9mm.tres": "res://data/items/weapons/smg_S.tres",
+	"res://data/items/ammo/ammo_9mm.tres": "res://data/items/ammo/ammo_S.tres",
+	"res://data/items/ammo/ammo_9mm_polished.tres": "res://data/items/ammo/ammo_S.tres",
+}
+
+
+static func normalize_item_path(item_path: String) -> String:
+	return str(ITEM_PATH_ALIASES.get(item_path, item_path))
+
 
 static func get_item_path(stack: Dictionary) -> String:
 	var resource_path := str(stack.get("resource_path", ""))
 	if resource_path != "":
-		return resource_path
-	return str(stack.get("item_path", ""))
+		return normalize_item_path(resource_path)
+	return normalize_item_path(str(stack.get("item_path", "")))
 
 
 static func has_durability_data(stack: Dictionary) -> bool:
@@ -34,7 +49,7 @@ static func has_durability_data(stack: Dictionary) -> bool:
 static func has_persistent_state(stack: Dictionary) -> bool:
 	if has_durability_data(stack):
 		return true
-	for key in WEAPON_MOD_KEYS:
+	for key in WEAPON_MOD_KEYS + WEAPON_RUNTIME_KEYS:
 		if not stack.has(key):
 			continue
 		var value: Variant = stack[key]
@@ -72,7 +87,7 @@ static func copy_persistent_state(source: Dictionary, target: Dictionary) -> Dic
 		for key in DURABILITY_KEYS:
 			if source.has(key):
 				target[key] = source[key]
-	for key in WEAPON_MOD_KEYS:
+	for key in WEAPON_MOD_KEYS + WEAPON_RUNTIME_KEYS:
 		if source.has(key):
 			target[key] = (source[key] as Dictionary).duplicate(true) if typeof(source[key]) == TYPE_DICTIONARY else source[key]
 	return target

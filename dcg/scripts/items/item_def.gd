@@ -14,6 +14,8 @@ extends Resource
 # // Gun damage used by the early codex and combat planning slice. Non-gun items keep this at 0. //
 @export var damage: int = 0
 @export_range(0.0, 30.0, 0.1) var fire_rate_per_second: float = 0.0
+@export_range(1, 32, 1) var projectiles_per_shot: int = 1
+@export_range(0.0, 90.0, 0.1) var projectile_spread_degrees: float = 0.0
 @export_range(0.0, 10.0, 0.5) var weapon_armor_penetration_level: float = 0.0
 @export_range(0.0, 100.0, 1.0) var critical_chance: float = 0.0
 @export_range(0.0, 100.0, 1.0) var projectile_pierce_chance: float = 0.0
@@ -22,6 +24,8 @@ extends Resource
 @export_range(0.0, 30.0, 0.1) var use_duration_seconds: float = 0.0
 @export_range(0.0, 9999.0, 0.5) var max_health_bonus: float = 0.0
 @export_range(0.0, 9999.0, 0.5) var stamina_restore: float = 0.0
+@export_range(0.0, 9999.0, 0.5) var thirst_restore: float = 0.0
+@export_range(0.0, 9999.0, 0.5) var satiety_restore: float = 0.0
 @export_range(0, 999, 1) var magazine_capacity: int = 0
 @export_range(0.0, 10.0, 0.05) var reload_duration_seconds: float = 0.0
 @export_range(0.0, 20000.0, 10.0) var projectile_range: float = 0.0
@@ -39,14 +43,8 @@ extends Resource
 @export var compatible_ammo_tags: Array[StringName] = []
 @export var weapon_attachment_slots: Array[StringName] = []
 @export var ammo_tag: StringName = &""
-@export_range(0.0, 10.0, 1.0) var ammo_penetration_level: float = 0.0
-@export_range(0.0, 5.0, 0.05) var weapon_wear_rate: float = 1.0
-@export_range(0.0, 5.0, 0.05) var ammo_damage_multiplier: float = 1.0
-@export_range(0.0, 5.0, 0.05) var ammo_spread_multiplier: float = 1.0
-@export_range(0.0, 5.0, 0.05) var ammo_recoil_multiplier: float = 1.0
 @export_range(0.0, 10.0, 1.0) var armor_protection_level: float = 0.0
 @export var weapon_profile: WeaponProfile
-@export var ammo_profile: AmmoProfile
 @export var armor_profile: ArmorProfile
 @export var attachment_profile: AttachmentProfile
 @export var tags: Array[StringName] = []
@@ -63,8 +61,44 @@ func get_weapon_damage() -> int:
 	return maxi(weapon_profile.damage if weapon_profile != null else damage, 0)
 
 
+func get_weapon_kind() -> String:
+	if item_type != "weapon":
+		return ""
+	if weapon_profile != null and weapon_profile.weapon_kind in ["firearm", "melee"]:
+		return weapon_profile.weapon_kind
+	return "melee" if tags.has(&"melee") else "firearm"
+
+
+func weapon_uses_ammo() -> bool:
+	return item_type == "weapon" and (get_weapon_magazine_capacity() > 0 or not get_weapon_compatible_ammo_tags().is_empty())
+
+
+func weapon_supports_attachments() -> bool:
+	return item_type == "weapon" and not get_weapon_attachment_slots().is_empty()
+
+
+func weapon_has_durability() -> bool:
+	return item_type == "weapon" and get_max_durability() > 0
+
+
+func get_weapon_shot_audio_profile() -> Resource:
+	return weapon_profile.shot_audio_profile if weapon_profile != null else null
+
+
+func get_weapon_vfx_profile() -> WeaponVfxProfile:
+	return weapon_profile.vfx_profile if weapon_profile != null else null
+
+
 func get_weapon_fire_rate_per_second() -> float:
 	return maxf(weapon_profile.fire_rate_per_second if weapon_profile != null else fire_rate_per_second, 0.0)
+
+
+func get_weapon_projectiles_per_shot() -> int:
+	return maxi(weapon_profile.projectiles_per_shot if weapon_profile != null else projectiles_per_shot, 1)
+
+
+func get_weapon_projectile_spread_degrees() -> float:
+	return maxf(weapon_profile.projectile_spread_degrees if weapon_profile != null else projectile_spread_degrees, 0.0)
 
 
 func get_weapon_armor_penetration_level() -> float:
@@ -112,27 +146,7 @@ func get_weapon_attachment_slots() -> Array[StringName]:
 
 
 func get_ammo_tag() -> StringName:
-	return ammo_profile.ammo_tag if ammo_profile != null and ammo_profile.ammo_tag != &"" else ammo_tag
-
-
-func get_ammo_penetration_level() -> float:
-	return maxf(ammo_profile.penetration_level if ammo_profile != null else ammo_penetration_level, 0.0)
-
-
-func get_ammo_weapon_wear_rate() -> float:
-	return maxf(ammo_profile.weapon_wear_rate if ammo_profile != null else weapon_wear_rate, 0.0)
-
-
-func get_ammo_damage_multiplier() -> float:
-	return maxf(ammo_profile.damage_multiplier if ammo_profile != null else ammo_damage_multiplier, 0.0)
-
-
-func get_ammo_spread_multiplier() -> float:
-	return maxf(ammo_profile.spread_multiplier if ammo_profile != null else ammo_spread_multiplier, 0.0)
-
-
-func get_ammo_recoil_multiplier() -> float:
-	return maxf(ammo_profile.recoil_multiplier if ammo_profile != null else ammo_recoil_multiplier, 0.0)
+	return ammo_tag
 
 
 func get_armor_defense_bonus() -> float:
@@ -202,14 +216,21 @@ func to_stack(quantity: int = 1) -> Dictionary:
 		"quantity": maxi(quantity, 1),
 		"max_stack": get_max_stack(),
 		"resource_path": resource_path,
+		"weapon_kind": get_weapon_kind(),
+		"weapon_uses_ammo": weapon_uses_ammo(),
+		"weapon_supports_attachments": weapon_supports_attachments(),
 		"damage": get_weapon_damage(),
 		"fire_rate_per_second": get_weapon_fire_rate_per_second(),
+		"projectiles_per_shot": get_weapon_projectiles_per_shot(),
+		"projectile_spread_degrees": get_weapon_projectile_spread_degrees(),
 		"weapon_armor_penetration_level": get_weapon_armor_penetration_level(),
 		"critical_chance": get_weapon_critical_chance(),
 		"projectile_pierce_chance": get_weapon_projectile_pierce_chance(),
 		"defense_bonus": get_armor_defense_bonus(),
 		"heal_amount": maxf(heal_amount, 0.0),
 		"stamina_restore": maxf(stamina_restore, 0.0),
+		"thirst_restore": maxf(thirst_restore, 0.0),
+		"satiety_restore": maxf(satiety_restore, 0.0),
 		"use_duration_seconds": maxf(use_duration_seconds, 0.0),
 		"max_health_bonus": maxf(max_health_bonus, 0.0),
 		"magazine_capacity": get_weapon_magazine_capacity(),
@@ -233,11 +254,6 @@ func to_stack(quantity: int = 1) -> Dictionary:
 		"compatible_ammo_tags": get_weapon_compatible_ammo_tags(),
 		"weapon_attachment_slots": get_weapon_attachment_slots(),
 		"ammo_tag": get_ammo_tag(),
-		"ammo_penetration_level": get_ammo_penetration_level(),
-		"weapon_wear_rate": get_ammo_weapon_wear_rate(),
-		"ammo_damage_multiplier": get_ammo_damage_multiplier(),
-		"ammo_spread_multiplier": get_ammo_spread_multiplier(),
-		"ammo_recoil_multiplier": get_ammo_recoil_multiplier(),
 		"armor_protection_level": get_armor_protection_level(),
 		"tags": tags.duplicate(),
 		"is_quest_item": is_quest_item,

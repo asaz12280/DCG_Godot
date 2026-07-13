@@ -13,8 +13,8 @@ const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd"
 const GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const VALIDATION_SAVE_ROOT := "user://validation_user_reported_correctness"
 const WoodItem := preload("res://data/items/crafting/wood.tres")
-const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_S.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
 const CashItem := preload("res://data/items/currency/cash.tres")
 const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
 
@@ -202,10 +202,6 @@ func _validate_english_translations_do_not_fall_back_to_chinese() -> void:
 		"quest.radio_tower_scout.desc",
 		"base_upgrade.storage_expansion_level_1.name",
 		"base_upgrade.storage_expansion_level_2.name",
-		"item.stabilizing_stock.name",
-		"item.stabilizing_stock.desc",
-		"item.targeting_laser.name",
-		"item.targeting_laser.desc",
 		"enemy.scavenger.name",
 		"enemy.status.idle",
 		"enemy.status.dead",

@@ -6,7 +6,6 @@ const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
 const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 
 var _errors: Array[String] = []
 
@@ -32,10 +31,8 @@ func _validate_quest_def_loads() -> void:
 		return
 	if str(FirstSalvageQuest.get("objective_type")) != "extract_any":
 		_errors.append("First Salvage should support extract_any objective.")
-	if int(FirstSalvageQuest.call("get_required_quantity", WOOD_PATH)) != 2:
-		_errors.append("First Salvage should require two wood for the wood objective.")
-	if int(FirstSalvageQuest.call("get_required_quantity", WIRE_PATH)) != 1:
-		_errors.append("First Salvage should require one wire for the wire objective.")
+	if int(FirstSalvageQuest.call("get_required_quantity", WOOD_PATH)) != 3:
+		_errors.append("First Salvage should require three wood for its active objective.")
 	if FirstScavengerHuntQuest == null or not FirstScavengerHuntQuest.has_method("is_valid") or not FirstScavengerHuntQuest.is_valid():
 		_errors.append("First Scavenger Hunt QuestDef should load and validate.")
 		return
@@ -48,20 +45,20 @@ func _validate_quest_def_loads() -> void:
 func _validate_extract_any_progress() -> void:
 	var state: Dictionary = QuestStateScript.create(FirstSalvageQuest)
 	state = QuestStateScript.update_from_extracted_items(state, FirstSalvageQuest, [
-		{"item_path": WIRE_PATH, "quantity": 1},
+		{"item_path": WOOD_PATH, "quantity": 3},
 	])
 	if str(state.get("state", "")) != QuestStateScript.STATE_READY:
-		_errors.append("Extracting one wire should ready First Salvage because it is extract_any.")
+		_errors.append("Extracting three wood should ready First Salvage.")
 	var progress: Dictionary = state.get("progress", {}) as Dictionary
-	if int(progress.get(WIRE_PATH, 0)) != 1:
-		_errors.append("Quest progress should record extracted wire quantity.")
+	if int(progress.get(WOOD_PATH, 0)) != 3:
+		_errors.append("Quest progress should record extracted wood quantity.")
 
 	var partial_state: Dictionary = QuestStateScript.create(FirstSalvageQuest)
 	partial_state = QuestStateScript.update_from_extracted_items(partial_state, FirstSalvageQuest, [
 		{"item_path": WOOD_PATH, "quantity": 1},
 	])
 	if str(partial_state.get("state", "")) == QuestStateScript.STATE_READY:
-		_errors.append("Extracting only one wood should not ready a two wood objective.")
+		_errors.append("Extracting only one wood should not ready a three wood objective.")
 
 
 func _validate_kill_progress() -> void:
@@ -82,7 +79,7 @@ func _validate_claim_reward() -> void:
 	}
 	var state: Dictionary = QuestStateScript.create(FirstSalvageQuest)
 	state = QuestStateScript.update_from_extracted_items(state, FirstSalvageQuest, [
-		{"item_path": WOOD_PATH, "quantity": 2},
+		{"item_path": WOOD_PATH, "quantity": 3},
 	])
 	var result: Dictionary = QuestStateScript.claim_reward(save_data, state, FirstSalvageQuest)
 	if not bool(result.get("success", false)):
@@ -103,7 +100,7 @@ func _validate_save_round_trip() -> void:
 
 	var state: Dictionary = QuestStateScript.create(FirstSalvageQuest)
 	state = QuestStateScript.update_from_extracted_items(state, FirstSalvageQuest, [
-		{"item_path": WIRE_PATH, "quantity": 1},
+		{"item_path": WOOD_PATH, "quantity": 3},
 	])
 	var save_data := {
 		"difficulty_id": "normal",
@@ -125,7 +122,7 @@ func _validate_save_round_trip() -> void:
 		if str(loaded_state.get("state", "")) != QuestStateScript.STATE_READY:
 			_errors.append("SaveGameManager should preserve ready quest state.")
 		var progress: Dictionary = loaded_state.get("progress", {}) as Dictionary
-		if int(progress.get(WIRE_PATH, 0)) != 1:
+		if int(progress.get(WOOD_PATH, 0)) != 3:
 			_errors.append("SaveGameManager should preserve quest progress dictionary.")
 
 	_cleanup_validation_root(manager.save_root_path)

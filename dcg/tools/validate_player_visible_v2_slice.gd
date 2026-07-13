@@ -8,8 +8,8 @@ const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd"
 
 const BASE_3D_SCENE := "res://scenes/base/base_3d.tscn"
 const BASE_SCREEN_SCENE := "res://scenes/base/base_screen.tscn"
-const PISTOL_PATH := "res://data/items/weapons/pistol_9mm.tres"
-const AMMO_PATH := "res://data/items/ammo/ammo_9mm.tres"
+const PISTOL_PATH := "res://data/items/weapons/pistol_S.tres"
+const AMMO_PATH := "res://data/items/ammo/ammo_S.tres"
 const STARTER_LOADOUT_PATH := "res://data/inventory/starter_inventory.tres"
 const VALIDATION_SAVE_ROOT := "user://validation_player_visible_v2_slice"
 
@@ -225,6 +225,7 @@ func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment
 		_errors.append("Equipped No.5 pistol should leave the backpack stack list.")
 	if not bool(weapon.call("has_weapon")):
 		_errors.append("WeaponController3D should bind to the equipped No.5 pistol.")
+	_validate_equipped_firearm_muzzle(player)
 
 	var ammo_before := _quantity_by_path(inventory.get_display_items(), AMMO_PATH)
 	if ammo_before <= 0:
@@ -258,6 +259,22 @@ func _equip_pistol_and_reload(player: Node, inventory: InventoryModel, equipment
 	var ammo_after := _quantity_by_path(inventory.get_display_items(), AMMO_PATH)
 	if ammo_after >= ammo_before:
 		_errors.append("No.7 ammo stack should decrease after reload.")
+
+
+func _validate_equipped_firearm_muzzle(player: Node3D) -> void:
+	var pistol_visual := player.get_node_or_null("WeaponVisualRoot/PistolVisual") as Node3D
+	var muzzle_marker := player.get_node_or_null("WeaponVisualRoot/PistolVisual/MuzzleMarker3D") as Marker3D
+	if pistol_visual == null or muzzle_marker == null:
+		_errors.append("Equipped pistol should provide an authored muzzle marker.")
+		return
+	if not pistol_visual.visible:
+		_errors.append("Equipped pistol visual should be visible before firing.")
+		return
+	var projectile_origin: Vector3 = player.call("_equipped_firearm_muzzle_origin")
+	if projectile_origin.distance_to(muzzle_marker.global_position) < 0.04:
+		_errors.append("Projectile origin should start beyond the pistol muzzle marker, not inside the weapon or player.")
+	if projectile_origin.distance_to(player.global_position) <= 0.42:
+		_errors.append("Projectile origin should remain outside the player body radius at the visible muzzle.")
 
 
 func _fire_visible_projectile(gameplay: Node, weapon: Node) -> void:

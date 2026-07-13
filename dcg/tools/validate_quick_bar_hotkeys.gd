@@ -3,7 +3,7 @@ extends SceneTree
 const PlayerScene := preload("res://scenes/player/player_3d.tscn")
 const PlayerHudScript := preload("res://scripts/ui/player_hud_3d.gd")
 const InventoryEquipmentUIScript := preload("res://scripts/ui/inventory_equipment_ui.gd")
-const Pistol9mm := preload("res://data/items/weapons/pistol_9mm.tres")
+const PistolS := preload("res://data/items/weapons/pistol_S.tres")
 const CombatKnife := preload("res://data/items/weapons/combat_knife.tres")
 const Bandage := preload("res://data/items/medical/bandage.tres")
 const Bread := preload("res://data/items/food/bread.tres")
@@ -38,8 +38,8 @@ func _validate_quick_bar_weapon_and_item_flow() -> void:
 	await process_frame
 	await physics_frame
 
-	_add_and_equip(player, Pistol9mm, &"primary_weapon")
-	_add_and_equip(player, Pistol9mm, &"sidearm")
+	_add_and_equip(player, PistolS, &"primary_weapon")
+	_add_and_equip(player, PistolS, &"sidearm")
 	_add_and_equip(player, CombatKnife, &"melee")
 	if not bool(player.call("add_item_resource", Bandage, 1)):
 		_errors.append("Player should be able to add a bandage for quick slot validation.")
@@ -125,7 +125,7 @@ func _validate_quick_bar_weapon_and_item_flow() -> void:
 	item_state = (player.call("get_item_use_state") as Dictionary)
 	if not bool(item_state.get("active", false)):
 		_errors.append("Left-click while holding quick key 3 should start using the bound bandage.")
-	player.call("_update_item_use", Bandage.use_duration_seconds + 0.25)
+	await _wait_item_use_complete(player, Bandage.use_duration_seconds + 1.0)
 	var after_health := float(player.get("health"))
 	if after_health <= before_health:
 		_errors.append("Quick key bandage use should restore health.")
@@ -204,6 +204,16 @@ func _press_left_click(player: Node) -> void:
 	event.pressed = true
 	event.button_index = MOUSE_BUTTON_LEFT
 	player.call("_unhandled_input", event)
+
+
+func _wait_item_use_complete(player: Node, timeout_seconds: float) -> void:
+	var deadline_msec := Time.get_ticks_msec() + int(round(timeout_seconds * 1000.0))
+	while Time.get_ticks_msec() < deadline_msec:
+		await process_frame
+		var state: Dictionary = player.call("get_item_use_state")
+		if not bool(state.get("active", false)):
+			return
+	_errors.append("Quick key bandage use should complete within %.2fs." % timeout_seconds)
 
 
 func _free_node(node: Node) -> void:

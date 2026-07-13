@@ -52,6 +52,8 @@ static func configure_actions(owner: Control, inventory_ui: Control, is_enabled:
 		return
 	if inventory_ui.has_method("set_store_all_action_visible"):
 		inventory_ui.call("set_store_all_action_visible", is_enabled)
+	if inventory_ui.has_method("set_overlay_scrim_visible"):
+		inventory_ui.call("set_overlay_scrim_visible", not is_enabled)
 	if not inventory_ui.has_signal("store_all_requested"):
 		return
 	var callable := Callable(owner, "_on_inventory_reference_store_all_requested")

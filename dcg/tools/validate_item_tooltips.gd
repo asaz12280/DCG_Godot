@@ -1,23 +1,25 @@
 extends SceneTree
 
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
+const ItemCodexCatalogScript := preload("res://scripts/ui/item_codex_catalog.gd")
 const LocalizationBootstrapScript := preload("res://scripts/localization/localization_bootstrap.gd")
 const ItemDurabilityServiceScript := preload("res://scripts/items/item_durability_service.gd")
 const WoodItem := preload("res://data/items/crafting/wood.tres")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
-const SMGItem := preload("res://data/items/weapons/smg_9mm.tres")
-const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
-const PolishedAmmoItem := preload("res://data/items/ammo/ammo_9mm_polished.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
+const SMGItem := preload("res://data/items/weapons/smg_S.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_S.tres")
 const LightArmorItem := preload("res://data/items/armor/light_armor.tres")
 const DefenseTotemItem := preload("res://data/items/totems/defense_totem.tres")
 
 var _errors: Array[String] = []
+var _catalog := ItemCodexCatalogScript.new()
 
 
 func _initialize() -> void:
 	var localization := LocalizationBootstrapScript.new()
 	root.add_child(localization)
 	await process_frame
+	_catalog.reload()
 	localization.call("set_game_locale", "en")
 	var owner := Control.new()
 	root.add_child(owner)
@@ -46,7 +48,7 @@ func _validate_material_tooltip(owner: Control) -> void:
 	})
 	var tooltip_text := ItemStackTooltipPresenterScript.tooltip_text(tooltip)
 	_expect_contains(tooltip_text, "Wood", "Material tooltip should show localized item name.")
-	_expect_contains(tooltip_text, "#1", "Material tooltip should show the codex number in hash format.")
+	_expect_contains(tooltip_text, _expected_codex_label(WoodItem), "Material tooltip should show the sorted codex display slot in hash format.")
 	_expect_not_contains(tooltip_text, "No.1", "Material tooltip should not show the old No. catalog format.")
 	_expect_contains(tooltip_text, "Type: Crafting Material", "Material tooltip should show the codex category on the type row.")
 	_expect_not_contains(tooltip_text, "Type: Other", "Material tooltip should not collapse material items into the generic other category.")
@@ -62,8 +64,8 @@ func _validate_material_tooltip(owner: Control) -> void:
 
 
 func _validate_weapon_tooltip(owner: Control) -> void:
-	_validate_weapon_tooltip_for_item(owner, PistolItem, "Pistol-S", "#5", 24, 8, 100)
-	_validate_weapon_tooltip_for_item(owner, SMGItem, "SMG-S", "#20", 16, 24, 120)
+	_validate_weapon_tooltip_for_item(owner, PistolItem, "Pistol-S", _expected_codex_label(PistolItem), 20, 8, 100)
+	_validate_weapon_tooltip_for_item(owner, SMGItem, "SMG-S", _expected_codex_label(SMGItem), 18, 20, 120)
 
 
 func _validate_weapon_tooltip_for_item(owner: Control, item: ItemDef, expected_name: String, expected_catalog_label: String, expected_damage: int, expected_magazine: int, expected_durability: int) -> void:
@@ -76,11 +78,13 @@ func _validate_weapon_tooltip_for_item(owner: Control, item: ItemDef, expected_n
 	_expect_contains(tooltip_text, "Type: Weapon", "Weapon tooltip should show the type once when codex category and item type match.")
 	_expect_not_contains(tooltip_text, "Codex No.", "Weapon tooltip should not show the old codex/category row.")
 	_expect_contains(tooltip_text, "Total weight", "Weapon tooltip should keep the compact total-weight line.")
-	_expect_contains(tooltip_text, "Damage %d" % expected_damage, "Weapon tooltip should show damage.")
-	_expect_contains(tooltip_text, "Magazine %d" % expected_magazine, "Weapon tooltip should show magazine capacity.")
+	_expect_not_contains(tooltip_text, "Damage %d" % expected_damage, "Weapon tooltip should not show damage in the hover summary.")
+	_expect_not_contains(tooltip_text, "Magazine %d" % expected_magazine, "Weapon tooltip should not show magazine capacity in the hover summary.")
+	_expect_contains(tooltip_text, "Ammo 0/%d" % expected_magazine, "Weapon tooltip should show compact ammo state after total weight.")
 	_expect_not_contains(tooltip_text, "Mod slots:", "Weapon tooltip should not show supported attachment slot categories in compact item summaries.")
 	var expected_recoil := "Recoil V%.1f / H%.1f" % [item.weapon_vertical_recoil, item.weapon_horizontal_recoil]
-	_expect_contains(tooltip_text, expected_recoil, "Weapon tooltip should show vertical and horizontal recoil.")
+	_expect_not_contains(tooltip_text, expected_recoil, "Weapon tooltip should not show recoil in the hover summary.")
+	_expect_not_contains(tooltip_text, "Pierce chance", "Weapon tooltip should not show penetration or pierce details in the hover summary.")
 	_expect_contains(tooltip_text, "Durability %d/%d" % [expected_durability, expected_durability], "Weapon tooltip should show current and max durability.")
 	_expect_contains(tooltip_text, "Repair wear -%d max durability" % item.repair_max_durability_loss, "Weapon tooltip should show max durability loss on repair.")
 
@@ -105,20 +109,11 @@ func _validate_ammo_tooltip(owner: Control) -> void:
 		ItemStackTooltipPresenterScript.build(owner, AmmoItem.to_stack(6))
 	)
 	_expect_contains(tooltip_text, "Ammo-S", "Ammo tooltip should show localized item name.")
-	_expect_contains(tooltip_text, "Penetration Lv. 1", "Ammo tooltip should show baseline armor penetration level.")
-	_expect_contains(tooltip_text, "Ammo damage 1.00x", "Ammo tooltip should show baseline ammo damage multiplier.")
-	_expect_contains(tooltip_text, "Spread 1.00x", "Ammo tooltip should show baseline ammo spread multiplier.")
-	_expect_contains(tooltip_text, "Weapon wear 1.00x", "Ammo tooltip should show weapon wear rate.")
-	_expect_contains(tooltip_text, "Recoil 1.00x", "Ammo tooltip should show baseline ammo recoil multiplier.")
-	var polished_tooltip_text := ItemStackTooltipPresenterScript.tooltip_text(
-		ItemStackTooltipPresenterScript.build(owner, PolishedAmmoItem.to_stack(6))
-	)
-	_expect_contains(polished_tooltip_text, "Polished Ammo-S", "Polished ammo tooltip should show localized item name.")
-	_expect_contains(polished_tooltip_text, "Penetration Lv. 2", "Polished ammo tooltip should show higher armor penetration level.")
-	_expect_contains(polished_tooltip_text, "Ammo damage 1.10x", "Polished ammo tooltip should show higher ammo damage multiplier.")
-	_expect_contains(polished_tooltip_text, "Spread 0.75x", "Polished ammo tooltip should show lower ammo spread multiplier.")
-	_expect_contains(polished_tooltip_text, "Weapon wear 0.50x", "Polished ammo tooltip should show lower weapon wear rate.")
-	_expect_contains(polished_tooltip_text, "Recoil 0.85x", "Polished ammo tooltip should show lower ammo recoil multiplier.")
+	_expect_not_contains(tooltip_text, "Penetration Lv.", "Ammo tooltip should not show removed ammo penetration tuning.")
+	_expect_not_contains(tooltip_text, "Ammo damage", "Ammo tooltip should not show removed ammo damage tuning.")
+	_expect_not_contains(tooltip_text, "Spread", "Ammo tooltip should not show removed ammo spread tuning.")
+	_expect_not_contains(tooltip_text, "Weapon wear", "Ammo tooltip should not show removed ammo wear tuning.")
+	_expect_not_contains(tooltip_text, "Recoil", "Ammo tooltip should not show removed ammo recoil tuning.")
 	_validate_plain_catalog_number_rendering()
 
 
@@ -154,6 +149,11 @@ func _expect_contains(content: String, needle: String, message: String) -> void:
 func _expect_not_contains(content: String, needle: String, message: String) -> void:
 	if content.contains(needle):
 		_errors.append("%s Did not expect `%s` in `%s`." % [message, needle, content])
+
+
+func _expected_codex_label(item: ItemDef) -> String:
+	var display_slot := int(_catalog.call("display_slot_for_item_id", item.id))
+	return "#%d" % display_slot
 
 
 func _validate_plain_catalog_number_rendering() -> void:

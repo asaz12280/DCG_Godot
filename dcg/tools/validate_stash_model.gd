@@ -2,7 +2,7 @@ extends SceneTree
 
 const StashModelScript := preload("res://scripts/base/stash_model.gd")
 const Wood := preload("res://data/items/crafting/wood.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 const ExtendedMagazine := preload("res://data/items/attachments/extended_magazine.tres")
 const WarehouseKey := preload("res://data/items/keys/warehouse_key.tres")
 

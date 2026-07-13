@@ -11,6 +11,7 @@ const CRATE_TABLE_BY_NODE := {
 	"LootContainerSouth": "res://data/loot_tables/crate_white_misc_food.tres",
 	"LockedWarehouseCache": "res://data/loot_tables/crate_yellow_locked_cache.tres",
 	"LockedBlueArmorCache": "res://data/loot_tables/crate_blue_locked_armor.tres",
+	"OrangeShotgunCache": "res://data/loot_tables/crate_orange_shotgun_kit.tres",
 }
 
 var _errors: Array[String] = []
@@ -148,6 +149,11 @@ func _validate_colored_container_wiring(container: Node) -> void:
 			_errors.append("LockedBlueArmorCache should be locked.")
 		if body_color.b <= body_color.r or body_color.b <= body_color.g:
 			_errors.append("LockedBlueArmorCache should be the blue locked crate.")
+	if container.name == "OrangeShotgunCache":
+		if bool(container.get("is_locked")) or container.get("required_key") != null:
+			_errors.append("OrangeShotgunCache should be unlocked and require no key.")
+		if body_color.r <= body_color.g or body_color.g <= body_color.b:
+			_errors.append("OrangeShotgunCache should use an orange body color.")
 
 
 func _validate_ui_independence() -> void:

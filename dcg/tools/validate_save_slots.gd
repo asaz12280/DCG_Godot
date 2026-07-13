@@ -11,7 +11,7 @@ func _initialize() -> void:
 	_validate_schema_round_trip()
 	_validate_legacy_slot_defaults()
 	if _errors.is_empty():
-		print("[save_slots] OK slots=3 save=start load=continue schema=v1")
+		print("[save_slots] OK slots=3 save=start load=continue schema=v2 stash_money=migrated")
 		quit(0)
 	else:
 		for error in _errors:
@@ -57,12 +57,14 @@ func _validate_schema_round_trip() -> void:
 	root.add_child(manager)
 	_cleanup_validation_root(manager.save_root_path)
 	if not manager.save_new_game(1, "easy"):
-		_errors.append("Saving a new schema v1 game should succeed.")
+		_errors.append("Saving a new schema v2 game should succeed.")
 	var save_data: Dictionary = manager.get_slot_data(1)
-	if int(save_data.get("version", 0)) != 1:
-		_errors.append("New save data should include schema version 1.")
+	if int(save_data.get("version", 0)) != SaveGameManagerScript.SAVE_SCHEMA_VERSION:
+		_errors.append("New save data should include the current schema version.")
 	if int(save_data.get("money", -1)) != 0:
 		_errors.append("New save data should default money to 0.")
+	if int(save_data.get("stash_money", -1)) != 0:
+		_errors.append("New save data should default warehouse money to 0.")
 	if typeof(save_data.get("stash", null)) != TYPE_ARRAY:
 		_errors.append("New save data should include a stash array.")
 	if typeof(save_data.get("base_upgrades", null)) != TYPE_DICTIONARY:
@@ -83,19 +85,21 @@ func _validate_schema_round_trip() -> void:
 		_errors.append("New schema v1 save data should target the base scene.")
 
 	save_data["money"] = 42
+	save_data["stash_money"] = 17
 	save_data["stash"] = [{"item_path": "res://data/items/crafting/wood.tres", "quantity": 3}]
 	save_data["base_upgrades"] = {"workbench_level": 1}
 	save_data["quests"] = {"first_wood": {"state": "complete"}}
 	save_data["needed_item_marks"] = {"res://data/items/crafting/wood.tres": true}
 	save_data["selected_recipe_ids"] = {"workbench": "workbench_extended_magazine"}
-	save_data["selected_repair_ids"] = {"workbench": "stash:0:pistol_9mm"}
-	save_data["selected_dismantle_ids"] = {"workbench": "stash:0:workbench_pistol_9mm_parts"}
-	save_data["researched_blueprints"] = {"res://data/items/recipes/blueprint.tres": true}
+	save_data["selected_repair_ids"] = {"workbench": "stash:0:pistol_S"}
+	save_data["selected_dismantle_ids"] = {"workbench": "stash:0:workbench_pistol_S_parts"}
 	if not manager.save_slot_data(1, save_data):
-		_errors.append("Saving updated schema v1 slot data should succeed.")
+		_errors.append("Saving updated schema v2 slot data should succeed.")
 	var loaded: Dictionary = manager.get_slot_data(1)
 	if int(loaded.get("money", 0)) != 42:
 		_errors.append("Round trip should preserve money.")
+	if int(loaded.get("stash_money", 0)) != 17:
+		_errors.append("Round trip should preserve warehouse money.")
 	if (loaded.get("stash", []) as Array).size() != 1:
 		_errors.append("Round trip should preserve stash entries.")
 	if int((loaded.get("base_upgrades", {}) as Dictionary).get("workbench_level", 0)) != 1:
@@ -106,12 +110,10 @@ func _validate_schema_round_trip() -> void:
 		_errors.append("Round trip should preserve needed item marks.")
 	if str((loaded.get("selected_recipe_ids", {}) as Dictionary).get("workbench", "")) != "workbench_extended_magazine":
 		_errors.append("Round trip should preserve selected crafting recipe ids.")
-	if str((loaded.get("selected_repair_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:pistol_9mm":
+	if str((loaded.get("selected_repair_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:pistol_S":
 		_errors.append("Round trip should preserve selected repair item ids.")
-	if str((loaded.get("selected_dismantle_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:workbench_pistol_9mm_parts":
+	if str((loaded.get("selected_dismantle_ids", {}) as Dictionary).get("workbench", "")) != "stash:0:workbench_pistol_S_parts":
 		_errors.append("Round trip should preserve selected dismantle item ids.")
-	if not bool((loaded.get("researched_blueprints", {}) as Dictionary).get("res://data/items/recipes/blueprint.tres", false)):
-		_errors.append("Round trip should preserve researched blueprint ids.")
 	_cleanup_validation_root(manager.save_root_path)
 	manager.queue_free()
 
@@ -135,10 +137,12 @@ func _validate_legacy_slot_defaults() -> void:
 	}, "\t"))
 	legacy_file = null
 	var loaded := manager.get_slot_data(3)
-	if int(loaded.get("version", 0)) != 1:
-		_errors.append("Legacy slot should normalize to schema version 1.")
+	if int(loaded.get("version", 0)) != SaveGameManagerScript.SAVE_SCHEMA_VERSION:
+		_errors.append("Legacy slot should normalize to the current schema version.")
 	if int(loaded.get("money", -1)) != 0:
 		_errors.append("Legacy slot should default money to 0.")
+	if int(loaded.get("stash_money", -1)) != 0:
+		_errors.append("Legacy slot should default warehouse money to 0.")
 	if typeof(loaded.get("stash", null)) != TYPE_ARRAY:
 		_errors.append("Legacy slot should default stash to an array.")
 	if typeof(loaded.get("needed_item_marks", null)) != TYPE_DICTIONARY:

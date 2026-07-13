@@ -3,7 +3,7 @@ extends SceneTree
 const DamageableScript := preload("res://scripts/combat/damageable_3d.gd")
 const WeaponControllerScript := preload("res://scripts/combat/weapon_controller_3d.gd")
 const ProjectileScript := preload("res://scripts/combat/projectile_3d.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 

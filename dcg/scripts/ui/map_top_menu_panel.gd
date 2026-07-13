@@ -4,11 +4,13 @@ extends Control
 const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
 const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
-@export var design_panel_size := Vector2(860.0, 96.0)
-@export var design_top_margin := 126.0
+@export var design_panel_size := UISurfacePaletteScript.SIZE_MAP_PANEL
+@export var design_top_margin := UISurfacePaletteScript.TOP_MENU_PANEL_TOP_MARGIN
 
 @onready var main_panel: PanelContainer = %MainPanel
+@onready var panel_margin: MarginContainer = $MainPanel/PanelMargin
 @onready var info_panel: PanelContainer = $MainPanel/PanelMargin/Content/InfoPanel
 @onready var title_label: Label = %TitleLabel
 @onready var hint_label: Label = %HintLabel
@@ -76,6 +78,7 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"note": note_label.text,
 		"summary": _map_summary.duplicate(true),
 		"panel_rect": rect,
+		"title_origin": _title_origin_for_viewport(viewport_size),
 		"mouse_filter": mouse_filter,
 		"body_visible": info_panel.visible if info_panel != null else false,
 	}
@@ -86,8 +89,10 @@ func preview_layout(viewport_size: Vector2) -> Rect2:
 
 
 func _apply_styles() -> void:
-	UIStyleScript.apply_overlay_panel_style(main_panel)
-	UIStyleScript.apply_font_size(title_label, UIStyleScript.FONT_BODY)
+	UIStyleScript.apply_top_menu_panel_style(main_panel)
+	if info_panel != null:
+		info_panel.add_theme_stylebox_override("panel", UIStyleScript.make_inner_panel_style())
+	UIStyleScript.apply_font_size(title_label, UIStyleScript.FONT_PANEL_TITLE)
 	UIStyleScript.apply_font_color(title_label, UIStyleScript.COLOR_TEXT_PRIMARY)
 	UIStyleScript.apply_font_size(hint_label, UIStyleScript.FONT_PLACEHOLDER)
 	UIStyleScript.apply_font_color(hint_label, UIStyleScript.COLOR_TEXT_HELP)
@@ -114,13 +119,25 @@ func _apply_responsive_layout() -> void:
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = Vector2(1920.0, 1080.0)
 	var rect := _layout_for_viewport(viewport_size)
+	UIStyleScript.apply_top_menu_panel_margins(panel_margin, _top_menu_scale(viewport_size))
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	position = rect.position
 	size = rect.size
 
 
 func _layout_for_viewport(viewport_size: Vector2) -> Rect2:
-	return UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, 0.68, 1.0)
+	var rect := UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
+	rect.size.y = minf(rect.size.y, viewport_size.y * UISurfacePaletteScript.TOP_MENU_PANEL_MAX_VIEWPORT_HEIGHT_RATIO)
+	return rect
+
+
+func _title_origin_for_viewport(viewport_size: Vector2) -> Vector2:
+	var rect := _layout_for_viewport(viewport_size)
+	return rect.position + UISurfacePaletteScript.TOP_MENU_TITLE_ORIGIN * _top_menu_scale(viewport_size)
+
+
+func _top_menu_scale(viewport_size: Vector2) -> float:
+	return UILayoutScript.design_scale(viewport_size, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
 
 
 func _build_map_summary() -> Dictionary:

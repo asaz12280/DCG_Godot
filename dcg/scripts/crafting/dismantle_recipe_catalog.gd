@@ -1,7 +1,7 @@
 class_name DismantleRecipeCatalog
 extends RefCounted
 
-const WorkbenchPistolParts := preload("res://data/dismantle_recipes/workbench_pistol_9mm_parts.tres")
+const WorkbenchPistolParts := preload("res://data/dismantle_recipes/workbench_pistol_S_parts.tres")
 const WorkbenchLightArmorParts := preload("res://data/dismantle_recipes/workbench_light_armor_parts.tres")
 
 const RECIPES := [

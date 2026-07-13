@@ -41,6 +41,11 @@ func _validate_enemy_health_status_visibility() -> void:
 		_errors.append("Scavenger should include a 3D StatusLabel.")
 	elif status_label.text.strip_edges() == "":
 		_errors.append("StatusLabel should show an initial readable state.")
+	var health_anchor := enemy.get_node_or_null("EnemyHealthAnchor3D") as Node3D
+	if health_anchor == null:
+		_errors.append("Scavenger should include EnemyHealthAnchor3D for player-style head tracking.")
+	elif health_anchor.position.y <= 1.75:
+		_errors.append("EnemyHealthAnchor3D should remain above the visible name/head stack.")
 
 	var health_back := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarBack")
 	var health_fill := enemy.get_node_or_null("EnemyStatusDisplay3D/HealthBarFill")
@@ -97,6 +102,21 @@ func _validate_player_style_hud_health_bar() -> void:
 		var player_bar_size: Vector2 = hud.get("health_size")
 		if enemy_bar_size.distance_to(player_bar_size) > 0.01:
 			_errors.append("Enemy health bar should use the same size as the player overhead health bar.")
+		var anchor := enemy.get_node_or_null("EnemyHealthAnchor3D") as Node3D
+		var camera := scene.get_node_or_null("Camera3D") as Camera3D
+		if anchor == null or camera == null:
+			_errors.append("Enemy HUD validation needs EnemyHealthAnchor3D and Camera3D.")
+		else:
+			var enemy_offset: Vector2 = hud.get("enemy_health_offset") as Vector2
+			var expected_center: Vector2 = camera.unproject_position(anchor.global_position) + enemy_offset
+			var actual_center: Vector2 = bar.get("center", Vector2.INF)
+			if actual_center.distance_to(expected_center) > 0.01:
+				_errors.append("Enemy health bar should project the EnemyHealthAnchor3D position, not the enemy root.")
+			hud.call("_enemy_health_overlay_requires_redraw")
+			anchor.global_position += Vector3(0.5, 0.0, 0.0)
+			if not bool(hud.call("_enemy_health_overlay_requires_redraw")):
+				_errors.append("Enemy health overlay should request a redraw immediately when its head anchor moves.")
+			anchor.global_position -= Vector3(0.5, 0.0, 0.0)
 
 	var hurt_event := DamageEventScript.new(12.0, null, null, [&"validation"])
 	enemy.apply_damage(hurt_event)
@@ -118,6 +138,10 @@ func _validate_decoupling() -> void:
 	for forbidden in ["InventoryEquipmentUI", "ContainerInventoryUI", "QuestState", "SaveGameManager"]:
 		if source.contains(forbidden):
 			_errors.append("EnemyStatusDisplay3D should not depend on %s." % forbidden)
+	var hud_source := FileAccess.get_file_as_string("res://scripts/ui/player_hud_3d.gd")
+	for required in ["_enemy_health_overlay_requires_redraw", "_enemy_overlay_anchor_positions", "_last_enemy_overlay_camera_transform"]:
+		if not hud_source.contains(required):
+			_errors.append("PlayerHud3D should keep enemy overlay transform-sync term: %s." % required)
 
 
 func _free_node(node: Node) -> void:

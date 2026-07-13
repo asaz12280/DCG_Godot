@@ -15,11 +15,12 @@ const PlayerInventoryActionsScript := preload("res://scripts/player/player_inven
 const PlayerLoadoutSupportScript := preload("res://scripts/player/player_loadout_support_3d.gd")
 const PlayerEquipmentControllerScript := preload("res://scripts/player/player_equipment_controller_3d.gd")
 const PlayerQuickSlotModelScript := preload("res://scripts/player/player_quick_slot_model.gd")
+const PlayerQuickSlotControllerScript := preload("res://scripts/player/player_quick_slot_controller_3d.gd")
+const PlayerTimedActionControllerScript := preload("res://scripts/player/player_timed_action_controller_3d.gd")
 const RaidLossRulesScript := preload("res://scripts/raid/raid_loss_rules.gd")
-const ItemConsumableServiceScript := preload("res://scripts/items/item_consumable_service.gd")
 const MeleeAttackServiceScript := preload("res://scripts/combat/melee_attack_service.gd")
+const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
 const DEFAULT_RELOAD_DURATION_SECONDS := 0.8
-const RELOAD_PROGRESS_EMIT_STEP := 0.05
 
 # 對外事件：HUD、背包 UI、裝備 UI、換彈提示等會靠這些 signal 更新畫面。
 signal health_changed(current: float, maximum: float)
@@ -95,16 +96,22 @@ var safe_pocket_model := InventoryModel.new()
 var _equipment: PlayerEquipmentController3D = PlayerEquipmentControllerScript.new(self)
 var equipment_model: RefCounted = _equipment.get_model()
 var quick_slot_model: RefCounted = PlayerQuickSlotModelScript.new()
+var _quick_slots: PlayerQuickSlotController3D = PlayerQuickSlotControllerScript.new(self, quick_slot_model, inventory_model)
 
 # 執行期協作者與暫存狀態：控制器不直接吃下所有細節，而是把移動/輸入/武器拆給專職物件。
 var _stats: PlayerStats3D
 var _input_reader := PlayerInputReaderScript.new(self)
 var _locomotion: PlayerLocomotion3D
 var _weapon_controller: Node = null
+var _melee_vfx_spawner: Node = null
 var _pistol_visual: Node3D = null
+var _smg_visual: Node3D = null
 var _knife_visual: Node3D = null
+var _pistol_muzzle_marker: Marker3D = null
+var _smg_muzzle_marker: Marker3D = null
 var _melee_mode_active := false
 var _selected_quick_item_key := -1
+var _primary_fire_held := false
 var _melee_attack_cooldown_remaining := 0.0
 var _last_melee_attack_state := {
 	"active": false,
@@ -113,43 +120,7 @@ var _last_melee_attack_state := {
 	"weapon_id": "",
 	"progress": 0.0,
 }
-var _is_reloading := false
-var _reload_elapsed := 0.0
-var _active_reload_duration_seconds := 0.0
-var _pending_reload := {}
-var _last_reload_result := {
-	"reloaded": false,
-	"blocked_reason": "",
-	"rounds_loaded": 0,
-	"current_ammo": 0,
-	"reserve_ammo": 0,
-	"backpack_ammo_remaining": 0,
-	"source": "",
-}
-var _last_reload_state := {
-	"active": false,
-	"progress": 0.0,
-	"remaining_time": 0.0,
-	"source": "",
-	"status": "idle",
-}
-var _last_reload_emit_active := false
-var _last_reload_emit_progress := -1.0
-var _last_reload_emit_source := ""
-var _last_reload_emit_status := ""
-var _is_using_item := false
-var _item_use_elapsed := 0.0
-var _active_item_use_duration_seconds := 0.0
-var _pending_item_use := {}
-var _last_item_use_state := {
-	"active": false,
-	"progress": 0.0,
-	"remaining_time": 0.0,
-	"stack_index": -1,
-	"item_id": "",
-	"name_key": "",
-	"status": "idle",
-}
+var _timed_actions: PlayerTimedActionController3D = PlayerTimedActionControllerScript.new()
 
 
 # 初始化流程：套用難度/基地加成，建立模型容量，掛事件，載入 raid loadout 或 starter loadout。
@@ -161,9 +132,17 @@ func _ready() -> void:
 	_stats = PlayerStatsScript.new(runtime_stats_profile)
 	_locomotion = PlayerLocomotionScript.new(self, _stats)
 	_weapon_controller = get_node_or_null("WeaponController3D")
+	_melee_vfx_spawner = get_node_or_null("MeleeVfxSpawner3D")
 	_pistol_visual = get_node_or_null("WeaponVisualRoot/PistolVisual") as Node3D
+	_smg_visual = get_node_or_null("WeaponVisualRoot/SmgVisual") as Node3D
 	_knife_visual = get_node_or_null("WeaponVisualRoot/KnifeVisual") as Node3D
+	_pistol_muzzle_marker = get_node_or_null("WeaponVisualRoot/PistolVisual/MuzzleMarker3D") as Marker3D
+	_smg_muzzle_marker = get_node_or_null("WeaponVisualRoot/SmgVisual/MuzzleMarker3D") as Marker3D
 	_equipment.set_weapon_controller(_weapon_controller)
+	_timed_actions.setup(self, inventory_model, _equipment, _weapon_controller)
+	_timed_actions.reload_feedback_changed.connect(_on_reload_feedback_changed)
+	_timed_actions.reload_progress_changed.connect(_on_reload_progress_changed)
+	_timed_actions.item_use_progress_changed.connect(_on_item_use_progress_changed)
 	_apply_base_upgrade_effects()
 	inventory_model.setup(backpack_slots)
 	safe_pocket_model.setup(safe_pocket_slots)
@@ -173,6 +152,7 @@ func _ready() -> void:
 	if not _load_pending_raid_loadout() and not _load_saved_base_equipment():
 		_load_starter_inventory()
 	_sync_weapon_from_equipment()
+	current_carry_weight = _get_carried_weight()
 	health = get_total_max_health()
 	stamina = max_stamina
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -211,12 +191,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		switch_to_weapon_slot(&"sidearm")
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if _has_selected_quick_item():
-			use_selected_quick_item()
-			get_viewport().set_input_as_handled()
-			return
-		_fire_equipped_weapon()
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_primary_fire_held = event.pressed
+		if event.pressed:
+			if _has_selected_quick_item():
+				use_selected_quick_item()
+				get_viewport().set_input_as_handled()
+				return
+			_fire_equipped_weapon()
 
 
 # 對外查詢 API：UI、驗證工具、其他系統用這些函式讀玩家目前總數值。
@@ -256,6 +238,10 @@ func get_armor_effect_state() -> Dictionary:
 
 func set_current_carry_weight(value: float) -> void:
 	current_carry_weight = maxf(value, 0.0)
+
+
+func get_current_carry_weight() -> float:
+	return _get_carried_weight()
 
 
 func get_weight_speed_multiplier() -> float:
@@ -304,15 +290,19 @@ func get_weapon_mod_panel_state(weapon_slot_id: StringName = &"") -> Dictionary:
 
 
 func get_last_reload_result() -> Dictionary:
-	return _last_reload_result.duplicate(true)
+	return _timed_actions.get_last_reload_result()
 
 
 func get_reload_state() -> Dictionary:
-	return _last_reload_state.duplicate(true)
+	return _timed_actions.get_reload_state()
 
 
 func get_item_use_state() -> Dictionary:
-	return _last_item_use_state.duplicate(true)
+	return _timed_actions.get_item_use_state()
+
+
+func is_timed_action_active() -> bool:
+	return _timed_actions.is_active()
 
 
 func get_melee_attack_state() -> Dictionary:
@@ -345,39 +335,11 @@ func get_held_weapon_state() -> Dictionary:
 
 
 func get_quick_bar_state() -> Array[Dictionary]:
-	var result: Array[Dictionary] = [
-		_quick_weapon_slot_state(1, &"primary_weapon"),
-		_quick_weapon_slot_state(2, &"sidearm"),
-		_quick_weapon_slot_state(0, &"melee", "V"),
-	]
-	if quick_slot_model == null:
-		return result
-	var slots_state: Variant = quick_slot_model.call("get_slots_state", inventory_model.stacks)
-	if typeof(slots_state) != TYPE_ARRAY:
-		return result
-	for slot_state in slots_state as Array:
-		if typeof(slot_state) != TYPE_DICTIONARY:
-			continue
-		var state: Dictionary = (slot_state as Dictionary).duplicate(true)
-		state["kind"] = "item"
-		var key_value := int(state.get("key", -1))
-		state["active"] = key_value == _selected_quick_item_key and _is_quick_slot_still_valid(key_value)
-		state["display_text"] = _stack_display_name(state.get("stack", {}) as Dictionary)
-		result.append(state)
-	return result
+	return _quick_slots.get_quick_bar_state()
 
 
 func get_quick_slot_state(key_number: int) -> Dictionary:
-	var quick_state: Variant = quick_slot_model.call("get_slots_state", inventory_model.stacks)
-	if typeof(quick_state) != TYPE_ARRAY:
-		return {}
-	for raw_state in quick_state as Array:
-		if typeof(raw_state) != TYPE_DICTIONARY:
-			continue
-		var state := raw_state as Dictionary
-		if int(state.get("key", -1)) == int(key_number):
-			return state.duplicate(true)
-	return {}
+	return _quick_slots.get_quick_slot_state(key_number)
 
 
 func is_melee_mode_active() -> bool:
@@ -414,7 +376,14 @@ func can_equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> b
 
 
 func equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
-	return _equipment.equip_inventory_stack(stack_index, slot_id)
+	var resolved_slot := slot_id
+	if resolved_slot == &"" and stack_index >= 0 and stack_index < inventory_model.stacks.size():
+		resolved_slot = _equipment.default_equipment_slot_for_stack(inventory_model.stacks[stack_index] as Dictionary)
+	var equipped := _equipment.equip_inventory_stack(stack_index, slot_id)
+	if equipped and resolved_slot == &"melee":
+		_selected_quick_item_key = -1
+		_set_melee_mode(true)
+	return equipped
 
 
 func can_swap_equipment_slots(source_slot_id: StringName, target_slot_id: StringName) -> bool:
@@ -454,232 +423,67 @@ func unequip_equipment_slot(slot_id: StringName) -> bool:
 
 
 func can_use_inventory_stack(stack_index: int) -> bool:
-	if _is_using_item or _is_reloading or is_dead:
-		return false
-	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
-		return false
-	var stack := inventory_model.stacks[stack_index] as Dictionary
-	var item_def := _load_item_from_stack(stack)
-	return ItemConsumableServiceScript.can_start_use(stack, health, get_total_max_health(), stamina, max_stamina, item_def)
+	return _timed_actions.can_use_inventory_stack(stack_index)
 
 
 func use_inventory_stack(stack_index: int) -> bool:
-	if not can_use_inventory_stack(stack_index):
-		return false
-	var stack := inventory_model.stacks[stack_index] as Dictionary
-	var item_def := _load_item_from_stack(stack)
-	_is_using_item = true
-	_item_use_elapsed = 0.0
-	_active_item_use_duration_seconds = ItemConsumableServiceScript.use_duration_seconds(stack, item_def)
-	_pending_item_use = {
-		"stack_index": stack_index,
-		"item_id": str(stack.get("id", "")),
-		"name_key": str(stack.get("name_key", "")),
-		"heal_amount": ItemConsumableServiceScript.healing_amount(stack, item_def),
-		"stamina_amount": ItemConsumableServiceScript.stamina_restore_amount(stack, item_def),
-	}
-	_emit_item_use_state(true, 0.0, &"using")
-	return true
+	return _timed_actions.use_inventory_stack(stack_index)
 
 
 func assign_quick_slot_for_inventory_stack(key_number: int, stack_index: int) -> bool:
-	if not _is_quick_key_number(key_number):
-		return false
-	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
-		return false
-	if quick_slot_model == null:
-		return false
-	var stack := inventory_model.stacks[stack_index] as Dictionary
-	if not _is_stack_usable_for_quick_bar(stack):
-		return false
-	var item_def := _load_item_from_stack(stack)
-	if not ItemConsumableServiceScript.is_usable_stack(stack, item_def):
-		return false
-	var assigned_variant: Variant = quick_slot_model.call("assign_inventory_stack", int(key_number), stack_index, stack)
-	if typeof(assigned_variant) != TYPE_BOOL:
-		return false
-	var assigned := bool(assigned_variant)
-	if assigned:
-		inventory_changed.emit()
-		_sync_selected_quick_slot_after_slot_change(key_number)
-	return assigned
+	return _quick_slots.assign_inventory_stack(key_number, stack_index)
 
 
 func clear_quick_slot_for_key(key_number: int) -> bool:
-	var normalized := int(key_number)
-	if not _is_quick_key_number(normalized):
-		return false
-	if quick_slot_model == null:
-		return false
-	var removed: Variant = quick_slot_model.call("clear_slot", normalized)
-	if typeof(removed) != TYPE_BOOL:
-		return false
-	if bool(removed):
-		if _selected_quick_item_key == normalized:
-			_selected_quick_item_key = -1
-			_sync_held_weapon_visuals()
-		inventory_changed.emit()
-		return true
-	return false
+	return _quick_slots.clear_slot(key_number)
 
 
 func move_quick_slot_to_key(from_key: int, to_key: int) -> bool:
-	var normalized_from := int(from_key)
-	var normalized_to := int(to_key)
-	if not _is_quick_key_number(normalized_from) or not _is_quick_key_number(normalized_to) or normalized_from == normalized_to:
-		return false
-	if quick_slot_model == null:
-		return false
-	var resolve_raw: Variant = quick_slot_model.call("resolve_stack_index", normalized_from, inventory_model.stacks)
-	if typeof(resolve_raw) != TYPE_INT:
-		return false
-	var stack_index := int(resolve_raw)
-	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
-		return false
-	var stack := inventory_model.stacks[stack_index] as Dictionary
-	var moved_variant: Variant = quick_slot_model.call("assign_inventory_stack", normalized_to, stack_index, stack)
-	if typeof(moved_variant) != TYPE_BOOL:
-		return false
-	var moved := bool(moved_variant)
-	if moved:
-		if _selected_quick_item_key == normalized_from:
-			_selected_quick_item_key = normalized_to
-		inventory_changed.emit()
-		_sync_selected_quick_slot_after_slot_change(normalized_from)
-		_sync_selected_quick_slot_after_slot_change(normalized_to)
-	return moved
+	return _quick_slots.move_slot(from_key, to_key)
 
 
 func select_quick_slot(key_number: int) -> bool:
-	if not _is_quick_key_number(key_number):
-		return false
-	if quick_slot_model == null:
-		return false
-	var resolve_raw: Variant = quick_slot_model.call("resolve_stack_index", int(key_number), inventory_model.stacks)
-	if typeof(resolve_raw) != TYPE_INT:
-		return false
-	var stack_index := int(resolve_raw)
-	if stack_index < 0:
-		if _selected_quick_item_key == int(key_number):
-			_selected_quick_item_key = -1
-			_sync_held_weapon_visuals()
-		return false
-	_selected_quick_item_key = key_number
-	_set_melee_mode(false)
-	_sync_held_weapon_visuals()
-	return true
+	return _quick_slots.select_slot(key_number)
 
 
 func use_selected_quick_item() -> bool:
-	if not _has_selected_quick_item():
-		return false
-	return use_quick_slot(_selected_quick_item_key)
+	return _quick_slots.use_selected()
 
 
 func _has_selected_quick_item() -> bool:
-	if not _is_quick_key_number(_selected_quick_item_key):
-		return false
-	if quick_slot_model == null:
-		return false
-	var resolve_raw: Variant = quick_slot_model.call("resolve_stack_index", _selected_quick_item_key, inventory_model.stacks)
-	if typeof(resolve_raw) != TYPE_INT:
-		return false
-	return int(resolve_raw) >= 0
+	return _quick_slots.has_selected_item()
 
 
 func _selected_quick_item_stack() -> Dictionary:
-	if not _is_quick_key_number(_selected_quick_item_key):
-		return {}
-	var slot_state := get_quick_slot_state(_selected_quick_item_key)
-	if not bool(slot_state.get("assigned", false)):
-		return {}
-	var stack: Dictionary = slot_state.get("stack", {}) as Dictionary
-	return stack.duplicate(true)
+	return _quick_slots.selected_item_stack()
 
 
 func use_quick_slot(key_number: int) -> bool:
-	if not _is_quick_key_number(key_number) or quick_slot_model == null:
-		return false
-	var resolve_raw: Variant = quick_slot_model.call("resolve_stack_index", int(key_number), inventory_model.stacks)
-	if typeof(resolve_raw) != TYPE_INT:
-		return false
-	var stack_index := int(resolve_raw)
-	if stack_index < 0:
-		return false
-	return use_inventory_stack(stack_index)
+	return _quick_slots.use_slot(key_number)
 
 
 func _sync_selected_quick_slot_after_slot_change(key_number: int) -> void:
-	var normalized := int(key_number)
-	if normalized < 3 or normalized > 8:
-		return
-	if _selected_quick_item_key != normalized:
-		return
-	var slot_state := get_quick_slot_state(normalized)
-	if not bool(slot_state.get("assigned", false)):
-		_selected_quick_item_key = -1
-		_sync_held_weapon_visuals()
+	_quick_slots.sync_selected_after_slot_change(key_number)
 
 
 func _is_quick_slot_still_valid(key_number: int) -> bool:
-	var normalized := int(key_number)
-	if not _is_quick_key_number(normalized):
-		return false
-	var slot_state := get_quick_slot_state(normalized)
-	if slot_state.is_empty():
-		return false
-	return bool(slot_state.get("assigned", false))
+	return _quick_slots.is_slot_still_valid(key_number)
 
 
 func _is_quick_key_number(key_number: int) -> bool:
-	return key_number >= 3 and key_number <= 8
+	return _quick_slots.is_quick_key_number(key_number)
 
 
 func _is_stack_usable_for_quick_bar(stack: Dictionary) -> bool:
-	if typeof(stack) != TYPE_DICTIONARY:
-		return false
-	return int(stack.get("quantity", 0)) > 0
+	return _quick_slots.is_stack_usable(stack)
 
 
-# 換彈入口：檢查武器、彈匣、背包彈藥後，建立 pending reload，完成動作由 _update_reload 推進。
 func reload_equipped_weapon(reload_source: StringName = &"manual") -> bool:
-	if _is_using_item:
-		_record_reload_feedback(false, &"using_item", 0, reload_source)
-		return false
-	if _is_reloading:
-		_record_reload_feedback(false, &"reloading", 0, reload_source)
-		return false
-	if _weapon_controller == null or not _weapon_controller.has_method("reload_from_item"):
-		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
-		_emit_reload_state(false, 0.0, reload_source, &"blocked")
-		return false
-	if not _weapon_controller.has_method("has_weapon") or not bool(_weapon_controller.call("has_weapon")):
-		_sync_weapon_from_equipment()
-	if not _weapon_controller.has_method("has_weapon") or not bool(_weapon_controller.call("has_weapon")):
-		_record_reload_feedback(false, &"no_weapon", 0, reload_source)
-		_emit_reload_state(false, 0.0, reload_source, &"blocked")
-		return false
+	return _timed_actions.reload_equipped_weapon(reload_source)
 
-	var current_rounds := int(_weapon_controller.get("current_ammo"))
-	var magazine_capacity := int(_weapon_controller.get("magazine_size"))
-	var needed_rounds := magazine_capacity - current_rounds
-	if needed_rounds <= 0:
-		_record_reload_feedback(false, &"magazine_full", 0, reload_source)
-		_emit_reload_state(false, 1.0, reload_source, &"blocked")
-		return false
 
-	var ammo_stack := _find_compatible_ammo_stack()
-	if ammo_stack.is_empty():
-		_record_reload_feedback(false, &"no_compatible_ammo", 0, reload_source)
-		_emit_reload_state(false, 0.0, reload_source, &"blocked")
-		return false
-
-	var ammo_index := int(ammo_stack.get("index", -1))
-	var ammo_def := ammo_stack.get("item_def") as ItemDef
-	var available_quantity := int(ammo_stack.get("quantity", 0))
-	var quantity_to_load := mini(needed_rounds, available_quantity)
-	_start_reload(reload_source, ammo_index, ammo_def, quantity_to_load)
-	return true
+func unload_equipped_weapon_ammo_to_backpack() -> Dictionary:
+	return _timed_actions.unload_equipped_weapon_ammo_to_backpack()
 
 
 func get_default_equipment_slot_for_stack(stack: Dictionary) -> StringName:
@@ -713,28 +517,15 @@ func switch_to_weapon_slot(slot_id: StringName) -> bool:
 	return selected
 
 
+func set_active_weapon_slot(slot_id: StringName) -> bool:
+	return switch_to_weapon_slot(slot_id)
+
+
+func get_equipped_weapon_slot_id() -> StringName:
+	return _equipment.get_equipped_weapon_slot_id()
+
+
 # 換彈完成：真正消耗背包彈藥並同步武器彈數，失敗時會記錄阻擋原因。
-func _complete_reload() -> bool:
-	if _pending_reload.is_empty() or _weapon_controller == null:
-		_cancel_reload(&"cancelled")
-		return false
-	var reload_source := StringName(str(_pending_reload.get("source", "manual")))
-	var ammo_index := int(_pending_reload.get("ammo_index", -1))
-	var ammo_def := _pending_reload.get("ammo_def") as ItemDef
-	var quantity_to_load := int(_pending_reload.get("quantity_to_load", 0))
-	var loaded_rounds := int(_weapon_controller.call("reload_from_item", ammo_def, quantity_to_load))
-	if loaded_rounds <= 0:
-		var weapon_result: Dictionary = _weapon_controller.get("last_reload_result")
-		_record_reload_feedback(false, StringName(str(weapon_result.get("blocked_reason", "no_ammo"))), 0, reload_source)
-		_cancel_reload(StringName(str(weapon_result.get("blocked_reason", "no_ammo"))))
-		return false
-
-	inventory_model.consume_stack_quantity(ammo_index, loaded_rounds)
-	_record_reload_feedback(true, &"", loaded_rounds, reload_source)
-	_finish_reload(reload_source)
-	return true
-
-
 # 受傷/死亡入口：先套護甲減傷，再磨損護甲耐久，血量歸零時交給 _die。
 func apply_damage(event: DamageEvent) -> bool:
 	if event == null or event.amount <= 0.0 or is_dead:
@@ -766,8 +557,6 @@ func is_alive() -> bool:
 # 每幀物理更新：換彈進度、後座力恢復、移動委派、滑動與滑鼠朝向都在這裡串起來。
 func _physics_process(delta: float) -> void:
 	_melee_attack_cooldown_remaining = maxf(_melee_attack_cooldown_remaining - delta, 0.0)
-	_update_reload(delta)
-	_update_item_use(delta)
 	_update_held_primary_fire()
 	_recover_weapon_recoil(delta)
 	var input_blocked := _locomotion.physics_update(delta, _input_reader)
@@ -807,7 +596,7 @@ func _fire_equipped_weapon() -> void:
 		return
 	if _weapon_controller == null or not _weapon_controller.has_method("fire_forward"):
 		return
-	if _is_reloading or _is_using_item:
+	if _timed_actions.is_active():
 		return
 	_sync_weapon_from_equipment()
 	if _should_block_fire_for_broken_weapon():
@@ -820,7 +609,7 @@ func _fire_equipped_weapon() -> void:
 	var mouse_position := get_viewport().get_mouse_position()
 	var ray_origin := camera.project_ray_origin(mouse_position)
 	var ray_direction := camera.project_ray_normal(mouse_position)
-	var projectile_origin: Vector3 = _weapon_controller.global_position + Vector3.UP * 0.72
+	var projectile_origin := _equipped_firearm_muzzle_origin()
 	var projectile_direction: Vector3 = _projectile_direction_from_camera_ray(projectile_origin, ray_origin, ray_direction)
 	var recoil_result := _projectile_direction_with_recoil(projectile_direction)
 	var spread_result := _projectile_direction_with_durability_spread(recoil_result.get("direction", projectile_direction))
@@ -831,12 +620,13 @@ func _fire_equipped_weapon() -> void:
 			spread_result.get("state", _empty_weapon_spread_state()) as Dictionary,
 			recoil_result.get("state", _empty_weapon_recoil_state()) as Dictionary
 		)
+		_equipment.save_synced_weapon_ammo_state(false)
 	else:
 		_equipment.clear_weapon_fire_result()
 
 
 func _attack_with_melee_weapon() -> bool:
-	if _is_reloading or _is_using_item or is_dead:
+	if _timed_actions.is_active() or is_dead:
 		return false
 	if _melee_attack_cooldown_remaining > 0.0:
 		return false
@@ -844,14 +634,27 @@ func _attack_with_melee_weapon() -> bool:
 	if melee_weapon == null:
 		_set_melee_mode(false)
 		return false
-	_melee_attack_cooldown_remaining = melee_attack_cooldown_seconds
+	var attack_rate := melee_weapon.get_weapon_fire_rate_per_second()
+	var attack_cooldown := 1.0 / attack_rate if attack_rate > 0.0 else melee_attack_cooldown_seconds
+	var attack_range := melee_attack_range
+	if melee_weapon.get_weapon_projectile_range() > 0.0:
+		attack_range = WeaponTuningServiceScript.authored_range_to_meters(melee_weapon.get_weapon_projectile_range())
+	_melee_attack_cooldown_remaining = maxf(attack_cooldown, 0.01)
 	var result := MeleeAttackServiceScript.perform_arc_attack(
 		self,
 		melee_weapon,
-		melee_attack_range,
+		attack_range,
 		melee_attack_arc_degrees,
 		melee_fallback_damage
 	)
+	if bool(result.get("attacked", false)) and _melee_vfx_spawner != null and _melee_vfx_spawner.has_method("play_crescent_slash"):
+		_melee_vfx_spawner.call(
+			"play_crescent_slash",
+			self,
+			float(result.get("range", attack_range)),
+			float(result.get("arc_degrees", melee_attack_arc_degrees)),
+			result.get("hit_positions", [])
+		)
 	_emit_melee_attack_state(true, result)
 	return bool(result.get("attacked", false))
 
@@ -934,10 +737,29 @@ func _emit_melee_attack_state(active: bool, result: Dictionary = {}) -> void:
 
 
 func _sync_held_weapon_visuals() -> void:
+	var firearm := _equipment.get_equipped_weapon_item()
+	var show_firearm := _selected_quick_item_key < 0 and not _melee_mode_active and firearm != null
+	var firearm_id := str(firearm.id) if firearm != null else ""
 	if _pistol_visual != null:
-		_pistol_visual.visible = _selected_quick_item_key < 0 and not _melee_mode_active and _equipment.get_equipped_weapon_item() != null
+		_pistol_visual.visible = show_firearm and firearm_id != "smg_S"
+	if _smg_visual != null:
+		_smg_visual.visible = show_firearm and firearm_id == "smg_S"
 	if _knife_visual != null:
 		_knife_visual.visible = _selected_quick_item_key < 0 and _melee_mode_active and _equipped_melee_weapon() != null
+
+
+func _equipped_firearm_muzzle_origin() -> Vector3:
+	var muzzle_marker := _smg_muzzle_marker if _smg_visual != null and _smg_visual.visible else _pistol_muzzle_marker
+	if muzzle_marker != null and muzzle_marker.is_inside_tree():
+		# Start just beyond the authored barrel tip, never at the player root.
+		var barrel_forward := -muzzle_marker.global_transform.basis.z
+		barrel_forward.y = 0.0
+		barrel_forward = barrel_forward.normalized() if barrel_forward.length() > 0.001 else -global_transform.basis.z.normalized()
+		return muzzle_marker.global_position + barrel_forward * 0.06
+	var forward := -global_transform.basis.z
+	forward.y = 0.0
+	forward = forward.normalized() if forward.length() > 0.001 else Vector3.FORWARD
+	return global_position + Vector3.UP * 0.7 + forward * 0.45
 
 
 # 彈道方向：從攝影機滑鼠射線推回地面目標，再轉成武器射出的水平方向。
@@ -973,8 +795,8 @@ func _active_weapon_combat_penalty_state() -> Dictionary:
 	return _equipment.active_weapon_combat_penalty_state()
 
 
-func _spread_state_from_penalty(penalty: Dictionary, applied_angle: float, ammo_spread_multiplier: float = 1.0, attachment_spread_multiplier: float = 1.0, base_spread_degrees: float = -1.0) -> Dictionary:
-	return _equipment.spread_state_from_penalty(penalty, applied_angle, ammo_spread_multiplier, attachment_spread_multiplier, base_spread_degrees)
+func _spread_state_from_penalty(penalty: Dictionary, applied_angle: float, attachment_spread_multiplier: float = 1.0, base_spread_degrees: float = -1.0) -> Dictionary:
+	return _equipment.spread_state_from_penalty(penalty, applied_angle, attachment_spread_multiplier, base_spread_degrees)
 
 
 func _empty_weapon_spread_state() -> Dictionary:
@@ -989,16 +811,8 @@ func _empty_weapon_recoil_state() -> Dictionary:
 	return _equipment.empty_weapon_recoil_state()
 
 
-func _current_ammo_spread_multiplier() -> float:
-	return _equipment.current_ammo_spread_multiplier()
-
-
 func _current_attachment_spread_multiplier() -> float:
 	return _equipment.current_attachment_spread_multiplier()
-
-
-func _current_ammo_recoil_multiplier() -> float:
-	return _equipment.current_ammo_recoil_multiplier()
 
 
 func _apply_weapon_recoil_after_shot(pre_shot_state: Dictionary) -> Dictionary:
@@ -1033,15 +847,19 @@ func _should_auto_reload_before_fire() -> bool:
 		return false
 	if _find_compatible_ammo_stack().is_empty():
 		return false
-	return reload_equipped_weapon(&"empty_fire")
+	var started_reload := reload_equipped_weapon(&"empty_fire")
+	if started_reload:
+		_primary_fire_held = false
+	return started_reload
 
 
 func _update_held_primary_fire() -> void:
-	if _input_reader.is_gameplay_blocked() or _is_reloading or _has_selected_quick_item():
+	if _input_reader.is_gameplay_blocked() or _timed_actions.is_reloading() or _has_selected_quick_item():
+		return
+	if not _primary_fire_held and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		return
 	if _melee_mode_active:
-		return
-	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_attack_with_melee_weapon()
 		return
 	if _weapon_controller != null and _weapon_controller.has_method("get_fire_block_reason"):
 		var block_reason := StringName(str(_weapon_controller.call("get_fire_block_reason")))
@@ -1109,232 +927,28 @@ func _quick_item_key_for_event(event: InputEvent) -> int:
 			return -1
 
 
+func _on_reload_feedback_changed(result: Dictionary) -> void:
+	reload_feedback_changed.emit(result)
+
+
+func _on_reload_progress_changed(state: Dictionary) -> void:
+	reload_progress_changed.emit(state)
+
+
+func _on_item_use_progress_changed(state: Dictionary) -> void:
+	item_use_progress_changed.emit(state)
+
+
 func _find_compatible_ammo_stack() -> Dictionary:
-	if _weapon_controller == null or not _weapon_controller.has_method("get_ammo_model"):
-		return {}
-	var ammo_model: Variant = _weapon_controller.call("get_ammo_model")
-	if ammo_model == null:
-		return {}
-	for index in range(inventory_model.stacks.size()):
-		var stack := inventory_model.stacks[index]
-		if int(stack.get("quantity", 0)) <= 0:
-			continue
-		if not _is_stack_compatible_ammo(stack, ammo_model):
-			continue
-		var item_def := _load_item_from_stack(stack)
-		if item_def == null or item_def.item_type != "ammo":
-			continue
-		return {
-			"index": index,
-			"item_def": item_def,
-			"quantity": int(stack.get("quantity", 1)),
-		}
-	return {}
+	return _timed_actions.call("_find_compatible_ammo_stack") as Dictionary
 
 
 func _is_stack_compatible_ammo(stack: Dictionary, ammo_model: Variant) -> bool:
-	if ammo_model == null:
-		return false
-	var stack_type := str(stack.get("type", ""))
-	if stack_type != "" and stack_type != "ammo":
-		return false
-	var ammo_tag := StringName(str(stack.get("ammo_tag", "")))
-	if ammo_tag != &"" and _ammo_model_accepts_tag(ammo_model, ammo_tag):
-		return true
-	var tags: Array = stack.get("tags", []) as Array
-	for raw_tag in tags:
-		var tag := StringName(str(raw_tag))
-		if tag != &"" and _ammo_model_accepts_tag(ammo_model, tag):
-			return true
-	if not ammo_model.has_method("can_use_ammo"):
-		return false
-	var item_def := _load_item_from_stack(stack)
-	return item_def != null and bool(ammo_model.call("can_use_ammo", item_def))
+	return bool(_timed_actions.call("_is_stack_compatible_ammo", stack, ammo_model))
 
 
 func _ammo_model_accepts_tag(ammo_model: Variant, ammo_tag: StringName) -> bool:
-	if ammo_model == null or ammo_tag == &"":
-		return false
-	var compatible_tags_variant: Variant = ammo_model.get("compatible_ammo_tags")
-	if typeof(compatible_tags_variant) != TYPE_ARRAY:
-		return false
-	for raw_tag in compatible_tags_variant as Array:
-		if StringName(str(raw_tag)) == ammo_tag:
-			return true
-	return false
-
-
-# 換彈內部狀態機：開始、推進、完成/取消，並透過 signal 持續回報 UI 進度。
-func _start_reload(reload_source: StringName, ammo_index: int, ammo_def: ItemDef, quantity_to_load: int) -> void:
-	_is_reloading = true
-	_reload_elapsed = 0.0
-	_active_reload_duration_seconds = _current_weapon_reload_duration_seconds()
-	_pending_reload = {
-		"source": str(reload_source),
-		"ammo_index": ammo_index,
-		"ammo_def": ammo_def,
-		"quantity_to_load": quantity_to_load,
-		"duration": _active_reload_duration_seconds,
-	}
-	_emit_reload_state(true, 0.0, reload_source, &"reloading")
-
-
-func _update_reload(delta: float) -> void:
-	if not _is_reloading:
-		return
-	_reload_elapsed += maxf(delta, 0.0)
-	var duration := maxf(_active_reload_duration_seconds, 0.05)
-	var progress := clampf(_reload_elapsed / duration, 0.0, 1.0)
-	var source := StringName(str(_pending_reload.get("source", "manual")))
-	_emit_reload_state(true, progress, source, &"reloading")
-	if progress >= 1.0:
-		_complete_reload()
-
-
-func _update_item_use(delta: float) -> void:
-	if not _is_using_item:
-		return
-	_item_use_elapsed += maxf(delta, 0.0)
-	var duration := maxf(_active_item_use_duration_seconds, 0.05)
-	var progress := clampf(_item_use_elapsed / duration, 0.0, 1.0)
-	_emit_item_use_state(true, progress, &"using")
-	if progress >= 1.0:
-		_complete_item_use()
-
-
-func _complete_item_use() -> bool:
-	if _pending_item_use.is_empty():
-		_cancel_item_use(&"cancelled")
-		return false
-	var stack_index := int(_pending_item_use.get("stack_index", -1))
-	if stack_index < 0 or stack_index >= inventory_model.stacks.size():
-		_cancel_item_use(&"missing_item")
-		return false
-	var stack := inventory_model.stacks[stack_index] as Dictionary
-	if str(stack.get("id", "")) != str(_pending_item_use.get("item_id", "")):
-		_cancel_item_use(&"missing_item")
-		return false
-	var consumed := inventory_model.consume_stack_quantity(stack_index, 1)
-	if consumed <= 0:
-		_cancel_item_use(&"missing_item")
-		return false
-	var max_health := get_total_max_health()
-	var max_stamina_value := max_stamina
-	var health_gain := maxf(float(_pending_item_use.get("heal_amount", 0.0)), 0.0)
-	var stamina_gain := maxf(float(_pending_item_use.get("stamina_amount", 0.0)), 0.0)
-	if health_gain <= 0.0 and stamina_gain <= 0.0:
-		_cancel_item_use(&"no_effect")
-		return false
-	if health_gain > 0.0:
-		health = minf(health + health_gain, max_health)
-		health_changed.emit(health, max_health)
-	if stamina_gain > 0.0:
-		stamina = minf(stamina + stamina_gain, max_stamina_value)
-		stamina_changed.emit(stamina, max_stamina_value)
-	_finish_item_use(&"complete")
-	return true
-
-
-func _finish_item_use(status: StringName) -> void:
-	_is_using_item = false
-	_item_use_elapsed = 0.0
-	_active_item_use_duration_seconds = 0.0
-	_emit_item_use_state(false, 1.0, status)
-	_pending_item_use = {}
-
-
-func _cancel_item_use(reason: StringName) -> void:
-	_is_using_item = false
-	_item_use_elapsed = 0.0
-	_active_item_use_duration_seconds = 0.0
-	_emit_item_use_state(false, 0.0, reason)
-	_pending_item_use = {}
-
-
-func _emit_item_use_state(active: bool, progress: float, status: StringName) -> void:
-	var duration := _active_item_use_duration_seconds
-	var clamped_progress := clampf(progress, 0.0, 1.0)
-	_last_item_use_state = {
-		"active": active,
-		"progress": clamped_progress,
-		"remaining_time": maxf(duration * (1.0 - clamped_progress), 0.0) if active else 0.0,
-		"duration": duration,
-		"stack_index": int(_pending_item_use.get("stack_index", -1)),
-		"item_id": str(_pending_item_use.get("item_id", "")),
-		"name_key": str(_pending_item_use.get("name_key", "")),
-		"status": str(status),
-	}
-	item_use_progress_changed.emit(_last_item_use_state.duplicate(true))
-
-
-func _finish_reload(reload_source: StringName) -> void:
-	_is_reloading = false
-	_reload_elapsed = 0.0
-	_active_reload_duration_seconds = 0.0
-	_pending_reload = {}
-	_emit_reload_state(false, 1.0, reload_source, &"complete")
-
-
-func _cancel_reload(reason: StringName) -> void:
-	var source := StringName(str(_pending_reload.get("source", "manual"))) if not _pending_reload.is_empty() else &"manual"
-	_is_reloading = false
-	_reload_elapsed = 0.0
-	_active_reload_duration_seconds = 0.0
-	_pending_reload = {}
-	_emit_reload_state(false, 0.0, source, reason)
-
-
-func _emit_reload_state(active: bool, progress: float, reload_source: StringName, status: StringName) -> void:
-	var duration := _active_reload_duration_seconds if _active_reload_duration_seconds > 0.0 else _current_weapon_reload_duration_seconds()
-	var clamped_progress := clampf(progress, 0.0, 1.0)
-	var source_text := str(reload_source)
-	var status_text := str(status)
-	_last_reload_state = {
-		"active": active,
-		"progress": clamped_progress,
-		"remaining_time": maxf(duration * (1.0 - clamped_progress), 0.0) if active else 0.0,
-		"source": source_text,
-		"status": status_text,
-	}
-	if not _should_emit_reload_state(active, clamped_progress, source_text, status_text):
-		return
-	_last_reload_emit_active = active
-	_last_reload_emit_progress = clamped_progress
-	_last_reload_emit_source = source_text
-	_last_reload_emit_status = status_text
-	reload_progress_changed.emit(_last_reload_state.duplicate(true))
-
-
-func _should_emit_reload_state(active: bool, progress: float, source_text: String, status_text: String) -> bool:
-	if active != _last_reload_emit_active or source_text != _last_reload_emit_source or status_text != _last_reload_emit_status:
-		return true
-	if not active:
-		return true
-	if progress <= 0.0 or progress >= 1.0:
-		return true
-	return absf(progress - _last_reload_emit_progress) >= RELOAD_PROGRESS_EMIT_STEP
-
-
-func _current_weapon_reload_duration_seconds() -> float:
-	if not is_equal_approx(reload_duration_seconds, DEFAULT_RELOAD_DURATION_SECONDS):
-		return maxf(reload_duration_seconds, 0.05)
-	var weapon_item := _get_equipped_weapon_item()
-	if weapon_item != null and weapon_item.reload_duration_seconds > 0.0:
-		return maxf(weapon_item.reload_duration_seconds, 0.05)
-	return maxf(reload_duration_seconds, 0.05)
-
-
-func _record_reload_feedback(did_reload: bool, blocked_reason: StringName, rounds_loaded: int, reload_source: StringName = &"manual") -> void:
-	_last_reload_result = {
-		"reloaded": did_reload,
-		"blocked_reason": str(blocked_reason),
-		"rounds_loaded": rounds_loaded,
-		"current_ammo": int(_weapon_controller.get("current_ammo")) if _weapon_controller != null else 0,
-		"reserve_ammo": int(_weapon_controller.get("reserve_ammo")) if _weapon_controller != null else 0,
-		"backpack_ammo_remaining": _count_compatible_backpack_ammo(),
-		"source": str(reload_source),
-	}
-	reload_feedback_changed.emit(_last_reload_result.duplicate(true))
+	return bool(_timed_actions.call("_ammo_model_accepts_tag", ammo_model, ammo_tag))
 
 
 # 初始裝載來源：優先套用存檔暫存的 raid loadout，沒有才放 starter inventory。
@@ -1481,6 +1095,7 @@ func _die(event: DamageEvent) -> void:
 	if is_dead:
 		return
 	is_dead = true
+	_timed_actions.cancel_all(&"cancelled")
 	died.emit(event)
 	var raid_session := _find_raid_session()
 	if raid_session != null and raid_session.has_method("register_player_death"):

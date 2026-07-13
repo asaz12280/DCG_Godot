@@ -5,8 +5,8 @@ const RaidResultApplierScript := preload("res://scripts/raid/raid_result_applier
 const RaidResultScript := preload("res://scripts/raid/raid_result.gd")
 const SaveGameManagerScript := preload("res://scripts/save/save_game_manager.gd")
 const WoodItem := preload("res://data/items/crafting/wood.tres")
-const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_S.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
 
 const VALIDATION_SAVE_ROOT := "user://validation_raid_loss_rules"
 

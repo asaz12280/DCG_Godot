@@ -1,10 +1,11 @@
 class_name PlayerQuickBarLayout
 extends RefCounted
 
-const SLOT_SIZE := Vector2(74.0, 74.0)
-const COMPACT_SLOT_SIZE := Vector2(58.0, 58.0)
-const GAP := 16.0
-const BOTTOM_OFFSET := 88.0
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
+const SLOT_SIZE := UISurfacePaletteScript.QUICK_SLOT_SIZE
+const COMPACT_SLOT_SIZE := UISurfacePaletteScript.QUICK_SLOT_COMPACT_SIZE
+const GAP := UISurfacePaletteScript.QUICK_SLOT_GAP
+const BOTTOM_OFFSET := UISurfacePaletteScript.QUICK_SLOT_BOTTOM_OFFSET
 
 
 static func slot_rects(viewport_size: Vector2, slots: Array) -> Array[Rect2]:

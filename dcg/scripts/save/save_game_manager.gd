@@ -4,11 +4,21 @@ signal slot_saved(slot_index: int, save_data: Dictionary)
 
 const DEFAULT_SAVE_ROOT := "user://saves"
 const SLOT_COUNT := 3
-const SAVE_SCHEMA_VERSION := 1
+const SAVE_SCHEMA_VERSION := 2
 const DEFAULT_BASE_SCENE := "res://scenes/base/base_3d.tscn"
 const DEFAULT_GAMEPLAY_SCENE := "res://scenes/gameplay/player_test_world_3d.tscn"
 const DEFAULT_MONEY := 0
+const DEFAULT_STASH_MONEY := 0
+const ItemStackSaveCodecScript := preload("res://scripts/inventory/item_stack_save_codec.gd")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
+
+const SAVE_ID_ALIASES := {
+	"workbench_ammo_9mm": "workbench_ammo_S",
+	"workbench_ammo_9mm_polished": "workbench_ammo_S",
+	"workbench_pistol_9mm_parts": "workbench_pistol_S_parts",
+	"stash:0:pistol_9mm": "stash:0:pistol_S",
+	"stash:0:workbench_pistol_9mm_parts": "stash:0:workbench_pistol_S_parts",
+}
 
 var save_root_path := DEFAULT_SAVE_ROOT
 var current_slot_index := 1
@@ -32,6 +42,7 @@ func get_slot_summary(slot_index: int) -> Dictionary:
 		"saved_at_unix": 0,
 		"saved_at_text": "",
 		"money": DEFAULT_MONEY,
+		"stash_money": DEFAULT_STASH_MONEY,
 	}
 	var raw_data := _read_slot_file(slot_index)
 	if raw_data.is_empty():
@@ -44,6 +55,7 @@ func get_slot_summary(slot_index: int) -> Dictionary:
 	summary["saved_at_unix"] = int(save_data.get("saved_at_unix", 0))
 	summary["saved_at_text"] = str(save_data.get("saved_at_text", ""))
 	summary["money"] = int(save_data.get("money", DEFAULT_MONEY))
+	summary["stash_money"] = int(save_data.get("stash_money", DEFAULT_STASH_MONEY))
 	return summary
 
 
@@ -200,6 +212,7 @@ func _default_save_data(difficulty_id: String = "normal", scene_path: String = D
 		"saved_at_unix": saved_at_unix,
 		"saved_at_text": Time.get_datetime_string_from_unix_time(saved_at_unix, true),
 		"money": DEFAULT_MONEY,
+		"stash_money": DEFAULT_STASH_MONEY,
 		"stash": [],
 		"equipment": {"slots": {}},
 		"base_upgrades": {},
@@ -221,10 +234,11 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 	normalized["version"] = SAVE_SCHEMA_VERSION
 	normalized["saved_at_text"] = str(raw_data.get("saved_at_text", normalized.get("saved_at_text", "")))
 	normalized["money"] = maxi(int(raw_data.get("money", DEFAULT_MONEY)), 0)
+	normalized["stash_money"] = maxi(int(raw_data.get("stash_money", DEFAULT_STASH_MONEY)), 0)
 
 	var stash_value: Variant = raw_data.get("stash", [])
 	if typeof(stash_value) == TYPE_ARRAY:
-		normalized["stash"] = (stash_value as Array).duplicate(true)
+		normalized["stash"] = _normalize_stack_array(stash_value as Array)
 
 	var equipment_value: Variant = raw_data.get("equipment", {})
 	if typeof(equipment_value) == TYPE_DICTIONARY:
@@ -264,7 +278,7 @@ func _normalize_save_data(raw_data: Dictionary) -> Dictionary:
 func _normalize_needed_item_marks(raw_marks: Dictionary) -> Dictionary:
 	var marks: Dictionary = {}
 	for item_path in raw_marks.keys():
-		var path := str(item_path).strip_edges()
+		var path := ItemStackSaveCodecScript.normalize_item_path(str(item_path).strip_edges())
 		if path != "" and bool(raw_marks.get(item_path, false)):
 			marks[path] = true
 	return marks
@@ -274,7 +288,7 @@ func _normalize_selected_recipe_ids(raw_selection: Dictionary) -> Dictionary:
 	var selection: Dictionary = {}
 	for station_id in raw_selection.keys():
 		var station := str(station_id).strip_edges()
-		var recipe_id := str(raw_selection.get(station_id, "")).strip_edges()
+		var recipe_id := _normalize_save_id(str(raw_selection.get(station_id, "")).strip_edges())
 		if station != "" and recipe_id != "":
 			selection[station] = recipe_id
 	return selection
@@ -284,7 +298,7 @@ func _normalize_selected_repair_ids(raw_selection: Dictionary) -> Dictionary:
 	var selection: Dictionary = {}
 	for station_id in raw_selection.keys():
 		var station := str(station_id).strip_edges()
-		var repair_id := str(raw_selection.get(station_id, "")).strip_edges()
+		var repair_id := _normalize_save_id(str(raw_selection.get(station_id, "")).strip_edges())
 		if station != "" and repair_id != "":
 			selection[station] = repair_id
 	return selection
@@ -294,7 +308,7 @@ func _normalize_selected_dismantle_ids(raw_selection: Dictionary) -> Dictionary:
 	var selection: Dictionary = {}
 	for station_id in raw_selection.keys():
 		var station := str(station_id).strip_edges()
-		var dismantle_id := str(raw_selection.get(station_id, "")).strip_edges()
+		var dismantle_id := _normalize_save_id(str(raw_selection.get(station_id, "")).strip_edges())
 		if station != "" and dismantle_id != "":
 			selection[station] = dismantle_id
 	return selection
@@ -303,7 +317,7 @@ func _normalize_selected_dismantle_ids(raw_selection: Dictionary) -> Dictionary:
 func _normalize_researched_blueprints(raw_blueprints: Dictionary) -> Dictionary:
 	var blueprints: Dictionary = {}
 	for item_path in raw_blueprints.keys():
-		var path := str(item_path).strip_edges()
+		var path := ItemStackSaveCodecScript.normalize_item_path(str(item_path).strip_edges())
 		if path != "" and bool(raw_blueprints.get(item_path, false)):
 			blueprints[path] = true
 	return blueprints
@@ -313,7 +327,42 @@ func _normalize_equipment_data(raw_equipment: Dictionary) -> Dictionary:
 	var slots_value: Variant = raw_equipment.get("slots", {})
 	if typeof(slots_value) != TYPE_DICTIONARY:
 		return {"slots": {}}
-	return {"slots": (slots_value as Dictionary).duplicate(true)}
+	var slots: Dictionary = {}
+	for slot_id in (slots_value as Dictionary).keys():
+		var value: Variant = (slots_value as Dictionary).get(slot_id, {})
+		if typeof(value) == TYPE_DICTIONARY:
+			slots[slot_id] = _normalize_stack_dictionary(value as Dictionary)
+	return {"slots": slots}
+
+
+func _normalize_stack_array(raw_stacks: Array) -> Array:
+	var stacks: Array = []
+	for value in raw_stacks:
+		if typeof(value) == TYPE_DICTIONARY:
+			var stack := _normalize_stack_dictionary(value as Dictionary)
+			if not stack.is_empty():
+				stacks.append(stack)
+	return stacks
+
+
+func _normalize_stack_dictionary(raw_stack: Dictionary) -> Dictionary:
+	var stack := raw_stack.duplicate(true)
+	for key in ["item_path", "resource_path"]:
+		if stack.has(key):
+			stack[key] = ItemStackSaveCodecScript.normalize_item_path(str(stack.get(key, "")))
+	if typeof(stack.get("weapon_mods", null)) == TYPE_DICTIONARY:
+		var normalized_mods: Dictionary = {}
+		var raw_mods := stack.get("weapon_mods", {}) as Dictionary
+		for slot_id in raw_mods.keys():
+			var mod_value: Variant = raw_mods.get(slot_id, {})
+			if typeof(mod_value) == TYPE_DICTIONARY:
+				normalized_mods[slot_id] = _normalize_stack_dictionary(mod_value as Dictionary)
+		stack["weapon_mods"] = normalized_mods
+	return stack
+
+
+func _normalize_save_id(value: String) -> String:
+	return str(SAVE_ID_ALIASES.get(value, value))
 
 
 func _normalize_quest_states(raw_quests: Dictionary) -> Dictionary:

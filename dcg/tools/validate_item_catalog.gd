@@ -91,20 +91,14 @@ func _validate_item_fields() -> void:
 			_errors.append("Armor item is missing durability at %s" % path)
 		if item.max_durability > 0 and item.repair_max_durability_loss <= 0:
 			_errors.append("Repairable item is missing max durability repair wear at %s" % path)
-		if item.item_type == "ammo" and item.weapon_wear_rate <= 0.0:
-			_errors.append("Ammo item is missing positive weapon wear rate at %s" % path)
-		if item.item_type == "ammo" and item.ammo_spread_multiplier <= 0.0:
-			_errors.append("Ammo item is missing positive spread multiplier at %s" % path)
-		if item.item_type == "ammo" and item.ammo_recoil_multiplier <= 0.0:
-			_errors.append("Ammo item is missing positive recoil multiplier at %s" % path)
 
 
 func _validate_v2_proof_items() -> void:
 	_validate_catalog_item(11, &"warehouse_key", "")
 	_validate_catalog_item(8, &"basic_helmet", "")
 	_validate_catalog_item(9, &"light_armor", "")
-	_validate_catalog_item(5, &"pistol_9mm", "手槍-S")
-	_validate_catalog_item(7, &"ammo_9mm", "彈藥-S")
+	_validate_catalog_item(5, &"pistol_S", "手槍-S")
+	_validate_catalog_item(7, &"ammo_S", "彈藥-S")
 
 
 	_validate_required_catalog_item(12, &"junk")
@@ -114,7 +108,7 @@ func _validate_v2_proof_items() -> void:
 	_validate_required_catalog_item(17, &"tactical_headset")
 	_validate_required_catalog_item(18, &"tactical_glasses")
 	_validate_required_catalog_item(19, &"defense_totem")
-	_validate_required_catalog_item(20, &"smg_9mm")
+	_validate_required_catalog_item(20, &"smg_S")
 
 
 func _validate_catalog_item(number: int, expected_id: StringName, expected_display_name: String) -> void:

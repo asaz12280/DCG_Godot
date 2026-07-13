@@ -1,5 +1,6 @@
-﻿extends Node
+extends Node
 
+const SoundManagerBridgeScript := preload("res://scripts/audio/sound_manager_bridge.gd")
 const CONFIG_PATH := "user://game_settings.cfg"
 const DISPLAY_MODE_FULLSCREEN := "fullscreen"
 const DISPLAY_MODE_WINDOWED := "windowed"
@@ -16,7 +17,7 @@ const BUS_BGM := "BGM"
 const BUS_SFX := "SFX"
 const DEFAULT_MASTER_VOLUME := 100
 const DEFAULT_BGM_VOLUME := 80
-const DEFAULT_SFX_VOLUME := 80
+const DEFAULT_SFX_VOLUME := 100
 const DEFAULT_DIFFICULTY_ID := "normal"
 
 signal settings_changed
@@ -28,6 +29,7 @@ var master_volume := DEFAULT_MASTER_VOLUME
 var bgm_volume := DEFAULT_BGM_VOLUME
 var sfx_volume := DEFAULT_SFX_VOLUME
 var difficulty_id := DEFAULT_DIFFICULTY_ID
+var _sound_manager_state: Dictionary = {}
 
 
 func _ready() -> void:
@@ -135,8 +137,13 @@ func get_display_debug_state() -> Dictionary:
 		"master_volume": master_volume,
 		"bgm_volume": bgm_volume,
 		"sfx_volume": sfx_volume,
+		"sound_manager": get_audio_integration_state(),
 		"difficulty_id": difficulty_id,
 	}
+
+
+func get_audio_integration_state() -> Dictionary:
+	return _sound_manager_state.duplicate(true)
 
 
 func load_settings() -> void:
@@ -233,6 +240,12 @@ func _apply_audio() -> void:
 	_apply_bus_volume(BUS_MASTER, master_volume)
 	_apply_bus_volume(BUS_BGM, bgm_volume)
 	_apply_bus_volume(BUS_SFX, sfx_volume)
+	_sound_manager_state = SoundManagerBridgeScript.sync_from_game_settings(
+		self,
+		master_volume,
+		bgm_volume,
+		sfx_volume
+	)
 
 
 func _ensure_audio_bus(bus_name: String) -> void:

@@ -12,9 +12,6 @@ output_item_path = "res://data/items/attachments/extended_magazine.tres"
 output_quantity = 1
 ingredient_costs = Array[Dictionary]([{
 "item_path": "res://data/items/loot/junk.tres",
-"quantity": 4
-}, {
-"item_path": "res://data/items/electronics/wire.tres",
-"quantity": 2
+"quantity": 6
 }])
 required_upgrade_id = &"workbench_level_1"

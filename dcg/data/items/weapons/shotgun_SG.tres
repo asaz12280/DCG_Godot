@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3 uid="uid://b4lq43j4b0bk6"]
+
+[ext_resource type="Script" uid="uid://d6qdpjmffd4i" path="res://scripts/items/item_def.gd" id="1_item_def"]
+[ext_resource type="Script" uid="uid://buigy86w6amjr" path="res://scripts/items/weapon_profile.gd" id="2_weapon_profile"]
+[ext_resource type="Resource" path="res://data/audio/weapons/pistol_shot_audio_profile.tres" id="3_shot_audio_profile"]
+[ext_resource type="Resource" path="res://data/vfx/weapons/pistol_vfx_profile.tres" id="4_vfx_profile"]
+
+[sub_resource type="Resource" id="Resource_weapon_profile_shotgun_SG"]
+script = ExtResource("2_weapon_profile")
+shot_audio_profile = ExtResource("3_shot_audio_profile")
+vfx_profile = ExtResource("4_vfx_profile")
+damage = 9
+fire_rate_per_second = 1.1
+projectiles_per_shot = 5
+projectile_spread_degrees = 40.0
+armor_penetration_level = 0.5
+critical_chance = 5.0
+projectile_pierce_chance = 2.0
+magazine_capacity = 5
+reload_duration_seconds = 1.8
+projectile_range = 400.0
+durability_wear_per_shot = 0.5
+max_durability = 110
+repair_max_durability_loss = 6
+vertical_recoil = 4.0
+horizontal_recoil = 10.0
+compatible_ammo_tags = Array[StringName]([&"SG"])
+attachment_slots = Array[StringName]([&"magazine", &"muzzle", &"scope", &"stock"])
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"shotgun_SG"
+catalog_number = 21
+display_name = "Shotgun-SG"
+name_key = &"item.shotgun_SG.name"
+description_key = &"item.shotgun_SG.desc"
+item_type = "weapon"
+weight = 3.6
+value = 460
+damage = 9
+fire_rate_per_second = 1.1
+projectiles_per_shot = 5
+projectile_spread_degrees = 40.0
+weapon_armor_penetration_level = 0.5
+critical_chance = 5.0
+projectile_pierce_chance = 2.0
+magazine_capacity = 5
+reload_duration_seconds = 1.8
+projectile_range = 400.0
+weapon_durability_wear_per_shot = 0.5
+weapon_vertical_recoil = 4.0
+weapon_horizontal_recoil = 30.0
+max_durability = 110
+repair_max_durability_loss = 6
+compatible_ammo_tags = Array[StringName]([&"SG"])
+weapon_attachment_slots = Array[StringName]([&"magazine", &"muzzle", &"scope", &"stock"])
+weapon_profile = SubResource("Resource_weapon_profile_shotgun_SG")
+tags = Array[StringName]([&"gun", &"shotgun", &"SG"])

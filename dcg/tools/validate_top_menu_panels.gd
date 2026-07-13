@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 
 const LocalizationBootstrapScript := preload("res://scripts/localization/localization_bootstrap.gd")
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
@@ -8,9 +8,11 @@ const StatusTopMenuScene := preload("res://scenes/ui/status_top_menu_panel.tscn"
 const StatusTopMenuScript := preload("res://scripts/ui/status_top_menu_panel.gd")
 const MapTopMenuScene := preload("res://scenes/ui/map_top_menu_panel.tscn")
 const MapTopMenuScript := preload("res://scripts/ui/map_top_menu_panel.gd")
-const PistolItem := preload("res://data/items/weapons/pistol_9mm.tres")
-const AmmoItem := preload("res://data/items/ammo/ammo_9mm.tres")
+const PistolItem := preload("res://data/items/weapons/pistol_S.tres")
+const AmmoItem := preload("res://data/items/ammo/ammo_S.tres")
 const QuestStateScript := preload("res://scripts/quests/quest_state.gd")
+const BaseQuestBoardProfile := preload("res://data/quests/givers/base_quest_board.tres")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 const VALIDATION_SAVE_ROOT := "user://validation_top_menu_panels"
 var _errors: Array[String] = []
@@ -35,6 +37,7 @@ func _initialize() -> void:
 	await _validate_quest_panel_english_locale(localization)
 	await _validate_status_panel_layout()
 	await _validate_map_panel_layout()
+	await _validate_top_menu_title_alignment()
 	_validate_node_first_structure()
 	_validate_source_boundaries()
 	_restore_save_manager(save_manager)
@@ -78,10 +81,14 @@ func _validate_quest_tab_opens_panel() -> void:
 	if str(top_menu.call("get_selected_item_id")) != "quests":
 		_errors.append("TopMenuBar should select the quest icon when the quest panel is open.")
 	_require_terms(str(state.get("title", "")), ["任務"], "Quest panel title should be Traditional Chinese.")
-	_validate_quest_board_state(state)
-	_validate_fresh_quest_action(state)
+	_validate_global_quest_board_state(state)
 	_validate_empty_quest_tabs_are_selectable(quest_panel)
-	if quest_panel.has_method("request_selected_action"):
+	if ui_manager.has_method("open_quests_for_giver") and quest_panel.has_method("request_selected_action"):
+		ui_manager.call("open_quests_for_giver", BaseQuestBoardProfile)
+		await process_frame
+		state = quest_panel.call("get_display_state")
+		_validate_quest_board_state(state)
+		_validate_fresh_quest_action(state)
 		quest_panel.call("request_selected_action")
 		await process_frame
 		_validate_accepted_first_quest(root.get_node_or_null("SaveGameManager"), quest_panel)
@@ -133,6 +140,7 @@ func _validate_status_tab_opens_panel() -> void:
 	if str(top_menu.call("get_selected_item_id")) != "status":
 		_errors.append("TopMenuBar should select the status icon when the status panel is open.")
 	_validate_status_summary(state)
+	_validate_status_weight_includes_equipment(state, player)
 
 	ui_manager.call("open_ui", &"quests")
 	await process_frame
@@ -194,6 +202,8 @@ func _validate_quest_panel_layout() -> void:
 	_force_validation_locale()
 	panel.call("open_quests")
 	await process_frame
+	_validate_top_menu_panel_surface(panel, "Quest")
+	_validate_quest_tab_body_alignment(panel)
 	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
 		var rect: Rect2 = panel.call("preview_layout", viewport_size)
 		if rect.position.y < 70.0:
@@ -205,8 +215,30 @@ func _validate_quest_panel_layout() -> void:
 		if rect.size.y > viewport_size.y * 0.72:
 			_errors.append("Quest top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
-		_validate_quest_board_state(state)
+		_validate_global_quest_board_state(state)
 	_free_node(panel)
+
+
+func _validate_quest_tab_body_alignment(panel: Control) -> void:
+	var available_tab := panel.find_child("AvailableTabButton", true, false) as Control
+	var active_tab := panel.find_child("ActiveTabButton", true, false) as Control
+	var completed_tab := panel.find_child("CompletedTabButton", true, false) as Control
+	var quest_list_panel := panel.find_child("QuestListPanel", true, false) as Control
+	var detail_panel := panel.find_child("DetailPanel", true, false) as Control
+	if available_tab == null or active_tab == null or completed_tab == null or quest_list_panel == null or detail_panel == null:
+		_errors.append("Quest panel should expose tabs and body columns for alignment validation.")
+		return
+	var available_rect := available_tab.get_global_rect()
+	var active_rect := active_tab.get_global_rect()
+	var completed_rect := completed_tab.get_global_rect()
+	var list_rect := quest_list_panel.get_global_rect()
+	var detail_rect := detail_panel.get_global_rect()
+	if absf(list_rect.position.x - available_rect.position.x) > 1.0 or absf(list_rect.size.x - available_rect.size.x) > 1.0:
+		_errors.append("Quest list column should align with the Available tab column.")
+	if absf(detail_rect.position.x - active_rect.position.x) > 1.0 or absf(detail_rect.end.x - completed_rect.end.x) > 1.0:
+		_errors.append("Quest detail column should align with the Active and Completed tab span.")
+	if absf(list_rect.position.y - detail_rect.position.y) > 1.0:
+		_errors.append("Quest list and detail panels should share one content top edge.")
 
 
 func _validate_status_panel_layout() -> void:
@@ -216,16 +248,17 @@ func _validate_status_panel_layout() -> void:
 	_force_validation_locale()
 	panel.call("open_status")
 	await process_frame
+	_validate_top_menu_panel_surface(panel, "Status")
 	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
 		var rect: Rect2 = panel.call("preview_layout", viewport_size)
 		if rect.position.y < 70.0:
 			_errors.append("Status top-menu panel should sit below the icon bar at %s." % viewport_size)
 		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
 			_errors.append("Status top-menu panel should fit inside viewport at %s." % viewport_size)
-		if rect.size.x > viewport_size.x * 0.55:
+		if rect.size.x > viewport_size.x * 0.84:
 			_errors.append("Status top-menu panel should not cover too much horizontal gameplay view at %s." % viewport_size)
-		if rect.size.y > viewport_size.y * 0.50:
-			_errors.append("Status top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
+		if rect.size.y > viewport_size.y * 0.76:
+			_errors.append("Status top-menu panel should stay above the quick-slot area at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 		if str(state.get("title", "")).strip_edges() == "":
 			_errors.append("Status panel title should not be empty.")
@@ -239,20 +272,85 @@ func _validate_map_panel_layout() -> void:
 	_force_validation_locale()
 	panel.call("open_map")
 	await process_frame
+	_validate_top_menu_panel_surface(panel, "Map")
 	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
 		var rect: Rect2 = panel.call("preview_layout", viewport_size)
 		if rect.position.y < 70.0:
 			_errors.append("Map top-menu panel should sit below the icon bar at %s." % viewport_size)
 		if rect.end.x > viewport_size.x or rect.end.y > viewport_size.y:
 			_errors.append("Map top-menu panel should fit inside viewport at %s." % viewport_size)
-		if rect.size.x > viewport_size.x * 0.55:
+		if rect.size.x > viewport_size.x * 0.84:
 			_errors.append("Map top-menu panel should not cover too much horizontal gameplay view at %s." % viewport_size)
-		if rect.size.y > viewport_size.y * 0.50:
+		if rect.size.y > viewport_size.y * 0.72:
 			_errors.append("Map top-menu panel should not cover too much vertical gameplay view at %s." % viewport_size)
 		var state: Dictionary = panel.call("get_display_state_for_viewport", viewport_size)
 		if str(state.get("title", "")).strip_edges() == "":
 			_errors.append("Map panel title should not be empty.")
 	_free_node(panel)
+
+
+func _validate_top_menu_title_alignment() -> void:
+	var scene := GameplayScene.instantiate()
+	root.add_child(scene)
+	await process_frame
+	await process_frame
+	_force_validation_locale()
+	var quest_panel := scene.get_node_or_null("HUD/QuestTopMenuPanel")
+	var status_panel := scene.get_node_or_null("HUD/StatusTopMenuPanel")
+	var map_panel := scene.get_node_or_null("HUD/MapTopMenuPanel")
+	var codex_panel := scene.get_node_or_null("HUD/ItemCodexUI")
+	if quest_panel == null or status_panel == null or map_panel == null or codex_panel == null:
+		_errors.append("Gameplay HUD should expose quest, status, map, and item codex panels for title alignment.")
+		_free_node(scene)
+		return
+	quest_panel.call("open_quests")
+	status_panel.call("open_status")
+	map_panel.call("open_map")
+	codex_panel.call("open_codex")
+	await process_frame
+	for viewport_size in [Vector2(1280.0, 720.0), Vector2(1920.0, 1080.0)]:
+		var states := [
+			{"label": "Quest", "state": quest_panel.call("get_display_state_for_viewport", viewport_size)},
+			{"label": "Status", "state": status_panel.call("get_display_state_for_viewport", viewport_size)},
+			{"label": "Map", "state": map_panel.call("get_display_state_for_viewport", viewport_size)},
+			{"label": "Item codex", "state": codex_panel.call("get_display_state_for_viewport", viewport_size)},
+		]
+		var expected := _title_origin_for_state(states[0], viewport_size)
+		if expected.x < -900000.0:
+			continue
+		for index in range(1, states.size()):
+			var actual := _title_origin_for_state(states[index], viewport_size)
+			if actual.x < -900000.0:
+				continue
+			if expected.distance_to(actual) > 1.0:
+				_errors.append("%s top-menu title should align with Quest at %s. Expected %s, got %s." % [states[index].get("label", "Panel"), viewport_size, expected, actual])
+	_free_node(scene)
+
+
+func _title_origin_for_state(entry: Dictionary, viewport_size: Vector2) -> Vector2:
+	var state: Dictionary = entry.get("state", {}) as Dictionary
+	var label := str(entry.get("label", "Panel"))
+	var value = state.get("title_origin", null)
+	if typeof(value) != TYPE_VECTOR2:
+		_errors.append("%s state should expose title_origin at %s." % [label, viewport_size])
+		return Vector2(-999999.0, -999999.0)
+	return value
+
+
+func _validate_top_menu_panel_surface(panel: Control, label: String) -> void:
+	var design_size: Vector2 = panel.get("design_panel_size")
+	if design_size != UISurfacePaletteScript.SIZE_TOP_MENU_PANEL:
+		_errors.append("%s top-menu panel should reuse the item codex top-menu backing size." % label)
+	var main_panel := panel.get_node_or_null("MainPanel") as PanelContainer
+	if main_panel == null:
+		_errors.append("%s top-menu panel should expose MainPanel for shared surface styling." % label)
+		return
+	var style := main_panel.get_theme_stylebox("panel") as StyleBoxFlat
+	if style == null:
+		_errors.append("%s top-menu panel should use a StyleBoxFlat panel surface." % label)
+		return
+	if style.corner_radius_top_left != UISurfacePaletteScript.RADIUS_TOP_MENU_PANEL:
+		_errors.append("%s top-menu panel should reuse the item codex backing corner radius." % label)
 
 
 func _validate_node_first_structure() -> void:
@@ -364,6 +462,17 @@ func _validate_source_boundaries() -> void:
 			_errors.append("MapTopMenuPanel should be display-only and not mutate flow/gameplay state: %s." % forbidden)
 
 
+func _validate_global_quest_board_state(state: Dictionary) -> void:
+	if str(state.get("quest_giver_id", "")) != "":
+		_errors.append("Generic top-menu quest panel should not keep an NPC quest giver profile.")
+	if int(state.get("available_count", 0)) != 0:
+		_errors.append("Generic top-menu quest panel should not expose new quests without an NPC/station profile.")
+	if bool(state.get("action_enabled", false)):
+		_errors.append("Generic top-menu quest panel should be read-only for quest actions.")
+	if str(state.get("active_category", "")) == "":
+		_errors.append("Quest board should track the selected category.")
+
+
 func _validate_quest_board_state(state: Dictionary) -> void:
 	var all_quests: Array = state.get("all_quests", []) as Array
 	if all_quests.size() < 3:
@@ -435,7 +544,7 @@ func _validate_quest_panel_english_locale(localization: Node) -> void:
 			]
 	if _contains_cjk(text):
 		_errors.append("English quest panel should not show Chinese quest text: %s" % text)
-	for required in ["Quest List", "First Salvage", "First Scavenger Hunt", "Radio Tower Scout", "Not accepted", "Accept Quest"]:
+	for required in ["Quest List", "No quests in this category", "Switch categories or return to base"]:
 		if not text.contains(required):
 			_errors.append("English quest panel should include `%s` in `%s`." % [required, text])
 	quest_panel.call("select_category", "completed")
@@ -555,6 +664,14 @@ func _validate_status_summary(state: Dictionary) -> void:
 	_require_terms(str(state.get("health", "")), ["生命"], "Status panel should show health.")
 	_require_terms(str(state.get("stamina", "")), ["體力"], "Status panel should show stamina.")
 	_require_terms(str(state.get("weight", "")), ["負重"], "Status panel should show carry weight.")
+	if bool(state.get("weight_bar_visible", false)):
+		_errors.append("Status panel should not show carry weight as a progress bar.")
+	var weight_ratio := float(state.get("weight_ratio", -1.0))
+	if weight_ratio < 0.0 or weight_ratio > 1.0:
+		_errors.append("Status panel weight progress ratio should stay within 0..1.")
+	var weight_value := str(state.get("weight_value", "")).strip_edges()
+	if weight_value == "" or not str(state.get("weight", "")).contains(weight_value):
+		_errors.append("Status panel weight should show the numeric value inline with the label.")
 	_require_terms(str(state.get("weapon_ammo", "")), ["武器", "彈藥", "手槍-S"], "Status panel should show weapon ammo from WeaponController.")
 	_require_terms(str(state.get("equipment", "")), ["手槍-S"], "Status panel should show equipment from EquipmentModel.")
 	var text := "%s\n%s\n%s\n%s\n%s\n%s" % [
@@ -568,6 +685,20 @@ func _validate_status_summary(state: Dictionary) -> void:
 	for token in ["Character Status", "Health", "Stamina", "Equipment", "Weapon ammo"]:
 		if text.contains(token) or str(state.get("weapon_ammo", "")).contains(token):
 			_errors.append("Status top-menu panel should not show English fallback text.")
+
+
+func _validate_status_weight_includes_equipment(state: Dictionary, player: Node) -> void:
+	if player == null or not player.has_method("get_current_carry_weight"):
+		_errors.append("Status weight validation requires PlayerController3D.get_current_carry_weight().")
+		return
+	var expected_weight := float(player.call("get_current_carry_weight"))
+	var shown_weight := float((state.get("summary", {}) as Dictionary).get("current_weight", -1.0))
+	if not is_equal_approx(shown_weight, expected_weight):
+		_errors.append("Status panel weight should use player total carry weight including equipped gear.")
+	if player.has_method("get_inventory_model"):
+		var backpack: RefCounted = player.call("get_inventory_model")
+		if backpack != null and backpack.has_method("get_total_weight") and expected_weight <= float(backpack.call("get_total_weight")):
+			_errors.append("Status panel sample should include equipped item weight above backpack-only weight.")
 
 
 func _validate_map_summary(state: Dictionary) -> void:

@@ -9,6 +9,7 @@ const UILayout := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
 const InventoryItemResolverScript := preload("res://scripts/ui/inventory_item_resolver.gd")
 const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_tooltip_presenter.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 @onready var main_panel: PanelContainer = %MainPanel
 @onready var title_label: Label = %TitleLabel
@@ -22,7 +23,7 @@ const ItemStackTooltipPresenterScript := preload("res://scripts/ui/item_stack_to
 
 var container_model: RefCounted = null
 var container_display_name := "物資箱"
-var slot_button_size := Vector2(96.0, 74.0)
+var slot_button_size := UISurfacePaletteScript.CONTAINER_SLOT_SIZE
 var status_message := "點擊物品移入背包。"
 
 var _item_resolver := InventoryItemResolverScript.new()
@@ -104,7 +105,7 @@ func set_status_message(message: String) -> void:
 
 
 func preview_layout(viewport_size: Vector2) -> Rect2:
-	var rect := UILayout.centered_top_rect(viewport_size, Vector2(480.0, 250.0), 92.0, 1.0, 1.0)
+	var rect := UILayout.centered_top_rect(viewport_size, UISurfacePaletteScript.SIZE_CONTAINER_PANEL, 92.0, 1.0, 1.0)
 	main_panel.anchor_left = 0.0
 	main_panel.anchor_top = 0.0
 	main_panel.anchor_right = 0.0
@@ -113,9 +114,9 @@ func preview_layout(viewport_size: Vector2) -> Rect2:
 	main_panel.offset_top = rect.position.y
 	main_panel.offset_right = rect.position.x + rect.size.x
 	main_panel.offset_bottom = rect.position.y + rect.size.y
-	slot_grid.columns = 4
-	var scale := rect.size.x / 480.0
-	slot_button_size = Vector2(96.0, 74.0) * scale
+	slot_grid.columns = UISurfacePaletteScript.CONTAINER_GRID_COLUMNS
+	var scale := rect.size.x / UISurfacePaletteScript.SIZE_CONTAINER_PANEL.x
+	slot_button_size = UISurfacePaletteScript.CONTAINER_SLOT_SIZE * scale
 	return rect
 
 
@@ -147,6 +148,12 @@ func _make_slot_button(index: int, stack: Dictionary) -> Button:
 		slot_pressed.emit(index, stack.duplicate(true))
 	)
 	UIStyle.apply_font_size(button, UIStyle.FONT_HELP)
+	button.add_theme_stylebox_override("normal", UIStyle.make_inner_panel_style())
+	button.add_theme_stylebox_override("hover", UIStyle.make_button_style(&"hover"))
+	button.add_theme_stylebox_override("pressed", UIStyle.make_button_style())
+	button.add_theme_color_override("font_color", UIStyle.COLOR_TEXT_PRIMARY)
+	button.add_theme_color_override("font_hover_color", UIStyle.COLOR_TEXT_PRIMARY)
+	button.add_theme_color_override("font_pressed_color", UIStyle.COLOR_TEXT_PRIMARY)
 	return button
 
 

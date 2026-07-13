@@ -69,7 +69,7 @@ static func equipment_weight(player: Node) -> float:
 		if typeof(stack_value) != TYPE_DICTIONARY:
 			continue
 		var equipment_stack: Dictionary = stack_value as Dictionary
-		total += stack_weight_with_weapon_mods(equipment_stack)
+		total += weapon_stack_total_weight(equipment_stack)
 	return total
 
 
@@ -82,6 +82,24 @@ static func stack_weight_with_weapon_mods(stack: Dictionary) -> float:
 		var mod_stack: Dictionary = mod_stack_value as Dictionary
 		total += float(mod_stack.get("weight", 0.0)) * float(mod_stack.get("quantity", 1))
 	return total
+
+
+static func weapon_total_weight(stack: Dictionary, ammo_item: ItemDef, loaded_ammo: int) -> float:
+	var total := stack_weight_with_weapon_mods(stack)
+	if ammo_item != null:
+		total += float(ammo_item.weight) * float(maxi(loaded_ammo, 0))
+	return total
+
+
+static func weapon_stack_total_weight(stack: Dictionary) -> float:
+	var ammo_state: Dictionary = stack.get("weapon_ammo_state", {}) as Dictionary
+	var ammo_item: ItemDef = null
+	var ammo_path := str(ammo_state.get("ammo_item_path", "")).strip_edges()
+	if ammo_path != "" and ResourceLoader.exists(ammo_path):
+		var loaded_item := load(ammo_path) as ItemDef
+		if loaded_item != null and loaded_item.item_type == "ammo":
+			ammo_item = loaded_item
+	return weapon_total_weight(stack, ammo_item, int(ammo_state.get("loaded_ammo", 0)))
 
 
 static func _has_saved_equipment(equipment_data: Variant) -> bool:

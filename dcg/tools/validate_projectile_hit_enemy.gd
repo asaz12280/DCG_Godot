@@ -1,8 +1,8 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 var _hit_count := 0
@@ -90,6 +90,8 @@ func _validate_equipped_pistol_projectile_kills_enemy() -> void:
 	if _hit_count < 2:
 		_errors.append("WeaponController3D should emit hit for projectile hits against the enemy.")
 
+	await create_timer(0.7).timeout
+	await process_frame
 	_free_node(scene)
 
 
@@ -113,9 +115,12 @@ func _wait_for_projectile_resolution(enemy: Node) -> void:
 
 func _validate_source_boundaries() -> void:
 	var weapon_source := FileAccess.get_file_as_string("res://scripts/combat/weapon_controller_3d.gd")
-	for required in ["projectile_scene", "_spawn_projectile", "_on_projectile_hit", "shot_feedback_scene"]:
+	for required in ["projectile_scene", "_spawn_projectile", "_on_projectile_hit"]:
 		if not weapon_source.contains(required):
-			_errors.append("WeaponController3D should keep projectile/fire VFX term: %s." % required)
+			_errors.append("WeaponController3D should keep projectile hit term: %s." % required)
+	for required in ["combat_vfx_spawner_path", "_play_firearm_vfx"]:
+		if not weapon_source.contains(required):
+			_errors.append("WeaponController3D should request profile-bound firearm VFX through %s." % required)
 	for forbidden in ["InventoryEquipmentUI", "ContainerInventoryUI", "Quest", "SaveGame"]:
 		if weapon_source.contains(forbidden):
 			_errors.append("WeaponController3D should not depend on unrelated systems for projectile hits: %s." % forbidden)

@@ -12,13 +12,11 @@ var _required_files := PackedStringArray([
 	"res://scripts/combat/weapon_controller_3d.gd",
 	"res://scripts/combat/weapon_ammo_model.gd",
 	"res://scripts/combat/projectile_3d.gd",
-	"res://scripts/combat/projectile_hit_feedback_3d.gd",
 	"res://scripts/loot/loot_container_3d.gd",
 	"res://scripts/inventory/container_inventory_model.gd",
 	"res://scripts/equipment/equipment_model.gd",
 	"res://scripts/raid/raid_loadout_transfer.gd",
 	"res://scenes/combat/projectile_3d.tscn",
-	"res://scenes/combat/projectile_hit_feedback_3d.tscn",
 	"res://scenes/ui/container_inventory_ui.tscn",
 	"res://tools/validate_container_open_flow.gd",
 	"res://tools/validate_equipment_model.gd",
@@ -57,8 +55,8 @@ var _required_files := PackedStringArray([
 	"res://scripts/player/player_controller_3d.gd",
 	"res://scenes/base/base_3d.tscn",
 	"res://scenes/player/player_3d.tscn",
-	"res://data/items/weapons/pistol_9mm.tres",
-	"res://data/items/ammo/ammo_9mm.tres",
+	"res://data/items/weapons/pistol_S.tres",
+	"res://data/items/ammo/ammo_S.tres",
 	"res://tools/validate_raid_briefing_ui.gd",
 	"res://tools/validate_top_menu_map_panel.gd",
 	"res://tools/validate_raid_hud.gd",
@@ -72,7 +70,6 @@ var _required_files := PackedStringArray([
 	"res://tools/validate_three_raid_loop_0_2.gd",
 	"res://tools/validate_enemy_attack_player.gd",
 	"res://tools/validate_projectile_hit_enemy.gd",
-	"res://tools/validate_pistol_fire_vfx.gd",
 ])
 
 var _audit_required_terms := PackedStringArray([
@@ -199,7 +196,7 @@ func _validate_equipment_independence() -> void:
 
 func _validate_known_current_risks_are_visible() -> void:
 	var player_scene_text := _read_text("res://scenes/player/player_3d.tscn")
-	if player_scene_text.contains("weapon_def = ExtResource(\"3_pistol\")") or player_scene_text.contains("data/items/weapons/pistol_9mm.tres"):
+	if player_scene_text.contains("weapon_def = ExtResource(\"3_pistol\")") or player_scene_text.contains("data/items/weapons/pistol_S.tres"):
 		_errors.append("Player scene should not hardwire No.5 pistol after V2 task thirteen.")
 
 	var player_text := _read_text("res://scripts/player/player_controller_3d.gd")
@@ -420,8 +417,6 @@ func _validate_health_g_enemy_first_0_2_boundaries() -> void:
 		"KEY_TAB",
 		"KEY_ESCAPE",
 		"ProjectileScript",
-		"ShotFeedbackScript",
-		"HitFeedbackScript",
 		"KILL_QUEST_ID",
 		"VALIDATION_SAVE_ROOT",
 	]):

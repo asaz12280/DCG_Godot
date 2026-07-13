@@ -4,11 +4,13 @@ extends Control
 const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
 const UILayoutScript := preload("res://scripts/ui/ui_layout.gd")
 const UITextScript := preload("res://scripts/ui/ui_text.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
-@export var design_panel_size := Vector2(760.0, 420.0)
-@export var design_top_margin := 126.0
+@export var design_panel_size := UISurfacePaletteScript.SIZE_STATUS_PANEL
+@export var design_top_margin := UISurfacePaletteScript.TOP_MENU_PANEL_TOP_MARGIN
 
 @onready var main_panel: PanelContainer = %MainPanel
+@onready var panel_margin: MarginContainer = $MainPanel/PanelMargin
 @onready var title_label: Label = %TitleLabel
 @onready var hint_label: Label = %HintLabel
 @onready var health_label: Label = %HealthLabel
@@ -25,6 +27,7 @@ var _status_summary := {}
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_remove_weight_progress_row()
 	_apply_styles()
 	_apply_responsive_layout()
 	if get_viewport() != null and not get_viewport().size_changed.is_connected(_apply_responsive_layout):
@@ -53,7 +56,7 @@ func refresh() -> void:
 	_status_summary = _build_status_summary()
 	health_label.text = "%s：%s" % [_text(&"ui.top.status_health", "生命"), str(_status_summary.get("health", "-- / --"))]
 	stamina_label.text = "%s：%s" % [_text(&"ui.top.status_stamina", "體力"), str(_status_summary.get("stamina", "-- / --"))]
-	weight_label.text = "%s：%s" % [_text(&"ui.top.status_weight", "負重"), str(_status_summary.get("weight", "-- / --"))]
+	_refresh_weight_row()
 	weapon_ammo_label.text = "%s：%s" % [_text(&"ui.top.status_weapon_ammo", "武器彈藥"), str(_status_summary.get("weapon_ammo", _none_text()))]
 	equipment_list_label.text = str(_status_summary.get("equipment", _none_text()))
 
@@ -73,10 +76,14 @@ func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
 		"health": health_label.text,
 		"stamina": stamina_label.text,
 		"weight": weight_label.text,
+		"weight_value": str(_status_summary.get("weight", "")),
+		"weight_ratio": float(_status_summary.get("weight_ratio", 0.0)),
+		"weight_bar_visible": false,
 		"weapon_ammo": weapon_ammo_label.text,
 		"equipment": equipment_list_label.text,
 		"summary": _status_summary.duplicate(true),
 		"panel_rect": rect,
+		"title_origin": _title_origin_for_viewport(viewport_size),
 		"mouse_filter": mouse_filter,
 	}
 
@@ -86,9 +93,9 @@ func preview_layout(viewport_size: Vector2) -> Rect2:
 
 
 func _apply_styles() -> void:
-	UIStyleScript.apply_overlay_panel_style(main_panel)
+	UIStyleScript.apply_top_menu_panel_style(main_panel)
 	for label in [title_label, equipment_title_label]:
-		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_BODY)
+		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PANEL_TITLE)
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_PRIMARY)
 	for label in [hint_label]:
 		UIStyleScript.apply_font_size(label, UIStyleScript.FONT_PLACEHOLDER)
@@ -98,18 +105,55 @@ func _apply_styles() -> void:
 		UIStyleScript.apply_font_color(label, UIStyleScript.COLOR_TEXT_STATUS)
 
 
+func _remove_weight_progress_row() -> void:
+	if weight_label == null or weight_label.get_parent() == null:
+		return
+	var rows := weight_label.get_parent()
+	var existing_row := rows.get_node_or_null("WeightRow") as HBoxContainer
+	if existing_row == null:
+		return
+	var old_index := existing_row.get_index()
+	if weight_label.get_parent() == existing_row:
+		existing_row.remove_child(weight_label)
+		rows.add_child(weight_label)
+		rows.move_child(weight_label, old_index)
+	weight_label.custom_minimum_size = Vector2.ZERO
+	weight_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	existing_row.queue_free()
+
+
+func _refresh_weight_row() -> void:
+	weight_label.text = _text(&"ui.top.status_weight", "負重")
+	weight_label.text = "%s：%s" % [
+		weight_label.text,
+		str(_status_summary.get("weight", "-- / --")),
+	]
+
+
 func _apply_responsive_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = Vector2(1920.0, 1080.0)
 	var rect := _layout_for_viewport(viewport_size)
+	UIStyleScript.apply_top_menu_panel_margins(panel_margin, _top_menu_scale(viewport_size))
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	position = rect.position
 	size = rect.size
 
 
 func _layout_for_viewport(viewport_size: Vector2) -> Rect2:
-	return UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, 0.68, 1.0)
+	var rect := UILayoutScript.centered_top_rect(viewport_size, design_panel_size, design_top_margin, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
+	rect.size.y = minf(rect.size.y, viewport_size.y * UISurfacePaletteScript.TOP_MENU_PANEL_MAX_VIEWPORT_HEIGHT_RATIO)
+	return rect
+
+
+func _title_origin_for_viewport(viewport_size: Vector2) -> Vector2:
+	var rect := _layout_for_viewport(viewport_size)
+	return rect.position + UISurfacePaletteScript.TOP_MENU_TITLE_ORIGIN * _top_menu_scale(viewport_size)
+
+
+func _top_menu_scale(viewport_size: Vector2) -> float:
+	return UILayoutScript.design_scale(viewport_size, UISurfacePaletteScript.TOP_MENU_PANEL_MIN_SCALE, 1.0)
 
 
 func _build_status_summary() -> Dictionary:
@@ -119,13 +163,20 @@ func _build_status_summary() -> Dictionary:
 			"health": "-- / --",
 			"stamina": "-- / --",
 			"weight": "-- / --",
+			"current_weight": 0.0,
+			"carry_weight_limit": 0.0,
+			"weight_ratio": 0.0,
 			"weapon_ammo": _none_text(),
 			"equipment": _none_text(),
 		}
+	var weight_state := _weight_state(player)
 	return {
 		"health": _health_text(player),
 		"stamina": _stamina_text(player),
-		"weight": _weight_text(player),
+		"weight": str(weight_state.get("text", "-- / --")),
+		"current_weight": float(weight_state.get("current", 0.0)),
+		"carry_weight_limit": float(weight_state.get("limit", 0.0)),
+		"weight_ratio": float(weight_state.get("ratio", 0.0)),
 		"weapon_ammo": _weapon_ammo_text(player),
 		"equipment": _equipment_text(player),
 	}
@@ -143,14 +194,21 @@ func _stamina_text(player: Node) -> String:
 	return "%d / %d" % [roundi(current), roundi(maximum)]
 
 
-func _weight_text(player: Node) -> String:
+func _weight_state(player: Node) -> Dictionary:
 	var current := 0.0
-	if player.has_method("get_inventory_model"):
+	if player.has_method("get_current_carry_weight"):
+		current = float(player.call("get_current_carry_weight"))
+	elif player.has_method("get_inventory_model"):
 		var backpack: RefCounted = player.call("get_inventory_model")
 		if backpack != null and backpack.has_method("get_total_weight"):
 			current = float(backpack.call("get_total_weight"))
 	var limit := float(player.call("get_total_carry_weight_limit")) if player.has_method("get_total_carry_weight_limit") else _node_number(player, "carry_weight_limit", 0.0)
-	return "%.1f / %.1fkg" % [current, limit]
+	return {
+		"text": "%.1f / %.1fkg" % [current, limit],
+		"current": current,
+		"limit": limit,
+		"ratio": 0.0 if limit <= 0.0 else clampf(current / limit, 0.0, 1.0),
+	}
 
 
 func _weapon_ammo_text(player: Node) -> String:

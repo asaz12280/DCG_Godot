@@ -22,27 +22,27 @@ static func radio_tower_scout_quest() -> Resource:
 	return QuestCatalogScript.radio_tower_scout_quest()
 
 
-static func selected_quest_def(save_data: Dictionary) -> Resource:
-	for quest_def in quest_defs():
+static func selected_quest_def(save_data: Dictionary, quest_giver_profile: Resource = null) -> Resource:
+	for quest_def in quest_defs(quest_giver_profile):
 		if str(quest_state(save_data, quest_def).get("state", "")) == QuestStateScript.STATE_READY:
 			return quest_def
-	for quest_def in quest_defs():
+	for quest_def in quest_defs(quest_giver_profile):
 		if str(quest_state(save_data, quest_def).get("state", "")) == QuestStateScript.STATE_ACTIVE:
 			return quest_def
 	return null
 
 
-static func next_available_quest_def(save_data: Dictionary) -> Resource:
-	for quest_def in quest_defs():
+static func next_available_quest_def(save_data: Dictionary, quest_giver_profile: Resource = null) -> Resource:
+	for quest_def in quest_defs(quest_giver_profile):
 		var state_name := str(quest_state(save_data, quest_def).get("state", ""))
 		if state_name == QuestStateScript.STATE_INACTIVE:
 			return quest_def
 	return null
 
 
-static func tracked_quest_defs(save_data: Dictionary) -> Array[Resource]:
+static func tracked_quest_defs(save_data: Dictionary, quest_giver_profile: Resource = null) -> Array[Resource]:
 	var result: Array[Resource] = []
-	for quest_def in quest_defs():
+	for quest_def in quest_defs(quest_giver_profile):
 		var state_name := str(quest_state(save_data, quest_def).get("state", ""))
 		if state_name == QuestStateScript.STATE_ACTIVE or state_name == QuestStateScript.STATE_READY or state_name == QuestStateScript.STATE_COMPLETED:
 			result.append(quest_def)
@@ -179,8 +179,17 @@ static func difficulty_name(owner: Object, difficulty_id: String) -> String:
 			return text(owner, &"ui.difficulty.normal", "普通")
 
 
-static func quest_defs() -> Array[Resource]:
-	return QuestCatalogScript.quest_defs()
+static func quest_defs(quest_giver_profile: Resource = null) -> Array[Resource]:
+	var catalog_defs := QuestCatalogScript.quest_defs()
+	if quest_giver_profile != null and quest_giver_profile.has_method("quest_defs_for_catalog"):
+		var scoped_defs: Array[Resource] = []
+		var value: Variant = quest_giver_profile.call("quest_defs_for_catalog", catalog_defs)
+		if typeof(value) == TYPE_ARRAY:
+			for quest_def in value as Array:
+				if quest_def is Resource:
+					scoped_defs.append(quest_def)
+		return scoped_defs
+	return catalog_defs
 
 
 static func quests_dict(value: Variant) -> Dictionary:

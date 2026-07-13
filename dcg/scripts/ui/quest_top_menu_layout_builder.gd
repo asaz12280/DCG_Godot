@@ -1,6 +1,7 @@
 extends RefCounted
 
 const UIStyleScript := preload("res://scripts/ui/ui_style.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 
 static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
@@ -16,14 +17,14 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 		panel_margin = MarginContainer.new()
 		panel_margin.name = "PanelMargin"
 		main_panel.add_child(panel_margin)
-	_apply_margin(panel_margin, 22, 18, 22, 18)
+	UIStyleScript.apply_top_menu_panel_margins(panel_margin)
 
 	var content := panel_margin.get_node_or_null("Content") as VBoxContainer
 	if content == null:
 		content = VBoxContainer.new()
 		content.name = "Content"
 		panel_margin.add_child(content)
-	content.add_theme_constant_override("separation", 12)
+	content.add_theme_constant_override("separation", UIStyleScript.SPACING_PANEL_CONTENT)
 	_clear_children(content)
 
 	var title_label := _make_label("TitleLabel", "Quests", UIStyleScript.FONT_PANEL_TITLE)
@@ -34,11 +35,11 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 
 	var tab_row := HBoxContainer.new()
 	tab_row.name = "TabRow"
-	tab_row.add_theme_constant_override("separation", 8)
+	tab_row.add_theme_constant_override("separation", UIStyleScript.SPACING_TAB_ROW)
 	content.add_child(tab_row)
-	var available_tab_button := _make_button("AvailableTabButton", "Available", Vector2(190.0, 54.0))
-	var active_tab_button := _make_button("ActiveTabButton", "Active", Vector2(190.0, 54.0))
-	var completed_tab_button := _make_button("CompletedTabButton", "Completed", Vector2(190.0, 54.0))
+	var available_tab_button := _make_button("AvailableTabButton", "Available", UISurfacePaletteScript.SIZE_QUEST_TAB_BUTTON)
+	var active_tab_button := _make_button("ActiveTabButton", "Active", UISurfacePaletteScript.SIZE_QUEST_TAB_BUTTON)
+	var completed_tab_button := _make_button("CompletedTabButton", "Completed", UISurfacePaletteScript.SIZE_QUEST_TAB_BUTTON)
 	tab_row.add_child(available_tab_button)
 	tab_row.add_child(active_tab_button)
 	tab_row.add_child(completed_tab_button)
@@ -46,28 +47,29 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 	var body := HBoxContainer.new()
 	body.name = "Body"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 14)
+	body.add_theme_constant_override("separation", UIStyleScript.SPACING_TAB_ROW)
 	content.add_child(body)
 
 	var left_column := VBoxContainer.new()
 	left_column.name = "LeftColumn"
-	left_column.custom_minimum_size = Vector2(430.0, 0.0)
+	left_column.custom_minimum_size = UISurfacePaletteScript.SIZE_QUEST_LEFT_COLUMN
+	left_column.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	left_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left_column.add_theme_constant_override("separation", 8)
+	left_column.add_theme_constant_override("separation", UIStyleScript.SPACING_TAB_ROW)
 	body.add_child(left_column)
 
 	var quest_list_panel := PanelContainer.new()
 	quest_list_panel.name = "QuestListPanel"
 	quest_list_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	quest_list_panel.add_theme_stylebox_override("panel", _inner_panel_style(Color(0.05, 0.07, 0.10, 0.94)))
+	quest_list_panel.add_theme_stylebox_override("panel", UIStyleScript.make_inner_panel_style(true))
 	left_column.add_child(quest_list_panel)
 	var list_margin := MarginContainer.new()
 	list_margin.name = "ListMargin"
-	_apply_margin(list_margin, 10, 10, 10, 10)
+	_apply_margin(list_margin, UIStyleScript.SPACING_ROW, UIStyleScript.SPACING_ROW, UIStyleScript.SPACING_ROW, UIStyleScript.SPACING_ROW)
 	quest_list_panel.add_child(list_margin)
 	var list_rows := VBoxContainer.new()
 	list_rows.name = "ListRows"
-	list_rows.add_theme_constant_override("separation", 8)
+	list_rows.add_theme_constant_override("separation", UIStyleScript.SPACING_TAB_ROW)
 	list_margin.add_child(list_rows)
 	var empty_list_label := _make_label("EmptyListLabel", "No quests in this category.", UIStyleScript.FONT_BODY)
 	empty_list_label.visible = false
@@ -84,22 +86,22 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 	quest_list.name = "QuestList"
 	quest_list.unique_name_in_owner = true
 	quest_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	quest_list.add_theme_constant_override("separation", 8)
+	quest_list.add_theme_constant_override("separation", UIStyleScript.SPACING_TAB_ROW)
 	quest_scroll.add_child(quest_list)
 
 	var detail_panel := PanelContainer.new()
 	detail_panel.name = "DetailPanel"
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	detail_panel.add_theme_stylebox_override("panel", _inner_panel_style(Color(0.10, 0.14, 0.15, 0.94)))
+	detail_panel.add_theme_stylebox_override("panel", UIStyleScript.make_inner_panel_style())
 	body.add_child(detail_panel)
 	var detail_margin := MarginContainer.new()
 	detail_margin.name = "DetailMargin"
-	_apply_margin(detail_margin, 28, 24, 28, 24)
+	_apply_margin(detail_margin, UIStyleScript.SPACING_LOAD_PANEL_CONTENT * 2, UIStyleScript.SPACING_LOAD_PANEL_CONTENT + UIStyleScript.SPACING_ROW, UIStyleScript.SPACING_LOAD_PANEL_CONTENT * 2, UIStyleScript.SPACING_LOAD_PANEL_CONTENT + UIStyleScript.SPACING_ROW)
 	detail_panel.add_child(detail_margin)
 	var detail_rows := VBoxContainer.new()
 	detail_rows.name = "DetailRows"
-	detail_rows.add_theme_constant_override("separation", 12)
+	detail_rows.add_theme_constant_override("separation", UIStyleScript.SPACING_PANEL_CONTENT)
 	detail_margin.add_child(detail_rows)
 
 	var detail_title_label := _make_label("DetailTitleLabel", "Quest Details", UIStyleScript.FONT_PANEL_TITLE)
@@ -115,14 +117,14 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 	var condition_rows := VBoxContainer.new()
 	condition_rows.name = "ConditionRows"
 	condition_rows.unique_name_in_owner = true
-	condition_rows.add_theme_constant_override("separation", 6)
+	condition_rows.add_theme_constant_override("separation", UIStyleScript.SPACING_ROW / 2)
 	detail_rows.add_child(condition_rows)
 	var reward_title_label := _make_label("RewardTitleLabel", "Rewards", UIStyleScript.FONT_BODY)
 	detail_rows.add_child(reward_title_label)
 	var reward_rows := VBoxContainer.new()
 	reward_rows.name = "RewardRows"
 	reward_rows.unique_name_in_owner = true
-	reward_rows.add_theme_constant_override("separation", 6)
+	reward_rows.add_theme_constant_override("separation", UIStyleScript.SPACING_ROW / 2)
 	detail_rows.add_child(reward_rows)
 	var spacer := Control.new()
 	spacer.name = "DetailSpacer"
@@ -131,7 +133,7 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 	var status_message_label := _make_label("StatusMessageLabel", "", UIStyleScript.FONT_PLACEHOLDER)
 	status_message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_rows.add_child(status_message_label)
-	var action_button := _make_button("ActionButton", "Accept Quest", Vector2(220.0, 52.0))
+	var action_button := _make_button("ActionButton", "", UISurfacePaletteScript.SIZE_QUEST_ACTION_BUTTON)
 	detail_rows.add_child(action_button)
 
 	return {
@@ -141,6 +143,8 @@ static func build(owner: Control, main_panel: PanelContainer) -> Dictionary:
 		"available_tab_button": available_tab_button,
 		"active_tab_button": active_tab_button,
 		"completed_tab_button": completed_tab_button,
+		"left_column": left_column,
+		"detail_panel": detail_panel,
 		"sort_label": null,
 		"quest_list": quest_list,
 		"empty_list_label": empty_list_label,
@@ -178,11 +182,8 @@ static func _make_button(node_name: String, text: String, minimum_size: Vector2)
 
 
 static func _inner_panel_style(bg_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
+	var style := UIStyleScript.make_inner_panel_style()
 	style.bg_color = bg_color
-	style.border_color = Color(1.0, 1.0, 1.0, 0.10)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
 	return style
 
 

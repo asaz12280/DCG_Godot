@@ -10,9 +10,6 @@ description = "帶回木頭或電線，確認這條路線值得重複探索。"
 objective_type = "extract_any"
 objectives = Array[Dictionary]([{
 "item_path": "res://data/items/crafting/wood.tres",
-"quantity": 2
-}, {
-"item_path": "res://data/items/electronics/wire.tres",
-"quantity": 1
+"quantity": 3
 }])
 reward_money = 35

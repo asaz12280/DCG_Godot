@@ -1,0 +1,5 @@
+schema_version,weapon_id,resource_path,weapon_kind,damage,fire_rate_per_second,projectiles_per_shot,projectile_spread_degrees,armor_penetration_level,critical_chance,projectile_pierce_chance,magazine_capacity,reload_duration_seconds,projectile_range,durability_wear_per_shot,max_durability,repair_max_durability_loss,durability_penalty_ratio,vertical_recoil,horizontal_recoil
+1,pistol_S,res://data/items/weapons/pistol_S.tres,firearm,20,3,1,0,1,15,10,8,1,1600,0.2,100,5,0.5,1,4
+1,smg_S,res://data/items/weapons/smg_S.tres,firearm,18,5,1,0,1,10,6,20,1.45,1970,0.28,120,6,0.45,1.6,5.5
+1,shotgun_SG,res://data/items/weapons/shotgun_SG.tres,firearm,9,1.1,5,40,0.5,5,2,5,1.8,400,0.5,110,6,0.5,4,10
+1,combat_knife,res://data/items/weapons/combat_knife.tres,melee,20,1.9,1,0,0,0,0,0,0,145,1,0,0,0.5,0,0

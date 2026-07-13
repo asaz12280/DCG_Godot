@@ -3,10 +3,11 @@ extends RefCounted
 
 const EquipmentModelScript := preload("res://scripts/equipment/equipment_model.gd")
 const ItemDurabilityServiceScript := preload("res://scripts/items/item_durability_service.gd")
+const PlayerLoadoutSupportScript := preload("res://scripts/player/player_loadout_support_3d.gd")
 const ArmorMitigationServiceScript := preload("res://scripts/combat/armor_mitigation_service.gd")
-const AmmoBallisticsServiceScript := preload("res://scripts/combat/ammo_ballistics_service.gd")
 const WeaponAttachmentServiceScript := preload("res://scripts/combat/weapon_attachment_service.gd")
 const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
+const ItemInspectionWeaponRowsScript := preload("res://scripts/items/item_inspection_weapon_rows.gd")
 const PlayerInventoryActionsScript := preload("res://scripts/player/player_inventory_actions_3d.gd")
 const ITEM_ROOT_PATH := "res://data/items"
 
@@ -18,6 +19,7 @@ var owner: Node = null
 var weapon_controller: Node = null
 var equipment_model := EquipmentModelScript.new()
 var active_weapon_slot_id: StringName = EquipmentModelScript.SLOT_PRIMARY_WEAPON
+var _synced_weapon_slot_id: StringName = &""
 
 var _durability_spread_index := 0
 var _weapon_recoil_offset_degrees := 0.0
@@ -34,7 +36,6 @@ var _last_weapon_recoil_state := {
 	"source": "",
 	"weapon_vertical_recoil": 0.0,
 	"weapon_horizontal_recoil": 0.0,
-	"ammo_recoil_multiplier": 1.0,
 	"attachment_vertical_recoil_multiplier": 1.0,
 	"attachment_horizontal_recoil_multiplier": 1.0,
 	"attachment_recoil_recovery_multiplier": 1.0,
@@ -46,6 +47,7 @@ var _last_weapon_recoil_state := {
 }
 var _item_def_lookup_by_id: Dictionary = {}
 var _item_def_lookup_by_catalog: Dictionary = {}
+var _item_def_lookup_by_path: Dictionary = {}
 
 
 func _init(source_owner: Node = null, source_weapon_controller: Node = null) -> void:
@@ -60,6 +62,8 @@ func set_weapon_controller(controller: Node) -> void:
 func set_active_weapon_slot(slot_id: StringName) -> bool:
 	if not EquipmentModelScript.ACTIVE_WEAPON_SLOT_IDS.has(slot_id):
 		return false
+	if active_weapon_slot_id != slot_id:
+		save_synced_weapon_ammo_state(false)
 	active_weapon_slot_id = slot_id
 	sync_weapon_from_equipment()
 	return equipment_model.get_equipped_item(slot_id) is ItemDef
@@ -192,100 +196,72 @@ func get_weapon_mod_panel_state(weapon_slot_id: StringName = &"") -> Dictionary:
 	if weapon_def == null or weapon_def.item_type != "weapon":
 		return {"has_weapon": false, "weapon_slot_id": str(slot_id), "slots": []}
 	var rows: Array[Dictionary] = []
-	for hardpoint in weapon_def.weapon_attachment_slots:
+	for hardpoint in weapon_def.get_weapon_attachment_slots():
 		rows.append({
 			"slot_id": str(hardpoint),
 			"label_key": weapon_hardpoint_label_key(hardpoint),
 			"stack": WeaponAttachmentServiceScript.weapon_mod_stack(weapon_stack, hardpoint),
 		})
 	var attachment_state := attachment_state_for_weapon_slot(slot_id)
+	var loaded_ammo := _loaded_ammo_for_weapon_stack(slot_id, weapon_stack)
+	var tuning_snapshot := WeaponTuningServiceScript.resolve_snapshot(weapon_def, current_loaded_ammo_item(), attachment_state, weapon_stack)
 	return {
 		"has_weapon": true,
 		"weapon_slot_id": str(slot_id),
 		"weapon_stack": weapon_stack.duplicate(true),
+		"catalog_number": weapon_def.catalog_number,
 		"description_key": weapon_def.description_key,
+		"capabilities": {
+			"inspection_kind": "weapon",
+			"weapon_kind": weapon_def.get_weapon_kind(),
+			"uses_ammo": weapon_def.weapon_uses_ammo(),
+			"supports_attachments": weapon_def.weapon_supports_attachments(),
+			"has_durability": weapon_def.weapon_has_durability(),
+		},
 		"stat_rows": _weapon_stat_rows(slot_id, weapon_stack, weapon_def, attachment_state),
+		"summary": _weapon_summary(weapon_stack, weapon_def, tuning_snapshot, loaded_ammo),
 		"attachment_state": attachment_state.duplicate(true),
+		"loaded_ammo": loaded_ammo,
+		"can_unload_ammo": loaded_ammo > 0,
 		"slots": rows,
+}
+
+
+func _weapon_summary(weapon_stack: Dictionary, weapon_def: ItemDef, snapshot: Dictionary, loaded_ammo: int) -> Dictionary:
+	var durability: Dictionary = snapshot.get("durability", {}) as Dictionary
+	var ammo_item := current_loaded_ammo_item()
+	if ammo_item == null:
+		ammo_item = _load_ammo_item_from_state(weapon_stack.get("weapon_ammo_state", {}) as Dictionary)
+	return {
+		"type_key": StringName("item_type.%s" % weapon_def.item_type),
+		"weapon_kind": weapon_def.get_weapon_kind(),
+		"uses_ammo": weapon_def.weapon_uses_ammo(),
+		"has_durability": weapon_def.weapon_has_durability(),
+		"supports_attachments": weapon_def.weapon_supports_attachments(),
+		"weight": PlayerLoadoutSupportScript.weapon_total_weight(weapon_stack, ammo_item, loaded_ammo),
+		"current_durability": int(durability.get("current_durability", 0)),
+		"max_durability": int(durability.get("max_durability", 0)),
+		"loaded_ammo": loaded_ammo,
+		"magazine_capacity": maxi(int(snapshot.get("magazine_capacity", 0)), 0),
 	}
+
+
+func _loaded_ammo_for_weapon_stack(slot_id: StringName, weapon_stack: Dictionary) -> int:
+	if weapon_controller != null and slot_id == _synced_weapon_slot_id:
+		return maxi(int(weapon_controller.get("current_ammo")), 0)
+	var ammo_state: Dictionary = weapon_stack.get("weapon_ammo_state", {}) as Dictionary
+	return maxi(int(ammo_state.get("loaded_ammo", 0)), 0)
 
 
 func _weapon_stat_rows(_slot_id: StringName, weapon_stack: Dictionary, weapon_def: ItemDef, attachment_state: Dictionary) -> Array[Dictionary]:
 	var snapshot := WeaponTuningServiceScript.resolve_snapshot(weapon_def, current_loaded_ammo_item(), attachment_state, weapon_stack)
-	var durability: Dictionary = snapshot.get("durability", {}) as Dictionary
-	var base_capacity := maxi(int(snapshot.get("base_magazine_capacity", 0)), 0)
-	var capacity_bonus := maxi(int(snapshot.get("magazine_capacity_bonus", 0)), 0)
-	var total_capacity := maxi(int(snapshot.get("magazine_capacity", base_capacity + capacity_bonus)), 0)
-	var active_vertical_recoil := maxf(float(snapshot.get("vertical_recoil", 0.0)), 0.0)
-	var active_horizontal_recoil := maxf(float(snapshot.get("horizontal_recoil", 0.0)), 0.0)
-	return [
-		{"label_key": &"ui.weapon_stat.damage", "value": _format_one_decimal(float(snapshot.get("damage", 0.0)))},
-		{"label_key": &"ui.weapon_stat.fire_rate", "value": _format_one_decimal(float(snapshot.get("fire_rate_per_second", _weapon_fire_rate_per_second(weapon_def))))},
-		{"label_key": &"ui.weapon_stat.armor_penetration", "value": _format_one_decimal(float(snapshot.get("armor_penetration_level", weapon_def.get_weapon_armor_penetration_level())))},
-		{"label_key": &"ui.weapon_stat.critical_chance", "value": _format_percent(float(snapshot.get("critical_chance", weapon_def.get_weapon_critical_chance())))},
-		{"label_key": &"ui.weapon_stat.projectile_pierce_chance", "value": _format_percent(float(snapshot.get("projectile_pierce_chance", weapon_def.get_weapon_projectile_pierce_chance())))},
-		{"label_key": &"ui.weapon_stat.magazine_capacity", "value": _magazine_capacity_text(total_capacity, base_capacity, capacity_bonus)},
-		{"label_key": &"ui.weapon_stat.reload_duration", "value": _format_two_decimal(float(snapshot.get("reload_duration_seconds", _weapon_reload_duration_seconds(weapon_def))))},
-		{"label_key": &"ui.weapon_stat.recoil_angle", "value": "V%s / H%s" % [_format_one_decimal(active_vertical_recoil), _format_one_decimal(active_horizontal_recoil)]},
-		{"label_key": &"ui.weapon_stat.projectile_range", "value": _format_one_decimal(float(snapshot.get("projectile_range_meters", _weapon_projectile_range(weapon_def))))},
-		{"label_key": &"ui.weapon_stat.durability_wear", "value": _format_two_decimal(float(snapshot.get("durability_wear_per_shot", weapon_def.get_weapon_durability_wear_per_shot())))},
-		{"label_key": &"ui.weapon_stat.durability", "value": "%d/%d" % [int(durability.get("current_durability", 0)), int(durability.get("max_durability", 0))]},
-	]
-
-
-func _weapon_fire_rate_per_second(weapon_def: ItemDef) -> float:
-	if weapon_def != null and weapon_def.get_weapon_fire_rate_per_second() > 0.0:
-		return weapon_def.get_weapon_fire_rate_per_second()
-	var cooldown := _weapon_controller_float(&"fire_cooldown_seconds", 0.0)
-	return 1.0 / cooldown if cooldown > 0.0 else 0.0
-
-
-func _weapon_reload_duration_seconds(weapon_def: ItemDef) -> float:
-	if weapon_def != null and weapon_def.get_weapon_reload_duration_seconds() > 0.0:
-		return weapon_def.get_weapon_reload_duration_seconds()
-	return _owner_float(&"reload_duration_seconds", 0.0)
-
-
-func _weapon_projectile_range(weapon_def: ItemDef) -> float:
-	if weapon_def != null and weapon_def.get_weapon_projectile_range() > 0.0:
-		return WeaponTuningServiceScript.authored_range_to_meters(weapon_def.get_weapon_projectile_range())
-	return _weapon_controller_float(&"weapon_range", 0.0)
-
-
-func _weapon_controller_float(property_name: StringName, fallback: float) -> float:
-	if weapon_controller == null:
-		return fallback
-	var value: Variant = weapon_controller.get(str(property_name))
-	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
-		return float(value)
-	return fallback
-
-
-func _owner_float(property_name: StringName, fallback: float) -> float:
-	if owner == null:
-		return fallback
-	var value: Variant = owner.get(str(property_name))
-	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
-		return float(value)
-	return fallback
-
-
-func _magazine_capacity_text(total_capacity: int, base_capacity: int, capacity_bonus: int) -> String:
-	if capacity_bonus <= 0:
-		return str(total_capacity)
-	return "%d (%d+%d)" % [total_capacity, base_capacity, capacity_bonus]
-
-
-func _format_one_decimal(value: float) -> String:
-	return "%.1f" % maxf(value, 0.0)
-
-
-func _format_two_decimal(value: float) -> String:
-	return "%.2f" % maxf(value, 0.0)
-
-
-func _format_percent(value: float) -> String:
-	return "%.0f%%" % WeaponTuningServiceScript.chance_percent(value)
+	var capabilities := {
+		"weapon_kind": weapon_def.get_weapon_kind(),
+		"uses_ammo": weapon_def.weapon_uses_ammo(),
+		"supports_attachments": weapon_def.weapon_supports_attachments(),
+		"has_durability": weapon_def.weapon_has_durability(),
+	}
+	return ItemInspectionWeaponRowsScript.build(snapshot, capabilities)
 
 
 func can_equip_inventory_stack(stack_index: int, slot_id: StringName = &"") -> bool:
@@ -347,35 +323,100 @@ func default_equipment_slot_for_stack(stack: Dictionary) -> StringName:
 func sync_weapon_from_equipment() -> void:
 	if weapon_controller == null:
 		return
+	var target_slot_id := get_equipped_weapon_slot_id()
+	if _synced_weapon_slot_id != &"" and _synced_weapon_slot_id != target_slot_id:
+		save_synced_weapon_ammo_state(false)
 	var weapon_item := get_equipped_weapon_item()
 	if weapon_item == null:
 		if weapon_controller.has_method("clear_weapon"):
 			weapon_controller.call("clear_weapon")
 		else:
 			weapon_controller.set("weapon_def", null)
+		_synced_weapon_slot_id = &""
 		return
+	var should_restore := _synced_weapon_slot_id != target_slot_id or _controller_weapon_id() != weapon_item.id
 	if weapon_controller.has_method("equip_weapon"):
 		var attachment_state := attachment_state_for_weapon_slot(get_equipped_weapon_slot_id())
 		weapon_controller.call("equip_weapon", weapon_item, int(attachment_state.get("magazine_capacity_bonus", 0)), attachment_state)
 	else:
 		weapon_controller.set("weapon_def", weapon_item)
+	_synced_weapon_slot_id = target_slot_id
+	if should_restore:
+		_restore_weapon_controller_ammo_state(equipment_model.get_slot(target_slot_id), weapon_item)
+
+
+func save_synced_weapon_ammo_state(emit_change: bool = false) -> bool:
+	if weapon_controller == null or _synced_weapon_slot_id == &"":
+		return false
+	if not EquipmentModelScript.ACTIVE_WEAPON_SLOT_IDS.has(_synced_weapon_slot_id):
+		return false
+	var stack := equipment_model.get_slot(_synced_weapon_slot_id)
+	if stack.is_empty():
+		return false
+	var item_def := load_item_from_stack(stack)
+	if item_def == null or item_def.id != _controller_weapon_id():
+		return false
+	var ammo_model: Variant = weapon_controller.call("get_ammo_model") if weapon_controller.has_method("get_ammo_model") else null
+	var ammo_state: Dictionary = ammo_model.call("get_state") if ammo_model != null and ammo_model.has_method("get_state") else {}
+	var ammo_def: ItemDef = ammo_model.get("ammo_def") as ItemDef if ammo_model != null else null
+	var runtime_state := {
+		"weapon_id": str(item_def.id),
+		"ammo_id": str(ammo_def.id) if ammo_def != null else "",
+		"ammo_item_path": ammo_def.resource_path if ammo_def != null else "",
+		"loaded_ammo": int(ammo_state.get("loaded_ammo", weapon_controller.get("current_ammo"))),
+		"reserve_ammo": int(ammo_state.get("reserve_ammo", weapon_controller.get("reserve_ammo"))),
+	}
+	return equipment_model.call("update_slot_stack_state", _synced_weapon_slot_id, {"weapon_ammo_state": runtime_state}, emit_change)
+
+
+func _restore_weapon_controller_ammo_state(weapon_stack: Dictionary, weapon_item: ItemDef) -> bool:
+	if weapon_controller == null or weapon_item == null or not weapon_controller.has_method("restore_ammo_state"):
+		return false
+	var raw_state: Variant = weapon_stack.get("weapon_ammo_state", {})
+	if typeof(raw_state) != TYPE_DICTIONARY:
+		return bool(weapon_controller.call("restore_ammo_state", null, 0, 0))
+	var ammo_state := raw_state as Dictionary
+	if str(ammo_state.get("weapon_id", "")) != str(weapon_item.id):
+		return bool(weapon_controller.call("restore_ammo_state", null, 0, 0))
+	var loaded_count := maxi(int(ammo_state.get("loaded_ammo", 0)), 0)
+	var reserve_count := maxi(int(ammo_state.get("reserve_ammo", 0)), 0)
+	var ammo_item := _load_ammo_item_from_state(ammo_state)
+	if ammo_item == null and (loaded_count > 0 or reserve_count > 0):
+		return bool(weapon_controller.call("restore_ammo_state", null, 0, 0))
+	return bool(weapon_controller.call("restore_ammo_state", ammo_item, loaded_count, reserve_count))
+
+
+func _load_ammo_item_from_state(ammo_state: Dictionary) -> ItemDef:
+	var ammo_path := str(ammo_state.get("ammo_item_path", "")).strip_edges()
+	if ammo_path != "" and ResourceLoader.exists(ammo_path):
+		var item := load(ammo_path) as ItemDef
+		if item != null and item.item_type == "ammo":
+			return item
+	return null
+
+
+func _controller_weapon_id() -> StringName:
+	if weapon_controller == null:
+		return &""
+	var value: Variant = weapon_controller.get("weapon_def")
+	var item := value as ItemDef
+	return item.id if item != null else &""
 
 
 func projectile_direction_with_durability_spread(direction: Vector3) -> Dictionary:
 	var penalty := active_weapon_combat_penalty_state()
-	var ammo_spread_multiplier := current_ammo_spread_multiplier()
 	var attachment_spread_multiplier := current_attachment_spread_multiplier()
 	if direction == Vector3.ZERO or not bool(penalty.get("active", false)):
-		return {"direction": direction, "state": spread_state_from_penalty(penalty, 0.0, ammo_spread_multiplier, attachment_spread_multiplier)}
+		return {"direction": direction, "state": spread_state_from_penalty(penalty, 0.0, attachment_spread_multiplier)}
 	var base_spread_degrees := float(penalty.get("spread_degrees", 0.0))
-	var spread_degrees := base_spread_degrees * ammo_spread_multiplier * attachment_spread_multiplier
+	var spread_degrees := base_spread_degrees * attachment_spread_multiplier
 	if spread_degrees <= 0.0:
-		return {"direction": direction, "state": spread_state_from_penalty(penalty, 0.0, ammo_spread_multiplier, attachment_spread_multiplier, base_spread_degrees)}
+		return {"direction": direction, "state": spread_state_from_penalty(penalty, 0.0, attachment_spread_multiplier, base_spread_degrees)}
 	var pattern_value := float(DURABILITY_SPREAD_PATTERN[_durability_spread_index % DURABILITY_SPREAD_PATTERN.size()])
 	_durability_spread_index += 1
 	var applied_angle := spread_degrees * pattern_value
 	var adjusted := direction.rotated(Vector3.UP, deg_to_rad(applied_angle)).normalized()
-	return {"direction": adjusted, "state": spread_state_from_penalty(penalty, applied_angle, ammo_spread_multiplier, attachment_spread_multiplier, base_spread_degrees)}
+	return {"direction": adjusted, "state": spread_state_from_penalty(penalty, applied_angle, attachment_spread_multiplier, base_spread_degrees)}
 
 
 func projectile_direction_with_recoil(direction: Vector3) -> Dictionary:
@@ -472,7 +513,7 @@ func should_block_fire_for_broken_weapon() -> bool:
 	var item_def := get_equipped_weapon_item()
 	var penalty := ItemDurabilityServiceScript.combat_penalty_state(stack, item_def)
 	record_weapon_fire_block(&"broken_weapon")
-	_last_weapon_spread_state = spread_state_from_penalty(penalty, 0.0, current_ammo_spread_multiplier(), current_attachment_spread_multiplier())
+	_last_weapon_spread_state = spread_state_from_penalty(penalty, 0.0, current_attachment_spread_multiplier())
 	return true
 
 
@@ -570,13 +611,11 @@ func active_weapon_recoil_profile() -> Dictionary:
 	var attachment_vertical_multiplier := maxf(float(snapshot.get("attachment_vertical_recoil_multiplier", 1.0)), 0.0)
 	var attachment_horizontal_multiplier := maxf(float(snapshot.get("attachment_horizontal_recoil_multiplier", 1.0)), 0.0)
 	var attachment_recovery_multiplier := maxf(float(snapshot.get("attachment_recoil_recovery_multiplier", 1.0)), 0.0)
-	var ammo_multiplier := maxf(float(snapshot.get("ammo_recoil_multiplier", 1.0)), 0.0)
 	return {
 		"active": horizontal > 0.0 or vertical > 0.0,
 		"source": "weapon_recoil",
 		"weapon_vertical_recoil": vertical,
 		"weapon_horizontal_recoil": horizontal,
-		"ammo_recoil_multiplier": ammo_multiplier,
 		"attachment_vertical_recoil_multiplier": attachment_vertical_multiplier,
 		"attachment_horizontal_recoil_multiplier": attachment_horizontal_multiplier,
 		"attachment_recoil_recovery_multiplier": attachment_recovery_multiplier,
@@ -596,15 +635,14 @@ func active_weapon_combat_penalty_state() -> Dictionary:
 	return (snapshot.get("combat_penalty", {}) as Dictionary).duplicate(true)
 
 
-func spread_state_from_penalty(penalty: Dictionary, applied_angle: float, ammo_spread_multiplier: float = 1.0, attachment_spread_multiplier: float = 1.0, base_spread_degrees: float = -1.0) -> Dictionary:
+func spread_state_from_penalty(penalty: Dictionary, applied_angle: float, attachment_spread_multiplier: float = 1.0, base_spread_degrees: float = -1.0) -> Dictionary:
 	var state := empty_weapon_spread_state()
 	state["active"] = bool(penalty.get("active", false))
 	state["source"] = str(penalty.get("source", ""))
 	var base_spread := float(penalty.get("spread_degrees", 0.0)) if base_spread_degrees < 0.0 else base_spread_degrees
 	state["base_spread_degrees"] = base_spread
-	state["ammo_spread_multiplier"] = ammo_spread_multiplier
 	state["attachment_spread_multiplier"] = attachment_spread_multiplier
-	state["spread_degrees"] = base_spread * ammo_spread_multiplier * attachment_spread_multiplier
+	state["spread_degrees"] = base_spread * attachment_spread_multiplier
 	state["applied_angle_degrees"] = applied_angle
 	state["current_durability"] = int(penalty.get("current_durability", 0))
 	state["max_durability"] = int(penalty.get("max_durability", 0))
@@ -616,7 +654,6 @@ func empty_weapon_spread_state() -> Dictionary:
 		"active": false,
 		"source": "",
 		"base_spread_degrees": 0.0,
-		"ammo_spread_multiplier": 1.0,
 		"attachment_spread_multiplier": 1.0,
 		"spread_degrees": 0.0,
 		"applied_angle_degrees": 0.0,
@@ -631,7 +668,6 @@ func recoil_state_from_profile(profile: Dictionary, applied_angle: float) -> Dic
 	state["source"] = str(profile.get("source", ""))
 	state["weapon_vertical_recoil"] = maxf(float(profile.get("weapon_vertical_recoil", 0.0)), 0.0)
 	state["weapon_horizontal_recoil"] = maxf(float(profile.get("weapon_horizontal_recoil", 0.0)), 0.0)
-	state["ammo_recoil_multiplier"] = maxf(float(profile.get("ammo_recoil_multiplier", 1.0)), 0.0)
 	state["attachment_vertical_recoil_multiplier"] = maxf(float(profile.get("attachment_vertical_recoil_multiplier", 1.0)), 0.0)
 	state["attachment_horizontal_recoil_multiplier"] = maxf(float(profile.get("attachment_horizontal_recoil_multiplier", 1.0)), 0.0)
 	state["attachment_recoil_recovery_multiplier"] = maxf(float(profile.get("attachment_recoil_recovery_multiplier", 1.0)), 0.0)
@@ -648,7 +684,6 @@ func empty_weapon_recoil_state() -> Dictionary:
 		"source": "",
 		"weapon_vertical_recoil": 0.0,
 		"weapon_horizontal_recoil": 0.0,
-		"ammo_recoil_multiplier": 1.0,
 		"attachment_vertical_recoil_multiplier": 1.0,
 		"attachment_horizontal_recoil_multiplier": 1.0,
 		"attachment_recoil_recovery_multiplier": 1.0,
@@ -660,17 +695,9 @@ func empty_weapon_recoil_state() -> Dictionary:
 	}
 
 
-func current_ammo_spread_multiplier() -> float:
-	return AmmoBallisticsServiceScript.spread_multiplier(current_loaded_ammo_item())
-
-
 func current_attachment_spread_multiplier() -> float:
 	var attachment_state := attachment_state_for_weapon_slot(get_equipped_weapon_slot_id())
 	return maxf(float(attachment_state.get("spread_multiplier", 1.0)), 0.0)
-
-
-func current_ammo_recoil_multiplier() -> float:
-	return AmmoBallisticsServiceScript.recoil_multiplier(current_loaded_ammo_item())
 
 
 func current_loaded_ammo_item() -> ItemDef:
@@ -690,9 +717,8 @@ func random_weapon_recoil_angle(profile: Dictionary) -> float:
 func random_weapon_recoil_offsets(profile: Dictionary) -> Dictionary:
 	if not bool(profile.get("active", false)):
 		return {"horizontal_degrees": 0.0, "vertical_degrees": 0.0}
-	var ammo_multiplier := maxf(float(profile.get("ammo_recoil_multiplier", 1.0)), 0.0)
-	var horizontal := maxf(float(profile.get("weapon_horizontal_recoil", 0.0)), 0.0) * ammo_multiplier
-	var vertical := maxf(float(profile.get("weapon_vertical_recoil", 0.0)), 0.0) * ammo_multiplier
+	var horizontal := maxf(float(profile.get("weapon_horizontal_recoil", 0.0)), 0.0)
+	var vertical := maxf(float(profile.get("weapon_vertical_recoil", 0.0)), 0.0)
 	return {
 		"horizontal_degrees": randf_range(-horizontal, horizontal) if horizontal > 0.001 else 0.0,
 		"vertical_degrees": randf_range(-vertical, vertical) if vertical > 0.001 else 0.0,
@@ -700,16 +726,32 @@ func random_weapon_recoil_offsets(profile: Dictionary) -> Dictionary:
 
 
 func load_item_from_stack(stack: Dictionary) -> ItemDef:
-	var item_path := str(stack.get("resource_path", stack.get("item_path", "")))
+	var item_path := str(stack.get("resource_path", stack.get("item_path", ""))).strip_edges()
+	if item_path != "":
+		if _item_def_lookup_by_path.has(item_path):
+			return _item_def_lookup_by_path.get(item_path, null) as ItemDef
 	if item_path != "" and ResourceLoader.exists(item_path):
 		var item_from_path := load(item_path) as ItemDef
 		if item_from_path != null:
-			return item_from_path
+			return _cache_item_def(item_from_path, item_path)
 	return _find_item_def(
 		ITEM_ROOT_PATH,
 		int(stack.get("catalog_number", 0)),
 		StringName(str(stack.get("id", "")))
 	)
+
+
+func _cache_item_def(item_def: ItemDef, item_path: String = "") -> ItemDef:
+	if item_def == null:
+		return null
+	var normalized_path := item_path.strip_edges()
+	if normalized_path != "":
+		_item_def_lookup_by_path[normalized_path] = item_def
+	if item_def.catalog_number > 0:
+		_item_def_lookup_by_catalog[item_def.catalog_number] = item_def
+	if item_def.id != &"":
+		_item_def_lookup_by_id[str(item_def.id)] = item_def
+	return item_def
 
 
 func _find_item_def(path: String, catalog_number: int, item_id: StringName) -> ItemDef:
@@ -737,13 +779,10 @@ func _find_item_def(path: String, catalog_number: int, item_id: StringName) -> I
 		elif entry.ends_with(".tres") or entry.ends_with(".res"):
 			var item_def := load(full_path) as ItemDef
 			if item_def != null:
+				_cache_item_def(item_def, full_path)
 				var matched_id := StringName(str(item_def.id)) != &"" and StringName(str(item_def.id)) == item_id
 				var matched_catalog := catalog_number > 0 and item_def.catalog_number == catalog_number
 				if matched_id or matched_catalog:
-					if item_def.catalog_number > 0:
-						_item_def_lookup_by_catalog[item_def.catalog_number] = item_def
-					if item_def.id != &"":
-						_item_def_lookup_by_id[str(item_def.id)] = item_def
 					dir.list_dir_end()
 					return item_def
 		entry = dir.get_next()

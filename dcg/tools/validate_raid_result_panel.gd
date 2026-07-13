@@ -287,7 +287,7 @@ func _dead_result() -> Dictionary:
 			{"item_path": "res://data/items/crafting/wood.tres", "quantity": 2},
 		],
 		"kept_safe_pocket_items": [
-			{"item_path": "res://data/items/electronics/wire.tres", "quantity": 1},
+			{"item_path": "res://data/items/loot/junk.tres", "quantity": 1},
 		],
 	}
 

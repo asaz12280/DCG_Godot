@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/combat/vfx/lelu_firearm_projectile_tracer_3d.tscn" id="1_base"]
+
+[node name="LeLuPistolProjectileTracer3D" instance=ExtResource("1_base")]
+scale = Vector3(1.12, 1.12, 1.12)

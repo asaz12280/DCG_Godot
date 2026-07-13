@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/firearm_target_hit_feedback_3d.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://VFX/Scenes/VFX_Anticipation_fire_3.tscn" id="2_anticipation_fire3"]
+
+[node name="LeLuFirearmTargetHitFeedback3D" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="VendorEnemyHitAnticipationFire3" parent="." instance=ExtResource("2_anticipation_fire3")]
+scale = Vector3(0.34, 0.34, 0.34)

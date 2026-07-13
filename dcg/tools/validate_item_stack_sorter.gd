@@ -2,8 +2,8 @@ extends SceneTree
 
 const ItemStackSorterScript := preload("res://scripts/inventory/item_stack_sorter.gd")
 const Wood := preload("res://data/items/crafting/wood.tres")
-const Wire := preload("res://data/items/electronics/wire.tres")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Junk := preload("res://data/items/loot/junk.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 
@@ -25,23 +25,23 @@ func _initialize() -> void:
 
 
 func _validate_value_sort() -> void:
-	var sorted := _sorted([Wood.to_stack(1), Wire.to_stack(1), Pistol.to_stack(1)], &"value")
-	_expect_catalog_order(sorted, [Pistol.catalog_number, Wire.catalog_number, Wood.catalog_number], "Value sort should prioritize total stack value.")
+	var sorted := _sorted([Wood.to_stack(1), Junk.to_stack(1), Pistol.to_stack(1)], &"value")
+	_expect_catalog_order(sorted, [Pistol.catalog_number, Junk.catalog_number, Wood.catalog_number], "Value sort should prioritize total stack value.")
 
 
 func _validate_weight_sort() -> void:
-	var sorted := _sorted([Wood.to_stack(1), Wire.to_stack(1), Pistol.to_stack(1)], &"weight")
-	_expect_catalog_order(sorted, [Pistol.catalog_number, Wood.catalog_number, Wire.catalog_number], "Weight sort should prioritize total stack weight.")
+	var sorted := _sorted([Wood.to_stack(1), Junk.to_stack(1), Pistol.to_stack(1)], &"weight")
+	_expect_catalog_order(sorted, [Pistol.catalog_number, Wood.catalog_number, Junk.catalog_number], "Weight sort should prioritize total stack weight.")
 
 
 func _validate_value_weight_sort() -> void:
-	var sorted := _sorted([Wood.to_stack(1), Wire.to_stack(1), Pistol.to_stack(1)], &"value_weight")
-	_expect_catalog_order(sorted, [Pistol.catalog_number, Wire.catalog_number, Wood.catalog_number], "Value/kg sort should prioritize value density.")
+	var sorted := _sorted([Wood.to_stack(1), Junk.to_stack(1), Pistol.to_stack(1)], &"value_weight")
+	_expect_catalog_order(sorted, [Pistol.catalog_number, Junk.catalog_number, Wood.catalog_number], "Value/kg sort should prioritize value density.")
 
 
 func _validate_type_sort() -> void:
-	var sorted := _sorted([Pistol.to_stack(1), Wood.to_stack(1), Wire.to_stack(1)], &"type")
-	_expect_catalog_order(sorted, [Wood.catalog_number, Wire.catalog_number, Pistol.catalog_number], "Type sort should keep category/name order stable.")
+	var sorted := _sorted([Pistol.to_stack(1), Wood.to_stack(1), Junk.to_stack(1)], &"type")
+	_expect_catalog_order(sorted, [Wood.catalog_number, Junk.catalog_number, Pistol.catalog_number], "Type sort should keep category/name order stable.")
 
 
 func _validate_empty_slots_are_preserved_when_requested() -> void:

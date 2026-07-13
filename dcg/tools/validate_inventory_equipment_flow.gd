@@ -1,8 +1,8 @@
 extends SceneTree
 
 const GameplayScene := preload("res://scenes/gameplay/player_test_world_3d.tscn")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
-const Ammo := preload("res://data/items/ammo/ammo_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
+const Ammo := preload("res://data/items/ammo/ammo_S.tres")
 
 var _errors: Array[String] = []
 
@@ -46,10 +46,12 @@ func _validate_backpack_pistol_equips_to_visible_slot() -> void:
 	var backpack_tooltip_text := _tooltip_text(inventory_ui.call("get_item_tooltip_by_path", Pistol.resource_path) as Dictionary)
 	if not backpack_tooltip_text.contains(_item_name(Pistol)):
 		_errors.append("Inventory UI tooltip should show the localized pistol name.")
-	if not backpack_tooltip_text.contains(TranslationServer.translate("ui.item.damage_format") % Pistol.damage):
-		_errors.append("Inventory UI tooltip should show pistol damage.")
-	if not backpack_tooltip_text.contains(TranslationServer.translate("ui.item.magazine_format") % Pistol.magazine_capacity):
-		_errors.append("Inventory UI tooltip should show pistol magazine capacity.")
+	if backpack_tooltip_text.contains(TranslationServer.translate("ui.item.damage_format") % Pistol.damage):
+		_errors.append("Inventory UI tooltip should not show pistol damage in compact hover summary.")
+	if backpack_tooltip_text.contains(TranslationServer.translate("ui.item.magazine_format") % Pistol.magazine_capacity):
+		_errors.append("Inventory UI tooltip should not show pistol magazine capacity in compact hover summary.")
+	if not backpack_tooltip_text.contains(TranslationServer.translate("ui.weapon_mod.summary_ammo") % [0, Pistol.magazine_capacity]):
+		_errors.append("Inventory UI tooltip should show compact pistol ammo state.")
 	var panel_rect: Rect2 = before_state.get("panel_rect", Rect2())
 	var backpack_start := panel_rect.position + Vector2(24.0, 415.0) + Vector2(28.0, 64.0)
 	var backpack_slot_center := backpack_start + Vector2(75.0, 75.0) * 0.5
@@ -250,6 +252,9 @@ func _validate_layout_fit(size: Vector2i) -> void:
 
 func _validate_player_visible_ui_path() -> void:
 	var ui_source := FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_ui.gd")
+	var interaction_source := ui_source
+	interaction_source += FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_input_router.gd")
+	interaction_source += FileAccess.get_file_as_string("res://scripts/ui/inventory_equipment_action_support.gd")
 	for required in [
 		"equip_backpack_stack",
 		"get_equipment_model",
@@ -260,12 +265,20 @@ func _validate_player_visible_ui_path() -> void:
 			_errors.append("Inventory UI should expose visible equip flow term: %s." % required)
 
 	var menu_source := FileAccess.get_file_as_string("res://scripts/ui/inventory_context_menu.gd")
-	for required in ["drop_requested", "ui.inventory.split", "ui.inventory.drop"]:
+	for required in ["drop_requested", "equipment_unload_ammo_requested", "equipment_drop_requested", "open_equipment_context_menu", "ui.inventory.split", "ui.inventory.drop", "ui.weapon_mod.unload_ammo"]:
 		if not menu_source.contains(required):
 			_errors.append("Inventory context menu should expose expected right-click action term: %s." % required)
+	for required in ["open_equipment_context_menu", "_on_context_equipment_unload_ammo_requested", "_on_context_equipment_drop_requested", "can_unload_equipment_weapon_ammo"]:
+		if not interaction_source.contains(required):
+			_errors.append("Inventory UI should expose equipment-slot right-click action term: %s." % required)
 	for forbidden in ["equip_requested", "ui.inventory.equip", "can_equip_stack", "equip_rect"]:
 		if menu_source.contains(forbidden):
 			_errors.append("Inventory context menu should not expose removed equip action term: %s." % forbidden)
+	for required_style in ["UISurfacePaletteScript.panel_fill()", "UISurfacePaletteScript.RADIUS_FLOATING_PANEL", "painter.numeric_slider(slider_rect, ratio)"]:
+		if not menu_source.contains(required_style):
+			_errors.append("Inventory split dialog should reuse the shared floating-panel and numeric-slider style: %s." % required_style)
+	if menu_source.contains("painter.panel(dialog_rect, UISurfacePaletteScript.panel_fill(true)") or menu_source.contains("owner.draw_circle(knob_center, 10.0 * ui_scale, UISurfacePaletteScript.BAR_FILL)"):
+		_errors.append("Inventory split dialog should not use a separate dark panel or progress-bar slider style.")
 
 
 func _validate_responsibility_boundary() -> void:

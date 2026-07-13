@@ -10,11 +10,15 @@ const InventoryContextMenuScript := preload("res://scripts/ui/inventory_context_
 const InventoryGridMetricsScript := preload("res://scripts/ui/inventory_grid_metrics.gd")
 const PlayerQuickBarLayoutScript := preload("res://scripts/ui/player_quick_bar_layout.gd")
 const WeaponModPanelPresenterScript := preload("res://scripts/ui/weapon_mod_panel_presenter.gd")
+const ItemDetailPanelPresenterScript := preload("res://scripts/ui/item_detail_panel_presenter.gd")
 const InventoryEquipmentDisplaySupportScript := preload("res://scripts/ui/inventory_equipment_display_support.gd")
 const InventoryEquipmentPanelPainterScript := preload("res://scripts/ui/inventory_equipment_panel_painter.gd")
-const WeaponAttachmentServiceScript := preload("res://scripts/combat/weapon_attachment_service.gd")
-const WeaponTuningServiceScript := preload("res://scripts/combat/weapon_tuning_service.gd")
+const InventoryEquipmentDragSupportScript := preload("res://scripts/ui/inventory_equipment_drag_support.gd")
+const InventoryEquipmentActionSupportScript := preload("res://scripts/ui/inventory_equipment_action_support.gd")
+const InventoryEquipmentInputRouterScript := preload("res://scripts/ui/inventory_equipment_input_router.gd")
+const WeaponModPanelStateBuilderScript := preload("res://scripts/ui/weapon_mod_panel_state_builder.gd")
 const ItemConsumableServiceScript := preload("res://scripts/items/item_consumable_service.gd")
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 
 @export var backpack_columns: int = 5
 @export var slot_size: Vector2 = Vector2(75.0, 75.0)
@@ -60,6 +64,7 @@ var equipment_slot_ids: Array[StringName] = [
 var _organize_button_rect: Rect2 = Rect2()
 var _store_all_button_rect: Rect2 = Rect2()
 var _store_all_button_visible: bool = false
+var _overlay_scrim_visible: bool = true
 var _ui_scale: float = 1.0
 var _scaled_slot_size: Vector2 = Vector2.ZERO
 var _scaled_slot_gap: float = 0.0
@@ -69,18 +74,14 @@ var _item_resolver := InventoryItemResolverScript.new()
 var _drop_controller := InventoryDropControllerScript.new()
 var _context_menu := InventoryContextMenuScript.new()
 var _weapon_mod_panel := WeaponModPanelPresenterScript.new()
+var _item_detail_panel := ItemDetailPanelPresenterScript.new()
 var _last_mouse_position: Vector2 = Vector2.ZERO
 var _layout_viewport_size: Vector2 = Vector2(1920.0, 1080.0)
-var _dragging_equipment_slot: StringName = &""
-var _dragging_equipment_stack: Dictionary = {}
-var _equipment_drag_position: Vector2 = Vector2.ZERO
-var _dragging_weapon_mod_slot: StringName = &""
-var _dragging_weapon_mod_stack: Dictionary = {}
-var _weapon_mod_drag_position: Vector2 = Vector2.ZERO
-var _dragging_quick_slot_key: int = -1
-var _dragging_quick_slot_stack: Dictionary = {}
-var _quick_slot_drag_position: Vector2 = Vector2.ZERO
+var _drag_support: InventoryEquipmentDragSupport = InventoryEquipmentDragSupportScript.new(self)
+var _action_support: InventoryEquipmentActionSupport = InventoryEquipmentActionSupportScript.new(self)
+var _input_router: InventoryEquipmentInputRouter = InventoryEquipmentInputRouterScript.new(self)
 var _weapon_mod_backpack_stack_index: int = -1
+var _item_def_cache_by_path: Dictionary = {}
 
 
 func _ready() -> void:
@@ -103,8 +104,10 @@ func _ready() -> void:
 	_drop_controller.setup(self, _painter, _item_resolver)
 	_context_menu.setup(self, _painter, backpack_model)
 	_context_menu.use_requested.connect(_on_context_use_requested)
-	_context_menu.mod_requested.connect(_on_context_mod_requested)
+	_context_menu.unload_ammo_requested.connect(_on_context_unload_ammo_requested)
 	_context_menu.drop_requested.connect(_on_context_drop_requested)
+	_context_menu.equipment_unload_ammo_requested.connect(_on_context_equipment_unload_ammo_requested)
+	_context_menu.equipment_drop_requested.connect(_on_context_equipment_drop_requested)
 	backpack_model.changed.connect(_on_backpack_changed)
 	safe_pocket_model.changed.connect(_on_safe_pocket_changed)
 	if equipment_model != null:
@@ -125,17 +128,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			if _weapon_mod_panel.has_point(event.position, _ui_scale, _layout_viewport_size):
-				_weapon_mod_panel.scroll_details(1, _ui_scale, _layout_viewport_size)
-				queue_redraw()
+			if scroll_weapon_mod_details_at(event.position, 1):
 				get_viewport().set_input_as_handled()
 				return
 			_scroll_backpack(1)
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			if _weapon_mod_panel.has_point(event.position, _ui_scale, _layout_viewport_size):
-				_weapon_mod_panel.scroll_details(-1, _ui_scale, _layout_viewport_size)
-				queue_redraw()
+			if scroll_weapon_mod_details_at(event.position, -1):
 				get_viewport().set_input_as_handled()
 				return
 			_scroll_backpack(-1)
@@ -143,134 +142,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if not is_open:
-		return
-
-	if event is InputEventMouseMotion:
-		_last_mouse_position = event.position
-		queue_redraw()
-		if _is_dragging_quick_slot():
-			_update_quick_slot_drag(event.position)
-			accept_event()
-			return
-		if _is_dragging_weapon_mod():
-			_update_weapon_mod_drag(event.position)
-			accept_event()
-			return
-		if _is_dragging_equipment():
-			_update_equipment_drag(event.position)
-			accept_event()
-			return
-		if _drop_controller.is_dragging():
-			_drop_controller.update_drag(event.position)
-			accept_event()
-			return
-		if _context_menu.handle_mouse_motion(event):
-			accept_event()
-			return
-
-	if event is InputEventMouseButton:
-		_last_mouse_position = event.position
-		var hit_stack_index := _get_backpack_stack_index_at(event.position)
-		var hit_safe_pocket_index := _get_safe_pocket_slot_index_at(event.position)
-		var hit_equipment_slot := _get_equipment_slot_id_at(event.position)
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			_drop_controller.clear()
-			if _weapon_mod_panel.is_open():
-				_context_menu.close_all()
-				accept_event()
-				return
-		if _context_menu.handle_mouse_button(event, hit_stack_index, backpack_items, _get_backpack_slots()):
-			accept_event()
-			return
-
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			var quick_key := _get_quick_item_key_at(event.position)
-			if quick_key >= 3 and _start_quick_slot_drag(quick_key, event.position):
-				accept_event()
-				return
-			if _store_all_button_visible and _store_all_button_rect.has_point(event.position):
-				_context_menu.close_all()
-				_drop_controller.clear()
-				store_all_requested.emit()
-				accept_event()
-				return
-			if _organize_button_rect.has_point(event.position):
-				organize_backpack()
-				accept_event()
-				return
-			if _weapon_mod_panel.hit_close(event.position, _ui_scale, _layout_viewport_size):
-				_close_weapon_mod_panel()
-				accept_event()
-				return
-			var hit_weapon_mod_slot := _get_weapon_mod_slot_id_at(event.position)
-			if hit_weapon_mod_slot != &"" and _start_weapon_mod_drag(hit_weapon_mod_slot, event.position):
-				accept_event()
-				return
-			if _handle_weapon_mod_panel_click(event.position):
-				accept_event()
-				return
-			if hit_equipment_slot != &"" and event.double_click and _unequip_equipment_slot(hit_equipment_slot):
-				accept_event()
-				return
-			if hit_equipment_slot != &"" and _start_equipment_drag(hit_equipment_slot, event.position):
-				accept_event()
-				return
-			if hit_safe_pocket_index >= 0 and hit_safe_pocket_index < safe_pocket_items.size() and _move_safe_pocket_stack_to_backpack(hit_safe_pocket_index):
-				accept_event()
-				return
-			if hit_stack_index >= 0 and hit_stack_index < backpack_items.size():
-				if event.double_click:
-					equip_backpack_stack(hit_stack_index)
-					accept_event()
-					return
-				_context_menu.close_all()
-				_drop_controller.start_drag(hit_stack_index, backpack_items[hit_stack_index], event.position)
-				accept_event()
-				return
-
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _is_dragging_weapon_mod():
-			_finish_weapon_mod_drag(event.position)
-			accept_event()
-			return
-
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _is_dragging_quick_slot():
-			_finish_quick_slot_drag(event.position)
-			accept_event()
-			return
-
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _is_dragging_equipment():
-			_finish_equipment_drag(event.position)
-			accept_event()
-			return
-
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _drop_controller.is_dragging():
-			var target_stack_index := _get_backpack_stack_index_at(event.position)
-			var target_equipment_slot := _get_equipment_slot_id_at(event.position)
-			var target_safe_pocket_slot := _get_safe_pocket_slot_index_at(event.position)
-			var target_weapon_mod_slot := _get_weapon_mod_slot_id_at(event.position)
-			var target_quick_key := _get_quick_item_key_at(event.position)
-			if target_quick_key >= 3 and assign_backpack_stack_to_quick_slot(_drop_controller.dragging_stack_index, target_quick_key):
-				_drop_controller.clear()
-				accept_event()
-				return
-			if target_weapon_mod_slot != &"":
-				_attach_dragged_stack_to_open_weapon_hardpoint(target_weapon_mod_slot)
-				_drop_controller.clear()
-				accept_event()
-				return
-			_drop_controller.finish_drag(backpack_model, event.position, _panel_rect(), target_stack_index, player, target_equipment_slot, target_safe_pocket_slot, not _weapon_mod_panel.is_open())
-			accept_event()
-
-
-func _process(_delta: float) -> void:
-	if not is_open:
-		return
-	var current_position := _current_mouse_position()
-	if current_position.distance_squared_to(_last_mouse_position) <= 0.25:
-		return
-	_last_mouse_position = current_position
-	queue_redraw()
+	_input_router.handle_gui_input(event)
 
 
 func toggle_inventory() -> void:
@@ -314,6 +186,20 @@ func set_store_all_action_visible(should_show: bool) -> void:
 	queue_redraw()
 
 
+func set_overlay_scrim_visible(should_show: bool) -> void:
+	_overlay_scrim_visible = should_show
+	queue_redraw()
+
+
+func scroll_weapon_mod_details_at(screen_position: Vector2, direction: int) -> bool:
+	_update_layout_scale(get_viewport_rect().size if is_inside_tree() else size)
+	if not _weapon_mod_panel.has_point(screen_position, _ui_scale, _layout_viewport_size):
+		return false
+	_weapon_mod_panel.scroll_details(direction, _ui_scale, _layout_viewport_size)
+	queue_redraw()
+	return true
+
+
 func add_item_resource(item_def: ItemDef, quantity: int = 1) -> bool:
 	if player != null and player.has_method("add_item_resource"):
 		return player.add_item_resource(item_def, quantity)
@@ -337,7 +223,7 @@ func get_display_state() -> Dictionary:
 
 
 func get_display_state_for_viewport(viewport_size: Vector2) -> Dictionary:
-	return InventoryEquipmentDisplaySupportScript.build_owner_state(self, viewport_size, _layout, _weapon_mod_panel, backpack_model, safe_pocket_model)
+	return InventoryEquipmentDisplaySupportScript.build_owner_state(self, viewport_size, _layout, _weapon_mod_panel, _item_detail_panel, backpack_model, safe_pocket_model)
 
 
 func get_item_tooltip_by_path(item_path: String) -> Dictionary:
@@ -355,6 +241,7 @@ func _reset_interaction_state() -> void:
 	_clear_quick_slot_drag()
 	_context_menu.close_all()
 	_close_weapon_mod_panel()
+	_close_item_detail_panel()
 
 
 func _on_backpack_changed() -> void:
@@ -392,7 +279,8 @@ func _draw() -> void:
 	var safe_rect := _layout.safe_pocket_rect(panel_rect, _get_safe_pocket_slots())
 	var money_rect := _layout.money_currency_rect(panel_rect)
 
-	draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.0, 0.0, 0.0, 0.08))
+	if _overlay_scrim_visible:
+		draw_rect(Rect2(Vector2.ZERO, viewport_size), UISurfacePaletteScript.overlay_scrim())
 	InventoryEquipmentPanelPainterScript.paint_shell(self, _painter, panel_rect)
 	InventoryEquipmentPanelPainterScript.paint_currency(self, _painter, money_rect, "$", money, _ui_scale)
 	_paint_equipment_panel(equipment_rect)
@@ -400,6 +288,7 @@ func _draw() -> void:
 	InventoryEquipmentPanelPainterScript.paint_weight(self, _painter, weight_rect, _ui_scale)
 	if _layout.can_show_safe_pocket(safe_rect, viewport_size):
 		_paint_safe_pocket_panel(safe_rect)
+	_draw_item_detail_panel()
 	_draw_weapon_mod_panel()
 	if _drop_controller.is_dragging():
 		_drop_controller.draw_dragged_item(_scaled_slot_size, Callable(self, "_paint_item_label"))
@@ -428,12 +317,12 @@ func _panel_rect() -> Rect2:
 
 
 func _paint_safe_pocket_panel(rect: Rect2) -> void:
-	_painter.panel(Rect2(rect.position + _v(8.0, 8.0), rect.size), Color(0.0, 0.0, 0.0, 0.14), Color.TRANSPARENT, 0, 18)
-	_painter.panel(rect, Color(0.76, 0.77, 0.70, 0.56), Color(1.0, 1.0, 1.0, 0.14), 1, 18)
+	_painter.panel(Rect2(rect.position + _v(8.0, 8.0), rect.size), UISurfacePaletteScript.shadow(), UISurfacePaletteScript.TRANSPARENT, 0, 18)
+	_painter.panel(rect, UISurfacePaletteScript.panel_fill(), UISurfacePaletteScript.panel_border(), 1, 18)
 	_paint_header(Rect2(rect.position + _v(12.0, 8.0), Vector2(rect.size.x - 24.0 * _ui_scale, 28.0 * _ui_scale)), _localized_text(&"ui.inventory.safe_pocket", ""))
 	for index in range(_get_safe_pocket_slots()):
 		var pocket_slot := _safe_pocket_slot_rect(rect, index)
-		_painter.slot(pocket_slot, Color(0.70, 0.72, 0.66, 0.25), Color(1.0, 1.0, 1.0, 0.28))
+		_painter.slot(pocket_slot, UISurfacePaletteScript.slot_fill(&"safe"), UISurfacePaletteScript.slot_border())
 		if index < safe_pocket_items.size():
 			_paint_item_label(pocket_slot, safe_pocket_items[index])
 
@@ -442,16 +331,20 @@ func _paint_equipment_panel(rect: Rect2) -> void:
 	_paint_header(Rect2(rect.position, Vector2(rect.size.x, 36.0 * _ui_scale)), _localized_text(&"ui.inventory.equipment", ""))
 	for index in range(equipment_slot_label_keys.size()):
 		var slot_rect := _equipment_slot_rect(rect, index)
-		_painter.slot(slot_rect, Color(0.56, 0.58, 0.53, 0.52), Color(1.0, 1.0, 1.0, 0.22))
+		_painter.slot(slot_rect, UISurfacePaletteScript.slot_fill(&"equipment"), UISurfacePaletteScript.slot_border())
 		_painter.equipment_icon(slot_rect, index)
 		var equipped_stack := _get_equipment_stack_at(index)
 		if not equipped_stack.is_empty():
 			_paint_item_label(slot_rect, equipped_stack)
-		_painter.text(_localized_text(equipment_slot_label_keys[index], ""), slot_rect.position + Vector2(0.0, slot_rect.size.y + 22.0 * _ui_scale), 17, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, slot_rect.size.x)
+		_painter.text(_localized_text(equipment_slot_label_keys[index], ""), slot_rect.position + Vector2(0.0, slot_rect.size.y + 22.0 * _ui_scale), 18, UISurfacePaletteScript.TEXT_PRIMARY, HORIZONTAL_ALIGNMENT_CENTER, slot_rect.size.x)
 
 
 func _draw_weapon_mod_panel() -> void:
 	_weapon_mod_panel.draw(self, _painter, _ui_scale, _layout_viewport_size)
+
+
+func _draw_item_detail_panel() -> void:
+	_item_detail_panel.draw(self, _painter, _ui_scale, _layout_viewport_size)
 
 
 func _backpack_slot_rect(backpack_rect: Rect2, slot_index: int) -> Rect2:
@@ -517,211 +410,95 @@ func _safe_pocket_slot_rect(safe_rect: Rect2, index: int) -> Rect2:
 
 
 func _on_context_drop_requested(stack_index: int, stack: Dictionary, screen_position: Vector2, random_near_player: bool) -> void:
-	if _weapon_mod_panel.is_open():
-		return
-	_drop_controller.drop_stack_at(backpack_model, stack_index, stack, screen_position, player, random_near_player)
+	_action_support.context_drop(stack_index, stack, screen_position, random_near_player)
 
 
 func _on_context_use_requested(stack_index: int) -> void:
-	if player == null or not player.has_method("use_inventory_stack"):
-		return
-	player.call("use_inventory_stack", stack_index)
-	_drop_controller.clear()
-	queue_redraw()
+	_action_support.context_use(stack_index)
 
 
-func _on_context_mod_requested(stack_index: int) -> void:
-	_open_weapon_mod_panel_for_backpack_stack(stack_index)
+func _on_context_unload_ammo_requested(stack_index: int) -> void:
+	_action_support.context_unload_ammo(stack_index)
+
+
+func _on_context_equipment_unload_ammo_requested(slot_id: StringName) -> void:
+	_action_support.context_equipment_unload_ammo(slot_id)
+
+
+func _on_context_equipment_drop_requested(slot_id: StringName, screen_position: Vector2) -> void:
+	_action_support.context_equipment_drop(slot_id, screen_position)
 
 
 func _unequip_equipment_slot(slot_id: StringName) -> bool:
-	if player == null or not player.has_method("unequip_equipment_slot"):
-		return false
-	if not bool(player.call("unequip_equipment_slot", slot_id)):
-		return false
-	_context_menu.close_all()
-	_drop_controller.clear()
-	queue_redraw()
-	return true
+	return _action_support.unequip_equipment_slot(slot_id)
 
 
 func _open_weapon_mod_panel_for_backpack_stack(stack_index: int) -> bool:
-	var state := _weapon_mod_panel_state_for_backpack_stack(stack_index)
-	if not _weapon_mod_panel.open(&"backpack_weapon", state):
-		return false
-	_weapon_mod_backpack_stack_index = stack_index
-	_context_menu.close_all()
-	_drop_controller.clear()
-	queue_redraw()
-	return true
+	return _action_support.open_weapon_mod_panel_for_backpack_stack(stack_index)
+
+
+func _open_weapon_mod_panel_for_slot(slot_id: StringName) -> bool:
+	return _action_support.open_weapon_mod_panel_for_slot(slot_id)
+
+
+func _open_item_detail_panel_for_stack(stack: Dictionary) -> bool:
+	return _action_support.open_item_detail_panel_for_stack(stack)
 
 
 func _close_weapon_mod_panel() -> void:
-	_clear_weapon_mod_drag()
-	_weapon_mod_backpack_stack_index = -1
-	_weapon_mod_panel.close()
-	_clear_equipment_drag()
-	_clear_quick_slot_drag()
+	_action_support.close_weapon_mod_panel()
+
+
+func _close_item_detail_panel() -> void:
+	_action_support.close_item_detail_panel()
 
 
 func _refresh_weapon_mod_panel_state() -> void:
-	if _weapon_mod_backpack_stack_index >= 0:
-		_weapon_mod_panel.refresh(_weapon_mod_panel_state_for_backpack_stack(_weapon_mod_backpack_stack_index))
-		return
-	if _weapon_mod_panel.weapon_slot == &"" or player == null or not player.has_method("get_weapon_mod_panel_state"):
-		return
-	var state: Dictionary = player.call("get_weapon_mod_panel_state", _weapon_mod_panel.weapon_slot)
-	_weapon_mod_panel.refresh(state)
+	_action_support.refresh_weapon_mod_panel_state()
 
 
 func _attach_dragged_stack_to_open_weapon_hardpoint(hardpoint_slot: StringName) -> bool:
-	if _weapon_mod_backpack_stack_index >= 0:
-		return _attach_dragged_stack_to_backpack_weapon_hardpoint(hardpoint_slot)
-	if _weapon_mod_panel.weapon_slot == &"" or player == null or not player.has_method("attach_inventory_stack_to_weapon_hardpoint"):
-		return false
-	if not bool(player.call("attach_inventory_stack_to_weapon_hardpoint", _drop_controller.dragging_stack_index, _weapon_mod_panel.weapon_slot, hardpoint_slot)):
-		return false
-	_refresh_weapon_mod_panel_state()
-	_context_menu.close_all()
-	queue_redraw()
-	return true
+	return _action_support.attach_dragged_stack_to_open_weapon_hardpoint(hardpoint_slot)
 
 
 func _attach_dragged_stack_to_backpack_weapon_hardpoint(hardpoint_slot: StringName) -> bool:
-	if hardpoint_slot == &"" or _drop_controller.dragging_stack_index < 0:
-		return false
-	var weapon_index := _weapon_mod_backpack_stack_index
-	if weapon_index < 0 or weapon_index >= backpack_model.stacks.size():
-		return false
-	if _drop_controller.dragging_stack_index == weapon_index:
-		return false
-	var weapon_stack := backpack_model.stacks[weapon_index].duplicate(true)
-	var weapon_def := _load_item_from_stack(weapon_stack)
-	var attachment_stack: Dictionary = backpack_model.stacks[_drop_controller.dragging_stack_index]
-	var attachment_def := _load_item_from_stack(attachment_stack)
-	if weapon_def == null or attachment_def == null:
-		return false
-	if attachment_def.item_type != "attachment" or WeaponAttachmentServiceScript.mod_slot_for_attachment(attachment_def, weapon_def) != hardpoint_slot:
-		return false
-	if not WeaponAttachmentServiceScript.weapon_mod_stack(weapon_stack, hardpoint_slot).is_empty():
-		return false
-	if _drop_controller.dragging_stack_index < weapon_index:
-		weapon_index -= 1
-		_weapon_mod_backpack_stack_index = weapon_index
-	var removed_stack: Dictionary = backpack_model.remove_stack_at(_drop_controller.dragging_stack_index)
-	if removed_stack.is_empty():
-		return false
-	weapon_stack = backpack_model.stacks[weapon_index].duplicate(true)
-	var mods: Dictionary = weapon_stack.get("weapon_mods", {}) as Dictionary
-	mods[str(hardpoint_slot)] = removed_stack.duplicate(true)
-	weapon_stack["weapon_mods"] = mods.duplicate(true)
-	if not backpack_model.replace_stack_at(weapon_index, weapon_stack):
-		backpack_model.add_stack(removed_stack)
-		return false
-	_refresh_weapon_mod_panel_state()
-	_context_menu.close_all()
-	queue_redraw()
-	return true
+	return _action_support.attach_dragged_stack_to_backpack_weapon_hardpoint(hardpoint_slot)
 
 
 func _handle_weapon_mod_panel_click(screen_position: Vector2) -> bool:
-	if not _weapon_mod_panel.is_open():
-		return false
-	var hit := _weapon_mod_panel.hit_slot(screen_position, _ui_scale, _layout_viewport_size)
-	if not bool(hit.get("handled", false)):
-		return false
-	return true
+	return _action_support.handle_weapon_mod_panel_click(screen_position)
+
+
+func _unload_backpack_weapon_ammo_to_backpack(weapon_index: int) -> bool:
+	return _action_support.unload_backpack_weapon_ammo_to_backpack(weapon_index)
+
+
+func _unload_equipment_weapon_ammo_to_backpack(slot_id: StringName) -> bool:
+	return _action_support.unload_equipment_weapon_ammo_to_backpack(slot_id)
 
 
 func _get_weapon_mod_slot_id_at(screen_position: Vector2) -> StringName:
-	if not _weapon_mod_panel.is_open():
-		return &""
-	var hit := _weapon_mod_panel.hit_slot(screen_position, _ui_scale, _layout_viewport_size)
-	if not bool(hit.get("handled", false)):
-		return &""
-	return StringName(str(hit.get("slot_id", "")))
+	return _action_support.get_weapon_mod_slot_id_at(screen_position)
 
 
 func _move_safe_pocket_stack_to_backpack(stack_index: int) -> bool:
-	if player == null or not player.has_method("move_safe_pocket_stack_to_inventory"):
-		return false
-	if not bool(player.call("move_safe_pocket_stack_to_inventory", stack_index)):
-		return false
-	_context_menu.close_all()
-	_drop_controller.clear()
-	queue_redraw()
-	return true
+	return _action_support.move_safe_pocket_stack_to_backpack(stack_index)
 
 
 func _start_weapon_mod_drag(hardpoint_slot: StringName, mouse_position: Vector2) -> bool:
-	if _weapon_mod_panel.weapon_slot == &"" or hardpoint_slot == &"":
-		return false
-	var stack := _weapon_mod_stack_for_slot(hardpoint_slot)
-	if stack.is_empty():
-		return false
-	_dragging_weapon_mod_slot = hardpoint_slot
-	_dragging_weapon_mod_stack = stack.duplicate(true)
-	_weapon_mod_drag_position = mouse_position
-	_context_menu.close_all()
-	_drop_controller.clear()
-	_clear_equipment_drag()
-	queue_redraw()
-	return true
+	return _drag_support.start_weapon_mod_drag(hardpoint_slot, mouse_position)
 
 
 func _update_weapon_mod_drag(mouse_position: Vector2) -> void:
-	_weapon_mod_drag_position = mouse_position
-	queue_redraw()
+	_drag_support.update_weapon_mod_drag(mouse_position)
 
 
 func _finish_weapon_mod_drag(mouse_position: Vector2) -> bool:
-	if not _is_dragging_weapon_mod():
-		return false
-	var target_stack_index := _get_backpack_stack_index_at(mouse_position)
-	var handled := false
-	if target_stack_index >= 0:
-		handled = _unequip_dragged_weapon_mod_to_backpack()
-	_clear_weapon_mod_drag()
-	queue_redraw()
-	return handled
+	return _drag_support.finish_weapon_mod_drag(mouse_position)
 
 
 func _unequip_dragged_weapon_mod_to_backpack() -> bool:
-	if _weapon_mod_backpack_stack_index >= 0:
-		return _unequip_dragged_backpack_weapon_mod_to_backpack()
-	if player == null or not player.has_method("unequip_weapon_mod_to_inventory"):
-		return false
-	if _weapon_mod_panel.weapon_slot == &"" or _dragging_weapon_mod_slot == &"":
-		return false
-	if not bool(player.call("unequip_weapon_mod_to_inventory", _weapon_mod_panel.weapon_slot, _dragging_weapon_mod_slot)):
-		return false
-	_refresh_weapon_mod_panel_state()
-	return true
-
-
-func _unequip_dragged_backpack_weapon_mod_to_backpack() -> bool:
-	if _weapon_mod_backpack_stack_index < 0 or _weapon_mod_backpack_stack_index >= backpack_model.stacks.size() or _dragging_weapon_mod_slot == &"":
-		return false
-	var weapon_stack := backpack_model.stacks[_weapon_mod_backpack_stack_index].duplicate(true)
-	var mods: Dictionary = weapon_stack.get("weapon_mods", {}) as Dictionary
-	var removed_value: Variant = mods.get(str(_dragging_weapon_mod_slot), mods.get(_dragging_weapon_mod_slot, {}))
-	if typeof(removed_value) != TYPE_DICTIONARY or (removed_value as Dictionary).is_empty():
-		return false
-	var removed_stack := (removed_value as Dictionary).duplicate(true)
-	mods.erase(str(_dragging_weapon_mod_slot))
-	mods.erase(_dragging_weapon_mod_slot)
-	weapon_stack["weapon_mods"] = mods.duplicate(true)
-	if not backpack_model.can_accept_stack(removed_stack):
-		return false
-	if not backpack_model.replace_stack_at(_weapon_mod_backpack_stack_index, weapon_stack):
-		return false
-	if not backpack_model.add_stack(removed_stack):
-		mods[str(_dragging_weapon_mod_slot)] = removed_stack
-		weapon_stack["weapon_mods"] = mods.duplicate(true)
-		backpack_model.replace_stack_at(_weapon_mod_backpack_stack_index, weapon_stack)
-		return false
-	_refresh_weapon_mod_panel_state()
-	return true
+	return _drag_support.unequip_dragged_weapon_mod_to_backpack()
 
 
 func _weapon_mod_stack_for_slot(hardpoint_slot: StringName) -> Dictionary:
@@ -729,162 +506,80 @@ func _weapon_mod_stack_for_slot(hardpoint_slot: StringName) -> Dictionary:
 	for row_value in slots:
 		var row := row_value as Dictionary
 		if StringName(str(row.get("slot_id", ""))) == hardpoint_slot:
-			var stack: Dictionary = row.get("stack", {}) as Dictionary
-			return stack
+			return row.get("stack", {}) as Dictionary
 	return {}
 
 
 func _is_dragging_weapon_mod() -> bool:
-	return _dragging_weapon_mod_slot != &"" and not _dragging_weapon_mod_stack.is_empty()
+	return _drag_support.is_dragging_weapon_mod()
 
 
 func _clear_weapon_mod_drag() -> void:
-	_dragging_weapon_mod_slot = &""
-	_dragging_weapon_mod_stack.clear()
-	_weapon_mod_drag_position = Vector2.ZERO
+	_drag_support.clear_weapon_mod_drag()
 
 
 func _draw_dragged_weapon_mod_item() -> void:
-	var drag_rect := Rect2(_weapon_mod_drag_position - _scaled_slot_size * 0.5, _scaled_slot_size)
-	_painter.slot(drag_rect, Color(0.34, 0.38, 0.52, 0.70), Color(0.86, 0.88, 1.0, 0.74))
-	_paint_item_label(drag_rect, _dragging_weapon_mod_stack)
+	_drag_support.draw_dragged_weapon_mod_item()
 
 
 func _start_quick_slot_drag(quick_key: int, mouse_position: Vector2) -> bool:
-	var quick_slot_state := _get_quick_slot_state_by_key(quick_key)
-	if typeof(quick_slot_state) != TYPE_DICTIONARY or quick_slot_state.is_empty():
-		return false
-	if int(quick_slot_state.get("key", -1)) < 3 or int(quick_slot_state.get("key", -1)) > 8:
-		return false
-	if not bool(quick_slot_state.get("assigned", false)):
-		return false
-	var stack := quick_slot_state.get("stack", {}) as Dictionary
-	if stack.is_empty():
-		return false
-	_dragging_quick_slot_key = int(quick_slot_state.get("key", int(quick_key)))
-	_dragging_quick_slot_stack = stack.duplicate(true)
-	_quick_slot_drag_position = mouse_position
-	_context_menu.close_all()
-	_drop_controller.clear()
-	_clear_weapon_mod_drag()
-	_clear_equipment_drag()
-	queue_redraw()
-	return true
+	return _drag_support.start_quick_slot_drag(quick_key, mouse_position)
 
 
 func _update_quick_slot_drag(mouse_position: Vector2) -> void:
-	_quick_slot_drag_position = mouse_position
-	queue_redraw()
+	_drag_support.update_quick_slot_drag(mouse_position)
 
 
 func _finish_quick_slot_drag(mouse_position: Vector2) -> bool:
-	if not _is_dragging_quick_slot():
-		return false
-	var source_key := _dragging_quick_slot_key
-	var target_key := _get_quick_item_key_at(mouse_position)
-	var handled := false
-	if target_key >= 3:
-		if target_key == source_key:
-			handled = true
-		elif player != null and player.has_method("move_quick_slot_to_key"):
-			handled = bool(player.call("move_quick_slot_to_key", source_key, target_key))
-	elif not _panel_rect().has_point(mouse_position):
-		if player != null and player.has_method("clear_quick_slot_for_key"):
-			handled = bool(player.call("clear_quick_slot_for_key", source_key))
-	_clear_quick_slot_drag()
-	queue_redraw()
-	return handled
+	return _drag_support.finish_quick_slot_drag(mouse_position)
 
 
 func _clear_quick_slot_drag() -> void:
-	_dragging_quick_slot_key = -1
-	_dragging_quick_slot_stack.clear()
-	_quick_slot_drag_position = Vector2.ZERO
+	_drag_support.clear_quick_slot_drag()
 
 
 func _is_dragging_quick_slot() -> bool:
-	return _dragging_quick_slot_key >= 3 and not _dragging_quick_slot_stack.is_empty()
+	return _drag_support.is_dragging_quick_slot()
 
 
 func _draw_dragged_quick_slot_item() -> void:
-	var drag_rect := Rect2(_quick_slot_drag_position - _scaled_slot_size * 0.5, _scaled_slot_size)
-	_painter.slot(drag_rect, Color(0.42, 0.38, 0.26, 0.72), Color(0.95, 0.88, 0.76, 0.82))
-	_paint_item_label(drag_rect, _dragging_quick_slot_stack)
+	_drag_support.draw_dragged_quick_slot_item()
 
 
 func _start_equipment_drag(slot_id: StringName, mouse_position: Vector2) -> bool:
-	if equipment_model == null or slot_id == &"" or not equipment_model.has_method("get_slot"):
-		return false
-	var stack: Dictionary = equipment_model.call("get_slot", slot_id)
-	if stack.is_empty():
-		return false
-	_dragging_equipment_slot = slot_id
-	_dragging_equipment_stack = stack.duplicate(true)
-	_equipment_drag_position = mouse_position
-	_context_menu.close_all()
-	_drop_controller.clear()
-	queue_redraw()
-	return true
+	return _drag_support.start_equipment_drag(slot_id, mouse_position)
 
 
 func _update_equipment_drag(mouse_position: Vector2) -> void:
-	_equipment_drag_position = mouse_position
-	queue_redraw()
+	_drag_support.update_equipment_drag(mouse_position)
 
 
 func _finish_equipment_drag(mouse_position: Vector2) -> bool:
-	if not _is_dragging_equipment():
-		return false
-	var target_stack_index := _get_backpack_stack_index_at(mouse_position)
-	var target_equipment_slot := _get_equipment_slot_id_at(mouse_position)
-	var handled := false
-	if target_stack_index >= 0:
-		handled = _unequip_dragged_equipment_to_backpack()
-	elif target_equipment_slot != &"":
-		handled = _move_dragged_equipment_to_equipment_slot(target_equipment_slot)
-	elif not _panel_rect().has_point(mouse_position):
-		handled = _drop_dragged_equipment_to_world(mouse_position)
-	_clear_equipment_drag()
-	queue_redraw()
-	return handled
+	return _drag_support.finish_equipment_drag(mouse_position)
 
 
 func _unequip_dragged_equipment_to_backpack() -> bool:
-	if player == null or not player.has_method("unequip_equipment_slot"):
-		return false
-	if _dragging_equipment_slot == &"":
-		return false
-	return bool(player.call("unequip_equipment_slot", _dragging_equipment_slot))
+	return _drag_support.unequip_dragged_equipment_to_backpack()
 
 
 func _move_dragged_equipment_to_equipment_slot(target_slot: StringName) -> bool:
-	if _dragging_equipment_slot == &"" or target_slot == &"" or _dragging_equipment_slot == target_slot:
-		return false
-	if player == null or not player.has_method("swap_equipment_slots"):
-		return false
-	return bool(player.call("swap_equipment_slots", _dragging_equipment_slot, target_slot))
+	return _drag_support.move_dragged_equipment_to_equipment_slot(target_slot)
 
 
 func _drop_dragged_equipment_to_world(mouse_position: Vector2) -> bool:
-	if _dragging_equipment_slot == &"" or _dragging_equipment_stack.is_empty():
-		return false
-	return _drop_controller.drop_equipment_stack_at(_dragging_equipment_slot, _dragging_equipment_stack, mouse_position, player)
+	return _drag_support.drop_dragged_equipment_to_world(mouse_position)
 
 
 func _is_dragging_equipment() -> bool:
-	return _dragging_equipment_slot != &"" and not _dragging_equipment_stack.is_empty()
+	return _drag_support.is_dragging_equipment()
 
 
 func _clear_equipment_drag() -> void:
-	_dragging_equipment_slot = &""
-	_dragging_equipment_stack.clear()
-	_equipment_drag_position = Vector2.ZERO
+	_drag_support.clear_equipment_drag()
 
 
 func _draw_dragged_equipment_item() -> void:
-	var drag_rect := Rect2(_equipment_drag_position - _scaled_slot_size * 0.5, _scaled_slot_size)
-	_painter.slot(drag_rect, Color(0.30, 0.45, 0.42, 0.68), Color(0.83, 0.95, 0.90, 0.72))
-	_paint_item_label(drag_rect, _dragging_equipment_stack)
+	_drag_support.draw_dragged_equipment_item()
 
 
 func _paint_header(rect: Rect2, text: String) -> void:
@@ -965,6 +660,32 @@ func can_mod_backpack_stack(stack_index: int) -> bool:
 	return item_def != null and item_def.item_type == "weapon" and not item_def.get_weapon_attachment_slots().is_empty()
 
 
+func is_backpack_weapon_stack(stack_index: int) -> bool:
+	if stack_index < 0 or stack_index >= backpack_model.stacks.size():
+		return false
+	var item_def := _load_item_from_stack(backpack_model.stacks[stack_index])
+	return item_def != null and item_def.item_type == "weapon"
+
+
+func can_unload_backpack_weapon_ammo(stack_index: int) -> bool:
+	if stack_index < 0 or stack_index >= backpack_model.stacks.size():
+		return false
+	var weapon_stack := backpack_model.stacks[stack_index]
+	var ammo_state: Dictionary = weapon_stack.get("weapon_ammo_state", {}) as Dictionary
+	var loaded_count := maxi(int(ammo_state.get("loaded_ammo", 0)), 0)
+	var ammo_item := _load_ammo_item_from_weapon_state(ammo_state)
+	return loaded_count > 0 and ammo_item != null and backpack_model.can_accept_stack(ammo_item.to_stack(loaded_count))
+
+
+func can_unload_equipment_weapon_ammo(slot_id: StringName) -> bool:
+	if player == null or not player.has_method("get_weapon_mod_panel_state"):
+		return false
+	if slot_id != &"primary_weapon" and slot_id != &"sidearm":
+		return false
+	var state: Dictionary = player.call("get_weapon_mod_panel_state", slot_id)
+	return bool(state.get("can_unload_ammo", false)) and int(state.get("loaded_ammo", 0)) > 0
+
+
 func _assign_hovered_stack_to_quick_slot(key_number: int) -> bool:
 	var stack_index := _get_backpack_stack_index_at(_current_mouse_position())
 	return assign_backpack_stack_to_quick_slot(stack_index, key_number)
@@ -1027,75 +748,31 @@ func _weapon_mod_panel_state_for_backpack_stack(stack_index: int) -> Dictionary:
 		return {"has_weapon": false, "weapon_slot_id": "backpack_weapon", "slots": []}
 	var weapon_stack := backpack_model.stacks[stack_index].duplicate(true)
 	var weapon_def := _load_item_from_stack(weapon_stack)
-	if weapon_def == null or weapon_def.item_type != "weapon" or weapon_def.get_weapon_attachment_slots().is_empty():
-		return {"has_weapon": false, "weapon_slot_id": "backpack_weapon", "slots": []}
-	var rows: Array[Dictionary] = []
-	for hardpoint in WeaponAttachmentServiceScript.weapon_mod_slot_ids(weapon_def):
-		rows.append({
-			"slot_id": str(hardpoint),
-			"label_key": _weapon_hardpoint_label_key(hardpoint),
-			"stack": WeaponAttachmentServiceScript.weapon_mod_stack(weapon_stack, hardpoint),
-		})
-	var attachment_state := WeaponAttachmentServiceScript.modifiers_for_weapon_stack(weapon_stack, weapon_def)
-	return {
-		"has_weapon": true,
-		"weapon_slot_id": "backpack_weapon",
-		"weapon_stack": weapon_stack,
-		"description_key": weapon_def.description_key,
-		"stat_rows": _weapon_stat_rows_for_stack(weapon_stack, weapon_def, attachment_state),
-		"attachment_state": attachment_state.duplicate(true),
-		"slots": rows,
-	}
+	return WeaponModPanelStateBuilderScript.build(weapon_stack, weapon_def, &"backpack_weapon")
 
 
-func _weapon_stat_rows_for_stack(weapon_stack: Dictionary, weapon_def: ItemDef, attachment_state: Dictionary) -> Array[Dictionary]:
-	var snapshot := WeaponTuningServiceScript.resolve_snapshot(weapon_def, null, attachment_state, weapon_stack)
-	var durability: Dictionary = snapshot.get("durability", {}) as Dictionary
-	var base_capacity := maxi(int(snapshot.get("base_magazine_capacity", 0)), 0)
-	var capacity_bonus := maxi(int(snapshot.get("magazine_capacity_bonus", 0)), 0)
-	var current_durability := int(durability.get("current_durability", 0))
-	var max_durability := int(durability.get("max_durability", 0))
-	var capacity_text := str(base_capacity + capacity_bonus)
-	if capacity_bonus > 0:
-		capacity_text = "%d (%d+%d)" % [base_capacity + capacity_bonus, base_capacity, capacity_bonus]
-	return [
-		{"label_key": &"ui.weapon_stat.damage", "value": "%.1f" % maxf(float(snapshot.get("damage", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.fire_rate", "value": "%.1f" % maxf(float(snapshot.get("fire_rate_per_second", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.armor_penetration", "value": "%.1f" % maxf(float(snapshot.get("armor_penetration_level", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.critical_chance", "value": "%.0f%%" % clampf(float(snapshot.get("critical_chance", 0.0)), 0.0, 100.0)},
-		{"label_key": &"ui.weapon_stat.projectile_pierce_chance", "value": "%.0f%%" % clampf(float(snapshot.get("projectile_pierce_chance", 0.0)), 0.0, 100.0)},
-		{"label_key": &"ui.weapon_stat.magazine_capacity", "value": capacity_text},
-		{"label_key": &"ui.weapon_stat.reload_duration", "value": "%.2f" % maxf(float(snapshot.get("reload_duration_seconds", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.recoil_angle", "value": "V%.1f / H%.1f" % [maxf(float(snapshot.get("vertical_recoil", 0.0)), 0.0), maxf(float(snapshot.get("horizontal_recoil", 0.0)), 0.0)]},
-		{"label_key": &"ui.weapon_stat.projectile_range", "value": "%.1f" % maxf(float(snapshot.get("projectile_range_meters", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.durability_wear", "value": "%.2f" % maxf(float(snapshot.get("durability_wear_per_shot", 0.0)), 0.0)},
-		{"label_key": &"ui.weapon_stat.durability", "value": "%d/%d" % [current_durability, max_durability]},
-	]
-
-
-func _weapon_hardpoint_label_key(hardpoint: StringName) -> StringName:
-	match hardpoint:
-		&"magazine":
-			return StringName("ui.equipment.weapon_%s" % "mag")
-		&"grip":
-			return StringName("ui.equipment.weapon_%s" % "grip")
-		&"muzzle":
-			return StringName("ui.equipment.weapon_%s" % "muzzle")
-		&"scope":
-			return StringName("ui.equipment.weapon_%s" % "scope")
-		&"stock":
-			return StringName("ui.equipment.weapon_%s" % "stock")
-		&"tactic":
-			return StringName("ui.equipment.weapon_%s" % "tactic")
-		_:
-			return &""
+func _load_ammo_item_from_weapon_state(ammo_state: Dictionary) -> ItemDef:
+	var ammo_path := str(ammo_state.get("ammo_item_path", "")).strip_edges()
+	if ammo_path == "" or not ResourceLoader.exists(ammo_path):
+		return null
+	var item_def := load(ammo_path) as ItemDef
+	if item_def == null or item_def.item_type != "ammo":
+		return null
+	return item_def
 
 
 func _load_item_from_stack(stack: Dictionary) -> ItemDef:
 	var item_path := str(stack.get("resource_path", stack.get("item_path", ""))).strip_edges()
-	if item_path == "" or not ResourceLoader.exists(item_path):
+	if item_path == "":
 		return null
-	return load(item_path) as ItemDef
+	if _item_def_cache_by_path.has(item_path):
+		return _item_def_cache_by_path.get(item_path, null) as ItemDef
+	if not ResourceLoader.exists(item_path):
+		return null
+	var item_def := load(item_path) as ItemDef
+	if item_def != null:
+		_item_def_cache_by_path[item_path] = item_def
+	return item_def
 
 
 func _localized_text(key: StringName, fallback: String) -> String:
@@ -1168,6 +845,8 @@ func _get_carry_weight_limit() -> float:
 
 
 func _get_current_weight() -> float:
+	if player != null and player.has_method("get_current_carry_weight"):
+		return float(player.call("get_current_carry_weight"))
 	var current_weight: Variant = player.get("current_carry_weight") if player != null else null
 	if typeof(current_weight) == TYPE_FLOAT or typeof(current_weight) == TYPE_INT:
 		return float(current_weight)
@@ -1186,6 +865,12 @@ func _get_equipment_stack_at(index: int) -> Dictionary:
 	if equipment_model == null or index < 0 or index >= equipment_slot_ids.size():
 		return {}
 	return equipment_model.call("get_slot", equipment_slot_ids[index])
+
+
+func _equipment_stack_for_slot(slot_id: StringName) -> Dictionary:
+	if equipment_model == null or slot_id == &"" or not equipment_model.has_method("get_slot"):
+		return {}
+	return equipment_model.call("get_slot", slot_id)
 
 
 func _get_equipment_slots_state() -> Dictionary:

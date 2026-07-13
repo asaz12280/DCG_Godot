@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponVfxProfile" format=3 uid="uid://u20og326x3ol"]
+
+[ext_resource type="Script" uid="uid://dsomo5jg4usra" path="res://scripts/combat/weapon_vfx_profile.gd" id="1_profile"]
+[ext_resource type="PackedScene" path="res://scenes/combat/vfx/lelu_pistol_muzzle_feedback_3d.tscn" id="2_muzzle"]
+[ext_resource type="PackedScene" path="res://scenes/combat/vfx/lelu_pistol_projectile_tracer_3d.tscn" id="3_tracer"]
+[ext_resource type="PackedScene" path="res://scenes/combat/vfx/lelu_pistol_impact_feedback_3d.tscn" id="4_impact"]
+[ext_resource type="PackedScene" path="res://scenes/combat/vfx/lelu_firearm_target_hit_feedback_3d.tscn" id="5_target"]
+
+[resource]
+script = ExtResource("1_profile")
+firearm_muzzle_scene = ExtResource("2_muzzle")
+firearm_projectile_scene = ExtResource("3_tracer")
+firearm_impact_scene = ExtResource("4_impact")
+firearm_target_hit_scene = ExtResource("5_target")

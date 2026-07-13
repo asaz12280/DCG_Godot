@@ -3,20 +3,21 @@ extends SceneTree
 const ProjectileScene := preload("res://scenes/combat/projectile_3d.tscn")
 const ProjectileScript := preload("res://scripts/combat/projectile_3d.gd")
 const WeaponControllerScript := preload("res://scripts/combat/weapon_controller_3d.gd")
+const CombatVfxSpawnerScript := preload("res://scripts/combat/combat_vfx_spawner_3d.gd")
 const DamageableScript := preload("res://scripts/combat/damageable_3d.gd")
-const Pistol := preload("res://data/items/weapons/pistol_9mm.tres")
+const Pistol := preload("res://data/items/weapons/pistol_S.tres")
 
 var _errors: Array[String] = []
 
 
 func _initialize() -> void:
 	_validate_projectile_scene()
-	await _validate_weapon_spawns_visible_projectile()
+	await _validate_weapon_spawns_projectile()
 	await _validate_projectile_wall_miss_cleanup()
 	await _validate_projectile_range_miss_cleanup()
 	_validate_source_boundaries()
 	if _errors.is_empty():
-		print("[projectile_3d] OK scene=visible spawn=moving hit=damages miss=cleans_up hitscan=removed boundaries=clean")
+		print("[projectile_3d] OK scene=logic_only spawn=moving hit=damages miss=cleans_up vfx=profile_bound boundaries=clean")
 		quit(0)
 	else:
 		for error in _errors:
@@ -28,24 +29,18 @@ func _validate_projectile_scene() -> void:
 	var projectile := ProjectileScene.instantiate()
 	root.add_child(projectile)
 	if not (projectile is Area3D):
-		_errors.append("Projectile scene should use Area3D root for visible moving hit detection.")
+		_errors.append("Projectile scene should use Area3D root for moving hit detection.")
 	if projectile.get_script() != ProjectileScript:
 		_errors.append("Projectile scene should use Projectile3D script.")
-	if projectile.get_node_or_null("MeshInstance3D") == null:
-		_errors.append("Projectile scene should include a MeshInstance3D so the bullet is visible.")
-	else:
-		var mesh := projectile.get_node_or_null("MeshInstance3D") as MeshInstance3D
-		var material := mesh.get_surface_override_material(0) as StandardMaterial3D
-		if material == null:
-			_errors.append("Projectile mesh should use an override material so bullet color is explicit.")
-		elif material.albedo_color.r < 0.9 or material.albedo_color.g > 0.25 or material.albedo_color.b > 0.20:
-			_errors.append("Projectile bullet should use a clearly red material, got %s." % material.albedo_color)
+	for forbidden_type in ["MeshInstance3D", "GPUParticles3D", "OmniLight3D", "Sprite3D"]:
+		if _contains_node_type(projectile, forbidden_type):
+			_errors.append("Logic-only projectile should not contain active VFX node type %s." % forbidden_type)
 	if projectile.get_node_or_null("CollisionShape3D") == null:
 		_errors.append("Projectile scene should include a CollisionShape3D for hit detection.")
 	_free_node(projectile)
 
 
-func _validate_weapon_spawns_visible_projectile() -> void:
+func _validate_weapon_spawns_projectile() -> void:
 	var world := Node3D.new()
 	world.name = "ProjectileValidationWorld"
 	root.add_child(world)
@@ -66,7 +61,9 @@ func _validate_weapon_spawns_visible_projectile() -> void:
 	var shooter := Node3D.new()
 	shooter.name = "ProjectileShooter"
 	world.add_child(shooter)
-
+	var spawner := CombatVfxSpawnerScript.new()
+	spawner.name = "CombatVfxSpawner3D"
+	shooter.add_child(spawner)
 	var weapon := WeaponControllerScript.new()
 	weapon.weapon_def = Pistol
 	weapon.current_ammo = 1
@@ -87,6 +84,8 @@ func _validate_weapon_spawns_visible_projectile() -> void:
 		_errors.append("fire_forward should add a Projectile3D instance to the scene.")
 		_free_node(world)
 		return
+	if projectile.get_node_or_null("ProjectileTravelVfx") == null:
+		_errors.append("Profile-bound projectile should attach its travel VFX as a child.")
 	var start_position := projectile.position
 	await physics_frame
 	await physics_frame
@@ -101,6 +100,8 @@ func _validate_weapon_spawns_visible_projectile() -> void:
 		_errors.append("Projectile should hit the damageable target and apply damage.")
 	if not bool(weapon.last_fire_result.get("hit", false)):
 		_errors.append("WeaponController3D should update last_fire_result after projectile hit.")
+	if _find_node_by_name(world, "LeLuFirearmTargetHitFeedback3D") == null:
+		_errors.append("Confirmed enemy hit should create a separate target-response VFX.")
 
 	_free_node(world)
 
@@ -149,8 +150,6 @@ func _validate_projectile_wall_miss_cleanup() -> void:
 			break
 	if is_instance_valid(projectile):
 		_errors.append("Projectile should disappear when it collides with non-damageable world geometry.")
-	if _find_hit_feedback(world) == null:
-		_errors.append("Projectile should spawn hit feedback when it collides with non-damageable world geometry.")
 	if bool(weapon.last_fire_result.get("hit", true)):
 		_errors.append("WeaponController3D should record wall collision as a miss, not a hit.")
 	if str(weapon.last_fire_result.get("blocked_reason", "not-empty")) != "":
@@ -188,7 +187,7 @@ func _validate_projectile_range_miss_cleanup() -> void:
 
 func _validate_source_boundaries() -> void:
 	var weapon_source := FileAccess.get_file_as_string("res://scripts/combat/weapon_controller_3d.gd")
-	for required in ["DEFAULT_PROJECTILE_SCENE", "projectile_scene", "_spawn_projectile", "_on_projectile_hit"]:
+	for required in ["DEFAULT_PROJECTILE_SCENE", "projectile_scene", "combat_vfx_spawner_path", "_spawn_projectile", "_play_firearm_vfx", "_on_projectile_hit"]:
 		if not weapon_source.contains(required):
 			_errors.append("WeaponController3D should expose projectile term: %s." % required)
 	if weapon_source.contains("intersect_ray"):
@@ -198,7 +197,7 @@ func _validate_source_boundaries() -> void:
 			_errors.append("WeaponController3D projectile flow should not depend on inventory or UI: %s." % forbidden)
 
 	var projectile_source := FileAccess.get_file_as_string("res://scripts/combat/projectile_3d.gd")
-	for required in ["max_distance", "lifetime_seconds", "_finish_miss", "projectile_missed.emit"]:
+	for required in ["max_distance", "lifetime_seconds", "attach_projectile_travel", "play_projectile_impact", "_finish_miss", "projectile_missed.emit"]:
 		if not projectile_source.contains(required):
 			_errors.append("Projectile3D should keep miss cleanup term: %s." % required)
 	for forbidden in ["InventoryModel", "EquipmentModel", "UIManager", "PlayerController3D"]:
@@ -216,14 +215,21 @@ func _find_projectile(parent: Node) -> Node3D:
 	return null
 
 
-func _find_hit_feedback(parent: Node) -> Node3D:
+func _find_node_by_name(parent: Node, node_name: String) -> Node:
+	if parent.name == node_name:
+		return parent
 	for child in parent.get_children():
-		if child is Node3D and child.name == "ProjectileHitFeedback3D":
-			return child as Node3D
-		var nested := _find_hit_feedback(child)
-		if nested != null:
-			return nested
+		var found := _find_node_by_name(child, node_name)
+		if found != null:
+			return found
 	return null
+
+
+func _contains_node_type(parent: Node, type_name: String) -> bool:
+	for child in parent.get_children():
+		if child.get_class() == type_name or _contains_node_type(child, type_name):
+			return true
+	return false
 
 
 func _free_node(node: Node) -> void:

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_def.gd" id="1_item_def"]
+
+[resource]
+script = ExtResource("1_item_def")
+id = &"ammo_SG"
+catalog_number = 22
+display_name = "Ammo-SG"
+name_key = &"item.ammo_SG.name"
+description_key = &"item.ammo_SG.desc"
+item_type = "ammo"
+weight = 0.04
+value = 8
+max_stack = 30
+ammo_tag = &"SG"
+tags = Array[StringName]([&"SG"])

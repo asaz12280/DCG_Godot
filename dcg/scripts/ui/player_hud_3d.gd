@@ -1,24 +1,26 @@
 ﻿extends Control
 
+const UISurfacePaletteScript := preload("res://scripts/ui/ui_surface_palette.gd")
 const PlayerHUDPainterScript := preload("res://scripts/ui/player_hud_painter.gd")
 
 @export var health_offset: Vector2 = Vector2(0.0, -76.0)
-@export var enemy_health_offset: Vector2 = Vector2(0.0, -76.0)
+@export var enemy_health_offset: Vector2 = Vector2(0.0, -20.0)
 @export var stamina_offset: Vector2 = Vector2(-54.0, 70.0)
 @export var health_size: Vector2 = Vector2(98.0, 16.0)
 @export var enemy_health_size: Vector2 = Vector2(98.0, 16.0)
 @export var lower_left_health_position: Vector2 = Vector2(42.0, -58.0)
-@export var lower_left_health_size: Vector2 = Vector2(250.0, 44.0)
+@export var lower_left_health_size: Vector2 = UISurfacePaletteScript.HUD_HEALTH_PANEL_SIZE
 @export var ring_radius: float = 18.0
 @export var ring_width: float = 6.0
-@export var crosshair_color: Color = Color(0.98, 0.98, 0.94, 1.0)
+@export var crosshair_color: Color = UISurfacePaletteScript.TEXT_PRIMARY
 @export var reload_bar_offset: Vector2 = Vector2(0.0, 48.0)
 @export var reload_bar_size: Vector2 = Vector2(190.0, 14.0)
 @export var reload_label_offset: Vector2 = Vector2(0.0, 72.0)
+@export var timed_action_world_offset: Vector3 = Vector3(0.0, 0.08, 0.0)
+@export var timed_action_pixel_offset: Vector2 = Vector2(0.0, 48.0)
 @export var ammo_panel_position: Vector2 = Vector2(-250.0, -70.0)
-@export var ammo_panel_size: Vector2 = Vector2(210.0, 46.0)
+@export var ammo_panel_size: Vector2 = UISurfacePaletteScript.HUD_AMMO_PANEL_SIZE
 @export var damage_feedback_duration: float = 0.45
-@export var melee_slash_duration: float = 0.24
 
 const WORLD_HUD_Z_INDEX := -10
 
@@ -39,8 +41,6 @@ var melee_attack_state: Dictionary = {
 	"mode_active": false,
 	"hit_count": 0,
 }
-var melee_slash_time: float = 0.0
-var melee_slash_direction := 1.0
 var item_use_state: Dictionary = {
 	"active": false,
 	"progress": 0.0,
@@ -56,6 +56,10 @@ var reload_fill_style := StyleBoxFlat.new()
 var ammo_panel_style := StyleBoxFlat.new()
 var _cached_backpack_ammo_count := 0
 var _backpack_ammo_cache_dirty := true
+var _last_crosshair_position := Vector2.INF
+var _enemy_overlay_anchor_positions: Dictionary = {}
+var _last_enemy_overlay_camera_transform := Transform3D.IDENTITY
+var _has_enemy_overlay_camera_transform := false
 
 
 func _ready() -> void:
@@ -93,10 +97,57 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	var should_redraw := false
 	stamina_visible_time = maxf(stamina_visible_time - delta, 0.0)
 	damage_feedback_time = maxf(damage_feedback_time - delta, 0.0)
-	melee_slash_time = maxf(melee_slash_time - delta, 0.0)
-	queue_redraw()
+	if stamina_visible_time > 0.0 or damage_feedback_time > 0.0:
+		should_redraw = true
+	if _is_reload_visible() or _is_item_use_visible():
+		should_redraw = true
+	var crosshair_position := _crosshair_center()
+	if crosshair_position.distance_squared_to(_last_crosshair_position) > 0.25:
+		_last_crosshair_position = crosshair_position
+		should_redraw = true
+	# World-space enemy overlays must redraw with the current rendered transforms.
+	# This tracks only camera/anchor transforms; health and inventory data stay event-driven.
+	if _enemy_health_overlay_requires_redraw():
+		should_redraw = true
+	if should_redraw:
+		queue_redraw()
+
+
+func _enemy_health_overlay_requires_redraw() -> bool:
+	var tree := get_tree()
+	var camera := get_viewport().get_camera_3d()
+	if tree == null or camera == null:
+		var had_overlay_state := not _enemy_overlay_anchor_positions.is_empty() or _has_enemy_overlay_camera_transform
+		_enemy_overlay_anchor_positions.clear()
+		_has_enemy_overlay_camera_transform = false
+		return had_overlay_state
+
+	var requires_redraw := not _has_enemy_overlay_camera_transform or not _last_enemy_overlay_camera_transform.is_equal_approx(camera.global_transform)
+	var current_anchor_positions: Dictionary = {}
+	for node in tree.get_nodes_in_group("enemy"):
+		var enemy := node as Node3D
+		if enemy == null or not enemy.is_inside_tree():
+			continue
+		if enemy.has_method("is_alive") and not bool(enemy.call("is_alive")):
+			continue
+		var anchor := _enemy_health_anchor(enemy)
+		var key := str(enemy.get_path())
+		var current_position := anchor.global_position
+		current_anchor_positions[key] = current_position
+		var previous_value: Variant = _enemy_overlay_anchor_positions.get(key, null)
+		if typeof(previous_value) != TYPE_VECTOR3:
+			requires_redraw = true
+		elif (previous_value as Vector3).distance_squared_to(current_position) > 0.0001:
+			requires_redraw = true
+	if current_anchor_positions.size() != _enemy_overlay_anchor_positions.size():
+		requires_redraw = true
+	_enemy_overlay_anchor_positions = current_anchor_positions
+	_last_enemy_overlay_camera_transform = camera.global_transform
+	_has_enemy_overlay_camera_transform = true
+	return requires_redraw
 
 
 func _on_stamina_changed(current: float, maximum: float) -> void:
@@ -128,9 +179,6 @@ func _on_item_use_progress_changed(state: Dictionary) -> void:
 
 func _on_melee_attack_changed(state: Dictionary) -> void:
 	melee_attack_state = state.duplicate(true)
-	if bool(melee_attack_state.get("active", false)):
-		melee_slash_time = melee_slash_duration
-	melee_slash_direction *= -1.0
 	queue_redraw()
 
 
@@ -160,14 +208,14 @@ func get_display_state() -> Dictionary:
 		"damage_feedback_visible": damage_feedback_time > 0.0,
 		"damage_feedback_alpha": _damage_feedback_alpha(),
 		"reload_visible": _is_reload_visible(),
-		"reload_progress": float(reload_state.get("progress", 0.0)),
+		"reload_progress": _timed_action_progress(reload_state),
+		"reload_remaining_time": _timed_action_remaining_time(reload_state),
 		"reload_status": str(reload_state.get("status", "idle")),
 		"item_use_visible": _is_item_use_visible(),
-		"item_use_progress": float(item_use_state.get("progress", 0.0)),
+		"item_use_progress": _timed_action_progress(item_use_state),
+		"item_use_remaining_time": _timed_action_remaining_time(item_use_state),
 		"item_use_status": str(item_use_state.get("status", "idle")),
 		"melee_mode_active": bool(melee_attack_state.get("mode_active", false)),
-		"melee_slash_visible": _is_melee_slash_visible(),
-		"melee_slash_alpha": _melee_slash_alpha(),
 		"melee_hit_count": int(melee_attack_state.get("hit_count", 0)),
 		"held_weapon": _held_weapon_state(),
 		"held_weapon_mode": str(_held_weapon_state().get("mode", "firearm")),
@@ -189,6 +237,13 @@ func _get_player_screen_position(offset: Vector2) -> Vector2:
 	if player == null or camera == null:
 		return Vector2(-1000.0, -1000.0)
 	return _get_actor_screen_position(player, Vector3(0.0, 0.75, 0.0), offset)
+
+
+func _timed_action_screen_position(extra_offset: Vector2 = Vector2.ZERO) -> Vector2:
+	var camera := get_viewport().get_camera_3d()
+	if player == null or camera == null:
+		return Vector2(-1000.0, -1000.0)
+	return _get_actor_screen_position(player, timed_action_world_offset, timed_action_pixel_offset + extra_offset)
 
 
 func _crosshair_center() -> Vector2:
@@ -217,10 +272,12 @@ func _enemy_health_bar_states() -> Array[Dictionary]:
 		if maximum <= 0.0 or current <= 0.0:
 			continue
 		var ratio := clampf(current / maximum, 0.0, 1.0)
-		var center := _get_actor_screen_position(enemy, Vector3(0.0, 0.85, 0.0), enemy_health_offset)
+		var anchor := _enemy_health_anchor(enemy)
+		var center := _get_actor_screen_position(anchor, Vector3.ZERO, enemy_health_offset)
 		var rect := Rect2(center - enemy_health_size * 0.5, enemy_health_size)
 		states.append({
 			"node_path": str(enemy.get_path()),
+			"anchor_path": str(anchor.get_path()),
 			"health_current": current,
 			"health_max": maximum,
 			"ratio": ratio,
@@ -231,6 +288,11 @@ func _enemy_health_bar_states() -> Array[Dictionary]:
 			"style": "player_health",
 		})
 	return states
+
+
+func _enemy_health_anchor(enemy: Node3D) -> Node3D:
+	var anchor := enemy.get_node_or_null("EnemyHealthAnchor3D") as Node3D
+	return anchor if anchor != null else enemy
 
 
 func _get_actor_screen_position(actor: Node3D, world_offset: Vector3, pixel_offset: Vector2) -> Vector2:
@@ -286,14 +348,30 @@ func _is_item_use_visible() -> bool:
 	return bool(item_use_state.get("active", false))
 
 
-func _is_melee_slash_visible() -> bool:
-	return melee_slash_time > 0.0
+func _timed_action_progress(state: Dictionary) -> float:
+	if not bool(state.get("active", false)):
+		return clampf(float(state.get("progress", 0.0)), 0.0, 1.0)
+	var duration := maxf(float(state.get("duration", 0.0)), 0.001)
+	var started_at_msec := int(state.get("started_at_msec", 0))
+	var ends_at_msec := int(state.get("ends_at_msec", 0))
+	if started_at_msec <= 0 or ends_at_msec <= started_at_msec:
+		return clampf(float(state.get("progress", 0.0)), 0.0, 1.0)
+	var elapsed := maxf(float(Time.get_ticks_msec() - started_at_msec) / 1000.0, 0.0)
+	return clampf(elapsed / duration, 0.0, 1.0)
 
 
-func _melee_slash_alpha() -> float:
-	if melee_slash_duration <= 0.0:
+func _timed_action_remaining_time(state: Dictionary) -> float:
+	if not bool(state.get("active", false)):
 		return 0.0
-	return clampf(melee_slash_time / melee_slash_duration, 0.0, 1.0)
+	var ends_at_msec := int(state.get("ends_at_msec", 0))
+	if ends_at_msec <= 0:
+		return maxf(float(state.get("remaining_time", 0.0)), 0.0)
+	return maxf(float(ends_at_msec - Time.get_ticks_msec()) / 1000.0, 0.0)
+
+
+func _timed_action_remaining_text(state: Dictionary) -> String:
+	var format_text := _hud_text(&"ui.timed_action.seconds_format", "%.1fs")
+	return format_text % _timed_action_remaining_time(state)
 
 
 func _has_equipped_weapon() -> bool:
@@ -306,9 +384,8 @@ func _ammo_display_text() -> String:
 		return _held_weapon_display_text()
 	if not _has_equipped_weapon():
 		return _hud_text(&"ui.raid_hud.weapon_missing", "未裝備")
-	return "%d %s / %d" % [
+	return "%d / %d" % [
 		_weapon_int("current_ammo", 0),
-		_hud_text(&"ui.player_hud.loaded_bullets", "發子彈"),
 		_backpack_compatible_ammo_count(),
 	]
 

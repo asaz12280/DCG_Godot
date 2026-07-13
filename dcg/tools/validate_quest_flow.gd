@@ -11,7 +11,6 @@ const FirstSalvageQuest := preload("res://data/quests/first_salvage.tres")
 const FirstScavengerHuntQuest := preload("res://data/quests/first_scavenger_hunt.tres")
 
 const WOOD_PATH := "res://data/items/crafting/wood.tres"
-const WIRE_PATH := "res://data/items/electronics/wire.tres"
 
 var _errors: Array[String] = []
 var _created_save_manager: Node = null
@@ -49,7 +48,7 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 	var applier := RaidResultApplierScript.new()
 	test_root.add_child(applier)
 	var result := RaidResultSchema.create(RaidResultSchema.OUTCOME_EXTRACTED, {
-		"extracted_items": [{"item_path": WIRE_PATH, "quantity": 1}],
+		"extracted_items": [{"item_path": WOOD_PATH, "quantity": 3}],
 	})
 	if not applier.apply_raid_result(result):
 		_errors.append("RaidResultApplier should apply extraction result with quest progress.")
@@ -61,7 +60,7 @@ func _validate_extraction_updates_quest_and_base_submit() -> void:
 	else:
 		var quest_state: Dictionary = quests.get("first_salvage", {}) as Dictionary
 		if str(quest_state.get("state", "")) != QuestStateScript.STATE_READY:
-			_errors.append("Extracting wire should ready accepted First Salvage quest.")
+			_errors.append("Extracting three wood should ready accepted First Salvage quest.")
 
 	var base_screen: BaseScreen = BaseScreenScene.instantiate()
 	root.add_child(base_screen)
@@ -182,7 +181,7 @@ func _validate_quest_ui_layout() -> void:
 			"first_salvage": {
 				"id": "first_salvage",
 				"state": QuestStateScript.STATE_READY,
-				"progress": {WIRE_PATH: 1},
+				"progress": {WOOD_PATH: 3},
 				"claimed": false,
 			},
 		},

@@ -1,0 +1,4 @@
+schema_version,difficulty_id,resource_path,player_health_multiplier
+1,easy,res://data/difficulty/easy.tres,1.25
+1,normal,res://data/difficulty/normal.tres,1.0
+1,hard,res://data/difficulty/hard.tres,0.75

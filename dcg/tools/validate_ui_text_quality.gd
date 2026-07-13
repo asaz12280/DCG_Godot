@@ -94,10 +94,6 @@ const VISIBLE_RESOURCE_TEXT := [
 		"display_name": "木頭",
 	},
 	{
-		"path": "res://data/items/electronics/wire.tres",
-		"display_name": "電線",
-	},
-	{
 		"path": "res://data/items/loot/junk.tres",
 		"display_name": "垃圾",
 	},
@@ -151,6 +147,8 @@ func _validate_supported_locales() -> void:
 		locales.append(locale)
 	if not locales.has("zh_TW") or not locales.has("en"):
 		_errors.append("Localization CSV must include zh_TW and en as required locales.")
+	if locales != PackedStringArray(["zh_TW", "en"]):
+		_errors.append("Localization CSV should only expose zh_TW and en during the current development phase.")
 
 	var settings_source := FileAccess.get_file_as_string("res://scripts/ui/settings_panel.gd")
 	if not settings_source.contains("LANGUAGE_LOCALES := [\"zh_TW\", \"en\"]"):

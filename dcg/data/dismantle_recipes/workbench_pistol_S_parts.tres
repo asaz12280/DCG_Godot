@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DismantleRecipeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/dismantle_recipe_def.gd" id="1_dismantle_recipe_def"]
+
+[resource]
+script = ExtResource("1_dismantle_recipe_def")
+id = &"workbench_pistol_S_parts"
+station_id = &"workbench"
+display_name_key = &"dismantle.workbench_pistol_S_parts.name"
+description_key = &"dismantle.workbench_pistol_S_parts.desc"
+input_item_path = "res://data/items/weapons/pistol_S.tres"
+input_quantity = 1
+output_stacks = Array[Dictionary]([{
+"item_path": "res://data/items/loot/junk.tres",
+"quantity": 4
+}])
+required_upgrade_id = &"workbench_disassemble_station"
